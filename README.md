@@ -1,9 +1,6 @@
 # Transparent Security
 
-Transparent Security is a solution for identify the source devices of a DDoS 
-attack and mitigates the attack in the customer premises or the access network.  
-This solution leverages a P4 based programmable data plane for add in-band network 
-telemetry (INT) for device identification and in-band mitigation.
+Transparent Security is a solution for identify the source devices of a DDoS attack and mitigates the attack in the customer premises or the access network. This solution leverages a P4 based programmable data plane for add in-band network telemetry (INT) for device identification and in-band mitigation.
 
 > Note: This is reference implementation for a minimal viable prototype.
 
