@@ -73,9 +73,8 @@ def get_args():
                         help='Switch Ethernet Interface. Defaults to '
                              'ff:ff:ff:ff:ff:ff',
                         required=False, default='ff:ff:ff:ff:ff:ff')
-    parser.add_argument('-e', '--src_mac',
-                        help='Src MAC Address. Defaults to 00:00:00:00:01:01',
-                        required=False, default='00:00:00:00:01:01')
+    parser.add_argument('-e', '--src_mac', help='Src MAC Address',
+                        required=False)
     args = parser.parse_args()
     return args
 
@@ -88,7 +87,7 @@ def device_send(args):
     logger.info('Delaying %d seconds' % args.delay)
     sleep(args.delay)
     src = args.src_mac
-    if args.src_mac == 'NA':
+    if not src:
         src = get_if_hwaddr(interface)
 
     if args.duration is 0:
