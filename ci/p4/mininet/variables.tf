@@ -1,0 +1,57 @@
+# Copyright (c) 2019 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Required Variables
+variable "access_key" {}
+variable "secret_key" {}
+variable "build_id" {}
+variable "git_user" {}
+variable "git_pass" {}
+
+# Image generated from env-build script for build_env='mininet' currently with name 'transparent-security-mininet-env'
+variable "ami" {default = "ami-07ab3272984d29bc6"}
+
+# Optional Variables
+variable "public_key_file" {default = "~/.ssh/id_rsa.pub"}
+variable "private_key_file" {default = "~/.ssh/id_rsa"}
+variable "sudo_user" {default = "ubuntu"}
+variable "region" {default = "us-west-2"}
+
+variable "instance_type" {default = "t2.2xlarge"}
+variable "run_tests" { default = "yes"}
+
+# Playbook Constants
+variable "ANSIBLE_CMD" {default = "export ANSIBLE_HOST_KEY_CHECKING=False; ansible-playbook"}
+
+# File paths are relative to this directory
+variable "ANSIBLE_PB_PATH" {default = "../../../playbooks"}
+variable "src_dir" {default = "~/transparent-security"}
+variable "topo_file_loc" {default = "/home/ubuntu/mininet-sim-topology.json"}
+variable "local_scripts_dir" {default = "../../../playbooks/general/templates"}
+variable "remote_scripts_dir" {default = "/etc/transparent-security"}
+variable "sdn_host" {default = "localhost"}
+variable "dashboard_port" {default = "8080"}
+variable "sdn_port" {default = "9998"}
+variable "sdn_dev_intf" {default = "lo"} # TODO - verify if this is correct???
+variable "ae_dev_intf" {default = "lo"} # TODO - verify if this is correct???
+variable "ae_monitor_intf" {default = "core1-eth1"} # TODO - verify if this is correct???
+variable "service_log_level" {default = "INFO"}
+variable "remote_srvc_log_dir" {default = "/var/log/transparent-security"}
+variable "remote_tps_dir" {default = "/home/ubuntu/transparent-security"}
+
+# Variables for ansible playbooks
+variable "SETUP_SOURCE" {default = "../../../playbooks/general/setup_source.yml"}
+variable "START_MININET" {default = "../../../playbooks/mininet/start_mininet.yml"}
+variable "GENERATE_TOPOLOGY" {default = "../../../playbooks/mininet/generate_topology.yml"}
+variable "GENERATE_DEVICE_SCRIPT" {default = "../../../playbooks/mininet/generate_device_script.yml"}
+variable "START_SERVICE" {default = "../../../playbooks/general/start_service.yml"}

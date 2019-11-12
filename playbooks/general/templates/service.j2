@@ -1,0 +1,11 @@
+[Unit]
+Description={{ description }}
+Requires=network.target
+After=syslog.target network.target
+
+[Service]
+Type=simple
+ExecStart=/bin/bash {{ startup_script }}
+
+[Install]
+WantedBy=multi-user.target

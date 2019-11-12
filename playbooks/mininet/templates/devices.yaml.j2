@@ -1,0 +1,127 @@
+---
+inet:
+  - daemon: sniff_and_log
+    iface: inet-eth0
+    loglevel: DEBUG
+    logfile:  inet_sniff_inet.log
+
+Camera1:
+  - daemon: attack
+    destinationR: 10.2.5.7
+    port: 1234
+    msg: Attacking
+    loglevel: DEBUG
+    logfile: attack_daemon_Camera1.log
+    duration: 60
+    delay: 5
+    interval: 0.005
+    udp_flood:
+      interface: eth0
+      switch_ethernet: 00:00:00:01:01:00
+    syn_flood:
+      count: 100
+
+  - daemon: heartbeat
+    destination: 10.2.5.7
+    port: 1235
+    msg: Normal
+    interface: eth0
+    loglevel: DEBUG
+    logfile: heartbeat_daemon_Camera1.log
+    switch_ethernet: 00:00:00:01:01:00
+    duration: 60
+    delay: 0
+    interval: 0.1
+
+NAS1:
+  - daemon: heartbeat
+    destination: 10.2.5.7
+    port: 1235
+    msg: Normal
+    interface: eth0
+    loglevel: DEBUG
+    logfile: heartbeat_daemon_NAS1.log
+    switch_ethernet: 00:00:00:01:01:00
+    duration: 60
+    delay: 0
+    interval: 0.1
+  
+Game1:
+  - daemon: heartbeat
+    destination: 10.2.5.7
+    port: 1235
+    msg: Normal
+    interface: eth0
+    loglevel: DEBUG
+    logfile: heartbeat_daemon_Game1.log
+    switch_ethernet: 00:00:00:01:01:00
+    duration: 60
+    delay: 1
+    interval: 0.2
+  
+Camera2:
+  - daemon: heartbeat
+    destination: 10.2.5.7
+    port: 1235
+    msg: Normal
+    interface: eth0
+    loglevel: DEBUG
+    logfile: heartbeat_daemon_Camera2.log
+    switch_ethernet: 00:00:00:01:02:00
+    duration: 60
+    delay: 2
+    interval: 0.3
+  
+Game2:
+  - daemon: attack
+    destination: 10.2.5.7
+    port : 1234
+    msg: Attacking
+    loglevel: DEBUG
+    logfile:  attack_daemon_Game2.log
+    duration: 60
+    delay: 0
+    interval: 0.01
+    udp_flood:
+      interface: eth0
+      switch_ethernet: 00:00:00:01:02:00
+    syn_flood:
+      count: 100
+
+  - daemon: heartbeat
+    destination: 10.2.5.7
+    port: 1235
+    msg: Normal
+    interface: eth0
+    loglevel: DEBUG
+    logfile: heartbeat_daemon_Game2.log
+    switch_ethernet: 00:00:00:01:02:00
+    duration: 60
+    delay: 0
+    interval: 0.1
+
+Camera3:
+  - daemon: heartbeat
+    destination: 10.2.5.7
+    port: 1235
+    msg: Normal
+    interface: eth0
+    loglevel: DEBUG
+    logfile: heartbeat_daemon_Camera3.log
+    switch_ethernet: 00:00:00:01:03:00
+    duration: 60
+    delay: 3
+    interval: 0.4
+  
+Game3:
+  - daemon: heartbeat
+    destination: 10.2.5.7
+    port: 1235
+    msg: Normal
+    interface: eth0
+    loglevel: DEBUG
+    logfile: heartbeat_daemon_Game3.log
+    switch_ethernet: 00:00:00:01:03:00
+    duration: 60
+    delay: 4
+    interval: 0.5

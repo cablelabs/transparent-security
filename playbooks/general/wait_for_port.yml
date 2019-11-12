@@ -1,0 +1,27 @@
+# Copyright (c) 2019 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+- hosts: all
+
+  gather_facts: no
+
+  tasks:
+    # Not using wait_for task as it appears to be killing the process that is supposed to be started as a pseudo daemon
+    - name: Query process running on port {{ port_num }}. Will fail after 150 seconds if port has not been opened
+      become: yes
+      command: "lsof -t -i:{{ port_num }}"
+      register: result
+      retries: 30
+      delay: 5
+      until: result.rc == 0
+

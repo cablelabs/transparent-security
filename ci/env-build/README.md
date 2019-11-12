@@ -1,0 +1,57 @@
+# transparent-security Environment build
+Readme for information on building a transparent-security environment
+
+### Host Requirements
+
+- Python 2.7 is installed
+- The python-pip package has been installed
+- The Python ansible >=2.7.5 package has been installed
+
+### Install terraform
+
+Download and install your binary for your platform from  https://www.terraform.io/downloads.html
+
+### Setup and execute
+
+This Terraform script has been designed to build a P4 environment on AWS
+
+1. build_id: this value must be unique to ensure multiple jobs can be run
+simultaneously from multiple hosts
+
+````
+git clone https://github.com/cablelabs/transparent-security
+git clone https://github.com/cablelabs/snaps-config
+cd transparent-security/ci/env-build
+terraform init
+terraform apply -var-file={dir}/snaps-config/aws/snaps-ci.tfvars \
+-auto-approve \
+-var 'build_id={some unique value}' \
+-var 'build_env={the supported build environment name}'\
+````
+
+### Obtain Deployment Information
+````
+# from transparent-security/ci/env-build directory
+terraform show
+````
+
+### Obtain EC2 Instance IP
+````
+# from transparent-security/ci/env-build directory
+terraform output ip
+````
+
+### SSH into EC2 Mininet VM
+````
+# from transparent-security/ci/env-build directory
+ssh -i ubuntu@$(terraform output ip)
+````
+
+### Cleanup
+````
+# from transparent-security/ci/env-build directory
+terraform destroy -var-file=~/snaps-config/aws/snaps-ci.tfvars \
+-auto-approve -var\
+-var 'build_id={some unique value}'\
+-var 'build_env={the supported build environment name}'\
+````
