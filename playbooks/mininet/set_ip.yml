@@ -14,52 +14,57 @@
 - name: Set node facts
   set_fact:
     north_node: "{{ item.north_node | default(None) }}"
+    south_node: "{{ item.south_node | default(None) }}"
     south_facing_port: "{{ item.south_facing_port | default(None) }}"
     north_facing_port: "{{ item.north_facing_port | default(None) }}"
-    intf_name: "{{ item.north_node | default('') }}-eth{{ item.south_facing_port | default('') }}"
     host: "{{ topo_dict.hosts.get(item.south_node) }}"
+    intf_name: None
     dev_ip: None
     dev_name: None
     dev_ip_tokens: None
 
-- name: set device IP fact
+- name: Find north node if south didn't exist
+  set_fact:
+    host: "{{ topo_dict.hosts.get(item.north_node) }}"
+  when: not host
+
+- name: Determine interface name for south_facing_port
+  set_fact:
+    intf_name: "{{ north_node | default('') }}-eth{{ south_facing_port | default('') }}"
+  when: south_facing_port and not north_facing_port
+
+- name: Determine interface name for south_facing_port
+  set_fact:
+    intf_name: "{{ south_node | default('') }}-eth{{ north_facing_port | default('') }}"
+  when: north_facing_port and not south_facing_port
+
+- name: Determine device IP and name
   set_fact:
     dev_ip: "{{ host.ip }}"
     dev_name: "{{ host.name }}"
     dev_ip_tokens: "{{ host.ip.split('.') }}"
-  when: host and host.ip and north_node and south_facing_port and dev_ip and not north_facing_port
+  when: host and host.ip
 
-- name: Display IP tokens
-  debug:
-    msg: "{{ dev_ip_tokens }}"
-  when: "{{ dev_ip_tokens }}"
+- name: Setup IPs in system
+  block:
+    - name: derive interface IP
+      set_fact:
+        intf_prfx: "{{ dev_ip_tokens[0] }}.{{ dev_ip_tokens[1] }}.{{ dev_ip_tokens[2] }}"
+        intf_sufx: "{{ dev_ip_tokens[3]|int - 1 }}"
 
-- name: derive interface IP
-  set_fact:
-    intf_prfx: "{{ dev_ip_tokens[0] }}.{{ dev_ip_tokens[1] }}.{{ dev_ip_tokens[2] }}"
-    intf_sufx: "{{ dev_ip_tokens[3]|int - 1 }}"
-  when: "{{ dev_ip_tokens }}"
+    - name: Set IP for intf {{ intf_name }}
+      become: yes
+      command: "ip addr del {{ intf_prfx }}.{{ intf_sufx }}/30 dev {{ intf_name }}"
+      ignore_errors: yes
 
-- name: Display Interface IP suffix
-  debug:
-    msg: "{{ intf_sufx }}"
-  when: "{{ intf_sufx }}"
+    - name: Set IP for intf {{ intf_name }}
+      become: yes
+      command: "ip addr add {{ intf_prfx }}.{{ intf_sufx }}/30 dev {{ intf_name }}"
 
-- name: Set IP for intf {{ intf_name }}
-  become: yes
-  command: "ip addr del {{ intf_prfx }}.{{ intf_sufx }}/30 dev {{ intf_name }}"
-  when: "{{ dev_ip_tokens }}"
-  ignore_errors: yes
-
-- name: Set IP for intf {{ intf_name }}
-  become: yes
-  command: "ip addr add {{ intf_prfx }}.{{ intf_sufx }}/30 dev {{ intf_name }}"
-  when: "{{ dev_ip_tokens }}"
-
-- name: Set /etc/hosts
-  become: yes
-  lineinfile:
-    path: /etc/hosts
-    line: "{{ dev_ip }} {{ dev_name }}"
-    state: present
+    - name: Set /etc/hosts
+      become: yes
+      lineinfile:
+        path: /etc/hosts
+        line: "{{ dev_ip }} {{ dev_name }}"
+        state: present
   when: "{{ dev_ip_tokens }}"
