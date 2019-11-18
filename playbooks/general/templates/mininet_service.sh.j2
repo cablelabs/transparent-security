@@ -13,6 +13,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Runs Mininet simulation ; Stop -> Stops any running switch instance ; Clean -> Removes logs, builds and artifacts ; Run -> Builds Mininet
-# TODO - make devices.yaml.j2 into a template and build it rather than using this static config and kickoff exercises with a different process
-screen -d -m sudo python {{ remote_tps_dir }}/bin/run_p4_mininet.py -t {{ topo_file_loc }} -b simple_switch_grpc -dc {{ devices_conf_file }} -l {{ srvc_log_dir }} -d True
+# Stops then starts mininet with the given topology
+mn -c; python {{ remote_tps_dir }}/bin/run_p4_mininet.py -t {{ topo_file_loc }} -l {{ srvc_log_dir }} -dc {{ devices_conf_file }}

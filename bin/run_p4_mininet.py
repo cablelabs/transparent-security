@@ -14,7 +14,6 @@
 # limitations under the License.
 import argparse
 import logging
-import os
 import sys
 import yaml
 
@@ -23,42 +22,23 @@ from trans_sec.mininet.exercise import ExerciseRunner
 logger = logging.getLogger('')
 
 
-def __format_latency(l):
-    """
-    Helper method for parsing link latencies from the topology json.
-    """
-    if isinstance(l, (str, unicode)):
-        return l
-    else:
-        return str(l) + "ms"
-
-
 def get_args():
-    cwd = os.getcwd()
-    default_logs = os.path.join(cwd, 'logs')
-    default_pcaps = os.path.join(cwd, 'pcaps')
     parser = argparse.ArgumentParser()
-    parser.add_argument('-q', '--quiet', help='Suppress log messages.',
-                        action='store_true', required=False, default=False)
     parser.add_argument('-t', '--topo', help='Path to topology json',
-                        type=str, required=False,
-                        default='./conf/topology_proposed.json')
-    parser.add_argument('-l', '--log-dir', type=str, required=False,
-                        default=default_logs)
+                        type=str, required=True)
+    parser.add_argument('-l', '--log-dir', type=str, required=True,
+                        default=None)
     parser.add_argument('-lf', '--log-file', type=str, required=False,
                         default='run_p4_mininet.log')
     parser.add_argument('-p', '--pcap-dir', type=str, required=False,
-                        default=default_pcaps)
+                        default=None)
     parser.add_argument('-j', '--switch_json', type=str, required=False)
-    parser.add_argument('-b', '--behavioral-exe',
-                        help='Path to behavioral executable',
-                        type=str, required=False, default='simple_switch')
+    parser.add_argument('-c', '--start-cli', type=bool, required=False,
+                        default=None)
     parser.add_argument('-d', '--daemon', help='Run device daemon on hosts.',
                         type=bool, required=False, default=False)
     parser.add_argument('-dc', '--devices-config', help='Devices config',
-                        type=str, required=True)
-    parser.add_argument('-u', '--dashboard-url', help='Devices config.',
-                        type=str, required=False, default=None)
+                        type=str, required=False)
     return parser.parse_args()
 
 
@@ -88,6 +68,9 @@ if __name__ == '__main__':
 
     exercise = ExerciseRunner(
         args.topo, args.log_dir, args.pcap_dir, args.switch_json,
-        read_yaml_file(args.devices_config), args.dashboard_url,
-        args.behavioral_exe, args.quiet, args.daemon)
+        read_yaml_file(args.devices_config), args.start_cli)
     exercise.run_exercise()
+
+    logger.info('Exercise Runner running indefinitely')
+    while True:
+        pass

@@ -36,9 +36,10 @@ variable "ANSIBLE_CMD" {default = "export ANSIBLE_HOST_KEY_CHECKING=False; ansib
 # File paths are relative to this directory
 variable "ANSIBLE_PB_PATH" {default = "../../../playbooks"}
 variable "src_dir" {default = "~/transparent-security"}
-variable "topo_file_loc" {default = "/home/ubuntu/mininet-sim-topology.json"}
-variable "local_scripts_dir" {default = "../../../playbooks/general/templates"}
 variable "remote_scripts_dir" {default = "/etc/transparent-security"}
+variable "topo_file" {default = "mininet-sim-topology.json"}
+variable "dev_daemon_file" {default = "device-daemons.yml"}
+variable "local_scripts_dir" {default = "../../../playbooks/general/templates"}
 variable "sdn_host" {default = "localhost"}
 variable "dashboard_port" {default = "8080"}
 variable "sdn_port" {default = "9998"}
@@ -53,5 +54,4 @@ variable "remote_tps_dir" {default = "/home/ubuntu/transparent-security"}
 variable "SETUP_SOURCE" {default = "../../../playbooks/general/setup_source.yml"}
 variable "START_MININET" {default = "../../../playbooks/mininet/start_mininet.yml"}
 variable "GENERATE_TOPOLOGY" {default = "../../../playbooks/mininet/generate_topology.yml"}
-variable "GENERATE_DEVICE_SCRIPT" {default = "../../../playbooks/mininet/generate_device_script.yml"}
 variable "START_SERVICE" {default = "../../../playbooks/general/start_service.yml"}

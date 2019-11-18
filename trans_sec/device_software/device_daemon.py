@@ -18,7 +18,6 @@ from time import sleep
 from dateutil import parser
 
 from trans_sec.device_software.abstract_daemon import AbstractDaemon
-from trans_sec.utils.http_session import HttpSession
 
 
 class HeartbeatDaemon(AbstractDaemon):
@@ -91,16 +90,10 @@ class AttackDaemon(AbstractDaemon):
     Starts and controls an attack daemon running on a device within
     a locally running mininet
     """
-    def __init__(self, dashboard_url, mn_device, device_config, log_file,
+    def __init__(self, mn_device, device_config, log_file,
                  device_log_dir, level):
         super(self.__class__, self).__init__(
             mn_device, device_config, log_file, device_log_dir, level)
-
-        self.dashboard_url = dashboard_url
-        if self.dashboard_url:
-            self.http_session = HttpSession(self.dashboard_url)
-        else:
-            self.http_session = None
 
         self.active = False
 
@@ -115,14 +108,9 @@ class AttackDaemon(AbstractDaemon):
 
         while self.running and self.device_config:
             while not self.active:
-
-                if self.http_session:
-                    self.logger.debug('Calling dashboard %s',
-                                      self.http_session.url)
-                    result = self.http_session.get('state')
-                    self.logger.debug(result)
-                    attack = result.get('attack')
-
+                # TODD - Determine proper attack logic here
+                attack = None
+                if attack:
                     # TODO - Determine new mechanism for start/stopping attacks
                     if attack is not None and attack.get('active'):
                         # Check timing

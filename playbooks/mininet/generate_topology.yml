@@ -20,6 +20,11 @@
     switch_mac: "{{ ansible_facts['eth0']['macaddress'] }}"
 
   tasks:
+    - name: Ensure {{ remote_scripts_dir }} scripts directory has been created
+      file:
+        path: "{{ remote_scripts_dir }}"
+        state: directory
+
     - name: copy topology configuration file
       become: yes
       template:

@@ -28,25 +28,20 @@ class ConfException(Exception):
 def program_switch(addr, device_id, p4info_fpath, bmv2_json_fpath,
                    proto_dump_fpath, table_entries=None):
     p4info_helper = trans_sec.p4runtime_lib.helper.P4InfoHelper(p4info_fpath)
-
     sw = trans_sec.p4runtime_lib.bmv2.Bmv2SwitchConnection(
-        address=addr, device_id=device_id,
-        proto_dump_file=proto_dump_fpath)
+        address=addr, device_id=device_id, proto_dump_file=proto_dump_fpath)
+    sw.master_arbitration_update()
+    logger.info("Setting pipeline config with file - [%s]", bmv2_json_fpath)
+    sw.set_forwarding_pipeline_config(
+        p4info=p4info_helper.p4info, bmv2_json_file_path=bmv2_json_fpath)
 
-    try:
-        sw.master_arbitration_update()
+    if table_entries:
+        for entry in table_entries:
+            logger.info('Inserting table entry - [%s]', entry)
+            insert_table_entry(sw, entry, p4info_helper)
 
-        logger.info("Setting pipeline config with file - [%s]",
-                    bmv2_json_fpath)
-        sw.set_forwarding_pipeline_config(
-            p4info=p4info_helper.p4info,
-            bmv2_json_file_path=bmv2_json_fpath)
-
-        if table_entries:
-            for entry in table_entries:
-                insert_table_entry(sw, entry, p4info_helper)
-    finally:
-        sw.shutdown()
+    # TODO - Why is the switch being shutdown here???
+    # sw.shutdown()
 
 
 def insert_table_entry(sw, flow, p4info_helper):

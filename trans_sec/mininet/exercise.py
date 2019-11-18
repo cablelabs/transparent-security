@@ -15,61 +15,25 @@ import json
 import logging
 import os
 import subprocess
-import threading
-from time import sleep
 
 from mininet.cli import CLI
 from mininet.link import TCLink, Intf
 from mininet.net import Mininet
 from mininet.topo import Topo
 
-from trans_sec.device_software.device_daemon import (
-    AttackDaemon, HeartbeatDaemon, SniffAndLogDaemon)
-from trans_sec.mininet.p4_mininet import P4Host, P4Switch
 from trans_sec.controller import simple_controller
+from trans_sec.mininet.daemons import DaemonRunner
+from trans_sec.mininet.p4_mininet import P4Host, P4Switch
 from trans_sec.p4runtime_lib.p4runtime_switch import P4RuntimeSwitch
 
 logger = logging.getLogger('exercise')
 
 
-def configure_p4_switch(**switch_args):
-    """ Helper class that is called by mininet to initialize
-        the virtual P4 switches. The purpose is to ensure each
-        switch's thrift server is using a unique port.
-    """
-    if "sw_path" in switch_args and 'grpc' in switch_args['sw_path']:
-        # If grpc appears in the BMv2 switch target, will start P4 Runtime
-        class ConfiguredP4RuntimeSwitch(P4RuntimeSwitch):
-            def __init__(self, *opts, **kwargs):
-                kwargs.update(switch_args)
-                P4RuntimeSwitch.__init__(self, *opts, **kwargs)
-
-            def describe(self):
-                logger.info("%s -> gRPC port: %s", self.name, self.grpc_port)
-
-        return ConfiguredP4RuntimeSwitch
-    else:
-        class ConfiguredP4Switch(P4Switch):
-            next_thrift_port = 9090
-
-            def __init__(self, *opts, **kwargs):
-                global next_thrift_port
-                kwargs.update(switch_args)
-                kwargs['thrift_port'] = ConfiguredP4Switch.next_thrift_port
-                ConfiguredP4Switch.next_thrift_port += 1
-                P4Switch.__init__(self, *opts, **kwargs)
-
-            def describe(self):
-                logger.info(
-                    "%s -> Thrift port: %s", self.name, self.thrift_port)
-
-        return ConfiguredP4Switch
-
-
 class ExerciseTopo(Topo):
-    """ The mininet topology class for the P4 tutorial exercises.
-        A custom class is used because the exercises make a few topology
-        assumptions, mostly about the IP and MAC addresses.
+    """
+    The mininet topology class for the P4 tutorial exercises.
+    A custom class is used because the exercises make a few topology
+    assumptions, mostly about the IP and MAC addresses.
     """
 
     def __init__(self, hosts, switches, links, log_dir, **opts):
@@ -94,12 +58,12 @@ class ExerciseTopo(Topo):
                              delay=link['latency'], bw=link['bandwidth'],
                              addr1=s_switch.get('mac'),
                              addr2=n_switch.get('mac'))
-                self.add_switch_port(s_switch.get('name'),
-                                     n_switch.get('name'),
-                                     link.get('north_facing_port'))
-                self.add_switch_port(n_switch.get('name'),
-                                     s_switch.get('name'),
-                                     link.get('south_facing_port'))
+                self.__add_switch_port(s_switch.get('name'),
+                                       n_switch.get('name'),
+                                       link.get('north_facing_port'))
+                self.__add_switch_port(n_switch.get('name'),
+                                       s_switch.get('name'),
+                                       link.get('south_facing_port'))
                 logger.info('Adding Switch Link %s %s port:%d <--> port:%d' % (
                     link['south_node'], link['north_node'],
                     link['north_facing_port'], link['south_facing_port']))
@@ -118,8 +82,8 @@ class ExerciseTopo(Topo):
                                  delay=link['latency'], bw=link['bandwidth'],
                                  addr1=n_host.get('mac'),
                                  addr2=s_switch.get('mac'))
-                    self.add_switch_port(s_switch.get('name'),
-                                         n_host.get('name'), np)
+                    self.__add_switch_port(s_switch.get('name'),
+                                           n_host.get('name'), np)
                     logger.info(
                         "Adding host %s link %s %s to switch %s %s on port %s",
                         n_host.get('name'), n_host.get('ip'),
@@ -139,8 +103,8 @@ class ExerciseTopo(Topo):
                                  delay=link['latency'], bw=link['bandwidth'],
                                  addr1=s_host.get('mac'),
                                  addr2=n_switch.get('mac'))
-                    self.add_switch_port(n_switch.get('name'),
-                                         s_host.get('name'), sp)
+                    self.__add_switch_port(n_switch.get('name'),
+                                           s_host.get('name'), sp)
 
                     logger.info("Adding host %s link %s %s to switch %s %s on "
                                 "port %d",
@@ -151,7 +115,7 @@ class ExerciseTopo(Topo):
                 logger.info('Error in link.  At least one port must be '
                             'defined %s', link)
 
-            self.print_port_mapping()
+            self.__print_port_mapping()
 
     @staticmethod
     def __int_to_dpid(dpid):
@@ -164,7 +128,7 @@ class ExerciseTopo(Topo):
                             'please either specify a dpid or use a '
                             'canonical switch name such as s23.')
 
-    def add_switch_port(self, sw, target, port=None):
+    def __add_switch_port(self, sw, target, port=None):
         if sw not in self.sw_port_mapping:
             self.sw_port_mapping[sw] = []
         if port is None:
@@ -173,7 +137,7 @@ class ExerciseTopo(Topo):
         else:
             self.sw_port_mapping[sw].append((port, target))
 
-    def print_port_mapping(self):
+    def __print_port_mapping(self):
         logger.info("Switch port mapping:")
         for sw in sorted(self.sw_port_mapping.keys()):
             logger.info("%s: " % sw,)
@@ -186,23 +150,17 @@ class ExerciseRunner:
         Attributes:
             log_dir  : string   // directory for mininet log files
             pcap_dir : string   // directory for mininet switch pcap files
-            quiet    : bool     // determines if we print logger messages
-
             hosts    : list<string>       // list of mininet host names
             switches : dict<string, dict> // mininet host names and their
                                              associated properties
             links    : list<dict>         // list of mininet link properties
-
             switch_json : string // json of the compiled p4 example
-            bmv2_exe    : string // name or path of the p4 switch binary
-
             topo : Topo object   // The mininet topology instance
             mininet : Mininet object // The mininet instance
     """
 
-    def __init__(self, topo_file, log_dir, pcap_dir,
-                 switch_json, devices_conf, dashboard_url,
-                 bmv2_exe='simple_switch', quiet=False, run_daemon=False):
+    def __init__(self, topo_file, log_dir, pcap_dir, switch_json,
+                 devices_conf=None, start_cli=False):
         """ Initializes some attributes and reads the topology json. Does not
             actually run the exercise. Use run_exercise() for that.
 
@@ -213,13 +171,8 @@ class ExerciseRunner:
                                          exercise logs
                 pcap_dir : string     // Same for mininet switch pcap files
                 switch_json : string  // Path to a compiled p4 json for bmv2
-                devices_conf : string  // Path to devices configuration
-                dashboard_url : string  // PDP dashboard url
-                bmv2_exe    : string  // Path to the p4 behavioral binary
-                quiet : bool          // Enable/disable script debug messages
         """
 
-        self.quiet = quiet
         logger.info('Reading topology file [%s]', topo_file)
         with open(topo_file, 'r') as f:
             self.topo_file = json.load(f)
@@ -227,12 +180,12 @@ class ExerciseRunner:
         self.switches = self.topo_file['switches']
         self.external = self.topo_file.get('external')
         self.links = self.topo_file['links']
-        self.topo = None
-        self.mininet = None
+        self.devices_conf = devices_conf
+        self.start_cli = start_cli
 
         # Ensure all the needed directories exist and are directories
         for dir_name in [log_dir, pcap_dir]:
-            if not os.path.isdir(dir_name):
+            if dir_name and not os.path.isdir(dir_name):
                 if os.path.exists(dir_name):
                     raise Exception(
                         "'%s' exists and is not a directory!" % dir_name)
@@ -240,11 +193,13 @@ class ExerciseRunner:
         self.log_dir = log_dir
         self.pcap_dir = pcap_dir
         self.switch_json = switch_json
-        self.devices_conf = devices_conf
-        self.dashboard_url = dashboard_url
-        self.bmv2_exe = bmv2_exe
-        self.run_daemon = run_daemon
-        self.daemons = []
+        self.topo = ExerciseTopo(self.hosts, self.switches, self.links,
+                                 self.log_dir)
+        self.mininet = self.__setup_mininet()
+        self.running = False
+        self.daemons = list()
+        self.daemon_threads = list()
+        self.daemon_runner = None
 
     def run_exercise(self):
         """ Sets up the mininet instance, programs the switches,
@@ -253,127 +208,79 @@ class ExerciseRunner:
         """
         # Initialize mininet with the topology specified by the config
         logger.info('Running exercise')
-        self.create_network()
-        self.add_external_connections()
+        self.__add_external_connections()
         self.mininet.start()
-        sleep(1)
 
-        # some programming that must happen after the net has started
-        self.program_hosts()
-        self.program_switches()
-        threads = []
+        logger.info('Programming mininet hosts')
+        self.__program_hosts()
 
-        # wait for that to finish. Not sure how to do this better
-        sleep(1)
+        logger.info('Programming mininet switches')
+        self.__program_switches()
 
-        # Create Mininet host daemons
-        if self.run_daemon:
-            for host_name, dev_confs in self.devices_conf.items():
-                if self.hosts.get(host_name):
-                    for dev_conf in dev_confs:
-                        self.daemons.append(
-                            self.__create_daemon(host_name, dev_conf))
+        if self.devices_conf:
+            self.daemon_runner = DaemonRunner(self.mininet, self.devices_conf,
+                                              self.log_dir)
+            self.daemon_runner.start_daemons()
 
-            for daemon in self.daemons:
-                logger.info('Starting Daemon for %s', daemon.mn_device.name)
-                t1 = threading.Thread(target=daemon.start, args=())
-                t1.start()
-                threads.append(t1)
+        if self.start_cli:
+            logger.info('Starting mininet CLI')
+            self.do_net_cli()
 
-        self.do_net_cli()
-        # stop right after the CLI is exited
-        if self.run_daemon:
-            for daemon in self.daemons:
-                daemon.stop()
-            i = 0
-            for thread in threads:
-                logger.info('Waiting on %s', self.daemons[i].mn_device.name)
-                while thread.isAlive():
-                    sleep(1)
-                i += 1
+        logger.info('Completed mininet setup')
+        self.running = True
 
-        self.mininet.stop()
+    def stop(self):
+        self.daemon_runner.stop()
+        self.running = False
 
-    def __create_daemon(self, host_name, dev_conf):
-        """
-        Instantiates the configured daemon object
-        """
-        daemon_type = dev_conf.get('daemon')
-        mn_device = None
-        for device in self.mininet.hosts:
-            if device.name == host_name:
-                mn_device = device
-
-        if daemon_type and mn_device:
-            device_log_file = '{}/device_{}_{}.log'.format(
-                self.log_dir, daemon_type, host_name)
-            if daemon_type == 'attack':
-                logger.info(
-                    'Creating attack daemon for [%s] with dashboard_url [%s]'
-                    ' and log file [%s]',
-                    host_name, self.dashboard_url, device_log_file)
-                return AttackDaemon(
-                    dashboard_url=self.dashboard_url,
-                    mn_device=mn_device,
-                    device_config=dev_conf,
-                    log_file=device_log_file,
-                    device_log_dir=self.log_dir,
-                    level=logging.DEBUG)
-
-            elif daemon_type == 'heartbeat':
-                logger.info(
-                    'Creating heartbeat daemon for [%s] and log file [%s]',
-                    host_name, device_log_file)
-                return HeartbeatDaemon(
-                    mn_device=mn_device,
-                    device_config=dev_conf,
-                    log_file=device_log_file,
-                    device_log_dir=self.log_dir,
-                    level=logging.DEBUG)
-
-            elif daemon_type == 'sniff_and_log':
-                logger.info(
-                    'Creating sniff and log daemon for [%s] and log file [%s]',
-                    host_name, device_log_file)
-                return SniffAndLogDaemon(
-                    mn_device=mn_device,
-                    device_config=dev_conf,
-                    log_file=device_log_file,
-                    device_log_dir=self.log_dir,
-                    level=logging.DEBUG)
-
-    def create_network(self):
+    def __setup_mininet(self):
         """ Create the mininet network object, and store it as self.mininet.
 
             Side effects:
                 - Mininet topology instance stored as self.topo
                 - Mininet instance stored as self.mininet
         """
-        logger.info("Building mininet topology.")
+        switch_class = self.__configure_p4_switch()
 
-        self.topo = ExerciseTopo(self.hosts, self.switches, self.links,
-                                 self.log_dir)
+        logger.info('Starting mininet')
+        return Mininet(
+            topo=self.topo, link=TCLink, host=P4Host, switch=switch_class)
 
-        switch_class = configure_p4_switch(
-            sw_path=self.bmv2_exe,
-            json_path=self.switch_json,
-            log_console=True,
-            pcap_dump=self.pcap_dir)
+    def __configure_p4_switch(self):
+        """
+        Returns a P4RuntimeSwitch class for use by Mininet
+        """
+        if self.pcap_dir:
+            pcap_dump_dir = self.pcap_dir
+        else:
+            pcap_dump_dir = self.log_dir
 
-        self.mininet = Mininet(topo=self.topo,
-                               link=TCLink,
-                               host=P4Host,
-                               switch=switch_class,
-                               controller=None)
+        switch_args = {
+            'sw_path': 'simple_switch_grpc',
+            'json_path': self.switch_json,
+            'log_console': True,
+            'pcap_dump': pcap_dump_dir,
+        }
 
-    def add_external_connections(self):
+        class ConfiguredP4RuntimeSwitch(P4RuntimeSwitch):
+            def __init__(self, *opts, **kwargs):
+                kwargs.update(switch_args)
+                P4RuntimeSwitch.__init__(self, *opts, **kwargs)
+
+            def describe(self):
+                logger.info("%s -> gRPC port: %s", self.name,
+                            self.grpc_port)
+
+        return ConfiguredP4RuntimeSwitch
+
+    def __add_external_connections(self):
         for link in self.links:
             external = self.external.get(link['north_node'])
             if external is not None:
                 sw_obj = self.mininet.get(link['south_node'])
                 Intf(external.get('id'), node=sw_obj)
 
-    def program_switch_p4runtime(self, sw_dict):
+    def __program_switch_p4runtime(self, sw_dict):
         """ This method will use P4Runtime to program the switch using the
             content of the runtime JSON file as input.
         """
@@ -382,6 +289,7 @@ class ExerciseRunner:
         grpc_port = sw_obj.grpc_port
         device_id = sw_obj.device_id
         outfile = '%s/%s-p4rt-exercise.log' % (self.log_dir, sw_name)
+        logger.info('Programming switch - [%s]', sw_name)
         simple_controller.program_switch(
             addr='127.0.0.1:%d' % grpc_port,
             device_id=device_id,
@@ -389,7 +297,7 @@ class ExerciseRunner:
             bmv2_json_fpath=sw_dict['runtime_json'],
             proto_dump_fpath=outfile)
 
-    def program_switch_cli(self, sw_name, sw_dict):
+    def __program_switch_cli(self, sw_name, sw_dict):
         """ This method will start up the CLI and use the contents of the
             command files as input.
         """
@@ -407,24 +315,18 @@ class ExerciseRunner:
                 subprocess.Popen([cli, '--thrift-port', str(thrift_port)],
                                  stdin=fin, stdout=cli_file)
 
-    def program_switches(self):
+    def __program_switches(self):
         """ This method will program each switch using the BMv2 CLI and/or
             P4Runtime, depending if any command or runtime JSON files were
             provided for the switches.
         """
         for name, sw in self.switches.items():
             if 'cli_input' in sw:
-                self.program_switch_cli(sw['name'], sw)
+                self.__program_switch_cli(sw['name'], sw)
             if 'runtime_json' in sw:
-                self.program_switch_p4runtime(sw)
+                self.__program_switch_p4runtime(sw)
 
-    def program_hosts(self):
-        """ Adds static ARP entries and default routes to each mininet host.
-
-            Assumes:
-                - A mininet instance is stored as self.mininet and
-                  self.mininet.start() has been called.
-        """
+    def __program_hosts(self):
         for name, host in self.hosts.items():
             h = self.mininet.get(host['name'])
             h_iface = h.intfs.values()[0]
@@ -440,6 +342,7 @@ class ExerciseRunner:
             h.cmd('arp -i %s -s %s %s' % (h_iface.name, sw_ip, sw_iface.mac))
             h.cmd('ethtool --offload %s rx off tx off' % h_iface.name)
             h.cmd('ip route add %s dev %s' % (sw_ip, h_iface.name))
+            h.cmd('/usr/sbin/sshd -D&')
             h.setDefaultRoute("via %s" % sw_ip)
 
     def do_net_cli(self):

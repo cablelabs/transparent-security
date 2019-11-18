@@ -11,10 +11,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Call ensure SSH key has correct permissions
+# Create and inject own SSH keys for being able to SSH into self or mininet hosts
 resource "null_resource" "transparent-security-mininet-setup" {
-  provisioner "local-exec" {
-    command = "chmod 600 ${var.private_key_file}"
+  provisioner "remote-exec" {
+    inline = [
+      "ssh-keygen -t rsa -N '' -f ~/.ssh/id_rsa",
+      "touch ~/.ssh/authorized_keys",
+      "chmod 600 ~/.ssh/authorized_keys",
+      "cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys",
+    ]
+  }
+  connection {
+    host = aws_instance.transparent-security-mininet-integration.public_ip
+    type = "ssh"
+    user = var.sudo_user
+    private_key = file(var.private_key_file)
   }
 }
 
@@ -51,25 +62,8 @@ ae_ip=${aws_instance.transparent-security-mininet-integration.private_ip}
 ae_dev_intf=${var.ae_dev_intf}
 sdn_dev_intf=${var.sdn_dev_intf}
 trans_sec_dir=${var.src_dir}
-topo_file_loc=${var.topo_file_loc}
+topo_file_loc=${var.remote_scripts_dir}/${var.topo_file}
 remote_scripts_dir=${var.remote_scripts_dir}
-"\
-EOT
-  }
-}
-
-resource "null_resource" "transparent-security-device-script" {
-  depends_on = [null_resource.transparent-security-mininet-setup]
-  provisioner "local-exec" {
-    command = <<EOT
-${var.ANSIBLE_CMD} -u ${var.sudo_user} \
--i ${aws_instance.transparent-security-mininet-integration.public_ip}, \
-${var.GENERATE_DEVICE_SCRIPT} \
---key-file ${var.private_key_file} \
---extra-vars="\
-host=10.2.5.7
-port=1234
-msg=Hello
 "\
 EOT
   }
@@ -79,7 +73,6 @@ resource "null_resource" "transparent-security-start-mininet" {
   depends_on = [
     null_resource.transparent-security-setup-source,
     null_resource.transparent-security-topology-gen,
-    null_resource.transparent-security-device-script,
   ]
   provisioner "local-exec" {
     command = <<EOT
@@ -89,25 +82,22 @@ ${var.START_MININET} \
 --key-file ${var.private_key_file} \
 --extra-vars "\
 remote_tps_dir=${var.remote_tps_dir}
-service_name=mininet
-srvc_desc='Mininet'
+service_name=tps-mininet
+srvc_desc='Mininet for TPS'
 local_srvc_script_tmplt_file=${abspath(var.local_scripts_dir)}/mininet_service.sh.j2
 remote_scripts_dir=${var.remote_scripts_dir}
-topo_file_loc=${var.topo_file_loc}
+topo_file_loc=${var.remote_scripts_dir}/${var.topo_file}
 srvc_log_dir=${var.remote_srvc_log_dir}
 srvc_start_pause_time=20
 port_to_wait=50051
+devices_conf_file=${var.remote_scripts_dir}/${var.dev_daemon_file}
 "\
 EOT
   }
 }
 
-
 resource "null_resource" "transparent-security-sim-start-sdn" {
-  depends_on = [
-    null_resource.transparent-security-start-mininet,
-    null_resource.transparent-security-device-script,
-  ]
+  depends_on = [null_resource.transparent-security-start-mininet]
   provisioner "local-exec" {
     command = <<EOT
 ${var.ANSIBLE_CMD} -u ${var.sudo_user} \
@@ -122,7 +112,7 @@ srvc_desc='SDN'
 local_srvc_script_tmplt_file=${abspath(var.local_scripts_dir)}/sdn_mininet.sh.j2
 srvc_start_pause_time=15
 port_to_wait=${var.sdn_port}
-topo_file_loc=${var.topo_file_loc}
+topo_file_loc=${var.remote_scripts_dir}/${var.topo_file}
 srvc_log_dir=${var.remote_srvc_log_dir}
 log_level=${var.service_log_level}
 "\
@@ -131,10 +121,7 @@ EOT
 }
 
 resource "null_resource" "transparent-security-start-ae" {
-  depends_on = [
-    null_resource.transparent-security-device-script,
-    null_resource.transparent-security-sim-start-sdn,
-  ]
+  depends_on = [null_resource.transparent-security-sim-start-sdn]
   provisioner "local-exec" {
     command = <<EOT
 ${var.ANSIBLE_CMD} -u ${var.sudo_user} \

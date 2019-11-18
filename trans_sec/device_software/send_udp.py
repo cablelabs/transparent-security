@@ -49,6 +49,9 @@ def get_args():
     parser.add_argument('-d', '--duration',
                         help='Number of seconds to run, 0 means forever',
                         type=int, required=True)
+    parser.add_argument('-c', '--count',
+                        help='Number of packets to send for each burst',
+                        type=int, default=1)
     parser.add_argument('-i', '--interval',
                         help='How often to send packets in seconds',
                         type=float, required=True)
@@ -101,18 +104,16 @@ def device_send(args):
         pkt.show2()
         sendp(pkt, iface=interface, verbose=False, loop=1, inter=args.interval)
     else:
-        count = int((args.duration - args.delay) / args.interval)
         logger.info(
             'sending %s packets at %s sec/packet on interface '
             '%r to %s for %s seconds',
-            count, args.interval, interface, args.destination,
+            args.count, args.interval, interface, args.destination,
             (args.duration - args.delay))
         pkt = Ether(src=src, dst=args.switch_ethernet)
-        pkt = pkt / IP(dst=addr) / UDP(dport=args.port,
-                                       sport=random.randint(49152,
-                                                            65535)) / args.msg
+        pkt = pkt / IP(dst=addr) / UDP(
+            dport=args.port, sport=random.randint(49152, 65535)) / args.msg
         pkt.show2()
-        sendp(pkt, iface=interface, verbose=False, count=count,
+        sendp(pkt, iface=interface, verbose=False, count=args.count,
               inter=args.interval)
         logger.info('Done')
         return

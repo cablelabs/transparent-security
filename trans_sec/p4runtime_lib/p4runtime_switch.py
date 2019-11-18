@@ -27,17 +27,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
+import logging
 import os
 import tempfile
 from time import sleep
 
-from mininet.log import info, error, debug
 from mininet.moduledeps import pathCheck
 from mininet.node import Switch
 
 from trans_sec.mininet.p4_mininet import P4Switch, SWITCH_START_TIMEOUT
 from trans_sec.utils.netstat import check_listening_on_port
+
+logger = logging.getLogger('p4runtime_switch')
 
 
 class P4RuntimeSwitch(P4Switch):
@@ -47,14 +48,10 @@ class P4RuntimeSwitch(P4Switch):
     next_grpc_port = 50051
     next_thrift_port = 9090
 
-    def __init__(self, name, sw_path=None, json_path=None,
-                 grpc_port=None,
-                 thrift_port=None,
-                 pcap_dump=False,
-                 log_console=False,
-                 device_id=None,
-                 enable_debugger=False,
-                 **kwargs):
+    def __init__(self, name, sw_path=None, json_path=None, grpc_port=None,
+                 thrift_port=None, pcap_dump=False, log_console=False,
+                 device_id=None, enable_debugger=False, **kwargs):
+
         Switch.__init__(self, name, **kwargs)
         assert sw_path
         self.sw_path = sw_path
@@ -64,8 +61,7 @@ class P4RuntimeSwitch(P4Switch):
         if json_path is not None:
             # make sure that the provided JSON file exists
             if not os.path.isfile(json_path):
-                error("Invalid JSON file.\n")
-                exit(1)
+                raise Exception('Invalid JSON file - [%s]', json_path)
             self.json_path = json_path
         else:
             self.json_path = None
@@ -83,9 +79,9 @@ class P4RuntimeSwitch(P4Switch):
             P4RuntimeSwitch.next_thrift_port += 1
 
         if check_listening_on_port(self.grpc_port):
-            error('%s cannot bind port %d because it is bound by another '
-                  'process\n' % (self.name, self.grpc_port))
-            exit(1)
+            raise Exception(
+                '%s cannot bind port %d because it is bound by another '
+                'process\n' % (self.name, self.grpc_port))
 
         self.verbose = True
         logfile = "/tmp/p4s.{}.log".format(self.name)
@@ -110,7 +106,7 @@ class P4RuntimeSwitch(P4Switch):
             sleep(0.5)
 
     def start(self, controllers):
-        info("Starting P4 switch {}.".format(self.name))
+        logger.info("Starting P4 switch {}.".format(self.name))
         args = [self.sw_path]
         for port, intf in self.intfs.items():
             if not intf.IP():
@@ -134,14 +130,14 @@ class P4RuntimeSwitch(P4Switch):
         if self.grpc_port:
             args.append("-- --grpc-server-addr 0.0.0.0:" + str(self.grpc_port))
         cmd = ' '.join(args)
-        info(cmd + "\n")
+        logger.info('Command - [%s]', cmd)
 
         logfile = "/tmp/p4s.{}.log".format(self.name)
         with tempfile.NamedTemporaryFile() as f:
             self.cmd(cmd + ' >' + logfile + ' 2>&1 & echo $! >> ' + f.name)
             pid = int(f.read())
-        debug("P4 switch {} PID is {}.\n".format(self.name, pid))
+        logger.debug("P4 switch {} PID is {}.".format(self.name, pid))
         if not self.check_switch_started(pid):
-            error("P4 switch {} did not start correctly.\n".format(self.name))
-            exit(1)
-        info("P4 switch {} has been started.\n".format(self.name))
+            raise Exception("P4 switch {} did not start correctly.\n".format(
+                self.name))
+        logger.info("P4 switch %s has been started.", self.name)

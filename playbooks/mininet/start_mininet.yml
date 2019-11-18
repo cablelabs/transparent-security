@@ -1,5 +1,3 @@
-#!/usr/bin/env python2
-
 # Copyright (c) 2019 Cable Television Laboratories, Inc.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,50 +19,30 @@
       - gateway
 
 - hosts: all
+  gather_facts: no
+  become: yes
+  tasks:
+    - name: Create devices configuration
+      template:
+        src: templates/devices.yaml.j2
+        dest: "{{ devices_conf_file }}"
+
+- import_playbook: ../general/start_service.yml
+
+- hosts: all
+  gather_facts: no
   become: yes
 
-  gather_facts: no
-
-  vars:
-    wait_port: "{{ port_to_wait | default('') }}"
-    timeout: "{{ wait_timeout | default(60) }}"
-
   tasks:
-    - name: Ensure {{ srvc_log_dir }} directory has been created
-      file:
-        path: "{{ srvc_log_dir }}"
-        state: directory
+    - name: Fetch topology {{ topo_file_loc }}
+      fetch:
+        src: "{{ topo_file_loc }}"
+        dest: /tmp/mininet-topology.json
+        flat: yes
 
-    - name: Ensure {{ remote_scripts_dir }} directory has been created
-      file:
-        path: "{{ remote_scripts_dir }}"
-        state: directory
+    - name: Read topology
+      set_fact:
+        topo_dict: "{{ lookup('file','/tmp/mininet-topology.json') | from_json }}"
 
-    - name: Ensure {{ remote_scripts_dir }}/conf directory has been created
-      file:
-        path: "{{ remote_scripts_dir }}/conf"
-        state: directory
-
-    - name: Create {{ service_name }} Service script
-      template:
-        src: ./templates/devices.yaml.j2
-        dest: "{{ remote_scripts_dir }}/conf/device_daemon.yaml"
-
-    - name: Create {{ service_name }} Service script
-      template:
-        src: "{{ local_srvc_script_tmplt_file }}"
-        dest: "{{ remote_scripts_dir }}/{{ service_name }}.sh"
-      vars:
-        devices_conf_file: "{{ remote_scripts_dir }}/conf/device_daemon.yaml"
-
-    - name: Cleanup mininet before startup script
-      command: "mn -c"
-
-    - name: Run the mininet startup script
-      command: "sh {{ remote_scripts_dir }}/{{ service_name }}.sh"
-
-    - name: Wait for {{ service_name }} to open port {{ wait_port }}
-      wait_for:
-        port: "{{ wait_port }}"
-        timeout: "{{ timeout }}"
-      when: wait_port != ''
+    - include_tasks: set_ip.yml
+      loop: "{{ topo_dict.links }}"

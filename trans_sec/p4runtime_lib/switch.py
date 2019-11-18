@@ -100,6 +100,8 @@ class SwitchConnection(object):
         logger.info('Request for SetForwardingPipelineConfig to device - [%s]',
                     request.device_id)
         self.client_stub.SetForwardingPipelineConfig(request)
+        logger.info('Completed SetForwardingPipelineConfig to device - [%s]',
+                    request.device_id)
 
     def write_table_entry(self, table_entry):
         request = p4runtime_pb2.WriteRequest()

@@ -69,11 +69,13 @@ class AbstractController(object):
                 self.log_dir, name))
         new_switch.master_arbitration_update()
 
-        logger.info('Setting forward pipeline config for mininet')
+        bmv2_json_file_path = "{0}/{1}.json".format(
+            self.p4_bin_dir, self.switch_type)
+        logger.info('Setting forward pipeline config with bmv2 json - [%s]',
+                    bmv2_json_file_path)
         new_switch.set_forwarding_pipeline_config(
             p4info=self.p4info_helper.p4info,
-            bmv2_json_file_path="{0}/{1}.json".format(
-                self.p4_bin_dir, self.switch_type))
+            bmv2_json_file_path=bmv2_json_file_path)
         self.switches.append(new_switch)
         logger.info(
             'Installed P4 %s on BMV2 using '
