@@ -13,10 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import argparse
+import json
 import logging
 import os
 
 import pydevd
+import yaml
 
 from trans_sec.controller.ddos_sdn_controller import DdosSdnController
 
@@ -62,8 +64,16 @@ def main():
     numeric_level = getattr(logging, args.loglevel.upper(), None)
     logging.basicConfig(format=FORMAT, level=numeric_level,
                         filename=args.logfile)
+
+    topo_file = args.topo
+    with open(topo_file, 'r') as f:
+        if topo_file.endswith('json'):
+            topo = json.load(f)
+        else:
+            topo = yaml.safe_load(f)
+
     sdn_controller = DdosSdnController(
-        args.topo, args.switch_config_dir, args.http_server_port, args.log_dir)
+        topo, args.switch_config_dir, args.http_server_port, args.log_dir)
     sdn_controller.start()
 
 

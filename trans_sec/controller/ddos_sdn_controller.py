@@ -10,22 +10,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from datetime import datetime
-from dateutil import parser
-import json
 # noinspection PyCompatibility
 import thread
+from datetime import datetime
 from logging import getLogger
 from time import sleep
 
+from dateutil import parser
+
+from trans_sec.controller.aggregate_controller import AggregateController
+from trans_sec.controller.core_controller import CoreController
+from trans_sec.controller.gateway_controller import GatewayController
 from trans_sec.p4runtime_lib.switch import shutdown_all_switch_connections
 from trans_sec.packet.packet_telemetry import PacketTelemetry
 from trans_sec.utils.http_server import ThreadedHTTPServer, Handler
 from trans_sec.utils.http_session import HttpSession
-
-from trans_sec.controller.gateway_controller import GatewayController
-from trans_sec.controller.aggregate_controller import AggregateController
-from trans_sec.controller.core_controller import CoreController
 
 # Logger stuff
 logger = getLogger('ddos_sdn_controller')
@@ -40,12 +39,10 @@ class DdosSdnController:
     """
     SDN controller for quelling DDoS attacks
     """
-    def __init__(self, topo, switch_config_dir, http_server_port, log_dir):
-        # Parse topology file and store into object
-        with open(topo, 'r') as f:
-            self.topo = json.load(f)
-            logger.info("Opened file - %s" % f.name)
+    def __init__(self, topo, switch_config_dir, http_server_port,
+                 log_dir):
 
+        self.topo = topo
         self.switch_config_dir = switch_config_dir
 
         # Create HTTP session to the snaps-pdp dashboard if possible

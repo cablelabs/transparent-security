@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import argparse
+import json
 import logging
 import sys
 import yaml
@@ -66,8 +67,15 @@ if __name__ == '__main__':
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG,
                         filename=log_file)
 
+    topo_file = args.topo
+    if topo_file.endswith('json'):
+        with open(topo_file, 'r') as f:
+            topo = json.load(f)
+    else:
+        topo = read_yaml_file(topo_file)
+
     exercise = ExerciseRunner(
-        args.topo, args.log_dir, args.pcap_dir, args.switch_json,
+        topo, args.log_dir, args.pcap_dir, args.switch_json,
         read_yaml_file(args.devices_config), args.start_cli)
     exercise.run_exercise()
 

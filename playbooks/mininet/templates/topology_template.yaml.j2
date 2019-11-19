@@ -1,0 +1,209 @@
+# Copyright (c) 2019 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+
+# IP values must be the third address in an IPv4 /30 CIDR block for running CI
+hosts:
+  Camera1:
+    name: Camera1
+    id: 5
+    switch_ip: 192.168.1.254
+    ip: 192.168.1.2
+    ip_port: any
+    mac: 00:00:00:00:01:01
+    type: webcam
+  NAS1:
+    name: NAS1
+    id: 6
+    switch_ip: 192.168.1.254
+    ip: 192.168.1.6
+    ip_port: any
+    mac: 00:00:00:00:01:02
+    type: nas
+  Game1:
+    name: Game1
+    id: 7
+    switch_ip: 192.168.1.254
+    ip: 192.168.1.10
+    ip_port: any
+    mac: 00:00:00:00:01:03
+    type: console
+  Camera2:
+    name: Camera2
+    id: 8
+    switch_ip: 192.168.2.254
+    ip: 192.168.2.14
+    ip_port: any
+    mac: 00:00:00:00:02:01
+    type: webcam
+  Game2:
+    name: Game2
+    id: 9
+    switch_ip: 192.168.2.254
+    ip: 192.168.2.18
+    ip_port: any
+    mac: 00:00:00:00:02:02
+    type: console
+  Camera3:
+    name: Camera3
+    id: 10
+    switch_ip: 192.168.3.254
+    ip: 192.168.3.22
+    ip_port: any
+    mac: 00:00:00:00:03:01
+    type: webcam
+  Game3:
+    name: Game3
+    id: 11
+    switch_ip: 192.168.3.254
+    ip: 192.168.3.26
+    ip_port: any
+    mac: 00:00:00:00:03:02
+    type: console
+  inet:
+    name: inet
+    id: 12
+    switch_ip: 10.2.5.254
+    ip: 10.2.5.2
+    ip_port: any
+    mac: 00:00:00:00:05:07
+    type: server
+switches:
+  gateway1:
+    name: gateway1
+    id: 2
+    runtime_p4info: {{ remote_scripts_dir }}/p4/gateway.p4info
+    runtime_json: {{ remote_scripts_dir }}/p4/gateway.json
+    subnet: 10.1.1.0
+    type: gateway
+    mac: 00:00:00:01:01:00
+    grpc: 127.0.0.1:50053
+  gateway2:
+    name: gateway2
+    id: 3
+    runtime_p4info: {{ remote_scripts_dir }}/p4/gateway.p4info
+    runtime_json: {{ remote_scripts_dir }}/p4/gateway.json
+    subnet: 10.1.2.0
+    type: gateway
+    mac: 00:00:00:01:02:00
+    grpc: 127.0.0.1:50054
+  gateway3:
+    name: gateway3
+    id: 4
+    runtime_p4info: {{ remote_scripts_dir }}/p4/gateway.p4info
+    runtime_json: {{ remote_scripts_dir }}/p4/gateway.json
+    subnet: 10.1.3.0
+    type: gateway
+    mac: 00:00:00:01:03:00
+    grpc: 127.0.0.1:50055
+  aggregate:
+    name: aggregate
+    id: 0
+    runtime_p4info: {{ remote_scripts_dir }}/p4/aggregate.p4info
+    runtime_json: {{ remote_scripts_dir }}/p4/aggregate.json
+    subnet: 10.197.1.0
+    type: aggregate
+    mac: 00:00:00:02:04:00
+    grpc: 127.0.0.1:50051
+  core1:
+    name: core1
+    id: 1
+    runtime_p4info: {{ remote_scripts_dir }}/p4/core.p4info
+    runtime_json: {{ remote_scripts_dir }}/p4/core.json
+    subnet: 10.197.1.0
+    type: core
+    mac: 00:00:00:03:05:00
+    grpc: 127.0.0.1:50052
+external:
+  analytics_engine:
+    name: analytics_engine
+    id: {{ ae_dev_intf }}
+    ip: {{ ae_ip }}
+    ip_port: 0
+    mac: {{ switch_mac }}
+  sdn:
+    name: sdn
+    id: {{ sdn_dev_intf }}
+    ip: {{ sdn_ip }}
+    mac: {{ switch_mac }}
+links:
+  - north_node: gateway1
+    south_node: Camera1
+    south_facing_port: 1
+    latency: 0ms
+    bandwidth: null
+  - north_node: gateway1
+    south_node: NAS1
+    south_facing_port: 2
+    latency: 0ms
+    bandwidth: null
+  - north_node: gateway1
+    south_node: Game1
+    south_facing_port: 3
+    latency: 0ms
+    bandwidth: null
+  - north_node: gateway2
+    south_node: Camera2
+    south_facing_port: 1
+    latency: 0ms
+    bandwidth: null
+  - north_node: gateway2
+    south_node: Game2
+    south_facing_port: 2
+    latency: 0ms
+    bandwidth: null
+  - north_node: gateway3
+    south_node: Camera3
+    south_facing_port: 1
+    latency: 0ms
+    bandwidth: null
+  - north_node: gateway3
+    south_node: Game3
+    south_facing_port: 2
+    latency: 0ms
+    bandwidth: null
+  - north_node: aggregate
+    south_node: gateway1
+    south_facing_port: 1
+    north_facing_port: 4
+    latency: 0ms
+    bandwidth: null
+  - north_node: aggregate
+    south_node: gateway2
+    south_facing_port: 2
+    north_facing_port: 3
+    latency: 0ms
+    bandwidth: null
+  - north_node: aggregate
+    south_node: gateway3
+    south_facing_port: 3
+    north_facing_port: 3
+    latency: 0ms
+    bandwidth: null
+  - north_node: core1
+    south_node: aggregate
+    south_facing_port: 1
+    north_facing_port: 4
+    latency: 0ms
+    bandwidth: null
+  - north_node: inet
+    south_node: core1
+    north_facing_port: 2
+    latency: 0ms
+    bandwidth: null
+  - north_node: analytics_engine
+    south_node: core1
+    north_facing_port: 3
+    latency: 0ms
+    bandwidth: null
+    l2ptr: 53261

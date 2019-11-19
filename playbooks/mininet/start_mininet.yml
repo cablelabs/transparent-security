@@ -37,12 +37,12 @@
     - name: Fetch topology {{ topo_file_loc }}
       fetch:
         src: "{{ topo_file_loc }}"
-        dest: /tmp/mininet-topology.json
+        dest: /tmp/mininet-topology.yaml
         flat: yes
 
     - name: Read topology
       set_fact:
-        topo_dict: "{{ lookup('file','/tmp/mininet-topology.json') | from_json }}"
+        topo_dict: "{{ lookup('file','/tmp/mininet-topology.yaml') | from_yaml }}"
 
     - include_tasks: set_ip.yml
       loop: "{{ topo_dict.links }}"

@@ -11,7 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # Unit tests for convert.py
-import json
 import logging
 import os
 import subprocess
@@ -23,7 +22,7 @@ from mininet.topo import Topo
 
 from trans_sec.controller import simple_controller
 from trans_sec.mininet.daemons import DaemonRunner
-from trans_sec.mininet.p4_mininet import P4Host, P4Switch
+from trans_sec.mininet.p4_mininet import P4Host
 from trans_sec.p4runtime_lib.p4runtime_switch import P4RuntimeSwitch
 
 logger = logging.getLogger('exercise')
@@ -159,27 +158,23 @@ class ExerciseRunner:
             mininet : Mininet object // The mininet instance
     """
 
-    def __init__(self, topo_file, log_dir, pcap_dir, switch_json,
+    def __init__(self, topo, log_dir, pcap_dir, switch_json,
                  devices_conf=None, start_cli=False):
         """ Initializes some attributes and reads the topology json. Does not
             actually run the exercise. Use run_exercise() for that.
 
             Arguments:
-                topo_file : string    // A json file which describes the
-                                         exercise's mininet topology.
+                topo : dict           // A dict describing the mininet topology
                 log_dir  : string     // Path to a directory for storing
                                          exercise logs
                 pcap_dir : string     // Same for mininet switch pcap files
                 switch_json : string  // Path to a compiled p4 json for bmv2
         """
 
-        logger.info('Reading topology file [%s]', topo_file)
-        with open(topo_file, 'r') as f:
-            self.topo_file = json.load(f)
-        self.hosts = self.topo_file['hosts']
-        self.switches = self.topo_file['switches']
-        self.external = self.topo_file.get('external')
-        self.links = self.topo_file['links']
+        self.hosts = topo['hosts']
+        self.switches = topo['switches']
+        self.external = topo.get('external')
+        self.links = topo['links']
         self.devices_conf = devices_conf
         self.start_cli = start_cli
 

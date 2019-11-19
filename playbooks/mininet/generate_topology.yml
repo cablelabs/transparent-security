@@ -28,6 +28,6 @@
     - name: copy topology configuration file
       become: yes
       template:
-        src: templates/topology_template.json.j2
+        src: templates/topology_template.yaml.j2
         dest: "{{ topo_file_loc }}"
 

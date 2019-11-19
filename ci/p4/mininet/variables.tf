@@ -37,7 +37,7 @@ variable "ANSIBLE_CMD" {default = "export ANSIBLE_HOST_KEY_CHECKING=False; ansib
 variable "ANSIBLE_PB_PATH" {default = "../../../playbooks"}
 variable "src_dir" {default = "~/transparent-security"}
 variable "remote_scripts_dir" {default = "/etc/transparent-security"}
-variable "topo_file" {default = "mininet-sim-topology.json"}
+variable "topo_file" {default = "mininet-sim-topology.yaml"}
 variable "dev_daemon_file" {default = "device-daemons.yml"}
 variable "local_scripts_dir" {default = "../../../playbooks/general/templates"}
 variable "sdn_host" {default = "localhost"}
