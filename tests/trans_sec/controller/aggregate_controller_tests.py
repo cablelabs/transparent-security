@@ -42,5 +42,5 @@ class AggregateControllerTests(unittest.TestCase):
         """
         Tests constructor for class CoreController
         """
-        controller = AggregateController("config_dir", self.topo)
+        controller = AggregateController("config_dir", self.topo, '/tmp')
         self.assertIsNotNone(controller)
