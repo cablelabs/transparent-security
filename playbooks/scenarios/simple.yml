@@ -11,25 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
-- hosts: Camera1
-  gather_facts: no
-  tasks:
-    - name: Hello
-      shell: echo 'Hello world' > ~/camera1-hello.out; sleep 20; ls foo
-      async: 30
-      poll: 5
-
-- hosts: inet
-  gather_facts: no
-  tasks:
-    - name: Hello
-      shell: echo 'Hello world' > ~/inet-hello.out; sleep 20; ls foo
-      async: 30
-      poll: 5
-
-    - name: Pause 45 sec
-      pause:
-        seconds: 45
-
-    - fail:
-        msg: Should have failed above
+- import_playbook: test_cases/send_receive.yml
+  vars:
+    receiver: inet
+    sender: Camera1
+    proc_log_dir: "{{ log_dir }}"

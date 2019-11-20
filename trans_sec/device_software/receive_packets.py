@@ -28,12 +28,6 @@ def get_args():
         '-i', '--iface', help='The network interface on which to sniff',
         required=True, dest='iface')
     parser.add_argument(
-        '-p', '--proto-id', help='The proto_id to bind to', required=False,
-        default=0x800, type=int, dest='proto_id')
-    parser.add_argument(
-        '-e', '--ether-type', help='The ether type to find to',
-        required=False, default=0x212, type=int, dest='ether_type')
-    parser.add_argument(
         '-f', '--logfile', help='File to log to defaults to console',
         required=True, dest='logfile')
     parser.add_argument(

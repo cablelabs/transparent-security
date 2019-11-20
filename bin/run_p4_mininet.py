@@ -74,9 +74,12 @@ if __name__ == '__main__':
     else:
         topo = read_yaml_file(topo_file)
 
+    dev_yaml = None
+    if args.devices_config:
+        dev_yaml = read_yaml_file(args.devices_config)
     exercise = ExerciseRunner(
-        topo, args.log_dir, args.pcap_dir, args.switch_json,
-        read_yaml_file(args.devices_config), args.start_cli)
+        topo, args.log_dir, args.pcap_dir, args.switch_json, dev_yaml,
+        args.start_cli)
     exercise.run_exercise()
 
     logger.info('Exercise Runner running indefinitely')

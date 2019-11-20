@@ -1,0 +1,31 @@
+# Copyright (c) 2019 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+- hosts: "{{ receiver }}"
+  gather_facts: no
+  tasks:
+    - name: Receive and log packets from "{{ receiver }}" logged at {{ proc_log_dir }}/receiver-{{ receiver }}.out
+      shell: "sudo python ~/transparent-security/trans_sec/device_software/receive_packets.py -i {{ receiver }}-eth0 -f {{ proc_log_dir }}/receiver-{{ receiver }}.out"
+      async: 999999
+      poll: 0
+
+- hosts: "{{ sender }}"
+  gather_facts: no
+  vars:
+    send_msg: "{{ the_message | default('hello transparent-security') }}"
+  tasks:
+    - name: Sending UDP packets from {{ sender }}
+      shell: "sudo python ~/transparent-security/trans_sec/device_software/send_packets.py -i 1 -z {{ sender }}-eth0 -r 10.2.5.2 -p 5432 -d 1 -f {{ proc_log_dir }}/sender-{{ sender }}.out -m '{{ send_msg }}'"
+
+    - fail:
+        msg: To parse log next

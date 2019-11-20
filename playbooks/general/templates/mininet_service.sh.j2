@@ -14,4 +14,8 @@
 # limitations under the License.
 #
 # Stops then starts mininet with the given topology
+{% if run_daemons == 'True' %}
 mn -c; python {{ remote_tps_dir }}/bin/run_p4_mininet.py -t {{ topo_file_loc }} -l {{ srvc_log_dir }} -dc {{ devices_conf_file }}
+{% else %}
+mn -c; python {{ remote_tps_dir }}/bin/run_p4_mininet.py -t {{ topo_file_loc }} -l {{ srvc_log_dir }}
+{% endif %}

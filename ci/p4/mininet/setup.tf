@@ -90,6 +90,7 @@ srvc_start_pause_time=20
 port_to_wait=50051
 devices_conf_file=${var.remote_scripts_dir}/${var.dev_daemon_file}
 remote_ansible_inventory=${var.remote_inventory_file}
+run_daemons=${var.run_daemons}
 "\
 EOT
   }
@@ -143,74 +144,74 @@ EOT
   }
 }
 
-resource "null_resource" "transparent-security-core1-eth1-logger" {
-  depends_on = [null_resource.transparent-security-start-mininet]
-  provisioner "local-exec" {
-    command = <<EOT
-${var.ANSIBLE_CMD} -u ${var.sudo_user} \
--i ${aws_instance.transparent-security-mininet-integration.public_ip}, \
-${var.START_SERVICE} \
---key-file ${var.private_key_file} \
---extra-vars "\
-remote_tps_dir=${var.remote_tps_dir}
-service_name=transparent-security-core1-eth1-logger
-srvc_desc='core1-eth1-logger'
-srvc_type='LOGGING'
-local_srvc_script_tmplt_file=${abspath(var.local_scripts_dir)}/ae_service.sh.j2
-remote_scripts_dir=${var.remote_scripts_dir}
-srvc_log_dir=${var.remote_srvc_log_dir}
-sdn_url=http://${var.sdn_host}:${var.sdn_port}
-log_level=${var.service_log_level}
-monitor_intf=core1-eth1
-"\
-EOT
-  }
-}
-
-resource "null_resource" "transparent-security-core1-eth2-logger" {
-  depends_on = [null_resource.transparent-security-start-mininet]
-  provisioner "local-exec" {
-    command = <<EOT
-${var.ANSIBLE_CMD} -u ${var.sudo_user} \
--i ${aws_instance.transparent-security-mininet-integration.public_ip}, \
-${var.START_SERVICE} \
---key-file ${var.private_key_file} \
---extra-vars "\
-remote_tps_dir=${var.remote_tps_dir}
-service_name=transparent-security-core1-eth2-logger
-srvc_desc='core1-eth2-logger'
-srvc_type='LOGGING'
-local_srvc_script_tmplt_file=${abspath(var.local_scripts_dir)}/ae_service.sh.j2
-remote_scripts_dir=${var.remote_scripts_dir}
-srvc_log_dir=${var.remote_srvc_log_dir}
-sdn_url=http://${var.sdn_host}:${var.sdn_port}
-log_level=${var.service_log_level}
-monitor_intf=core1-eth2
-"\
-EOT
-  }
-}
-
-resource "null_resource" "transparent-security-gateway1-eth4-logger" {
-  depends_on = [null_resource.transparent-security-start-mininet]
-  provisioner "local-exec" {
-    command = <<EOT
-${var.ANSIBLE_CMD} -u ${var.sudo_user} \
--i ${aws_instance.transparent-security-mininet-integration.public_ip}, \
-${var.START_SERVICE} \
---key-file ${var.private_key_file} \
---extra-vars "\
-remote_tps_dir=${var.remote_tps_dir}
-service_name=transparent-security-gateway1-eth4-int
-srvc_desc='gateway1-eth4-int'
-srvc_type='INT'
-local_srvc_script_tmplt_file=${abspath(var.local_scripts_dir)}/ae_service.sh.j2
-remote_scripts_dir=${var.remote_scripts_dir}
-srvc_log_dir=${var.remote_srvc_log_dir}
-sdn_url=http://${var.sdn_host}:${var.sdn_port}
-log_level=${var.service_log_level}
-monitor_intf=gateway1-eth4
-"\
-EOT
-  }
-}
+//resource "null_resource" "transparent-security-core1-eth1-logger" {
+//  depends_on = [null_resource.transparent-security-start-mininet]
+//  provisioner "local-exec" {
+//    command = <<EOT
+//${var.ANSIBLE_CMD} -u ${var.sudo_user} \
+//-i ${aws_instance.transparent-security-mininet-integration.public_ip}, \
+//${var.START_SERVICE} \
+//--key-file ${var.private_key_file} \
+//--extra-vars "\
+//remote_tps_dir=${var.remote_tps_dir}
+//service_name=transparent-security-core1-eth1-logger
+//srvc_desc='core1-eth1-logger'
+//srvc_type='LOGGING'
+//local_srvc_script_tmplt_file=${abspath(var.local_scripts_dir)}/ae_service.sh.j2
+//remote_scripts_dir=${var.remote_scripts_dir}
+//srvc_log_dir=${var.remote_srvc_log_dir}
+//sdn_url=http://${var.sdn_host}:${var.sdn_port}
+//log_level=${var.service_log_level}
+//monitor_intf=core1-eth1
+//"\
+//EOT
+//  }
+//}
+//
+//resource "null_resource" "transparent-security-core1-eth2-logger" {
+//  depends_on = [null_resource.transparent-security-start-mininet]
+//  provisioner "local-exec" {
+//    command = <<EOT
+//${var.ANSIBLE_CMD} -u ${var.sudo_user} \
+//-i ${aws_instance.transparent-security-mininet-integration.public_ip}, \
+//${var.START_SERVICE} \
+//--key-file ${var.private_key_file} \
+//--extra-vars "\
+//remote_tps_dir=${var.remote_tps_dir}
+//service_name=transparent-security-core1-eth2-logger
+//srvc_desc='core1-eth2-logger'
+//srvc_type='LOGGING'
+//local_srvc_script_tmplt_file=${abspath(var.local_scripts_dir)}/ae_service.sh.j2
+//remote_scripts_dir=${var.remote_scripts_dir}
+//srvc_log_dir=${var.remote_srvc_log_dir}
+//sdn_url=http://${var.sdn_host}:${var.sdn_port}
+//log_level=${var.service_log_level}
+//monitor_intf=core1-eth2
+//"\
+//EOT
+//  }
+//}
+//
+//resource "null_resource" "transparent-security-gateway1-eth4-logger" {
+//  depends_on = [null_resource.transparent-security-start-mininet]
+//  provisioner "local-exec" {
+//    command = <<EOT
+//${var.ANSIBLE_CMD} -u ${var.sudo_user} \
+//-i ${aws_instance.transparent-security-mininet-integration.public_ip}, \
+//${var.START_SERVICE} \
+//--key-file ${var.private_key_file} \
+//--extra-vars "\
+//remote_tps_dir=${var.remote_tps_dir}
+//service_name=transparent-security-gateway1-eth4-int
+//srvc_desc='gateway1-eth4-int'
+//srvc_type='INT'
+//local_srvc_script_tmplt_file=${abspath(var.local_scripts_dir)}/ae_service.sh.j2
+//remote_scripts_dir=${var.remote_scripts_dir}
+//srvc_log_dir=${var.remote_srvc_log_dir}
+//sdn_url=http://${var.sdn_host}:${var.sdn_port}
+//log_level=${var.service_log_level}
+//monitor_intf=gateway1-eth4
+//"\
+//EOT
+//  }
+//}
