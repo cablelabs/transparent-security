@@ -28,6 +28,8 @@ simultaneously from multiple hosts
 'ubuntu' (defaults to ~/.ssh/id_rsa.pub)
 1. private_key_file: Used to access the VM via SSH with the user 'ubuntu'
 (Defaults to ~/.ssh/id_rsa)
+1. run_daemons: When 'True', the mininet host daemons will be started else not
+(Defaults 'True')
 
 ````
 git clone https://github.com/cablelabs/transparent-security
