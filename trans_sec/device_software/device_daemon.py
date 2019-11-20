@@ -38,7 +38,7 @@ class HeartbeatDaemon(AbstractDaemon):
 
     def __setup_device(self):
         dev_prog = resource_filename(
-            'trans_sec.device_software', 'send_udp.py')
+            'trans_sec.device_software', 'send_packets.py')
         cmd = 'python %s' % dev_prog
         cmd += ' --duration=%d' % self.device_config.get('duration')
         cmd += ' --interval=%f' % self.device_config.get('interval')
@@ -52,7 +52,8 @@ class HeartbeatDaemon(AbstractDaemon):
                                          self.device_config.get('logfile'))
         cmd += ' --switch_ethernet=%s' % self.device_config.get(
             'switch_ethernet')
-        self.logger.debug(cmd)
+        self.logger.info('Command run on device %s - [%s]',
+                         self.device_name, cmd)
         self.cmd = cmd
 
 
@@ -74,7 +75,7 @@ class SniffAndLogDaemon(AbstractDaemon):
 
         if iface:
             dev_prog = resource_filename(
-                'trans_sec.device_software', 'receive_udp.py')
+                'trans_sec.device_software', 'receive.py')
             cmd = 'python %s' % dev_prog
             cmd += ' --iface={}'.format(iface)
             cmd += ' --logfile={}/{}'.format(self.device_log_dir,
@@ -90,10 +91,11 @@ class AttackDaemon(AbstractDaemon):
     Starts and controls an attack daemon running on a device within
     a locally running mininet
     """
-    def __init__(self, mn_device, device_config, log_file,
+    def __init__(self, device_name, mn_device, device_config, log_file,
                  device_log_dir, level):
         super(self.__class__, self).__init__(
-            mn_device, device_config, log_file, device_log_dir, level)
+            device_name, mn_device, device_config, log_file, device_log_dir,
+            level)
 
         self.active = False
 
@@ -152,11 +154,11 @@ class AttackDaemon(AbstractDaemon):
             cmd += ' %d' % duration
         else:
             if attack_type == 'SYN Flood':
-                dev_prog = resource_filename('trans_sec.device_software',
-                                             'syn_flood.py')
+                dev_prog = resource_filename(
+                    'trans_sec.device_software', 'syn_flood.py')
             else:
-                dev_prog = resource_filename('trans_sec.device_software',
-                                             'send_udp.py')
+                dev_prog = resource_filename(
+                    'trans_sec.device_software', 'send_packets.py')
             cmd = 'python %s' % dev_prog
             cmd += ' --duration=%d' % duration
             cmd += ' --interval=%f' % self.device_config.get('interval')
@@ -175,5 +177,4 @@ class AttackDaemon(AbstractDaemon):
                 cmd += ' --interface=%s' % udp_flood.get('interface')
                 cmd += ' --switch_ethernet=%s' % udp_flood.get(
                     'switch_ethernet')
-        self.logger.debug(cmd)
         self.cmd = cmd

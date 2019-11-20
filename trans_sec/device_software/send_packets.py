@@ -20,34 +20,26 @@ from logging import getLogger, basicConfig
 from time import sleep
 
 from scapy.all import get_if_list, get_if_hwaddr
-from scapy.layers.inet import IP, UDP
+from scapy.layers.inet import IP, UDP, TCP
 from scapy.layers.l2 import Ether
 from scapy.sendrecv import sendp
 
 # Logger stuff
-filename = 'send_udp'
-logger = getLogger(filename)
+logger = getLogger('send_packets')
+
 FORMAT = '%(levelname)s %(asctime)-15s %(filename)s %(message)s'
 
 
-def get_if(target):
-    iface = None
-    logger.error(target)
-    for i in get_if_list():
-        logger.info(i.find(target))
-        if i.find(target) >= 0:
-            iface = i
-            break
-    if not iface:
-        logger.error('Cannot find %s interface' % target)
-        exit(1)
-    return iface
+def get_first_if():
+    for iface in get_if_list():
+        if iface != 'lo':
+            return iface
+    raise Exception('No NIC to send packets to')
 
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-d', '--duration',
-                        help='Number of seconds to run, 0 means forever',
+    parser.add_argument('-d', '--duration', help='Number of seconds to run',
                         type=int, required=True)
     parser.add_argument('-c', '--count',
                         help='Number of packets to send for each burst',
@@ -59,6 +51,12 @@ def get_args():
                         type=int, required=False, default=0)
     parser.add_argument('-r', '--destination', help='Destination IPv4 address',
                         required=True)
+    parser.add_argument('-e', '--src-mac', help='Src MAC Address',
+                        required=False, default=None)
+    parser.add_argument('-sa', '--source-addr', help='Source IP Address',
+                        required=False, default=None)
+    parser.add_argument('-sp', '--source-port', type=int,
+                        help='Source port else it will be random')
     parser.add_argument('-p', '--port', help='Destination port', type=int,
                         required=True)
     parser.add_argument('-m', '--msg', help='Message to send', required=True)
@@ -69,57 +67,67 @@ def get_args():
     parser.add_argument('-f', '--logfile',
                         help='File to log to defaults to console',
                         required=False, default=None)
-    parser.add_argument('-z', '--interface',
-                        help='Linux named ethernet device. Defaults to eth0',
-                        required=False, default='eth0')
+    parser.add_argument(
+        '-z', '--interface', required=False, default=None,
+        help='Linux named ethernet device. Defaults to first one found')
     parser.add_argument('-s', '--switch_ethernet',
                         help='Switch Ethernet Interface. Defaults to '
                              'ff:ff:ff:ff:ff:ff',
                         required=False, default='ff:ff:ff:ff:ff:ff')
-    parser.add_argument('-e', '--src_mac', help='Src MAC Address',
-                        required=False)
+    parser.add_argument('-t', '--tcp', dest='tcp', required=False)
     args = parser.parse_args()
     return args
 
 
 def device_send(args):
-    numeric_level = getattr(logging, args.loglevel.upper(), None)
-    basicConfig(format=FORMAT, level=numeric_level, filename=args.logfile)
     addr = socket.gethostbyname(args.destination)
-    interface = get_if(args.interface)
+
+    interface = args.interface
+    if not interface:
+        interface = get_first_if()
     logger.info('Delaying %d seconds' % args.delay)
     sleep(args.delay)
-    src = args.src_mac
-    if not src:
-        src = get_if_hwaddr(interface)
 
-    if args.duration is 0:
-        logger.info(
-            'sending packets at %s sec/packet on interface %r to %s forever',
-            args.interval, interface, args.destination)
-        pkt = Ether(src=src, dst=args.switch_ethernet)
-        pkt = pkt / IP(dst=addr) / UDP(dport=args.port,
-                                       sport=random.randint(49152,
-                                                            65535)) / args.msg
-        pkt.show2()
-        sendp(pkt, iface=interface, verbose=False, loop=1, inter=args.interval)
+    logger.info(
+        'sending %s packets at %s sec/packet on interface %r to %s for %s '
+        'seconds',
+        args.count, args.interval, interface, args.destination,
+        (args.duration - args.delay))
+    logger.info('SRC ADDR for interface %s - %s', interface,
+                get_if_hwaddr(interface))
+
+    src_mac = args.src_mac
+    if not src_mac:
+        src_mac = get_if_hwaddr(interface)
+
+    if args.source_port:
+        src_port = args.source_port
     else:
-        logger.info(
-            'sending %s packets at %s sec/packet on interface '
-            '%r to %s for %s seconds',
-            args.count, args.interval, interface, args.destination,
-            (args.duration - args.delay))
-        pkt = Ether(src=src, dst=args.switch_ethernet)
-        pkt = pkt / IP(dst=addr) / UDP(
-            dport=args.port, sport=random.randint(49152, 65535)) / args.msg
-        pkt.show2()
+        src_port = random.randint(49152, 65535)
+
+    pkt = Ether(src=src_mac, dst=args.switch_ethernet) / IP(
+        dst=addr, src=args.source_addr)
+    if args.tcp:
+        pkt = pkt / TCP(dport=args.port, sport=src_port) / args.msg
+    else:
+        pkt = pkt / UDP(dport=args.port, sport=src_port) / args.msg
+
+    logger.info('Sending %s packets to %s every %s',
+                args.count, interface, args.interval)
+    pkt.show2()
+    if args.duration is 0:
+        sendp(pkt, iface=interface, verbose=False, inter=args.interval, loop=1)
+    else:
         sendp(pkt, iface=interface, verbose=False, count=args.count,
               inter=args.interval)
-        logger.info('Done')
-        return
+
+    logger.info('Done')
+    return
 
 
 if __name__ == '__main__':
-    logger.info('Starting Send')
     cmd_args = get_args()
+    numeric_level = getattr(logging, cmd_args.loglevel.upper(), None)
+    basicConfig(format=FORMAT, level=numeric_level, filename=cmd_args.logfile)
+    logger.info('Starting Send')
     device_send(cmd_args)

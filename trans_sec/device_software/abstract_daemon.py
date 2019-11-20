@@ -17,8 +17,9 @@ class AbstractDaemon(object):
     """
     Abstract superclass for running a daemon on a device
     """
-    def __init__(self, mn_device, device_config, log_file, device_log_dir,
-                 level):
+    def __init__(self, device_name, mn_device, device_config, log_file,
+                 device_log_dir, level):
+        self.device_name = device_name
         self.running = False
         self.cmd = None
         self.logger = logging.getLogger('{}_{}'.format(
@@ -43,9 +44,11 @@ class AbstractDaemon(object):
         self.logger.info('Thread %s stopping' % self.mn_device.name)
 
     def run(self):
-        logging.info('Executing command [%s] on device for class [%s]',
-                     self.cmd, self.__class__.__name__)
+        logging.info('Executing command [%s] on device [%s] for class [%s]',
+                     self.cmd, self.device_name, self.__class__.__name__)
         if self.cmd:
+            self.logger.info('Command run on device %s - [%s]',
+                             self.device_name, self.cmd)
             self.mn_device.cmd(self.cmd)
         else:
             raise Exception('Command is None')

@@ -18,8 +18,7 @@ import sys
 
 from scapy.all import sniff
 
-filename = 'receive_udp'
-logger = logging.getLogger(filename)
+logger = logging.getLogger('receive_packets')
 FORMAT = '%(levelname)s %(asctime)-15s %(filename)s %(message)s'
 
 

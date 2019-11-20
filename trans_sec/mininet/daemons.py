@@ -80,6 +80,7 @@ class DaemonRunner:
                     'Creating attack daemon for [%s] and log file [%s]',
                     host_name, device_log_file)
                 return AttackDaemon(
+                    device_name=host_name,
                     mn_device=mn_device,
                     device_config=dev_conf,
                     log_file=device_log_file,
@@ -91,6 +92,7 @@ class DaemonRunner:
                     'Creating heartbeat daemon for [%s] and log file [%s]',
                     host_name, device_log_file)
                 return HeartbeatDaemon(
+                    device_name=host_name,
                     mn_device=mn_device,
                     device_config=dev_conf,
                     log_file=device_log_file,
@@ -102,6 +104,7 @@ class DaemonRunner:
                     'Creating sniff and log daemon for [%s] and log file [%s]',
                     host_name, device_log_file)
                 return SniffAndLogDaemon(
+                    device_name=host_name,
                     mn_device=mn_device,
                     device_config=dev_conf,
                     log_file=device_log_file,
