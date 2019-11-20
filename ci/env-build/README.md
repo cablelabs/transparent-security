@@ -21,6 +21,10 @@ simultaneously from multiple hosts
 1. access_key: Amazon EC2 access key
 1. secret_key: Amazon EC2 secret key
 1. ec2_region: Amazon EC2 region
+1. public_key_file: Used to inject into the VM for SSH access with the user
+'ubuntu' (defaults to ~/.ssh/id_rsa.pub)
+1. private_key_file: Used to access the VM via SSH with the user 'ubuntu'
+(Defaults to ~/.ssh/id_rsa)
 
 ````
 git clone https://github.com/cablelabs/transparent-security

@@ -14,7 +14,8 @@ Download and install your binary for your platform from  https://www.terraform.i
 ### Setup and execute
 
 This Terraform script has been designed to run and execute tests for P4
-programs on mininet on AWS. The following variables are required:
+programs on mininet on AWS. The following variables are required or have
+defaults that may cause issues:
 
 
 1. build_id: this value must be unique to ensure multiple jobs can be run
@@ -23,6 +24,10 @@ simultaneously from multiple hosts
 1. secret_key: Amazon EC2 secret key
 1. ec2_region: Amazon EC2 region
 1. mininet_ami: The image ID created from the env-build terraform script
+1. public_key_file: Used to inject into the VM for SSH access with the user
+'ubuntu' (defaults to ~/.ssh/id_rsa.pub)
+1. private_key_file: Used to access the VM via SSH with the user 'ubuntu'
+(Defaults to ~/.ssh/id_rsa)
 
 ````
 git clone https://github.com/cablelabs/transparent-security
