@@ -39,8 +39,6 @@ ${var.ANSIBLE_CMD} -u ${var.sudo_user} \
 ${var.SETUP_SOURCE} \
 --key-file ${var.private_key_file} \
 --extra-vars "\
-git_user=${var.git_user}
-git_pass=${var.git_pass}
 trans_sec_dir=${var.remote_tps_dir}
 "\
 EOT

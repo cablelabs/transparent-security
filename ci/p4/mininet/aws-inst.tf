@@ -13,7 +13,7 @@
 
 # AWS EC2 Instance
 resource "aws_instance" "transparent-security-mininet-integration" {
-  ami = var.ami
+  ami = var.mininet_ami
   instance_type = var.instance_type
   key_name = aws_key_pair.transparent-security-mini-pk.key_name
   security_groups = [aws_security_group.transparent-security-img-sg.name]

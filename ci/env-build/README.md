@@ -13,10 +13,14 @@ Download and install your binary for your platform from  https://www.terraform.i
 
 ### Setup and execute
 
-This Terraform script has been designed to build a P4 environment on AWS
+This Terraform script has been designed to build a P4 environment on AWS.
+The following variables are required:
 
 1. build_id: this value must be unique to ensure multiple jobs can be run
 simultaneously from multiple hosts
+1. access_key: Amazon EC2 access key
+1. secret_key: Amazon EC2 secret key
+1. ec2_region: Amazon EC2 region
 
 ````
 git clone https://github.com/cablelabs/transparent-security
@@ -25,8 +29,7 @@ cd transparent-security/ci/env-build
 terraform init
 terraform apply -var-file={dir}/snaps-config/aws/snaps-ci.tfvars \
 -auto-approve \
--var 'build_id={some unique value}' \
--var 'build_env={the supported build environment name}'\
+-var '{var name}={appropriate value}' &| -var-file={some tfvars file}
 ````
 
 ### Obtain Deployment Information
@@ -51,7 +54,6 @@ ssh -i ubuntu@$(terraform output ip)
 ````
 # from transparent-security/ci/env-build directory
 terraform destroy -var-file=~/snaps-config/aws/snaps-ci.tfvars \
--auto-approve -var\
--var 'build_id={some unique value}'\
--var 'build_env={the supported build environment name}'\
+-auto-approve -var \
+-var '{var name}={appropriate value}' &| -var-file={some tfvars file}
 ````

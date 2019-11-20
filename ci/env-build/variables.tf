@@ -15,18 +15,15 @@
 variable "access_key" {}
 variable "secret_key" {}
 variable "build_id" {}
-variable "git_user" {}
-variable "git_pass" {}
+variable "ec2_region" {default = "us-west-2"}
 
 # Optional Variables
 variable "public_key_file" {default = "~/.ssh/id_rsa.pub"}
 variable "private_key_file" {default = "~/.ssh/id_rsa"}
 variable "sudo_user" {default = "ubuntu"}
-variable "region" {default = "us-west-2"}
-variable "availability_zone" {default = "us-west-2b"}
 
 # ubuntu 16
-variable "ami" {default = "ami-08692d171e3cf02d6"}
+variable "base_ami" {default = "ami-08692d171e3cf02d6"}
 variable "instance_type" {default = "t2.2xlarge"}
 variable "run_tests" {default = "yes"}
 

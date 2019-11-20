@@ -13,10 +13,9 @@
 
 # AWS EC2 Instance
 resource "aws_instance" "transparent-security-build-img" {
-  ami = var.ami
+  ami = var.base_ami
   instance_type = var.instance_type
   key_name = aws_key_pair.transparent-security-mini-pk.key_name
-  availability_zone = var.availability_zone
 
   tags = {
     Name = "transparent-security-env-build-${var.build_id}"
@@ -59,8 +58,6 @@ ${var.ANSIBLE_PB_PATH}/mininet/env_mininet.yml \
 --extra-vars "
 aws_access_key=${var.access_key}
 aws_secret_key=${var.secret_key}
-git_user=${var.git_user}
-git_pass=${var.git_pass}
 grpc_version=${var.grpc_version}
 p4c_version=${var.p4c_version}
 protobuf_version=${var.protobuf_version}

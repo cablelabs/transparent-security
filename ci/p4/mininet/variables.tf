@@ -15,20 +15,15 @@
 variable "access_key" {}
 variable "secret_key" {}
 variable "build_id" {}
-variable "git_user" {}
-variable "git_pass" {}
-
-# Image generated from env-build script for build_env='mininet' currently with name 'transparent-security-mininet-env'
-variable "ami" {default = "ami-07ab3272984d29bc6"}
+variable "ec2_region" {}
+# Image generated from env-build script for build_env='mininet'
+variable "mininet_ami" {}
 
 # Optional Variables
 variable "public_key_file" {default = "~/.ssh/id_rsa.pub"}
 variable "private_key_file" {default = "~/.ssh/id_rsa"}
 variable "sudo_user" {default = "ubuntu"}
-variable "region" {default = "us-west-2"}
-
 variable "instance_type" {default = "t2.2xlarge"}
-variable "run_tests" { default = "yes"}
 
 # Playbook Constants
 variable "ANSIBLE_CMD" {default = "export ANSIBLE_HOST_KEY_CHECKING=False; ansible-playbook"}
@@ -55,3 +50,5 @@ variable "SETUP_SOURCE" {default = "../../../playbooks/general/setup_source.yml"
 variable "START_MININET" {default = "../../../playbooks/mininet/start_mininet.yml"}
 variable "GENERATE_TOPOLOGY" {default = "../../../playbooks/mininet/generate_topology.yml"}
 variable "START_SERVICE" {default = "../../../playbooks/general/start_service.yml"}
+variable "SCENARIOS_DIR" {default = "../../../playbooks/scenarios"}
+variable "scenario_name" {default = "simple"}

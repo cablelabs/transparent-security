@@ -13,20 +13,24 @@ Download and install your binary for your platform from  https://www.terraform.i
 
 ### Setup and execute
 
-This Terraform script has been designed to run and execute unit tests for P4
-programs on mininet:
+This Terraform script has been designed to run and execute tests for P4
+programs on mininet on AWS. The following variables are required:
+
 
 1. build_id: this value must be unique to ensure multiple jobs can be run
 simultaneously from multiple hosts
+1. access_key: Amazon EC2 access key
+1. secret_key: Amazon EC2 secret key
+1. ec2_region: Amazon EC2 region
+1. mininet_ami: The image ID created from the env-build terraform script
 
 ````
 git clone https://github.com/cablelabs/transparent-security
-git clone https://github.com/cablelabs/snaps-config
 cd transparent-security/ci/p4/mininet
 terraform init
-terraform apply -var-file=~/snaps-config/aws/snaps-ci.tfvars \
+terraform apply \
 -auto-approve \
--var 'build_id={some unique value}'\
+-var '{var name}={appropriate value}' &| -var-file={some tfvars file}\
 ````
 
 ### Obtain Deployment Information
@@ -56,65 +60,6 @@ realized immediately.
 ````
 # from transparent-security/ci/p4/mininet directory
 terraform destroy -var-file=~/snaps-config/aws/snaps-ci.tfvars \
--auto-approve -var\
--var 'build_id={some unique value}'\
+-auto-approve \
+-var '{var name}={appropriate value}' &| -var-file={some tfvars file}
 ````
-
-## Running Mininet Simulation
-To run the Mininet Simluation you need to have four (4) shells open to the EC2 instance. 
-````
-# from transparent-security/ci/p4/mininet directory
-ssh -i ubuntu@$(terraform output ip)
-````
-
-### Mininet 
-
-````bash
-# from transparent-security/mininet-start
-make stop clean run_mininet_daemon 
-````
-
-It should finish with 
-
-
-````bash
-
-==============================================================
-Welcome to the BMV2 Mininet CLI!
-==============================================================
-Your P4 program is installed into the BMV2 software switch
-and your initial configuration is loaded. You can interact
-with the network using the mininet CLI below.
-
-To view a switch log, run this command from your host OS:
-  tail -f /home/ubuntu/transparent-security/mininet-start/logs/<switchname>.log
-
-To view the switch output pcap, check the pcap files in /home/ubuntu/transparent-security/mininet-start/pcaps:
- for example run:  sudo tcpdump -xxx -r s1-eth1.pcap
-
-mininet> 
-````
-Note: 
- - stop -> stops any switch instances still running
- - clean -> removes logs, builds, artifacts, etc... 
- - run_mininet_daemon -> builds/runs mininet with the nominal and attack daemons running
-
-*If you don't want the daemons to run automatically, use:*
-
- `make stop clean run`
-
-### SDN Controller
-
-```bash
-$ sudo --help #to see the options
-#typical
-$ sudo ../apps/sdn_controller.py -m true -l debug --logfile=./logs/sdn_controller.log
-```
-AE
-
-```bash
-$ sudo --help #to see options
-#typical
-$ sudo ../apps/start_ae.py -i eth0
-```
-

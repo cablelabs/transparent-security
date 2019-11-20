@@ -15,7 +15,7 @@
 provider "aws" {
   access_key = var.access_key
   secret_key = var.secret_key
-  region = var.region
+  region = var.ec2_region
 }
 
 # Note: Script will fail if another process is leveraging the same build_id
