@@ -89,6 +89,7 @@ srvc_log_dir=${var.remote_srvc_log_dir}
 srvc_start_pause_time=20
 port_to_wait=50051
 devices_conf_file=${var.remote_scripts_dir}/${var.dev_daemon_file}
+remote_ansible_inventory=${var.remote_inventory_file}
 "\
 EOT
   }

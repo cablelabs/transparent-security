@@ -13,14 +13,18 @@
 
 resource "null_resource" "transparent-security-run-senario-tests" {
   depends_on = [null_resource.transparent-security-start-ae]
-  provisioner "local-exec" {
-    command = <<EOT
-${var.ANSIBLE_CMD} -u ${var.sudo_user} \
--i ${aws_instance.transparent-security-mininet-integration.public_ip}, \
-${var.SCENARIOS_DIR}/${var.scenario_name}.yml \
---key-file ${var.private_key_file} \
---extra-vars "\
-"\
-EOT
+
+  provisioner "remote-exec" {
+    inline = [
+      "sudo pip install ansible",
+      "${var.ANSIBLE_CMD} -i ${var.remote_inventory_file} ${var.remote_scenario_pb_dir}/${var.scenario_name}.yml",
+    ]
+  }
+
+  connection {
+    host = aws_instance.transparent-security-mininet-integration.public_ip
+    type     = "ssh"
+    user     = var.sudo_user
+    private_key = file(var.private_key_file)
   }
 }
