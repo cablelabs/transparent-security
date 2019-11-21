@@ -125,5 +125,5 @@ if __name__ == '__main__':
     cmd_args = get_args()
     numeric_level = getattr(logging, cmd_args.loglevel.upper(), None)
     basicConfig(format=FORMAT, level=numeric_level, filename=cmd_args.logfile)
-    logger.info('Starting Send')
+    logger.info('Starting Send with args - [%s]', cmd_args)
     device_send(cmd_args)
