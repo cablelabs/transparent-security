@@ -55,8 +55,9 @@ def get_args():
                         required=False, default=None)
     parser.add_argument('-sa', '--source-addr', help='Source IP Address',
                         required=False, default=None)
-    parser.add_argument('-sp', '--source-port', type=int,
-                        help='Source port else it will be random')
+    parser.add_argument(
+        '-sp', '--source-port', type=int, default=random.randint(49152, 65535),
+        help='Source port else it will be random')
     parser.add_argument('-p', '--port', help='Destination port', type=int,
                         required=True)
     parser.add_argument('-m', '--msg', help='Message to send', required=True)
@@ -100,17 +101,12 @@ def device_send(args):
     if not src_mac:
         src_mac = get_if_hwaddr(interface)
 
-    if args.source_port:
-        src_port = args.source_port
-    else:
-        src_port = random.randint(49152, 65535)
-
     pkt = Ether(src=src_mac, dst=args.switch_ethernet) / IP(
         dst=addr, src=args.source_addr)
     if args.tcp:
-        pkt = pkt / TCP(dport=args.port, sport=src_port) / args.msg
+        pkt = pkt / TCP(dport=args.port, sport=args.source_port) / args.msg
     else:
-        pkt = pkt / UDP(dport=args.port, sport=src_port) / args.msg
+        pkt = pkt / UDP(dport=args.port, sport=args.source_port) / args.msg
 
     logger.info('Sending %s packets to %s every %s',
                 args.count, interface, args.interval)

@@ -14,5 +14,10 @@
 - import_playbook: test_cases/send_receive.yml
   vars:
     receiver: inet
+    receiver_log_file: "{{ log_dir }}/receiver-inet.out"
     sender: Camera1
-    proc_log_dir: "{{ log_dir }}"
+    sender_log_file: "{{ log_dir }}/sender-Camera1.out"
+    send_port: 4321
+    send_src_port: 5432
+    send_to_ip: 10.2.5.2
+    send_packet_count: 1

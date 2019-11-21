@@ -17,6 +17,9 @@ import logging
 import sys
 
 from scapy.all import sniff
+from scapy.layers.l2 import Ether
+
+from trans_sec.analytics import oinc
 
 logger = logging.getLogger('receive_packets')
 FORMAT = '%(levelname)s %(asctime)-15s %(filename)s %(message)s'
@@ -37,19 +40,22 @@ def get_args():
     return parser.parse_args()
 
 
-def log_packet(packet):
-    logger.info('Packet data - [%s]', packet.summary())
+def __log_packet(packet):
+    if packet[Ether].type == 0x1212:
+        logger.warn('INT Packet data - [%s]', oinc.extract_int_data(packet))
+    else:
+        logger.warn('Packet data - [%s]', packet.summary())
 
 
-def device_sniff(args):
-    numeric_level = getattr(logging, args.loglevel.upper(), None)
+def device_sniff(iface, log_file, log_level):
+    numeric_level = getattr(logging, log_level, None)
     logging.basicConfig(format=FORMAT, level=numeric_level,
-                        filename=args.logfile)
-    logger.info("Sniffing for packets on iface - [%s]", args.iface)
+                        filename=log_file)
+    logger.info("Sniffing for packets on iface - [%s]", iface)
     sys.stdout.flush()
-    sniff(iface=args.iface, prn=lambda packet: log_packet(packet))
+    sniff(iface=iface, prn=lambda packet: __log_packet(packet))
 
 
 if __name__ == '__main__':
     cmd_args = get_args()
-    device_sniff(cmd_args)
+    device_sniff(cmd_args.iface, cmd_args.logfile, cmd_args.loglevel.upper())

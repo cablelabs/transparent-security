@@ -11,21 +11,45 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
+
+# Create packet sniffer
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Remove {{ receiver_log_file }}
+      become: yes
+      file:
+        path: "{{ receiver_log_file }}"
+        state: absent
+
 - hosts: "{{ receiver }}"
   gather_facts: no
   tasks:
-    - name: Receive and log packets from "{{ receiver }}" logged at {{ proc_log_dir }}/receiver-{{ receiver }}.out
-      shell: "sudo python ~/transparent-security/trans_sec/device_software/receive_packets.py -i {{ receiver }}-eth0 -f {{ proc_log_dir }}/receiver-{{ receiver }}.out"
+    - name: Receive and log packets from "{{ receiver }}" logged at {{ receiver_log_file }}
+      shell: "sudo python ~/transparent-security/trans_sec/device_software/receive_packets.py -i {{ receiver }}-eth0 -f {{ receiver_log_file }}"
       async: 999999
       poll: 0
 
+# Generate packets
 - hosts: "{{ sender }}"
   gather_facts: no
   vars:
     send_msg: "{{ the_message | default('hello transparent-security') }}"
   tasks:
     - name: Sending UDP packets from {{ sender }}
-      shell: "sudo python ~/transparent-security/trans_sec/device_software/send_packets.py -i 1 -z {{ sender }}-eth0 -r 10.2.5.2 -p 5432 -d 1 -f {{ proc_log_dir }}/sender-{{ sender }}.out -m '{{ send_msg }}'"
+      shell: "sudo python ~/transparent-security/trans_sec/device_software/send_packets.py -i 1 -z {{ sender }}-eth0 -r {{ send_to_ip }} -sp {{ send_src_port }} -p {{ send_port }} -d 1 -f {{ sender_log_file }} -m '{{ send_msg }} -c {{ send_packet_count }}'"
 
-    - fail:
-        msg: To parse log next
+# Validate sent packets were received
+- hosts: localhost
+  gather_facts: no
+  vars:
+    packet_count: "{{ send_packet_count | int }}"
+  tasks:
+    - name: Parse file with command - [grep {{ send_to_ip }} {{ receiver_log_file }} | grep {{ send_port }} | wc -l]
+      shell: "grep {{ send_to_ip }} {{ receiver_log_file }} | grep {{ send_port }} | wc -l"
+      register: grep_out
+
+    - name: Validate count
+      fail:
+        msg: "Expected count of {{ send_packet_count }} not actual {{ grep_out.stout_lines[1] }}"
+      when: packet_count != grep_out['stdout_lines'][0]
