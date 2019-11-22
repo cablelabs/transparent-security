@@ -13,6 +13,7 @@
 import abc
 import datetime
 import logging
+import time
 
 from anytree import search, Node, RenderTree
 from scapy.all import bind_layers
@@ -227,6 +228,12 @@ class SimpleAE(PacketAnalytics):
     Simple implementation of PacketAnalytics where the count for detecting
     attack notifications is based on the unique hash of the extracted INT data
     """
+    def __init__(self, sdn_interface, packet_count=100, sample_interval=60):
+        super(self.__class__, self).__init__(sdn_interface, packet_count,
+                                             sample_interval)
+        # Holds the last time an attack call was issued to the SDN controller
+        self.attack_map = dict()
+
     def process_packet(self, packet):
         """
         Processes a packet to determine if an attack is occurring
@@ -235,13 +242,13 @@ class SimpleAE(PacketAnalytics):
         """
         logger.debug('Packet data - [%s]', packet.summary())
         int_data = extract_int_data(packet)
-        counter_key = hash(str(int_data))
-        if not self.count_map.get(counter_key):
-            self.count_map[counter_key] = list()
+        attack_map_key = hash(str(int_data))
+        if not self.count_map.get(attack_map_key):
+            self.count_map[attack_map_key] = list()
 
         curr_time = datetime.datetime.now()
-        self.count_map.get(counter_key).append(curr_time)
-        times = self.count_map.get(counter_key)
+        self.count_map.get(attack_map_key).append(curr_time)
+        times = self.count_map.get(attack_map_key)
         count = 0
         for eval_time in times:
             delta = (curr_time - eval_time).total_seconds()
@@ -252,22 +259,34 @@ class SimpleAE(PacketAnalytics):
 
         if count > self.packet_count:
             logger.debug('Attack detected - count [%s] with key [%s]',
-                         count, counter_key)
-            logger.info('UDP Flood attack detected')
+                         count, attack_map_key)
+
+            attack_dict = dict(
+                src_mac=int_data['devMac'],
+                src_ip=int_data['devAddr'],
+                dst_ip=int_data['dstAddr'],
+                dst_port=int_data['dstPort'],
+                packet_size=int_data['packetLen'],
+                attack_type='UDP Flood')
 
             # Send to SDN
-            try:
-                self._send_attack(**dict(
-                    src_mac=int_data['devMac'],
-                    src_ip=int_data['devAddr'],
-                    dst_ip=int_data['dstAddr'],
-                    dst_port=int_data['dstPort'],
-                    packet_size=int_data['packetLen'],
-                    attack_type='UDP Flood'))
-            except Exception as e:
-                logger.error('Unexpected error [%s]', e)
+            last_attack = self.attack_map.get(attack_map_key)
+            if not last_attack or time.time() - last_attack > 1:
+                logger.info('Calling SDN, last attack sent - [%s]',
+                            last_attack)
+                try:
+                    self.attack_map[attack_map_key] = time.time()
+                    self._send_attack(**attack_dict)
+                    return True
+                except Exception as e:
+                    logger.error('Unexpected error [%s]', e)
+                    return False
+            else:
+                logger.debug(
+                    'Not calling SDN as last attack notification for %s'
+                    ' was only %s seconds ago',
+                    attack_dict, time.time() - last_attack)
                 return False
-            return True
         else:
             logger.debug('No attack detected - count [%s]', count)
             return False

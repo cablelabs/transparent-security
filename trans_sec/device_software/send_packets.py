@@ -48,11 +48,12 @@ def get_args():
         '-c', '--count', help='Number of packets to send for each burst',
         type=int, default=1, required=False)
     parser.add_argument(
-        '-i', '--interval', help='How often to send packets in seconds',
-        type=float, required=False, default=0)
+        '-i', '--interval',
+        help='How often to send packets in seconds (Default = 1)',
+        type=float, required=False, default=1)
     parser.add_argument(
-        '-y', '--delay', help='Delay before starting run', type=int,
-        required=False, default=0)
+        '-y', '--delay', help='Delay before starting run (Default = 0',
+        type=int, required=False, default=0)
     parser.add_argument(
         '-r', '--destination', help='Destination IPv4 address', required=True)
     parser.add_argument(
