@@ -239,7 +239,8 @@ class ExerciseRunner:
 
         logger.info('Starting mininet')
         return Mininet(
-            topo=self.topo, link=TCLink, host=P4Host, switch=switch_class)
+            topo=self.topo, link=TCLink, host=P4Host, switch=switch_class,
+            autoPinCpus=True)
 
     def __configure_p4_switch(self):
         """

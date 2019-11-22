@@ -59,14 +59,10 @@
     - name: Get service facts
       service_facts:
 
-    - debug:
-        var: ansible_facts.services['{{ service_name }}.service']['state']
-
     - name: Fail when {{ service_name }} not running
       fail:
         msg: "{{ service_name }} not running"
       when: ansible_facts.services['{{ service_name }}.service']['state'] != "running"
-      args:
 
     - name: Wait for {{ service_name }} to open port {{ wait_port }}
       wait_for:

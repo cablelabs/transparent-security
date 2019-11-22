@@ -40,7 +40,7 @@ class HeartbeatDaemon(AbstractDaemon):
         dev_prog = resource_filename(
             'trans_sec.device_software', 'send_packets.py')
         cmd = 'python %s' % dev_prog
-        cmd += ' --duration=%d' % self.device_config.get('duration')
+        cmd += ' --continuous=True'
         cmd += ' --interval=%f' % self.device_config.get('interval')
         cmd += ' --delay=%d' % self.device_config.get('delay')
         cmd += ' --destination=%s' % self.device_config.get('destination')
@@ -160,7 +160,7 @@ class AttackDaemon(AbstractDaemon):
                 dev_prog = resource_filename(
                     'trans_sec.device_software', 'send_packets.py')
             cmd = 'python %s' % dev_prog
-            cmd += ' --duration=%d' % duration
+            cmd += ' --continuous=False'
             cmd += ' --interval=%f' % self.device_config.get('interval')
             cmd += ' --delay=%d' % self.device_config.get('delay')
             cmd += ' --destination=%s' % self.device_config.get('destination')

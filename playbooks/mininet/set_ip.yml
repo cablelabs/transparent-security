@@ -67,4 +67,4 @@
         path: /etc/hosts
         line: "{{ dev_ip }} {{ dev_name }}"
         state: present
-  when: "{{ dev_ip_tokens }}"
+  when: dev_ip_tokens

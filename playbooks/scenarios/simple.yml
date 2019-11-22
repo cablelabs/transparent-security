@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
-# Testing packets through gateway 1
+# Sending 25 packets within a second 1x through gateway 1
 - import_playbook: test_cases/send_receive.yml
   vars:
     receiver: inet
@@ -21,9 +21,9 @@
     send_port: 4321
     send_src_port: 5432
     send_to_ip: 10.2.5.2
-    send_packet_count: 100
+    send_packet_count: 25
 
-# Testing packets through gateway 2
+# Sending 50 packets within a second 1x through gateway 2
 - import_playbook: test_cases/send_receive.yml
   vars:
     receiver: inet
@@ -33,16 +33,19 @@
     send_port: 4322
     send_src_port: 5433
     send_to_ip: 10.2.5.2
-    send_packet_count: 75
+    send_packet_count: 50
 
-# Testing packets through gateway 3
+# Sending 150 packets within a second 2x through gateway 3.
+# The second set should be dropped else this will fail
 - import_playbook: test_cases/send_receive.yml
   vars:
     receiver: inet
     receiver_log_file: "{{ log_dir }}/receiver-inet-3.out"
+    expected_received_packet_count: 150
     sender: Camera3
     sender_log_file: "{{ log_dir }}/sender-Camera3.out"
     send_port: 4323
     send_src_port: 5434
     send_to_ip: 10.2.5.2
-    send_packet_count: 50
+    send_packet_count: 150
+    send_loops: 2

@@ -16,6 +16,7 @@ import argparse
 import logging
 import random
 import socket
+import time
 from logging import getLogger, basicConfig
 from time import sleep
 
@@ -39,42 +40,54 @@ def get_first_if():
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-d', '--duration', help='Number of seconds to run',
-                        type=int, required=True)
-    parser.add_argument('-c', '--count',
-                        help='Number of packets to send for each burst',
-                        type=int, default=1)
-    parser.add_argument('-i', '--interval',
-                        help='How often to send packets in seconds',
-                        type=float, required=True)
-    parser.add_argument('-y', '--delay', help='Delay before starting run',
-                        type=int, required=False, default=0)
-    parser.add_argument('-r', '--destination', help='Destination IPv4 address',
-                        required=True)
-    parser.add_argument('-e', '--src-mac', help='Src MAC Address',
-                        required=False, default=None)
-    parser.add_argument('-sa', '--source-addr', help='Source IP Address',
-                        required=False, default=None)
+    parser.add_argument(
+        '-d', '--continuous',
+        help='When true, count disregarded and packets will send indefinitely',
+        type=bool, required=False, default=False)
+    parser.add_argument(
+        '-c', '--count', help='Number of packets to send for each burst',
+        type=int, default=1, required=False)
+    parser.add_argument(
+        '-i', '--interval', help='How often to send packets in seconds',
+        type=float, required=False, default=0)
+    parser.add_argument(
+        '-y', '--delay', help='Delay before starting run', type=int,
+        required=False, default=0)
+    parser.add_argument(
+        '-r', '--destination', help='Destination IPv4 address', required=True)
+    parser.add_argument(
+        '-e', '--src-mac', help='Src MAC Address', required=False,
+        default=None)
+    parser.add_argument(
+        '-sa', '--source-addr', help='Source IP Address', required=False,
+        default=None)
     parser.add_argument(
         '-sp', '--source-port', type=int, default=random.randint(49152, 65535),
         help='Source port else it will be random')
-    parser.add_argument('-p', '--port', help='Destination port', type=int,
-                        required=True)
+    parser.add_argument(
+        '-p', '--port', help='Destination port', type=int, required=True)
     parser.add_argument('-m', '--msg', help='Message to send', required=True)
-    parser.add_argument('-l', '--loglevel',
-                        help='Log Level <DEBUG|INFO|WARNING|ERROR> defaults '
-                             'to INFO',
-                        required=False, default='INFO')
-    parser.add_argument('-f', '--logfile',
-                        help='File to log to defaults to console',
-                        required=False, default=None)
+    parser.add_argument(
+        '-l', '--loglevel', required=False, default='INFO',
+        help='Log Level <DEBUG|INFO|WARNING|ERROR> defaults to INFO')
+    parser.add_argument(
+        '-f', '--logfile', help='File to log to defaults to console',
+        required=False, default=None)
     parser.add_argument(
         '-z', '--interface', required=False, default=None,
         help='Linux named ethernet device. Defaults to first one found')
-    parser.add_argument('-s', '--switch_ethernet',
-                        help='Switch Ethernet Interface. Defaults to '
-                             'ff:ff:ff:ff:ff:ff',
-                        required=False, default='ff:ff:ff:ff:ff:ff')
+    parser.add_argument(
+        '-s', '--switch_ethernet',
+        help='Switch Ethernet Interface. Defaults to ff:ff:ff:ff:ff:ff',
+        required=False, default='ff:ff:ff:ff:ff:ff')
+    parser.add_argument(
+        '-it', '--iterations',
+        help='Number of iterations of packet groups to send',
+        required=False, default=1, type=int)
+    parser.add_argument(
+        '-itd', '--iter-delay',
+        help='Seconds betweein iterations of packet groups to be sent',
+        required=False, default=1, type=int)
     parser.add_argument('-t', '--tcp', dest='tcp', required=False)
     args = parser.parse_args()
     return args
@@ -89,14 +102,6 @@ def device_send(args):
     logger.info('Delaying %d seconds' % args.delay)
     sleep(args.delay)
 
-    logger.info(
-        'sending %s packets at %s sec/packet on interface %r to %s for %s '
-        'seconds',
-        args.count, args.interval, interface, args.destination,
-        (args.duration - args.delay))
-    logger.info('SRC ADDR for interface %s - %s', interface,
-                get_if_hwaddr(interface))
-
     src_mac = args.src_mac
     if not src_mac:
         src_mac = get_if_hwaddr(interface)
@@ -108,14 +113,21 @@ def device_send(args):
     else:
         pkt = pkt / UDP(dport=args.port, sport=args.source_port) / args.msg
 
-    logger.info('Sending %s packets to %s every %s',
-                args.count, interface, args.interval)
     pkt.show2()
-    if args.duration is 0:
-        sendp(pkt, iface=interface, verbose=False, inter=args.interval, loop=1)
+
+    if args.continuous:
+        logger.info('Sending a packet to %s every %s',
+                    interface, args.interval)
+        sendp(pkt, iface=interface, verbose=2, inter=args.interval, loop=1)
     else:
-        sendp(pkt, iface=interface, verbose=False, count=args.count,
-              inter=args.interval)
+        logger.info('Starting iter loop for iterations %s', args.iterations)
+        for i in range(0, args.iterations):
+            logger.info('Iteration %s', i)
+            logger.info('Sending %s packets to %s every %s',
+                        args.count, interface, args.interval)
+            sendp(pkt, iface=interface, verbose=2, count=args.count,
+                  inter=args.interval)
+            time.sleep(args.iter_delay)
 
     logger.info('Done')
     return

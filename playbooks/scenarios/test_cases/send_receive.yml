@@ -37,21 +37,27 @@
 - hosts: "{{ sender }}"
   gather_facts: no
   vars:
+    packet_count: "{{ send_packet_count | default(1) }}"
     send_msg: "{{ the_message | default('hello transparent-security') }}"
+    send_delay: "{{ send_packets_delay | default(15) }}"
+    interval: "{{ send_interval | default(0.005) }}"
+    loops: "{{ send_loops | default(1) }}"
+    loop_delay: "{{ send_loop_delay | default(1) }}"
   tasks:
-    - name: Sending {{ send_packet_count }} UDP packets from {{ sender }}
-      shell: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/send_packets.py -i 1 -z {{ sender }}-eth0 -r {{ send_to_ip }} -sp {{ send_src_port }} -p {{ send_port }} -d 1 -f {{ sender_log_file }}  -c {{ send_packet_count }} -m '{{ send_msg }}'"
+    - name: Sending {{ packet_count }} UDP packets to {{ send_port }} every {{ interval }} seconds and {{ loops }}x each {{ loop_delay }} from {{ sender }} after delay {{ send_delay}}
+      shell: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/send_packets.py -y {{ send_delay }} -i {{ interval }} -it {{ loops }} -itd {{ loop_delay }} -z {{ sender }}-eth0 -r {{ send_to_ip }} -sp {{ send_src_port }} -p {{ send_port }} -f {{ sender_log_file }} -c {{ packet_count }} -m '{{ send_msg }}'"
+      async: 180
 
 # Validate sent packets were received
 - hosts: localhost
   gather_facts: no
   vars:
-    packet_count: "{{ send_packet_count | int }}"
+    packet_count: "{{ expected_received_packet_count | default(send_packet_count) | int }}"
   tasks:
     - name: Parse file with command - [grep {{ send_to_ip }} {{ receiver_log_file }} | grep {{ send_port }} | wc -l]
       shell: "grep {{ send_to_ip }} {{ receiver_log_file }} | grep {{ send_port }} | wc -l"
       register: grep_out
     - name: Validate {{ packet_count }} packets were actually received
       fail:
-        msg: "Expected count of {{ packet_count }} not actual"
+        msg: "Expected count of {{ packet_count }} not actual {{ grep_out['stdout_lines'][0] }}"
       when: packet_count != grep_out['stdout_lines'][0]
