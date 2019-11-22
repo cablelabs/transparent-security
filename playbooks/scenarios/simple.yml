@@ -49,3 +49,4 @@
     send_to_ip: 10.2.5.2
     send_packet_count: 150
     send_loops: 2
+    send_loop_delay: 30
