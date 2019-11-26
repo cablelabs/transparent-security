@@ -61,25 +61,31 @@ class HttpSession:
         if not self.is_authorized():
             self.authorize()
         headers = {'Authorization': 'Bearer ' + self.token}
-        actual_resource = resource
-        logger.debug('Post received from %s/%s with body value[\n%s\n]',
-                     self.url, actual_resource, body)
-        r = requests.post(self.url + '/' + actual_resource,
-                          headers=headers, json=body, verify=False)
-        if r.status_code == 201 or r.status_code == 200:
-            logger.info('POST return value - [%s]', r.json())
-            return r.json()
+        logger.debug('Post request received from %s/%s with body value[%s]',
+                     self.url, resource, body)
+        try:
+            response = requests.post(
+                self.url + '/' + resource,
+                headers=headers, json=body, verify=False)
+        except Exception as e:
+            logger.error('Unexpected error - %s', e)
+            return
+
+        logger.debug('POST response - [%s]', response)
+        if response.status_code == 201 or response.status_code == 200:
+            logger.info('POST return value - [%s]', response.json())
+            return response.json()
         else:
-            logger.error('Error on Post [%s] to URL [%s/%s]',
-                         str(r.status_code),
-                         self.url, actual_resource)
-            temp = r.json()
+            logger.error(
+                'Error on Post [%s] to URL [%s/%s]',
+                str(response.status_code), self.url, resource)
+            temp = response.json()
             if body.get('Name') is not None:
-                raise AlreadyExistsError(body['Name'],
-                                         str(temp['Messages'][0]))
+                raise AlreadyExistsError(
+                    body['Name'], str(temp['Messages'][0]))
             else:
-                raise AlreadyExistsError(body['Addr'],
-                                         str(temp['Messages'][0]))
+                raise AlreadyExistsError(
+                    body['Addr'], str(temp['Messages'][0]))
 
     def delete(self, resource, key):
         logger.info('DELETE resource [%s] with key [%s]', resource, key)
@@ -94,7 +100,7 @@ class HttpSession:
             return r.json()
         elif r.status_code == 404:
             logger.info('Deleting a non-existent object, ignoring')
-            return {}
+            return dict()
         else:
             logger.error('Error on Delete with code %s and payload [%s]',
                          r.status_code, r.json)

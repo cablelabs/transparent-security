@@ -10,4 +10,6 @@ anytree>=2.6.0
 pydevd
 gevent==1.1.0
 python-dateutil
+flask
+flask_restful
 mock

@@ -86,7 +86,7 @@ class PacketAnalytics(object):
         :raises Exception: due to the remote HTTP POST
         """
         logger.info('Start attack - %s', attack_dict)
-        self.sdn_interface.post('/', attack_dict)
+        self.sdn_interface.post('attack', attack_dict)
 
     @abc.abstractmethod
     def process_packet(self, packet):

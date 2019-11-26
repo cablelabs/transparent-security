@@ -10,8 +10,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# noinspection PyCompatibility
-import thread
 from datetime import datetime
 from logging import getLogger
 from time import sleep
@@ -23,7 +21,7 @@ from trans_sec.controller.core_controller import CoreController
 from trans_sec.controller.gateway_controller import GatewayController
 from trans_sec.p4runtime_lib.switch import shutdown_all_switch_connections
 from trans_sec.packet.packet_telemetry import PacketTelemetry
-from trans_sec.utils.http_server import ThreadedHTTPServer, Handler
+from trans_sec.controller.http_server_flask import SDNControllerServer
 from trans_sec.utils.http_session import HttpSession
 
 # Logger stuff
@@ -39,7 +37,7 @@ class DdosSdnController:
     """
     SDN controller for quelling DDoS attacks
     """
-    def __init__(self, topo, switch_config_dir, http_server_port,
+    def __init__(self, topo, switch_config_dir, http_server_port, scenario,
                  log_dir):
 
         self.topo = topo
@@ -66,29 +64,27 @@ class DdosSdnController:
                 self.switch_config_dir, self.topo, log_dir),
         }
 
-        # Start HTTP server
-        self.http_server_port = http_server_port
-        self.server = ThreadedHTTPServer(
-            ('localhost', self.http_server_port), Handler(self))
-        logger.info(
-            'Starting SDN-AE Server on port %s', self.http_server_port)
-        thread.start_new_thread(self.server.serve_forever, ())
+        self.http_server = SDNControllerServer(self, http_server_port)
 
         self.last_scenario_time = datetime.now()
         self.last_attack_time = datetime.now()
 
         # TODO/FIXME - remove hardcoding and determine what this value is for
-        self.mitigation = dict(activeScenario='scenario1',
+        self.mitigation = dict(activeScenario=scenario,
                                timeActivated=datetime.now())
         self.attack = dict(
             active=False, durationSec=0, attackStart=datetime.now(),
             attackEnd=datetime.now(), attackType=None)
 
     def start(self):
+        self.http_server.start()
         self.__send_topology()
         self.__make_switch_rules()
         self.__build_skeleton_packet_telemetry()
         self.__main_loop()
+
+    def stop(self):
+        self.http_server.stop()
 
     def __check_scenario(self):
         """
@@ -212,12 +208,7 @@ class DdosSdnController:
         Adds a device to perform an attack
         :param attack: dict of attack
         """
-        logger.info(attack.get('attack_type'))
-        logger.info(attack.get('src_mac'))
-        logger.info(attack.get('src_ip'))
-        logger.info(attack.get('dst_ip'))
-        logger.info(attack.get('dst_port'))
-        logger.info(attack.get('packet_size'))
+        logger.info('Attack received - %s', attack)
 
         conditions = {'mac': attack.get('src_mac')}
         values = self.topo.get('hosts').values()
@@ -227,11 +218,15 @@ class DdosSdnController:
             values)
         if len(host) != 0:
             host = host[0]
+            logger.info('Attack scenario - [%s]',
+                        self.mitigation.get('activeScenario'))
             if self.mitigation.get('activeScenario') == 'scenario3':
+                logger.info('Adding attack to gateway')
                 self.controllers.get(GATEWAY_CTRL_KEY).add_attacker(
                     attack, host)
             if (self.mitigation.get('activeScenario') == 'scenario2'
                     or self.mitigation.get('activeScenario') == 'scenario3'):
+                logger.info('Adding attack to aggregate')
                 self.controllers.get(AGG_CTRL_KEY).add_attacker(attack, host)
             self.packet_telemetry.register_attack(host.get('id'))
         else:
