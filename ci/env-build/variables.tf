@@ -28,12 +28,12 @@ variable "instance_type" {default = "t2.2xlarge"}
 variable "run_tests" {default = "yes"}
 
 # Consider upgrading the GRPC version, current stable is v1.24.3
-variable "grpc_version" {default = "v1.3.2"}
-variable "p4c_version" {default = "69e132d0d663e3408d740aaf8ed534ecefc88810"}
+variable "grpc_version" {default = "v1.19.1"}
+variable "p4c_version" {default = "fbe395bbf1eed9653323ac73b20cf6c06af2121e"}
 # Consider upgrading the protobuf version, current stable is 3.10.x
-variable "protobuf_version" {default = "3.2.x"}
-variable "pi_version" {default = "41358da0ff32c94fa13179b9cee0ab597c9ccbcc"}
-variable "bm_version" {default = "b447ac4c0cfd83e5e72a3cc6120251c1e91128ab"}
+variable "protobuf_version" {default = "3.6.x"}
+variable "pi_version" {default = "1539ecd8a50c159b011d9c5a9c0eba99f122a845"}
+variable "bm_version" {default = "16c699953ee02306731ebf9a9241ea9fe3bbdc8c"}
 
 # Playbook Constants
 variable "ANSIBLE_CMD" {default = "export ANSIBLE_HOST_KEY_CHECKING=False; ansible-playbook"}

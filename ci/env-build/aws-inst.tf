@@ -55,7 +55,7 @@ ${var.ANSIBLE_CMD} -u ${var.sudo_user} \
 -u ${var.sudo_user} \
 ${var.ANSIBLE_PB_PATH}/mininet/env_mininet.yml \
 --key-file ${var.private_key_file} \
---extra-vars "
+--extra-vars "\
 aws_access_key=${var.access_key}
 aws_secret_key=${var.secret_key}
 grpc_version=${var.grpc_version}
@@ -63,7 +63,7 @@ p4c_version=${var.p4c_version}
 protobuf_version=${var.protobuf_version}
 pi_version=${var.pi_version}
 bm_version=${var.bm_version}
-    "\
-    EOT
+"\
+EOT
   }
 }

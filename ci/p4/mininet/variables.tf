@@ -37,6 +37,7 @@ variable "run_daemons" {default = "True"}
 variable "topo_file" {default = "mininet-sim-topology.yaml"}
 variable "dev_daemon_file" {default = "device-daemons.yml"}
 variable "local_scripts_dir" {default = "../../../playbooks/general/templates"}
+variable "clone_egress_port" {default = "3"}
 variable "sdn_host" {default = "localhost"}
 variable "dashboard_port" {default = "8080"}
 variable "sdn_port" {default = "9998"}

@@ -42,7 +42,7 @@ hosts:
     name: Camera2
     id: 8
     switch_ip: 192.168.2.254
-    ip: 192.168.2.14
+    ip: 192.168.2.2
     ip_port: any
     mac: 00:00:00:00:02:01
     type: webcam
@@ -50,7 +50,7 @@ hosts:
     name: Game2
     id: 9
     switch_ip: 192.168.2.254
-    ip: 192.168.2.18
+    ip: 192.168.2.6
     ip_port: any
     mac: 00:00:00:00:02:02
     type: console
@@ -58,7 +58,7 @@ hosts:
     name: Camera3
     id: 10
     switch_ip: 192.168.3.254
-    ip: 192.168.3.22
+    ip: 192.168.3.2
     ip_port: any
     mac: 00:00:00:00:03:01
     type: webcam
@@ -66,7 +66,7 @@ hosts:
     name: Game3
     id: 11
     switch_ip: 192.168.3.254
-    ip: 192.168.3.26
+    ip: 192.168.3.6
     ip_port: any
     mac: 00:00:00:00:03:02
     type: console
@@ -120,13 +120,14 @@ switches:
     id: 1
     runtime_p4info: {{ remote_scripts_dir }}/p4/core.p4info
     runtime_json: {{ remote_scripts_dir }}/p4/core.json
+    clone_egress: {{ clone_egress_port }}
     subnet: 10.197.1.0
     type: core
     mac: 00:00:00:03:05:00
     grpc: 127.0.0.1:50052
 external:
   analytics_engine:
-    name: analytics_engine
+    name: ae
     id: {{ ae_dev_intf }}
     ip: {{ ae_ip }}
     ip_port: 0

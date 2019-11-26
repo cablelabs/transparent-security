@@ -9,7 +9,6 @@ const bit<32> MAX_DEVICE_ID = 15;
 const bit<9> DROP_PORT = 511;
 
 #define MAX_HOPS 9
-#define IOAM_CLONE_SPEC 0x1000
 
 
 /*************************************************************************
@@ -167,32 +166,12 @@ control MyIngress(inout headers hdr,
     counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) forwardedPackets;
     counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) droppedPackets;
 
-    action data_drop(bit<32> device) {
-        mark_to_drop(standard_metadata);;
-        droppedPackets.count(device);
-    }
-
     action data_forward(macAddr_t dstAddr, egressSpec_t port, bit<32> l2ptr) {
         standard_metadata.egress_spec = port;
         hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
         hdr.ethernet.dstAddr = dstAddr;
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
         meta.fwd.l2ptr = l2ptr;
-    }
-
-    action data_inspect_packet(bit<32> device) {
-        hdr.inspection.setValid();
-        hdr.inspection.srcAddr = hdr.ethernet.srcAddr;
-        hdr.inspection.deviceAddr = hdr.ipv4.srcAddr;
-        hdr.inspection.dstAddr  = hdr.ipv4.dstAddr;
-        hdr.inspection.dstPort = hdr.udp.dst_port;
-        hdr.inspection.proto_id = TYPE_IPV4;
-        hdr.ethernet.etherType = TYPE_INSPECTION;
-        forwardedPackets.count(device);
-    }
-
-    action data_remove_inspection() {
-        hdr.inspection.setInvalid();
     }
 
     table data_forward_t {
@@ -207,6 +186,16 @@ control MyIngress(inout headers hdr,
         default_action = NoAction();
     }
 
+    action data_inspect_packet(bit<32> device) {
+        hdr.inspection.setValid();
+        hdr.inspection.srcAddr = hdr.ethernet.srcAddr;
+        hdr.inspection.deviceAddr = hdr.ipv4.srcAddr;
+        hdr.inspection.dstAddr  = hdr.ipv4.dstAddr;
+        hdr.inspection.dstPort = hdr.udp.dst_port;
+        hdr.inspection.proto_id = TYPE_IPV4;
+        hdr.ethernet.etherType = TYPE_INSPECTION;
+        forwardedPackets.count(device);
+    }
 
     table data_inspection_t {
         key = {
@@ -218,6 +207,11 @@ control MyIngress(inout headers hdr,
         }
         size = 1024;
         default_action = NoAction();
+    }
+
+    action data_drop(bit<32> device) {
+        mark_to_drop(standard_metadata);;
+        droppedPackets.count(device);
     }
 
     table data_drop_t {
@@ -245,14 +239,6 @@ control MyIngress(inout headers hdr,
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
     }
 
-    action control_ae_forward(bit<48> dmac, bit<9> intf, ip4Addr_t dstAddr, bit<16> dstPort) {
-        hdr.ethernet.dstAddr = dmac;
-        standard_metadata.egress_spec = intf;
-        hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
-        hdr.ipv4.dstAddr = dstAddr;
-        hdr.udp.dst_port = dstPort;
-    }
-
     table control_forward_t {
         key = {
             hdr.ipv4.dstAddr: lpm;
@@ -266,17 +252,6 @@ control MyIngress(inout headers hdr,
         default_action = NoAction();
     }
 
-    table control_ae_forward_t {
-        key = {
-            meta.fwd.l2ptr: exact;
-        }
-        actions = {
-            control_ae_forward;
-            NoAction;
-        }
-        default_action = NoAction();
-    }
-
      apply {
         if (hdr.ipv4.isValid()) {
             if (hdr.udp.isValid()) {
@@ -284,7 +259,6 @@ control MyIngress(inout headers hdr,
                 if (standard_metadata.egress_spec != DROP_PORT) {
                     data_inspection_t.apply();
                     data_forward_t.apply();
-                    control_ae_forward_t.apply();
                 }
             }
             else {

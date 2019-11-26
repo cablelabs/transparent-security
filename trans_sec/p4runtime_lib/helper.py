@@ -230,47 +230,12 @@ class P4InfoHelper(object):
         counter_entry.data.packet_count = 0
 
     @staticmethod
-    def build_clone_entry():
-        """
-       P4Runtime Write
-            updates {
-              type: INSERT
-              entity {
-                packet_replication_engine_entry {
-                  clone_session_entry {
-                    session_id: 2
-                    replicas {
-                      egress_port: 1
-                      instance: 1
-                    }
-                    replicas {
-                      egress_port: 2
-                      instance: 2
-                    }
-                    class_of_service: 2
-                    packet_length_bytes: 64
-                  }
-                }
-              }
-            }
-        :return:
-        """
+    def build_clone_entry(clone_egress):
         pre_entry = p4runtime_pb2.PacketReplicationEngineEntry()
         clone_session_entry = p4runtime_pb2.CloneSessionEntry()
         clone_session_entry.session_id = 5
-        clone_session_entry.class_of_service = 2
+        clone_session_entry.replicas.add(egress_port=clone_egress, instance=1)
         clone_session_entry.packet_length_bytes = 0
         pre_entry.clone_session_entry.CopyFrom(clone_session_entry)
-        # pre_entry = {
-        #     'packet_replication_engine_entry': {
-        #         'clone_session_entry': {
-        #             'session_id': 5,
-        #             'class_of_service': 2,
-        #             'egress_port': 3,
-        #             'packet_length_bytes': 0
-        #         }
-        #     }
-        # }
-
         logger.info('Clone entry - [%s]', pre_entry)
         return pre_entry

@@ -43,9 +43,6 @@ class CoreController(AbstractController):
         :param north_facing_links: northbound links
         :param south_facing_links: southbound links
         """
-        # clone_entry = self.p4info_helper.build_clone_entry()
-        # sw.write_clone_entries(clone_entry)
-        # logger.info('Installed clone on %s' % sw.name)
 
         for south_facing_link in south_facing_links:
             south_device = self.topo.get('hosts').get(south_facing_link.get(
@@ -84,27 +81,7 @@ class CoreController(AbstractController):
                 logger.info(
                     'Installed Host %s ipv4 cloning rule on %s',
                     north_device.get('ip'), sw.name)
-            else:
-                north_device = self.topo.get('external').get(
-                    north_facing_link.get('north_node'))
-                logger.info(
-                    'Core: %s connects to %s on physical port %s to ip %s:%s',
-                    sw_info['name'], north_device['name'],
-                    str(north_facing_link.get('north_facing_port')),
-                    north_device.get('ip'),
-                    str(north_device.get('ip_port')))
 
-                table_entry = self.p4info_helper.build_table_entry(
-                    table_name='MyIngress.control_ae_forward_t',
-                    match_fields={
-                        'meta.fwd.l2ptr': north_facing_link.get('l2ptr')
-                    },
-                    action_name='MyIngress.control_ae_forward',
-                    action_params={
-                        'dmac': north_device.get('mac'),
-                        'intf': north_facing_link.get('north_facing_port'),
-                        'dstAddr': convert.encode(north_device.get('ip'), 32),
-                        'dstPort': north_device.get('ip_port')
-                    })
-                sw.write_table_entry(table_entry)
-                logger.info('Installed AE rule on %s' % sw.name)
+        clone_entry = self.p4info_helper.build_clone_entry(sw_info['clone_egress'])
+        sw.write_clone_entries(clone_entry)
+        logger.info('Installed clone on %s' % sw.name)

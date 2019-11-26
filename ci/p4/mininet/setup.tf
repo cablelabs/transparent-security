@@ -62,6 +62,7 @@ sdn_dev_intf=${var.sdn_dev_intf}
 trans_sec_dir=${var.src_dir}
 topo_file_loc=${var.remote_scripts_dir}/${var.topo_file}
 remote_scripts_dir=${var.remote_scripts_dir}
+clone_egress_port=${var.clone_egress_port}
 "\
 EOT
   }

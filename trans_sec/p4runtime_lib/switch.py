@@ -130,16 +130,15 @@ class SwitchConnection(object):
         for response in self.client_stub.Read(request):
             yield response
 
-    def write_clone_entries(self, packet_replication_engine_entry):
+    def write_clone_entries(self, pre_entry):
         logger.info('Packet info for insertion to cloning table - %s',
-                    packet_replication_engine_entry)
+                    pre_entry)
         request = p4runtime_pb2.WriteRequest()
         request.device_id = self.device_id
         request.election_id.low = 1
         update = request.updates.add()
         update.type = p4runtime_pb2.Update.INSERT
-        update.entity.packet_replication_engine_entry.CopyFrom(
-            packet_replication_engine_entry)
+        update.entity.packet_replication_engine_entry.CopyFrom(pre_entry)
 
         try:
             logger.info('Request for writing a clone request to device - [%s]',

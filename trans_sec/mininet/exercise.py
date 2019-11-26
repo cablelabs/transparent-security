@@ -35,7 +35,7 @@ class ExerciseTopo(Topo):
     assumptions, mostly about the IP and MAC addresses.
     """
 
-    def __init__(self, hosts, switches, links, log_dir, **opts):
+    def __init__(self, hosts, switches, external, links, log_dir, **opts):
         Topo.__init__(self, **opts)
         self.sw_port_mapping = {}
 
@@ -71,7 +71,8 @@ class ExerciseTopo(Topo):
             elif np:
                 s_switch = switches.get(link.get('south_node'))
                 n_host = hosts.get(link.get('north_node'))
-
+                if n_host is None:
+                    n_host = external.get(link.get('north_node'))
                 # ignore externals
                 if n_host is not None:
                     self.addHost(n_host.get('name'),
@@ -188,7 +189,7 @@ class ExerciseRunner:
         self.log_dir = log_dir
         self.pcap_dir = pcap_dir
         self.switch_json = switch_json
-        self.topo = ExerciseTopo(self.hosts, self.switches, self.links,
+        self.topo = ExerciseTopo(self.hosts, self.switches, self.external, self.links,
                                  self.log_dir)
         self.mininet = self.__setup_mininet()
         self.running = False
