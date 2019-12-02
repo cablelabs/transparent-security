@@ -42,9 +42,6 @@ def get_args():
                         help='the remote debugging port')
     parser.add_argument('-s', '--sdn-url', dest='sdn_url', required=True,
                         help='the URL to the SDN controller')
-    parser.add_argument('-a', '--simple_ae', dest='simple_ae', required=False,
-                        default=True, type=bool,
-                        help='the URL to the SDN controller')
     parser.add_argument('-t', '--type', dest='type', required=True,
                         choices=['OINC', 'SIMPLE', 'LOGGING', 'INT'],
                         help='Acceptable values OINC|SIMPLE|LOGGING|INT')
