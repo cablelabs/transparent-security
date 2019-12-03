@@ -110,10 +110,13 @@ class SwitchConnection(object):
         update = request.updates.add()
         update.type = p4runtime_pb2.Update.INSERT
         update.entity.table_entry.CopyFrom(table_entry)
-
-        logger.info('Request for writing table entry to device - [%s]',
-                    request.device_id)
-        self.client_stub.Write(request)
+        try:
+            logger.info('Request for writing table entry to device - [%s]',
+                        request.device_id)
+            self.client_stub.Write(request)
+        except Exception as e:
+            logging.error('Error requesting [%s] table entry - [%s]', request, e)
+            raise e
 
     def read_table_entries(self, table_id=None):
         request = p4runtime_pb2.ReadRequest()

@@ -28,12 +28,9 @@ simultaneously from multiple hosts
 
 ````
 git clone https://github.com/cablelabs/transparent-security
-git clone https://github.com/cablelabs/snaps-config
 cd transparent-security/ci/env-build
 terraform init
-terraform apply -var-file={dir}/snaps-config/aws/snaps-ci.tfvars \
--auto-approve \
--var '{var name}={appropriate value}' &| -var-file={some tfvars file}
+terraform apply -var-file={tfvars file} -auto-approve -var '{var name}={appropriate value}'
 ````
 
 ### Obtain Deployment Information
@@ -57,7 +54,5 @@ ssh -i ubuntu@$(terraform output ip)
 ### Cleanup
 ````
 # from transparent-security/ci/env-build directory
-terraform destroy -var-file=~/snaps-config/aws/snaps-ci.tfvars \
--auto-approve -var \
--var '{var name}={appropriate value}' &| -var-file={some tfvars file}
+terraform destroy -var-file={tfvars file} -auto-approve -var '{var name}={appropriate value}'
 ````

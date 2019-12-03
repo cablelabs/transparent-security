@@ -203,15 +203,16 @@ control MyIngress(inout headers hdr,
     }
 
     action data_drop(bit<32> device) {
-        mark_to_drop(standard_metadata);;
+        mark_to_drop(standard_metadata);
         droppedPackets.count(device);
     }
 
     table data_drop_t {
         key = {
+            hdr.inspection.srcAddr: exact;
+            hdr.ipv4.srcAddr: exact;
             hdr.ipv4.dstAddr: exact;
             hdr.udp.dst_port: exact;
-            hdr.udp.len: exact;
         }
         actions = {
             data_drop;

@@ -168,16 +168,16 @@ control MyIngress(inout headers hdr,
     }
 
     action data_drop(bit<32> device) {
-        mark_to_drop(standard_metadata);;
+        mark_to_drop(standard_metadata);
         droppedPackets.count(device);
     }
 
     table data_drop_t {
         key = {
-            hdr.ipv4.dstAddr: exact;
+            hdr.inspection.srcAddr: exact;
             hdr.ipv4.srcAddr: exact;
+            hdr.ipv4.dstAddr: exact;
             hdr.udp.dst_port: exact;
-            hdr.udp.len: exact;
         }
         actions = {
             data_drop;
@@ -258,8 +258,11 @@ control MyIngress(inout headers hdr,
         if (hdr.ipv4.isValid()) {
             dbg_table.apply();
             if (hdr.udp.isValid()) {
-                 data_clone_t.apply();
-                 data_forward_t.apply();
+                 data_drop_t.apply();
+                 if (standard_metadata.egress_spec != DROP_PORT) {
+                     data_clone_t.apply();
+                     data_forward_t.apply();
+                 }
             }
             else {
                 control_forward_t.apply();

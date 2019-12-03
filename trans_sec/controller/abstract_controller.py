@@ -141,10 +141,10 @@ class AbstractController(object):
             table_entry = self.p4info_helper.build_table_entry(
                 table_name='MyIngress.data_drop_t',
                 match_fields={
-                    'hdr.ipv4.srcAddr': attack.get('src_ip'),
-                    'hdr.ipv4.dstAddr': attack.get('dst_ip'),
-                    'hdr.udp.dst_port': attack.get('dst_port'),
-                    'hdr.udp.len': attack.get('packet_size')
+                    'hdr.inspection.srcAddr': (attack.get('src_mac')),
+                    'hdr.ipv4.srcAddr': (attack.get('src_ip')),
+                    'hdr.ipv4.dstAddr': (attack.get('dst_ip')),
+                    'hdr.udp.dst_port': (int(attack.get('dst_port')))
                 },
                 action_name='MyIngress.data_drop',
                 action_params={
