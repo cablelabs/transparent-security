@@ -21,6 +21,11 @@ simultaneously from multiple hosts
 1. access_key: Amazon EC2 access key
 1. secret_key: Amazon EC2 secret key
 1. ec2_region: Amazon EC2 region
+1. env_type: {'mininet'|'tofino'}
+1. bf_sde_s3_bucket: when env_type is 'tofino', this is the bucket where your
+Barefoot SDE tar file would be located
+1. bf_sde_version: when env_type is 'tofino', this is the version contained in
+your associated s3 (Defaults and tested with '8.9.2', note that previous versions may not work) 
 1. public_key_file: Used to inject into the VM for SSH access with the user
 'ubuntu' (defaults to ~/.ssh/id_rsa.pub)
 1. private_key_file: Used to access the VM via SSH with the user 'ubuntu'
@@ -30,7 +35,8 @@ simultaneously from multiple hosts
 git clone https://github.com/cablelabs/transparent-security
 cd transparent-security/ci/env-build
 terraform init
-terraform apply -var-file={tfvars file} -auto-approve -var '{var name}={appropriate value}'
+terraform apply -auto-approve \
+-var '{var name}={appropriate value}' &| -var-file={some tfvars file}
 ````
 
 ### Obtain Deployment Information
@@ -54,5 +60,6 @@ ssh -i ubuntu@$(terraform output ip)
 ### Cleanup
 ````
 # from transparent-security/ci/env-build directory
-terraform destroy -var-file={tfvars file} -auto-approve -var '{var name}={appropriate value}'
+terraform destroy -auto-approve \
+-var '{var name}={appropriate value}' &| -var-file={some tfvars file}
 ````
