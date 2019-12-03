@@ -15,7 +15,7 @@
 variable "access_key" {}
 variable "secret_key" {}
 variable "build_id" {}
-variable "ec2_region" {default = "us-west-2"}
+variable "ec2_region" {}
 
 # Optional Variables
 variable "public_key_file" {default = "~/.ssh/id_rsa.pub"}
