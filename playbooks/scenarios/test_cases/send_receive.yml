@@ -65,20 +65,7 @@
     - set_fact:
         packet_count: "{{ grep_out['stdout_lines'][0] | int }}"
 
-    - debug:
-        var: packet_count
-
-    - name: Validate min {{ min_packet_count }} is not greater than {{ packet_count }}
-      fail:
-        msg: "{{ min_packet_count }} > {{ packet_count }}"
-      when: min_packet_count|int > packet_count|int
-
-    - name: Validate max {{ max_packet_count }} is not less than {{ packet_count }}
-      fail:
-        msg: "{{ max_packet_count }} < {{ packet_count }}"
-      when: max_packet_count|int < packet_count|int
-
-    - name: Validate all packet counts
+    - name: Validate max [{{ max_packet_count }}] NOT < actual [{{ packet_count }}] OR min [{{ min_packet_count }}] NOT > actual [{{ packet_count }}]
       fail:
         msg: "{{ max_packet_count }} < {{ packet_count }} or {{ min_packet_count }} > {{ packet_count }}"
       when: min_packet_count|int > packet_count|int or max_packet_count|int < packet_count|int
