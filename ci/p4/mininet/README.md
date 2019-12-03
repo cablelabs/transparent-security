@@ -1,5 +1,5 @@
 # transparent-security Mininet integration setup on AWS
-Readme for information on building a transparent-security environment
+Readme for information on how to execute transparent-security integration tests
 
 ### Host Requirements
 
