@@ -101,31 +101,3 @@ class SimpleAETests(unittest.TestCase):
             else:
                 self.assertTrue(ret_val1)
                 self.assertTrue(ret_val2)
-
-    def test_attack_wait_attack(self):
-        """
-        Tests to ensure that a single packet is handled without Error
-        :return:
-        """
-        pkt = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
-               INSPECT() /
-               IP(dst='localhost', src='localhost') /
-               UDP(dport=1234, sport=1234) /
-               'hello')
-
-        logger.info('Starting first packet attack')
-        for index in range(0, self.ae.packet_count + 100):
-            ret_val = self.ae.handle_packet(pkt)
-            if index < self.ae.packet_count:
-                self.assertFalse(ret_val)
-            else:
-                self.assertTrue(ret_val)
-
-        time.sleep(self.ae.sample_interval + 1)
-
-        for index in range(0, self.ae.packet_count + 100):
-            ret_val = self.ae.handle_packet(pkt)
-            if index < self.ae.packet_count:
-                self.assertFalse(ret_val)
-            else:
-                self.assertTrue(ret_val)
