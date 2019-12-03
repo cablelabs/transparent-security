@@ -68,9 +68,6 @@
     - debug:
         var: packet_count
 
-    # TODO/FIXME - This should not be working but the > or < should be joined with and =
-    # but that is not working, but everything should be failing when expected vs. actual are equal but it is not
-
     - name: Validate min {{ min_packet_count }} is not greater than {{ packet_count }}
       fail:
         msg: "{{ min_packet_count }} > {{ packet_count }}"
