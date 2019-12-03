@@ -10,6 +10,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# Simple scenario where packets are sent through 3 devices and only the last
+# one will be demonstrating dropped packets
 ---
 # Sending 25 packets within a second 1x through gateway 1
 - import_playbook: test_cases/send_receive.yml
@@ -41,7 +43,8 @@
   vars:
     receiver: inet
     receiver_log_file: "{{ log_dir }}/receiver-inet-3.out"
-    expected_received_packet_count: 150
+    min_received_packet_count: 99
+    max_received_packet_count: 150
     sender: Camera3
     sender_log_file: "{{ log_dir }}/sender-Camera3.out"
     send_port: 4323

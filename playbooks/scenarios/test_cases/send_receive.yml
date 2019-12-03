@@ -10,6 +10,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# integration test case where one host creates a packet sniffer and another
+# sends packets. The validation routine counts the number received via the
+# receiver's log file
 ---
 
 # Reset log file
@@ -52,12 +55,33 @@
 - hosts: localhost
   gather_facts: no
   vars:
-    packet_count: "{{ expected_received_packet_count | default(send_packet_count) | int }}"
+    min_packet_count: "{{ min_received_packet_count | default(send_packet_count) | int }}"
+    max_packet_count: "{{ max_received_packet_count | default(send_packet_count) | int }}"
   tasks:
     - name: Parse file with command - [grep {{ send_to_ip }} {{ receiver_log_file }} | grep {{ send_port }} | wc -l]
       shell: "grep {{ send_to_ip }} {{ receiver_log_file }} | grep {{ send_port }} | wc -l"
       register: grep_out
-    - name: Validate {{ packet_count }} packets were actually received
+
+    - set_fact:
+        packet_count: "{{ grep_out['stdout_lines'][0] | int }}"
+
+    - debug:
+        var: packet_count
+
+    # TODO/FIXME - This should not be working but the > or < should be joined with and =
+    # but that is not working, but everything should be failing when expected vs. actual are equal but it is not
+
+    - name: Validate min {{ min_packet_count }} is not greater than {{ packet_count }}
       fail:
-        msg: "Expected count of {{ packet_count }} not actual {{ grep_out['stdout_lines'][0] }}"
-      when: packet_count != grep_out['stdout_lines'][0]
+        msg: "{{ min_packet_count }} > {{ packet_count }}"
+      when: min_packet_count|int > packet_count|int
+
+    - name: Validate max {{ max_packet_count }} is not less than {{ packet_count }}
+      fail:
+        msg: "{{ max_packet_count }} < {{ packet_count }}"
+      when: max_packet_count|int < packet_count|int
+
+    - name: Validate all packet counts
+      fail:
+        msg: "{{ max_packet_count }} < {{ packet_count }} or {{ min_packet_count }} > {{ packet_count }}"
+      when: min_packet_count|int > packet_count|int or max_packet_count|int < packet_count|int
