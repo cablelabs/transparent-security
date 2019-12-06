@@ -53,7 +53,7 @@ resource "null_resource" "env_provision" {
 ${var.ANSIBLE_CMD} -u ${var.sudo_user} \
 -i ${aws_instance.transparent-security-build-img.public_ip}, \
 -u ${var.sudo_user} \
-${var.ANSIBLE_PB_PATH}/mininet/env_mininet.yml \
+${var.ANSIBLE_PB_PATH}/${var.env_type}/env_build.yml \
 --key-file ${var.private_key_file} \
 --extra-vars "\
 aws_access_key=${var.access_key}
@@ -63,6 +63,8 @@ p4c_version=${var.p4c_version}
 protobuf_version=${var.protobuf_version}
 pi_version=${var.pi_version}
 bm_version=${var.bm_version}
+bf_sde_version=${var.bf_sde_version}
+bf_sde_s3_bucket=${var.bf_sde_s3_bucket}
 "\
 EOT
   }

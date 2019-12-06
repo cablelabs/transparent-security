@@ -37,7 +37,7 @@ cd transparent-security/ci/p4/mininet
 terraform init
 terraform apply \
 -auto-approve \
--var '{var name}={appropriate value}' &| -var-file={some tfvars file}\
+-var '{var name}={appropriate value}' &| -var-file={some tfvars file}
 ````
 
 ### Obtain Deployment Information
