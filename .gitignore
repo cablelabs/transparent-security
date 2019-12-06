@@ -102,3 +102,9 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+/.idea/
+*.iml
+*/.terraform/*
+*.tfstate*
+lock.json
+terraform-provider-*

@@ -1,0 +1,81 @@
+# Copyright (c) 2019 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+- hosts: all
+
+  gather_facts: no
+
+  environment:
+    CFLAGS: "-Os"
+    CXXFLAGS: "-Os"
+    LDFLAGS: "-Wl,-s"
+
+  tasks:
+    - name: apt update
+      become: yes
+      apt:
+        update_cache: yes
+
+    - name: install packages for protobuf
+      become: yes
+      apt:
+        name:
+          - git
+          - autoconf
+          - automake
+          - libtool
+          - curl
+          - make
+          - gcc
+          - unzip
+
+    - name: clone protobuf
+      git:
+        repo: https://github.com/protocolbuffers/protobuf
+        dest: ~/protobuf
+        version: "{{ protobuf_version }}"
+
+    - name: get protobuf submodules
+      command: git submodule update --init --recursive
+      args:
+        chdir: ~/protobuf
+
+    - name: autogen protobuf
+      command: ./autogen.sh
+      args:
+        chdir: ~/protobuf
+
+    - name: configure protobuf
+      command: ./configure --prefix=/usr
+      args:
+        chdir: ~/protobuf
+
+    - name: make protobuf
+      command: make -j4
+      args:
+        chdir: ~/protobuf
+
+    - name: make install protobuf
+      command: sudo make install
+      args:
+        chdir: ~/protobuf
+
+    - name: ldconfig protobuf
+      command: sudo ldconfig
+      args:
+        chdir: ~/protobuf
+
+    - name: install python built dependencies
+      command: sudo python setup.py install
+      args:
+        chdir: ~/protobuf/python

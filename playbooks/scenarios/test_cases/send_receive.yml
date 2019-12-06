@@ -1,0 +1,71 @@
+# Copyright (c) 2019 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# integration test case where one host creates a packet sniffer and another
+# sends packets. The validation routine counts the number received via the
+# receiver's log file
+---
+
+# Reset log file
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Remove {{ receiver_log_file }}
+      become: yes
+      file:
+        path: "{{ receiver_log_file }}"
+        state: absent
+
+# Create packet sniffer
+- hosts: "{{ receiver }}"
+  gather_facts: no
+  vars:
+    receive_timeout: "{{ receiver_timeout_seconds | default(999999) }}"
+  tasks:
+    - name: Receive and log packets from "{{ receiver }}" logged at {{ receiver_log_file }} with async timeout {{ receive_timeout }}
+      shell: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/receive_packets.py -i {{ receiver }}-eth0 -f {{ receiver_log_file }}"
+      async: "{{ receive_timeout }}"
+      poll: 0
+
+# Generate packets from the sender
+- hosts: "{{ sender }}"
+  gather_facts: no
+  vars:
+    packet_count: "{{ send_packet_count | default(1) }}"
+    send_msg: "{{ the_message | default('hello transparent-security') }}"
+    send_delay: "{{ send_packets_delay | default(15) }}"
+    interval: "{{ send_interval | default(0.005) }}"
+    loops: "{{ send_loops | default(1) }}"
+    loop_delay: "{{ send_loop_delay | default(1) }}"
+  tasks:
+    - name: Sending {{ packet_count }} UDP packets to port {{ send_port }} every {{ interval }} seconds {{ loops }}x each with a delay between bursts of {{ loop_delay }} seconds from {{ sender }} after delay {{ send_delay}}
+      shell: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/send_packets.py -y {{ send_delay }} -i {{ interval }} -it {{ loops }} -itd {{ loop_delay }} -z {{ sender }}-eth0 -r {{ send_to_ip }} -sp {{ send_src_port }} -p {{ send_port }} -f {{ sender_log_file }} -c {{ packet_count }} -m '{{ send_msg }}'"
+      async: 180
+
+# Validate sent packets were received
+- hosts: localhost
+  gather_facts: no
+  vars:
+    min_packet_count: "{{ min_received_packet_count | default(send_packet_count) | int }}"
+    max_packet_count: "{{ max_received_packet_count | default(send_packet_count) | int }}"
+  tasks:
+    - name: Parse file with command - [grep {{ send_to_ip }} {{ receiver_log_file }} | grep {{ send_port }} | wc -l]
+      shell: "grep {{ send_to_ip }} {{ receiver_log_file }} | grep {{ send_port }} | wc -l"
+      register: grep_out
+
+    - set_fact:
+        packet_count: "{{ grep_out['stdout_lines'][0] | int }}"
+
+    - name: Validate max [{{ max_packet_count }}] NOT < actual [{{ packet_count }}] OR min [{{ min_packet_count }}] NOT > actual [{{ packet_count }}]
+      fail:
+        msg: "{{ max_packet_count }} < {{ packet_count }} or {{ min_packet_count }} > {{ packet_count }}"
+      when: min_packet_count|int > packet_count|int or max_packet_count|int < packet_count|int

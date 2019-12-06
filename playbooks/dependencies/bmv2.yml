@@ -1,0 +1,103 @@
+# Copyright (c) 2019 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+- hosts: all
+  gather_facts: no
+  tasks:
+    - name: apt update
+      become: yes
+      apt:
+        update_cache: yes
+
+    - name: install packages for behavioral-model
+      become: yes
+      apt:
+        name:
+          - git
+          - autoconf
+          - automake
+          - libtool
+          - curl
+          - make
+          - g++
+          - libreadline-dev
+
+    - name: clone behavioral-model
+      git:
+        repo: https://github.com/p4lang/behavioral-model.git
+        dest: ~/behavioral-model
+        version: "{{ bm_version }}"
+
+    - name: Install behavioral-model dependencies
+      command: ./install_deps.sh
+      args:
+        chdir: ~/behavioral-model
+      async: 600
+
+- import_playbook: p4runtime.yml
+
+- hosts: all
+  gather_facts: no
+  tasks:
+    - name: autogen behavioral-model
+      command: ./autogen.sh
+      args:
+        chdir: ~/behavioral-model
+
+    - name: configure behavioral-model
+      command: ./configure --enable-debugger --with-pi
+      args:
+        chdir: ~/behavioral-model
+
+    - name: make behavioral-model
+      command: make -j4
+      args:
+        chdir: ~/behavioral-model
+      async: 1200
+
+      ignore_errors: yes
+
+    - name: install behavioral-model
+      command: sudo make install
+      args:
+        chdir: ~/behavioral-model
+
+    - name: ldconfig behavioral-model
+      command: sudo ldconfig
+      args:
+        chdir: ~/behavioral-model
+
+    - name: autogen behavioral-model target simple_switch_grpc
+      command: ./autogen.sh
+      args:
+        chdir: ~/behavioral-model/targets/simple_switch_grpc
+
+    - name: configure behavioral-model target simple_switch_grpc
+      command: ./configure --with-pi
+      args:
+        chdir: ~/behavioral-model/targets/simple_switch_grpc
+
+    - name: make behavioral-model target simple_switch_grpc
+      command: make -j4
+      args:
+        chdir: ~/behavioral-model/targets/simple_switch_grpc
+
+    - name: install behavioral-model simple_switch_grpc
+      command: sudo make install
+      args:
+        chdir: ~/behavioral-model/targets/simple_switch_grpc
+
+    - name: ldconfig behavioral-model target simple_switch_grpc
+      command: sudo ldconfig
+      args:
+        chdir: ~/behavioral-model/targets/simple_switch_grpc

@@ -1,0 +1,90 @@
+---
+inet:
+  - daemon: sniff_and_log
+    iface: inet-eth0
+    loglevel: DEBUG
+    logfile:  inet_sniff_inet.log
+
+Camera1:
+  - daemon: heartbeat
+    destination: 10.2.5.2
+    port: 1235
+    msg: Normal
+    interface: Camera1-eth0
+    loglevel: DEBUG
+    logfile: heartbeat_daemon_Camera1.log
+    switch_ethernet: 00:00:00:01:01:00
+    delay: 3
+    interval: 3
+
+NAS1:
+  - daemon: heartbeat
+    destination: 10.2.5.2
+    port: 1235
+    msg: Normal
+    interface: NAS1-eth0
+    loglevel: DEBUG
+    logfile: heartbeat_daemon_NAS1.log
+    switch_ethernet: 00:00:00:01:01:00
+    delay: 3
+    interval: 3
+  
+Game1:
+  - daemon: heartbeat
+    destination: 10.2.5.2
+    port: 1235
+    msg: Normal
+    interface: Game1-eth0
+    loglevel: DEBUG
+    logfile: heartbeat_daemon_Game1.log
+    switch_ethernet: 00:00:00:01:01:00
+    delay: 3
+    interval: 3
+  
+Camera2:
+  - daemon: heartbeat
+    destination: 10.2.5.2
+    port: 1235
+    msg: Normal
+    interface: Camera2-eth0
+    loglevel: DEBUG
+    logfile: heartbeat_daemon_Camera2.log
+    switch_ethernet: 00:00:00:01:02:00
+    delay: 3
+    interval: 3
+  
+Game2:
+  - daemon: heartbeat
+    destination: 10.2.5.2
+    port: 1235
+    msg: Normal
+    interface: Game2-eth0
+    loglevel: DEBUG
+    logfile: heartbeat_daemon_Game2.log
+    switch_ethernet: 00:00:00:01:02:00
+    delay: 3
+    interval: 3
+
+Camera3:
+  - daemon: heartbeat
+    destination: 10.2.5.2
+    port: 1235
+    msg: Normal
+    interface: Camera3-eth0
+    loglevel: DEBUG
+    logfile: heartbeat_daemon_Camera3.log
+    switch_ethernet: 00:00:00:01:03:00
+    delay: 3
+    interval: 3
+  
+Game3:
+  - daemon: heartbeat
+    destination: 10.2.5.2
+    port: 1235
+    msg: Normal
+    interface: Game3-eth0
+    loglevel: DEBUG
+    logfile: heartbeat_daemon_Game3.log
+    switch_ethernet: 00:00:00:01:03:00
+    delay: 3
+    interval: 3

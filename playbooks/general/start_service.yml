@@ -1,0 +1,71 @@
+# Copyright (c) 2019 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+- hosts: all
+  become: yes
+
+  gather_facts: no
+
+  vars:
+    pause: "{{ srvc_start_pause_time | default(10) }}"
+    wait_port: "{{ port_to_wait | default('') }}"
+    timeout: "{{ wait_timeout | default(60) }}"
+    log_dir: "{{ srvc_log_dir | default('') }}"
+
+  tasks:
+    - name: Ensure {{ remote_scripts_dir }} scripts directory has been created
+      file:
+        path: "{{ remote_scripts_dir }}"
+        state: directory
+
+    - name: Ensure {{ log_dir }} log directory has been created
+      file:
+        path: "{{ log_dir }}"
+        state: directory
+      when: log_dir != ''
+
+    - name: Create {{ service_name }} Service script
+      template:
+        src: "{{ local_srvc_script_tmplt_file }}"
+        dest: "{{ remote_scripts_dir }}/{{ service_name }}.sh"
+
+    - name: Copy {{ service_name }} Service File to /etc/systemd/system/{{ service_name }}.service
+      template:
+        src: ./templates/service.j2
+        dest: "/etc/systemd/system/{{ service_name }}.service"
+      vars:
+        startup_script: "{{ remote_scripts_dir }}/{{ service_name }}.sh"
+        description: "{{ srvc_desc }}"
+
+    - name: Start {{ service_name }}.service
+      systemd:
+        name: "{{ service_name }}.service"
+        state: started
+        enabled: yes
+
+    - name: Service check sleep {{ pause }} seconds as the state is always "running" immediatley
+      pause:
+        seconds: "{{ pause }}"
+    - name: Get service facts
+      service_facts:
+
+    - name: Fail when {{ service_name }} not running
+      fail:
+        msg: "{{ service_name }} not running"
+      when: ansible_facts.services['{{ service_name }}.service']['state'] != "running"
+
+    - name: Wait for {{ service_name }} to open port {{ wait_port }}
+      wait_for:
+        port: "{{ wait_port }}"
+        timeout: "{{ timeout }}"
+      when: wait_port != ''

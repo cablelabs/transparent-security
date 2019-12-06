@@ -1,0 +1,93 @@
+# Copyright (c) 2019 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+# Requires playbook - protobuf.yml
+
+- hosts: all
+
+  gather_facts: no
+
+  tasks:
+    - name: apt update
+      become: yes
+      apt:
+        update_cache: yes
+
+    - name: install packages for p4c
+      become: yes
+      apt:
+        name:
+          - git
+          - python-pip
+          - g++
+          - automake
+          - libtool
+          - libgc-dev
+          - cmake
+          - flex
+          - bison
+          - libfl-dev
+          - libgmp-dev
+          - libboost-dev
+          - libboost-iostreams-dev
+          - libboost-graph-dev
+          - llvm
+          - pkg-config
+          - tcpdump
+          - doxygen
+#          - python-scapy
+#          - python-ipaddr
+#          - python-ply
+#          - graphviz
+#          - texlive-full
+
+    - name: pip install
+      become: yes
+      pip:
+        name:
+          - scapy
+          - ipaddr
+          - ply
+
+    - name: clone p4c
+      git:
+        repo: https://github.com/p4lang/p4c
+        dest: ~/p4c
+        recursive: yes
+        track_submodules: yes
+        version: "{{ p4c_version }}"
+
+    - name: get p4c submodules
+      command: git submodule update --init --recursive
+      args:
+        chdir: ~/p4c
+
+    - name: Create p4c build directory
+      file:
+        path: ~/p4c/build
+        state: directory
+
+    - name: cmake p4c
+      command: cmake .. -DCMAKE_BUILD_TYPE=DEBUG -DENABLE_EBPF=OFF -DENABLE_BMV2=ON
+      args:
+        chdir: ~/p4c/build
+
+    - name: make -j4
+      command: make -j4
+      args:
+        chdir: ~/p4c/build
+
+    - name: install p4c
+      command: sudo make install
+      args:
+        chdir: ~/p4c/build
