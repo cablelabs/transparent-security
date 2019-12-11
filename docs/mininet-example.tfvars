@@ -17,3 +17,6 @@ mininet-ami = "ami-09263e0c9493510b0"
 
 # Amazon EC2 region; Optional to change
 ec2_region = "us-west-2"
+
+# When 'True', the mininet host daemons will be started else not (Default 'True')
+run_daemons = "True"
