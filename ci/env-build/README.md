@@ -39,9 +39,11 @@ terraform apply -auto-approve \
 -var '{var name}={appropriate value}' &| -var-file={some tfvars file}
 ````
 Note: Refer the example.tfvars in transparent-security/docs   
-Example: 
+Example:  
+Copy transparent-securiyt/docs/example.tfvars to a working directory and 
+make changes to adapt the file to your local environment.
 ````
-terraform apply -auto-approve -var-file=transparent-security/docs/example.tfvars \
+terraform apply -auto-approve -var-file=example.tfvars \
 -var build_id=test-image -var env_type=mininet
 ````
 
