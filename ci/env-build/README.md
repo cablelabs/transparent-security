@@ -15,21 +15,29 @@ Download and install your binary for your platform from  https://www.terraform.i
 
 This Terraform script has been designed to build a P4 environment on AWS.
 The following variables are required:
+An example file is in: transparent-security/docs/example.tfvars
+Copy transparent-securiyt/docs/example.tfvars to a working directory and 
+make changes to adapt the file to your local environment.
 
-1. build_id: this value must be unique to ensure multiple jobs can be run
+* build_id: this value must be unique to ensure multiple jobs can be run
 simultaneously from multiple hosts
-1. access_key: Amazon EC2 access key
-1. secret_key: Amazon EC2 secret key
-1. ec2_region: Amazon EC2 region
-1. env_type: {'mininet'|'tofino'}
-1. bf_sde_s3_bucket: when env_type is 'tofino', this is the bucket where your
+* access_key: Amazon EC2 access key
+* secret_key: Amazon EC2 secret key
+* ec2_region: Amazon EC2 region
+* env_type: {'mininet'|'tofino'}
+
+The following variaiable are only used when running a tofine build and can
+be skipped with a mininet environment.
+
+* bf_sde_s3_bucket: when env_type is 'tofino', this is the bucket where your
 Barefoot SDE tar file would be located
-1. bf_sde_version: when env_type is 'tofino', this is the version contained in
+* bf_sde_version: when env_type is 'tofino', this is the version contained in
 your associated s3 (Defaults and tested with '8.9.2', note that previous versions may not work) 
-1. public_key_file: Used to inject into the VM for SSH access with the user
+* public_key_file: Used to inject into the VM for SSH access with the user
 'ubuntu' (defaults to ~/.ssh/id_rsa.pub)
-1. private_key_file: Used to access the VM via SSH with the user 'ubuntu'
+* private_key_file: Used to access the VM via SSH with the user 'ubuntu'
 (Defaults to ~/.ssh/id_rsa)
+
 
 ````
 git clone https://github.com/cablelabs/transparent-security
@@ -38,13 +46,10 @@ terraform init
 terraform apply -auto-approve \
 -var '{var name}={appropriate value}' &| -var-file={some tfvars file}
 ````
-Note: Refer the example.tfvars in transparent-security/docs   
-Example:  
-Copy transparent-securiyt/docs/example.tfvars to a working directory and 
-make changes to adapt the file to your local environment.
+
+Example terraform command with updated variable file:
 ````
-terraform apply -auto-approve -var-file=example.tfvars \
--var build_id=test-image -var env_type=mininet
+terraform apply -auto-approve -var-file=my-mininet.tfvars
 ````
 
 ### Obtain Deployment Information
