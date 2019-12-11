@@ -38,6 +38,12 @@ terraform init
 terraform apply -auto-approve \
 -var '{var name}={appropriate value}' &| -var-file={some tfvars file}
 ````
+Note: Refer our example.tfvars in transparent-security/docs   
+Example: 
+````
+terraform apply -auto-approve -var-file=transparent-security/docs/example.tfvars \
+-var build_id=test-image -var env_type=mininet
+````
 
 ### Obtain Deployment Information
 ````
