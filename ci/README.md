@@ -1,6 +1,6 @@
 # transparent-security CI
 
-###Table of Contents
+### Table of Contents
 1. Introduction
 2. Host Requirements
 3. Install Terraform
@@ -41,7 +41,7 @@ The following variables are required:
 
 | Variable         | Description                                                                                                                               | Type   | Example                                                 |
 |------------------|-------------------------------------------------------------------------------------------------------------------------------------------|--------|---------------------------------------------------------|
-| build_id         | this value must be unique to ensure multiple jobs  can be run simultaneously from multiple hosts                                          | string | build_id = "test-1"                                     |
+| build_id         | This value must be unique to ensure multiple jobs  can be run simultaneously from multiple hosts                                          | string | build_id = "test-1"                                     |
 | access_key       | Amazon EC2 access key                                                                                                                     | string | access_key = "AKIAIOSFODNN7EXAMPLE"                     |
 | secret_key       | Amazon EC2 secret key                                                                                                                     | string | secret_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" |
 | ec2_region       | Amazon EC2 region                                                                                                                         | string | ec2_region = "us-west-2"                                |
