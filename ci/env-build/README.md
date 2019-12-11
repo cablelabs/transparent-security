@@ -13,11 +13,14 @@ Download and install your binary for your platform from  https://www.terraform.i
 
 ### Setup and execute
 
-This Terraform script has been designed to build a P4 environment on AWS.
-The following variables are required:
-An example file is in: transparent-security/docs/example.tfvars
+An example file is in: transparent-security/docs/mininet-example.tfvars 
+
 Copy transparent-securiyt/docs/example.tfvars to a working directory and 
 make changes to adapt the file to your local environment.
+
+This Terraform script has been designed to build a P4 environment on AWS.
+The following variables are required:
+
 
 * build_id: this value must be unique to ensure multiple jobs can be run
 simultaneously from multiple hosts
