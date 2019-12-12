@@ -64,6 +64,15 @@ Example terraform command with updated variable file:
 terraform apply -auto-approve -var-file=env-build.tfvars
 ````
 
+Sample Output
+````
+Apply complete! Resources: 12 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+ip = 34.211.114.181
+````
+
   ### 4.2. Mininet 
   
 An example file is in: transparent-security/docs/mininet-example.tfvars 
@@ -77,7 +86,7 @@ defaults that may cause issues:
 
 | Variable         | Description                                                                                                                               | Type   | Example                                                 |
 |------------------|-------------------------------------------------------------------------------------------------------------------------------------------|--------|---------------------------------------------------------|
-| build_id         | this value must be unique to ensure multiple jobs  can be run simultaneously from multiple hosts                                          | string | build_id = "test-mininet"                                     |
+| build_id         | This value must be unique to ensure multiple jobs  can be run simultaneously from multiple hosts                                          | string | build_id = "test-mininet"                                     |
 | access_key       | Amazon EC2 access key                                                                                                                     | string | access_key = "AKIAIOSFODNN7EXAMPLE"                     |
 | secret_key       | Amazon EC2 secret key                                                                                                                     | string | secret_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" |
 | ec2_region       | Amazon EC2 region                                                                                                                         | string | ec2_region = "us-west-2"                                |
@@ -97,24 +106,74 @@ Example terraform command with updated variable file:
 ````
 terraform apply -auto-approve -var-file=mininet.tfvars
 ````
+
+Sample Output
+````
+aws_key_pair.transparent-security-mini-pk: Creating...
+aws_security_group.transparent-security-img-sg: Creating...
+aws_key_pair.transparent-security-mini-pk: Creation complete after 5s
+.
+.
+.
+Apply complete! Resources: 12 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+ip = 34.211.54.181
+````
 ### 5. Obtain Deployment Information
 ````
 # from transparent-security/ci/p4/mininet directory
 terraform show
 ````
+Sample output - 
+````
+# aws_instance.transparent-security-mininet-integration:
+resource "aws_instance" "transparent-security-mininet-integration" {
+    ami                          =  
+.
+.
+.
+.
+Outputs:
 
+ip = "34.211.114.181"
+````
 ### 6. Obtain EC2 Instance IP
 ````
 # from transparent-security/ci/p4/mininet directory
 terraform output ip
 ````
-
+Sample output - 
+````
+34.211.114.181
+````
 ### SSH into EC2 Mininet VM
 ````
 # from transparent-security/ci/p4/mininet directory
 ssh -i ubuntu@$(terraform output ip)
 ````
+Sample output - 
+````
+Welcome to Ubuntu 16.04.5 LTS (GNU/Linux 4.4.0-1075-aws x86_64)
 
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/advantage
+
+  Get cloud support with Ubuntu Advantage Cloud Guest:
+    http://www.ubuntu.com/business/services/cloud
+
+149 packages can be updated.
+89 updates are security updates.
+
+New release '18.04.3 LTS' available.
+Run 'do-release-upgrade' to upgrade to it.
+
+
+Last login: Wed Dec 11 22:39:13 2019 from 127.0.0.1
+ubuntu@ip-172-31-15-5:~$ 
+````
 ### 7. Development and debugging of Python
 The playbooks will be installing the python code located in the trans_sec
 directory into the VM's Python runtime in place so any changes there will be
@@ -132,4 +191,12 @@ Mininet -
 # from transparent-security/ci/p4/mininet directory
 terraform destroy -auto-approve \
 -var '{var name}={appropriate value}' &| -var-file={some tfvars file}
+````
+Sample output - 
+````
+.
+.
+Destroy complete! Resources: 12 destroyed.
+
+Process finished with exit code 0
 ````
