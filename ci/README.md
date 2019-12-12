@@ -66,6 +66,12 @@ terraform apply -auto-approve -var-file=env-build.tfvars
 
 Sample Output
 ````
+aws_key_pair.transparent-security-mini-pk: Creating...
+aws_security_group.transparent-security-img-sg: Creating...
+aws_key_pair.transparent-security-mini-pk: Creation complete after 1s
+.
+.
+.
 Apply complete! Resources: 12 added, 0 changed, 0 destroyed.
 
 Outputs:
