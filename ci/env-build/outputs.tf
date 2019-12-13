@@ -15,3 +15,7 @@
 output "ip" {
   value = aws_instance.transparent-security-build-img.public_ip
 }
+
+output "ami-id" {
+  value = aws_ami_from_instance.transparent-security-env-build.id
+}

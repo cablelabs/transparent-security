@@ -27,8 +27,8 @@ resource "aws_instance" "transparent-security-build-img" {
   # Used to ensure host is really up before attempting to apply ansible playbooks
   provisioner "remote-exec" {
     inline = [
-      "sudo apt update",
-      "sudo apt install python2.7 -y",
+      "sudo apt-get update",
+      "sudo apt-get install python2.7 -y",
       "sudo ln /usr/bin/python2.7 /usr/bin/python"
     ]
 
@@ -68,4 +68,9 @@ bf_sde_s3_bucket=${var.bf_sde_s3_bucket}
 "\
 EOT
   }
+}
+
+resource "aws_ami_from_instance" "transparent-security-env-build" {
+  name               = "transparent-security-env-build-${var.build_id}"
+  source_instance_id = aws_instance.transparent-security-build-img.id
 }
