@@ -3,15 +3,11 @@
 ## Table of Contents
 
 1. Introduction
-1. Host Requirements
-1. Install Terraform
-1. Setup and Execute  
-   4.1. CI Environment Build  
-   4.2. Mininet
-1. Obtain deployment information
-1. Obtain EC2 instance IP
-1. Development and debugging of Python
-1. Cleanup
+2. [Optional] Create an OS instance for running the mininet simulator
+3. Run minine simulator
+4. Obtain EC2 instance IP
+5. Development and debugging of Python
+6. Cleanup
 
 ## 1. Introduction
 
@@ -20,27 +16,25 @@ This document provides instructuions to:
 1. Building a transparent-security environment on AWS
 1. Setting up Mininet and AWS
 
-## 2. Host Requirements
+## 2. [Optional] Create an OS instance for running the mininet simulator
 
-- Python 2.7 is installed
-- The python-pip package has been installed
-- The Python ansible >=2.7.5 package has been installed
+This step is optional if you are running on AWS and use the AMI provided by CableLabs.
 
-## 3. Install Terraform
+Section 4.1 provides instructions for using Terraform to build an AMI on your AWS.
 
-Download and install your binary for your platform from  <https://www.terraform.io/downloads.html>
+Section 4.2 provides instructions for building an image in another environemnt or on baremetal.
 
-## 4. Setup and Execute
+### 2.1. Build an AMI for running mininet on AWS
 
-### 4.1. CI Environment Build
+#### 1. Clone the transparent-security repository
 
-An example file is in: transparent-security/docs/env-build-example.tfvars
+```bash
+git clone https://github.com/cablelabs/transparent-security
+```
 
-Copy transparent-securiyt/docs/env-build-example.tfvars to a working directory and 
-make changes to adapt the file to your local environment.
+#### 2. Create a variable file for your environment
 
-This Terraform script has been designed to build a P4 environment on AWS.
-The following variables are required:
+Copy the example variable file transparent-securiyt/docs/env-build-example.tfvars to a working directory and make changes to adapt the file to your local environment.
 
 | Variable         | Description                                                                                                                               | Type   | Example                                                 |
 |------------------|-------------------------------------------------------------------------------------------------------------------------------------------|--------|---------------------------------------------------------|
@@ -48,28 +42,61 @@ The following variables are required:
 | access_key       | Amazon EC2 access key                                                                                                                     | string | access_key = "AKIAIOSFODNN7EXAMPLE"                     |
 | secret_key       | Amazon EC2 secret key                                                                                                                     | string | secret_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" |
 | ec2_region       | Amazon EC2 region                                                                                                                         | string | ec2_region = "us-west-2"                                |
-| env_type         | The type of environment being used. Could be "mininet" or "tofino".                                                                       | string | env_type = "mininet"                                    |
 | public_key_file  | Used to inject into the VM for SSH access with the user'ubuntu' (defaults to ~/.ssh/id_rsa.pub)                                           | string | public_key_file = "~/.ssh/id_rsa.pub"                   |
 | private_key_file | Used to access the VM via SSH with the user 'ubuntu' (defaults to ~/.ssh/id_rsa)                                                          | string | private_key_file = "~/.ssh/id_rsa"                      |
-| bf_sde_s3_bucket | Used when env_type="tofino". Points to the S3 bucket with the Barefoot SDE tar file                                                        | string | bf_sde_s3_bucket = "Barefoot"                           |
-| bf_sde_version   | Used when env_type="tofino". Barefoot SDE version in the S3 bucket (defaults and tested with '8.9.2'). Note: Previous versions may not work | string | bf_sde_version = "8.9.2"                                |
+| env_type | The type of environemnt being built (only used for creating the environment)                                                          | string | env_type = "mininet"                      |
+| mininet_ami | The AMI for the mininet environment (defaults to "ami-060d055b5ca40de8c"). Only used for running the simulator.                                         | string | mininet_ami = "ami-060d055b5ca40de8c"                      |
+| run_daemons      | When 'True', the mininet host daemons will be started else not (defaults to 'True') Only used for running the simulator.                                                      | string | run_daemons = "True"                                    |
+
+#### 3. Install dependences on your local system
+
+This can be any system capable of connecting to AWS and running Terraform and Ansible to build an AMI with the dependencies needed to run the mininet simulator.
+
+- Python 2.7 is installed
+- The python-pip package has been installed
+- The Python ansible >=2.7.5 package has been installed
+
+On Ubuntu run:
 
 ```bash
-git clone https://github.com/cablelabs/transparent-security
-cd transparent-security/ci/env-build
-terraform init
-terraform apply \
--auto-approve \
--var '{var name}={appropriate value}' &| -var-file={some tfvars file}
+sudo apt update
+sudo apt install python-pip
+sudo pip install ansible
 ```
 
-Example terraform command with updated variable file:
-````
-terraform apply -auto-approve -var-file=env-build.tfvars
-````
+Validate the ansible version:
 
-Sample Output
-````
+```bash
+ansible --version
+```
+
+Example output:
+
+```bash
+ansible 2.9.2
+.
+.
+.
+  python version = 2.7.16 (default, Nov  9 2019, 05:55:08) [GCC 4.2.1 Compatible Apple LLVM 11.0.0 (clang-1100.0.32.4) (-macos10.15-objc-s
+```
+
+#### 4. Install Terraform
+
+[Terraform Download page](https://www.terraform.io/downloads.html)
+
+#### 5. Create the AMI with terraform
+
+This step will creat an VM on AWS, install all mininet dependencies and create an AMI.
+
+```bash
+cd transparent-security/ci/env-build
+terraform init
+terraform apply -auto-approve -var-file=env-build.tfvars
+```
+
+Sample Output:
+
+```bash
 aws_key_pair.transparent-security-mini-pk: Creating...
 aws_security_group.transparent-security-img-sg: Creating...
 aws_key_pair.transparent-security-mini-pk: Creation complete after 1s
@@ -82,9 +109,11 @@ Outputs:
 
 ami-id = ami-0393652ac3fbc331e
 ip = 34.211.114.181
-````
+```
 
-Note the ami-id, this will be used when running simulations.
+Save the ami-id, this will be used when running simulations.
+
+#### 6. Remove the AMI for terraform state
 
 Remove the AMI from the terrafrom state so that it will remain after destroying the VM.
 
@@ -94,7 +123,7 @@ Removed aws_ami_from_instance.transparent-security-env-build
 Successfully removed 1 resource instance(s).
 ```
 
-Destroy the VM and other artificats.
+#### 7. Destroy the VM and other artificats
 
 ```bash
 terraform destroy -auto-approve -var-file="../../my-mininet.tfvars"
@@ -111,9 +140,11 @@ aws_security_group.transparent-security-img-sg: Refreshing state... [id=sg-057e5
 Destroy complete! Resources: 4 destroyed.
 ```
 
-### 4.2. Mininet
-  
-An example file is in: transparent-security/docs/mininet-example.tfvars 
+### 3. Run minine simulator
+
+If you create an evironment 
+
+An example file is in: transparent-security/docs/mininet-example.tfvars
 
 Copy transparent-securiyt/docs/mininet-example.tfvars to a working directory and 
 make changes to adapt the file to your local environment.
@@ -128,7 +159,6 @@ defaults that may cause issues:
 | access_key       | Amazon EC2 access key                                                                                                                     | string | access_key = "AKIAIOSFODNN7EXAMPLE"                     |
 | secret_key       | Amazon EC2 secret key                                                                                                                     | string | secret_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" |
 | ec2_region       | Amazon EC2 region                                                                                                                         | string | ec2_region = "us-west-2"                                |
-| run_daemons      | When 'True', the mininet host daemons will be started else not (defaults to 'True')                                                       | string | run_daemons = "True"                                    |
 | public_key_file  | Used to inject into the VM for SSH access with the user'ubuntu' (defaults to ~/.ssh/id_rsa.pub)                                           | string | public_key_file = "~/.ssh/id_rsa.pub"                   |
 | private_key_file | Used to access the VM via SSH with the user 'ubuntu' (defaults to ~/.ssh/id_rsa)                                                          | string | private_key_file = "~/.ssh/id_rsa"                      |
 
