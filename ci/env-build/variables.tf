@@ -16,7 +16,7 @@ variable "access_key" {}
 variable "secret_key" {}
 variable "build_id" {}
 variable "ec2_region" {}
-variable "env_type" {}
+variable "env_type" {default = "mininet"}
 variable "bf_sde_s3_bucket" {default = "null"}
 
 # Optional Variables

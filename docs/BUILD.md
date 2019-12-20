@@ -3,11 +3,12 @@
 ## Table of Contents
 
 1. Introduction
-2. [Optional] Create an OS instance for running the mininet simulator
-3. Run minine simulator
-4. Obtain EC2 instance IP
-5. Development and debugging of Python
-6. Cleanup
+2. Client system setup
+3. [Optional] Create an OS instance for running the mininet simulator
+4. Run minine simulator
+5. Obtain EC2 instance IP
+6. Development and debugging of Python
+7. Cleanup
 
 ## 1. Introduction
 
@@ -16,45 +17,41 @@ This document provides instructuions to:
 1. Building a transparent-security environment on AWS
 1. Setting up Mininet and AWS
 
-## 2. [Optional] Create an OS instance for running the mininet simulator
+## 2. Client system setup
 
-This step is optional if you are running on AWS and use the AMI provided by CableLabs.
+When running builds and simulations this project reccomends running them on a cloud infrastructure.  These instructuion are using AWS EC2.  With minor changes these could be run on other cloud types.
 
-Section 4.1 provides instructions for using Terraform to build an AMI on your AWS.
+You will use a local system for:
 
-Section 4.2 provides instructions for building an image in another environemnt or on baremetal.
+* Running Ansible and Terraform to orchestrate the simulator
+* Downloading the Transparnet Secuirty source
+* Configuring the input file
 
-### 2.1. Build an AMI for running mininet on AWS
+The local system can be Linux, Mac OS or Windows.  We provide examples for Linux.  This has also been testing on Mac OS.
 
-#### 1. Clone the transparent-security repository
+
+### 2.1 Install dependences on local client
+
+Install git, python-ansible and terrafrom.
+
+#### 2.1.1 Install git
+
+Instal the git client.
+
+On Ubuntu:
 
 ```bash
-git clone https://github.com/cablelabs/transparent-security
+sudo apt update
+sudo apt install git
 ```
 
-#### 2. Create a variable file for your environment
-
-Copy the example variable file transparent-securiyt/docs/env-build-example.tfvars to a working directory and make changes to adapt the file to your local environment.
-
-| Variable         | Description                                                                                                                               | Type   | Example                                                 |
-|------------------|-------------------------------------------------------------------------------------------------------------------------------------------|--------|---------------------------------------------------------|
-| build_id         | This value must be unique to ensure multiple jobs  can be run simultaneously from multiple hosts                                          | string | build_id = "test-1"                                     |
-| access_key       | Amazon EC2 access key                                                                                                                     | string | access_key = "AKIAIOSFODNN7EXAMPLE"                     |
-| secret_key       | Amazon EC2 secret key                                                                                                                     | string | secret_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" |
-| ec2_region       | Amazon EC2 region                                                                                                                         | string | ec2_region = "us-west-2"                                |
-| public_key_file  | Used to inject into the VM for SSH access with the user'ubuntu' (defaults to ~/.ssh/id_rsa.pub)                                           | string | public_key_file = "~/.ssh/id_rsa.pub"                   |
-| private_key_file | Used to access the VM via SSH with the user 'ubuntu' (defaults to ~/.ssh/id_rsa)                                                          | string | private_key_file = "~/.ssh/id_rsa"                      |
-| env_type | The type of environemnt being built (only used for creating the environment)                                                          | string | env_type = "mininet"                      |
-| mininet_ami | The AMI for the mininet environment (defaults to "ami-060d055b5ca40de8c"). Only used for running the simulator.                                         | string | mininet_ami = "ami-060d055b5ca40de8c"                      |
-| run_daemons      | When 'True', the mininet host daemons will be started else not (defaults to 'True') Only used for running the simulator.                                                      | string | run_daemons = "True"                                    |
-
-#### 3. Install dependences on your local system
-
-This can be any system capable of connecting to AWS and running Terraform and Ansible to build an AMI with the dependencies needed to run the mininet simulator.
+#### 2.1.2 Install Python Ansible
 
 - Python 2.7 is installed
 - The python-pip package has been installed
 - The Python ansible >=2.7.5 package has been installed
+
+Use Python-pip to install ansible >=2.7.5.
 
 On Ubuntu run:
 
@@ -80,11 +77,59 @@ ansible 2.9.2
   python version = 2.7.16 (default, Nov  9 2019, 05:55:08) [GCC 4.2.1 Compatible Apple LLVM 11.0.0 (clang-1100.0.32.4) (-macos10.15-objc-s
 ```
 
-#### 4. Install Terraform
+#### 2.1.2 Install Terraform
+
+See terroaform docuementation for installation instructruction.
 
 [Terraform Download page](https://www.terraform.io/downloads.html)
 
-#### 5. Create the AMI with terraform
+### 2.2. Download Transparent Secuirty from Git
+
+Download the latest source from https://github.com/cablelabs/transparent-security
+
+```bash
+git clone https://github.com/cablelabs/transparent-security
+```
+
+Example output:
+
+```bash
+Cloning into 'transparent-security'...
+.
+.
+.
+Resolving deltas: 100% (554/554), done.
+```
+
+### 2.3. Obtain credentials to AWS
+
+To use the directions, you will need an account on [AWS](https://aws.amazon.com/) with API access keys.
+
+### 2.4 Customize the variable file for your environment
+
+Copy the example variable file docs/mininet-example.tfvars to a working directory and make changes to adapt the file to your local environment.
+
+| Variable         | Description                                                                                                                               | Type   | Example                                                 |
+|------------------|-------------------------------------------------------------------------------------------------------------------------------------------|--------|---------------------------------------------------------|
+| build_id         | This value must be unique to ensure multiple jobs  can be run simultaneously from multiple hosts                                          | string | build_id = "test-1"                                     |
+| access_key       | Amazon EC2 access key                                                                                                                     | string | access_key = "AKIAIOSFODNN7EXAMPLE"                     |
+| secret_key       | Amazon EC2 secret key                                                                                                                     | string | secret_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" |
+| ec2_region       | Amazon EC2 region                                                                                                                         | string | ec2_region = "us-west-2"                                |
+| public_key_file  | Used to inject into the VM for SSH access with the user'ubuntu' (defaults to ~/.ssh/id_rsa.pub)                                           | string | public_key_file = "~/.ssh/id_rsa.pub"                   |
+| private_key_file | Used to access the VM via SSH with the user 'ubuntu' (defaults to ~/.ssh/id_rsa)                                                          | string | private_key_file = "~/.ssh/id_rsa"                      |
+| env_type | The type of environemnt being built (only used for creating the environment)                                                          | string | env_type = "mininet"                      |
+| mininet_ami | The AMI for the mininet environment (defaults to "ami-060d055b5ca40de8c"). Only used for running the simulator.                                         | string | mininet_ami = "ami-060d055b5ca40de8c"                      |
+| run_daemons      | When 'True', the mininet host daemons will be started else not (defaults to 'True') Only used for running the simulator.                                                      | string | run_daemons = "True"                                    |
+
+## 3. [Optional] Create an OS instance for running the mininet simulator
+
+This step is optional if you are running on AWS and use the AMI provided by CableLabs.
+
+Section 3.1 provides instructions for using Terraform to build an AMI on your AWS.
+
+Section 3.2 provides instructions for building an image in another environemnt or on baremetal.
+
+### 3.1. Build an AMI for running mininet on AWS
 
 This step will creat an VM on AWS, install all mininet dependencies and create an AMI.
 
