@@ -29,7 +29,6 @@ You will use a local system for:
 
 The local system can be Linux, Mac OS or Windows.  We provide examples for Linux.  This has also been testing on Mac OS.
 
-
 ### 2.1 Install dependences on local client
 
 Install git, python-ansible and terrafrom.
@@ -47,9 +46,9 @@ sudo apt install git
 
 #### 2.1.2 Install Python Ansible
 
-- Python 2.7 is installed
-- The python-pip package has been installed
-- The Python ansible >=2.7.5 package has been installed
+* Python 2.7 is installed
+* The python-pip package has been installed
+* The Python ansible >=2.7.5 package has been installed
 
 Use Python-pip to install ansible >=2.7.5.
 
@@ -85,7 +84,7 @@ See terroaform docuementation for installation instructruction.
 
 ### 2.2. Download Transparent Secuirty from Git
 
-Download the latest source from https://github.com/cablelabs/transparent-security
+Download the latest source from [Transparent Secuirty GitHub](https://github.com/cablelabs/transparent-security)
 
 ```bash
 git clone https://github.com/cablelabs/transparent-security
