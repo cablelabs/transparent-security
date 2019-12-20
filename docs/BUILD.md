@@ -131,6 +131,8 @@ Section 3.2 provides instructions for building an image in another environemnt o
 
 ### 3.1. Build an AMI for running mininet on AWS
 
+#### 3.1.1 Create VM with Terraform
+
 This step will creat an VM on AWS, install all mininet dependencies and create an AMI.
 
 ```bash
@@ -156,9 +158,9 @@ ami-id = ami-0393652ac3fbc331e
 ip = 34.211.114.181
 ```
 
-Save the ami-id, this will be used when running simulations.
+Save the ami-id and it to your variables file.
 
-#### 6. Remove the AMI for terraform state
+#### 3.1.2 Remove the AMI for terraform state
 
 Remove the AMI from the terrafrom state so that it will remain after destroying the VM.
 
@@ -168,7 +170,9 @@ Removed aws_ami_from_instance.transparent-security-env-build
 Successfully removed 1 resource instance(s).
 ```
 
-#### 7. Destroy the VM and other artificats
+#### 3.1.3 Clean up the VM used to create the AMI
+
+This step will remove everything except the AMI that was used to create the VM.
 
 ```bash
 terraform destroy -auto-approve -var-file="../../my-mininet.tfvars"
@@ -185,43 +189,23 @@ aws_security_group.transparent-security-img-sg: Refreshing state... [id=sg-057e5
 Destroy complete! Resources: 4 destroyed.
 ```
 
-### 3. Run minine simulator
+## 4. Run minine simulator
 
-If you create an evironment 
+Use the environment file create in section 2.4
 
-An example file is in: transparent-security/docs/mininet-example.tfvars
+### 4.1
 
-Copy transparent-securiyt/docs/mininet-example.tfvars to a working directory and 
-make changes to adapt the file to your local environment.
+Run terraform to launch the simulator on AWS.
 
-This Terraform script has been designed to run and execute tests for P4
-programs on mininet on AWS. The following variables are required or have
-defaults that may cause issues:
-
-| Variable         | Description                                                                                                                               | Type   | Example                                                 |
-|------------------|-------------------------------------------------------------------------------------------------------------------------------------------|--------|---------------------------------------------------------|
-| build_id         | This value must be unique to ensure multiple jobs  can be run simultaneously from multiple hosts                                          | string | build_id = "test-mininet"                                     |
-| access_key       | Amazon EC2 access key                                                                                                                     | string | access_key = "AKIAIOSFODNN7EXAMPLE"                     |
-| secret_key       | Amazon EC2 secret key                                                                                                                     | string | secret_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" |
-| ec2_region       | Amazon EC2 region                                                                                                                         | string | ec2_region = "us-west-2"                                |
-| public_key_file  | Used to inject into the VM for SSH access with the user'ubuntu' (defaults to ~/.ssh/id_rsa.pub)                                           | string | public_key_file = "~/.ssh/id_rsa.pub"                   |
-| private_key_file | Used to access the VM via SSH with the user 'ubuntu' (defaults to ~/.ssh/id_rsa)                                                          | string | private_key_file = "~/.ssh/id_rsa"                      |
-
-````
-git clone https://github.com/cablelabs/transparent-security
+```bash
 cd transparent-security/ci/p4/mininet
 terraform init
-terraform apply \
--auto-approve \
--var '{var name}={appropriate value}' &| -var-file={some tfvars file}
-````
-Example terraform command with updated variable file:
-````
-terraform apply -auto-approve -var-file=mininet.tfvars
-````
+terraform apply -auto-approve -var-file=env-build.tfvars
+```
 
-Sample Output
-````
+Sample Output:
+
+```bash
 aws_key_pair.transparent-security-mini-pk: Creating...
 aws_security_group.transparent-security-img-sg: Creating...
 aws_key_pair.transparent-security-mini-pk: Creation complete after 5s
@@ -233,14 +217,18 @@ Apply complete! Resources: 12 added, 0 changed, 0 destroyed.
 Outputs:
 
 ip = 34.211.54.181
-````
-### 5. Obtain Deployment Information
-````
+```
+
+### 4.2 Obtain Deployment Information
+
+```bash
 # from transparent-security/ci/p4/mininet directory
 terraform show
-````
-Sample output - 
-````
+```
+
+Sample output -
+
+```bash
 # aws_instance.transparent-security-mininet-integration:
 resource "aws_instance" "transparent-security-mininet-integration" {
     ami                          =  
@@ -251,23 +239,21 @@ resource "aws_instance" "transparent-security-mininet-integration" {
 Outputs:
 
 ip = "34.211.114.181"
-````
-### 6. Obtain EC2 Instance IP
-````
-# from transparent-security/ci/p4/mininet directory
-terraform output ip
-````
-Sample output - 
-````
-34.211.114.181
-````
-### SSH into EC2 Mininet VM
-````
+```
+
+### 4.3 SSH into EC2 Mininet VM
+
+Login to the VM running the simulator.  Use the SSH kyes indicated in the variable file to login
+to the VM.
+
+```bash
 # from transparent-security/ci/p4/mininet directory
 ssh -i ubuntu@$(terraform output ip)
-````
-Sample output - 
-````
+```
+
+Sample output -
+
+```bash
 Welcome to Ubuntu 16.04.5 LTS (GNU/Linux 4.4.0-1075-aws x86_64)
 
  * Documentation:  https://help.ubuntu.com
@@ -285,31 +271,32 @@ Run 'do-release-upgrade' to upgrade to it.
 
 
 Last login: Wed Dec 11 22:39:13 2019 from 127.0.0.1
-ubuntu@ip-172-31-15-5:~$ 
-````
-### 7. Development and debugging of Python
+ubuntu@ip-172-31-15-5:~$
+```
+
+Upgrading to a newer version of Ubuntu isn't currently supported.  Do so at your own risk.
+
+### 4.4. Development and debugging of Python
+
 The playbooks will be installing the python code located in the trans_sec
 directory into the VM's Python runtime in place so any changes there will be
 realized immediately.
 
-### 8. Cleanup
-CI environment build - 
-````
-# from transparent-security/ci/env-build directory
-terraform destroy -auto-approve \
--var '{var name}={appropriate value}' &| -var-file={some tfvars file}
-````
-Mininet - 
-````
+### 4.5. Cleanup the simulation environment
+
+This will remove the VM and other artifacts created when it was deployed.
+
+```bash
 # from transparent-security/ci/p4/mininet directory
-terraform destroy -auto-approve \
--var '{var name}={appropriate value}' &| -var-file={some tfvars file}
-````
-Sample output - 
-````
+terraform destroy -auto-approve -var-file="../../my-mininet.tfvars"
+```
+
+Sample output:
+
+```bash
 .
 .
 Destroy complete! Resources: 12 destroyed.
 
 Process finished with exit code 0
-````
+```
