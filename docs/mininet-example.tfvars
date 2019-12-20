@@ -14,9 +14,9 @@ ec2_region = "us-west-2"
 
 # Used to inject into the VM for SSH access with the user'ubuntu' (defaults to ~/.ssh/id_rsa.pub)
 # public_key_file = "~/.ssh/id_rsa.pub"
-                |
+
 # Used to access the VM via SSH with the user 'ubuntu' (defaults to ~/.ssh/id_rsa)
-# private_key_file = "~/.ssh/id_rsa"|
+# private_key_file = "~/.ssh/id_rsa"
 
 # The type of environemnt being used
 # Only used for creating the environment

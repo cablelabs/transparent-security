@@ -6,9 +6,6 @@
 2. Client system setup
 3. [Optional] Create an OS instance for running the mininet simulator
 4. Run minine simulator
-5. Obtain EC2 instance IP
-6. Development and debugging of Python
-7. Cleanup
 
 ## 1. Introduction
 
@@ -137,7 +134,7 @@ This step will creat an VM on AWS, install all mininet dependencies and create a
 ```bash
 cd transparent-security/ci/env-build
 terraform init
-terraform apply -auto-approve -var-file=env-build.tfvars
+terraform apply -auto-approve -var-file="/path/to/my-mininet.tfvars"
 ```
 
 Sample Output:
@@ -174,7 +171,7 @@ Successfully removed 1 resource instance(s).
 This step will remove everything except the AMI that was used to create the VM.
 
 ```bash
-terraform destroy -auto-approve -var-file="../../my-mininet.tfvars"
+terraform destroy -auto-approve -var-file="/path/to/my-mininet.tfvars"
 ```
 
 Sample output:
@@ -192,14 +189,12 @@ Destroy complete! Resources: 4 destroyed.
 
 Use the environment file create in section 2.4
 
-### 4.1
-
-Run terraform to launch the simulator on AWS.
+### 4.1 Run terraform to launch the simulator on AWS.
 
 ```bash
 cd transparent-security/ci/p4/mininet
 terraform init
-terraform apply -auto-approve -var-file=env-build.tfvars
+terraform apply -auto-approve -var-file="/path/to/my-mininet.tfvars"
 ```
 
 Sample Output:
@@ -287,7 +282,7 @@ This will remove the VM and other artifacts created when it was deployed.
 
 ```bash
 # from transparent-security/ci/p4/mininet directory
-terraform destroy -auto-approve -var-file="../../my-mininet.tfvars"
+terraform destroy -auto-approve -var-file="/path/to/my-mininet.tfvars"
 ```
 
 Sample output:
