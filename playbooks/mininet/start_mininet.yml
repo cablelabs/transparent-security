@@ -13,12 +13,13 @@
 ---
 - import_playbook: compile_p4.yml
   vars:
+    host_val: localhost
     p4_progs:
       - core
       - aggregate
       - gateway
 
-- hosts: all
+- hosts: "{{ host_val | default('all') }}"
   gather_facts: no
   become: yes
   tasks:
@@ -28,8 +29,10 @@
         dest: "{{ devices_conf_file }}"
 
 - import_playbook: ../general/start_service.yml
+  vars:
+    host_val: localhost
 
-- hosts: all
+- hosts: localhost
   gather_facts: no
   become: yes
 

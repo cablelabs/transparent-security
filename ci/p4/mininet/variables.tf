@@ -32,6 +32,8 @@ variable "ANSIBLE_CMD" {default = "export ANSIBLE_HOST_KEY_CHECKING=False; ansib
 variable "ANSIBLE_PB_PATH" {default = "../../../playbooks"}
 variable "src_dir" {default = "~/transparent-security"}
 variable "remote_scripts_dir" {default = "/etc/transparent-security"}
+variable "remote_pb_dir" {default = "/home/ubuntu/transparent-security/playbooks"}
+variable "remote_var_inventory" {default = "/home/ubuntu/variables.ini"}
 variable "remote_inventory_file" {default = "/home/ubuntu/transparent-security.ini"}
 variable "run_daemons" {default = "True"}
 variable "topo_file" {default = "mininet-sim-topology.yaml"}
@@ -56,3 +58,4 @@ variable "START_SERVICE" {default = "../../../playbooks/general/start_service.ym
 variable "SCENARIOS_DIR" {default = "../../../playbooks/scenarios"}
 variable "remote_scenario_pb_dir" {default = "/home/ubuntu/transparent-security/playbooks/scenarios"}
 variable "scenario_name" {default = "simple"}
+variable "setup_mininet" {default = "setup_mininet.yml"}

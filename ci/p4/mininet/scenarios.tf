@@ -12,7 +12,7 @@
 # limitations under the License.
 
 resource "null_resource" "transparent-security-run-senario-tests" {
-  depends_on = [null_resource.transparent-security-start-ae]
+  depends_on = [null_resource.transparent-security-start-sim]
 
   provisioner "remote-exec" {
     inline = [
