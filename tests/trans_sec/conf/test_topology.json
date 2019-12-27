@@ -142,13 +142,6 @@
       "id": "enp2s0",
       "ip": "10.197.123.11",
       "mac": "08:00:27:4c:ce:28"
-    },
-    "dashboard": {
-      "name": "dashboard",
-      "id": "enp0s3",
-      "ip": "localhost",
-      "ip_port": 8080,
-      "mac": "a0:48:1c:db:1d:3d"
     }
   },
   "links": [
