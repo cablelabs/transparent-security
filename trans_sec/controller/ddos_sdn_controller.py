@@ -19,10 +19,9 @@ from dateutil import parser
 from trans_sec.controller.aggregate_controller import AggregateController
 from trans_sec.controller.core_controller import CoreController
 from trans_sec.controller.gateway_controller import GatewayController
+from trans_sec.controller.http_server_flask import SDNControllerServer
 from trans_sec.p4runtime_lib.switch import shutdown_all_switch_connections
 from trans_sec.packet.packet_telemetry import PacketTelemetry
-from trans_sec.controller.http_server_flask import SDNControllerServer
-from trans_sec.utils.http_session import HttpSession
 
 # Logger stuff
 logger = getLogger('ddos_sdn_controller')
@@ -42,16 +41,6 @@ class DdosSdnController:
 
         self.topo = topo
         self.switch_config_dir = switch_config_dir
-
-        # Create HTTP session to the snaps-pdp dashboard if possible
-        if self.topo.get('external').get('dashboard'):
-            dash_url = 'http://{}:{}'.format(
-                self.topo.get('external').get('dashboard').get('ip'),
-                str(self.topo.get('external').get('dashboard').get('ip_port')))
-            self.dash_board_session = HttpSession(url=dash_url)
-        else:
-            self.dash_board_session = None
-
         self.packet_telemetry = PacketTelemetry()
 
         # Init switch controllers
@@ -78,7 +67,6 @@ class DdosSdnController:
 
     def start(self):
         self.http_server.start()
-        self.__send_topology()
         self.__make_switch_rules()
         self.__build_skeleton_packet_telemetry()
         self.__main_loop()
@@ -134,22 +122,6 @@ class DdosSdnController:
                 self.attack['active'] = False
         else:
             logger.debug('Attack is inactive')
-            if self.dash_board_session:
-                state = self.dash_board_session.get('state')
-                if (state.get('mitigation').get('activeScenario')
-                        != self.mitigation.get('activeScenario')):
-                    self.mitigation = state.get('mitigation')
-                    self.attack = state.get('attack')
-
-    def __send_topology(self):
-        """
-        Sends the topology structure to the PDP dashboard
-        """
-        if self.dash_board_session:
-            self.dash_board_session.post('topology', self.topo)
-            logger.info('Sent Topology to Dashboard')
-        else:
-            logger.info('No Dashboard configured to receive the topology')
 
     def __make_switch_rules(self):
         """
@@ -257,15 +229,3 @@ class DdosSdnController:
         for controller in self.controllers.values():
             controller.update_all_counters(self.packet_telemetry)
             controller.reset_all_counters(self.packet_telemetry)
-
-    def __send_packet_telemetry(self):
-        self.packet_telemetry.total()
-        self.packet_telemetry.build_msg()
-
-        if self.dash_board_session:
-            logger.info('Telemetry data - [%s]',
-                        self.packet_telemetry.telemetry)
-            self.dash_board_session.post(
-                'analytics', self.packet_telemetry.telemetry)
-        else:
-            logger.info('No dashboard configured to receive packet telemetry')
