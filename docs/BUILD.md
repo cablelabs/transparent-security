@@ -216,7 +216,7 @@ ip = 34.211.54.181
 ### 4.2 Obtain Deployment Information
 
 ```bash
-# from transparent-security/ci/p4/mininet directory
+# from transparent-security/automation/p4/mininet directory
 terraform show
 ```
 
@@ -241,7 +241,7 @@ Login to the VM running the simulator.  Use the SSH kyes indicated in the variab
 to the VM.
 
 ```bash
-# from transparent-security/ci/p4/mininet directory
+# from transparent-security/automation/p4/mininet directory
 ssh -i ubuntu@$(terraform output ip)
 ```
 
@@ -281,7 +281,7 @@ realized immediately.
 This will remove the VM and other artifacts created when it was deployed.
 
 ```bash
-# from transparent-security/ci/p4/mininet directory
+# from transparent-security/automation/p4/mininet directory
 terraform destroy -auto-approve -var-file="/path/to/my-mininet.tfvars"
 ```
 
