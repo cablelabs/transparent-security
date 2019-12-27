@@ -132,7 +132,7 @@ Section 3.2 provides instructions for building an image in another environemnt o
 This step will creat an VM on AWS, install all mininet dependencies and create an AMI.
 
 ```bash
-cd transparent-security/ci/env-build
+cd transparent-security/automation/env-build
 terraform init
 terraform apply -auto-approve -var-file="/path/to/my-mininet.tfvars"
 ```
@@ -192,7 +192,7 @@ Use the environment file create in section 2.4
 ### 4.1 Run terraform to launch the simulator on AWS.
 
 ```bash
-cd transparent-security/ci/p4/mininet
+cd transparent-security/automation/p4/mininet
 terraform init
 terraform apply -auto-approve -var-file="/path/to/my-mininet.tfvars"
 ```
