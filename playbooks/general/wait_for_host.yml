@@ -10,14 +10,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-# https://github.com/p4lang/tutorials/blob/master/vm/user-bootstrap.sh
-# Project and script derived in part from the script in the link above
 ---
-- import_playbook: ../general/wait_for_host.yml
-- import_playbook: ../dependencies/mininet.yml
-- import_playbook: ../dependencies/protobuf.yml
-- import_playbook: ../dependencies/grpc.yml
-- import_playbook: ../dependencies/bmv2.yml
-- import_playbook: ../dependencies/p4c.yml
-- import_playbook: ../general/final_env_setup.yml
+- hosts: all
+
+  gather_facts: no
+
+  vars:
+    wait_time: "{{ host_wait_sec | default(30) }}"
+    wait_port: "{{ host_wait_port | default(22) }}"
+
+  tasks:
+    - name: wait {{ wait_time }} seconds just in case VM decides to restart itself
+      pause:
+        seconds: "{{ wait_time }}"
+
+    - name: Wait for port {{ wait_port }} to be available
+      wait_for:
+        port: "{{ wait_port }}"
+        delay: 10
