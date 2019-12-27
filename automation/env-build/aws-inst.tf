@@ -71,6 +71,7 @@ EOT
 }
 
 resource "aws_ami_from_instance" "transparent-security-env-build" {
+  depends_on = [null_resource.env_provision]
   name               = "transparent-security-env-build-${var.build_id}"
   source_instance_id = aws_instance.transparent-security-build-img.id
 }
