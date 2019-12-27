@@ -11,6 +11,8 @@ const bit<9> DROP_PORT = 511;
 #define MAX_HOPS 9
 #define BMV2_V1MODEL_INSTANCE_TYPE_INGRESS_CLONE 1
 #define IS_I2E_CLONE(std_meta) (std_meta.instance_type == BMV2_V1MODEL_INSTANCE_TYPE_INGRESS_CLONE)
+#define IOAM_CLONE_SPEC 0x1000
+
 const bit<32> I2E_CLONE_SESSION_ID = 5;
 
 
@@ -207,7 +209,7 @@ control MyIngress(inout headers hdr,
     }
 
     action control_drop() {
-        mark_to_drop(standard_metadata);;
+        mark_to_drop(standard_metadata);
     }
 
     table control_forward_t {
@@ -225,30 +227,23 @@ control MyIngress(inout headers hdr,
 
     table dbg_table {
         key = {
-             standard_metadata.ingress_port : exact;
+            standard_metadata.ingress_port : exact;
             standard_metadata.egress_spec : exact;
             standard_metadata.egress_port : exact;
             standard_metadata.instance_type : exact;
-            standard_metadata.packet_length : exact;
-            standard_metadata.enq_timestamp : exact;
-            standard_metadata.enq_qdepth : exact;
-            standard_metadata.deq_timedelta : exact;
-            standard_metadata.deq_qdepth : exact;
             standard_metadata.ingress_global_timestamp : exact;
-            standard_metadata.egress_global_timestamp : exact;
             standard_metadata.mcast_grp : exact;
-            standard_metadata.egress_rid : exact;
             standard_metadata.checksum_error : exact;
-           hdr.inspection.srcAddr: exact;
-           hdr.inspection.deviceAddr: exact;
-           hdr.inspection.dstAddr: exact;
-           hdr.inspection.dstPort: exact;
-           hdr.inspection.proto_id: exact;
-           hdr.ipv4.srcAddr: exact;
-           hdr.ipv4.dstAddr: exact;
-           hdr.udp.dst_port: exact;
-           hdr.ethernet.dstAddr: exact;
-           hdr.ipv4.identification: exact;
+            hdr.inspection.srcAddr: exact;
+            hdr.inspection.deviceAddr: exact;
+            hdr.inspection.dstAddr: exact;
+            hdr.inspection.dstPort: exact;
+            hdr.inspection.proto_id: exact;
+            hdr.ipv4.srcAddr: exact;
+            hdr.ipv4.dstAddr: exact;
+            hdr.udp.dst_port: exact;
+            hdr.ethernet.dstAddr: exact;
+            hdr.ipv4.identification: exact;
         }
         actions = { NoAction; }
         const default_action = NoAction();
