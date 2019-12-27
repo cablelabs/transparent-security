@@ -16,6 +16,10 @@ output "ip" {
   value = aws_instance.transparent-security-build-img.public_ip
 }
 
+locals {
+  ami_id = var.create_ami =="yes" ? aws_ami_from_instance.transparent-security-env-build.0.id : "n/a"
+}
+
 output "ami-id" {
-  value = aws_ami_from_instance.transparent-security-env-build.id
+  value = local.ami_id
 }

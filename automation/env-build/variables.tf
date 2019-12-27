@@ -18,6 +18,7 @@ variable "build_id" {}
 variable "ec2_region" {}
 variable "env_type" {default = "mininet"}
 variable "bf_sde_s3_bucket" {default = "null"}
+variable "create_ami" {default = "yes"}
 
 # Optional Variables
 variable "public_key_file" {default = "~/.ssh/id_rsa.pub"}

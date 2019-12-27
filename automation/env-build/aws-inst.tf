@@ -72,6 +72,7 @@ EOT
 
 resource "aws_ami_from_instance" "transparent-security-env-build" {
   depends_on = [null_resource.env_provision]
+  count = var.create_ami == "yes" ? 1 : 0
   name               = "transparent-security-env-build-${var.build_id}"
   source_instance_id = aws_instance.transparent-security-build-img.id
 }
