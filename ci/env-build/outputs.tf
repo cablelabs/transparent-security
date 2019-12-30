@@ -17,5 +17,6 @@ output "ip" {
 }
 
 output "ami-id" {
-  value = aws_ami_from_instance.transparent-security-env-build.id
+  value = var.create_ami =="yes" ? aws_ami_from_instance.transparent-security-env-build.0.id : "n/a"
+
 }
