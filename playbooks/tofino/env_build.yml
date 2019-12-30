@@ -11,4 +11,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
+# Build BF SDE
 - import_playbook: ./bf-sde/bf-sde-build.yml
+
+# adding P4 runtime for the TPS SDN Controller
+- import_playbook: ../dependencies/p4runtime.yml
+
+# disables unattended upgrades
+- import_playbook: ../general/final_env_setup.yml
