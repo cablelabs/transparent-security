@@ -27,7 +27,7 @@ variable "sudo_user" {default = "ubuntu"}
 
 # ubuntu 16
 variable "base_ami" {default = "ami-08692d171e3cf02d6"}
-variable "instance_type" {default = "t2.2xlarge"}
+variable "instance_type" {default = "c5d.2xlarge"}
 variable "run_tests" {default = "yes"}
 
 # Dependency version only for tofino environments
