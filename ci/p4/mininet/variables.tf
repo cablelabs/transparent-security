@@ -39,7 +39,6 @@ variable "dev_daemon_file" {default = "device-daemons.yml"}
 variable "local_scripts_dir" {default = "../../../playbooks/general/templates"}
 variable "clone_egress_port" {default = "3"}
 variable "sdn_host" {default = "localhost"}
-variable "dashboard_port" {default = "8080"}
 variable "sdn_port" {default = "9998"}
 variable "sdn_dev_intf" {default = "lo"} # TODO - verify if this is correct???
 variable "ae_dev_intf" {default = "lo"} # TODO - verify if this is correct???
