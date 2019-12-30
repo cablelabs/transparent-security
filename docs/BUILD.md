@@ -113,9 +113,10 @@ Copy the example variable file docs/mininet-example.tfvars to a working director
 | ec2_region       | Amazon EC2 region                                                                                                                         | string | ec2_region = "us-west-2"                                |
 | public_key_file  | Used to inject into the VM for SSH access with the user'ubuntu' (defaults to ~/.ssh/id_rsa.pub)                                           | string | public_key_file = "~/.ssh/id_rsa.pub"                   |
 | private_key_file | Used to access the VM via SSH with the user 'ubuntu' (defaults to ~/.ssh/id_rsa)                                                          | string | private_key_file = "~/.ssh/id_rsa"                      |
-| env_type | The type of environemnt being built (only used for creating the environment)                                                          | string | env_type = "mininet"                      |
-| mininet_ami | The AMI for the mininet environment (defaults to "ami-060d055b5ca40de8c"). Only used for running the simulator.                                         | string | mininet_ami = "ami-060d055b5ca40de8c"                      |
-| run_daemons      | When 'True', the mininet host daemons will be started else not (defaults to 'True') Only used for running the simulator.                                                      | string | run_daemons = "True"                                    |
+| env_type         | The type of environemnt being built (only used for creating the environment)                                                              | string | env_type = "mininet"                                    |
+| mininet_ami      | The AMI for the mininet environment (defaults to "ami-060d055b5ca40de8c"). Only used for running the simulator.                           | string | mininet_ami = "ami-060d055b5ca40de8c"                   |
+| run_daemons      | When 'True', the mininet host daemons will be started else not (defaults to 'True') Only used for running the simulator.                  | string | run_daemons = "True"                                    |
+| create_ami       | When 'yes', the an EC2 image (AMI) will be created.                                                                                       | string | create_ami = "yes"                                      |
 
 ## 3. [Optional] Create an OS instance for running the mininet simulator
 
