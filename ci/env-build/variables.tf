@@ -20,6 +20,7 @@ variable "env_type" {default = "mininet"}
 variable "bf_sde_s3_bucket" {default = "null"}
 
 # Optional Variables
+variable "create_ami" {default = "yes"}
 variable "public_key_file" {default = "~/.ssh/id_rsa.pub"}
 variable "private_key_file" {default = "~/.ssh/id_rsa"}
 variable "sudo_user" {default = "ubuntu"}
