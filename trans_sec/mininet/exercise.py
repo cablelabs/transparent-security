@@ -23,7 +23,7 @@ from mininet.topo import Topo
 from trans_sec.controller import simple_controller
 from trans_sec.mininet.daemons import DaemonRunner
 from trans_sec.mininet.p4_mininet import P4Host
-from trans_sec.p4runtime_lib.p4runtime_switch import P4RuntimeSwitch
+from trans_sec.p4runtime_lib.p4runtime_switch import MininetSwitch
 
 logger = logging.getLogger('exercise')
 
@@ -53,16 +53,16 @@ class ExerciseTopo(Topo):
                 s_switch = switches.get(link.get('south_node'))
                 n_switch = switches.get(link.get('north_node'))
 
-                self.addLink(s_switch.get('name'), n_switch.get('name'),
+                self.addLink(s_switch['name'], n_switch['name'],
                              delay=link['latency'], bw=link['bandwidth'],
-                             addr1=s_switch.get('mac'),
-                             addr2=n_switch.get('mac'))
-                self.__add_switch_port(s_switch.get('name'),
-                                       n_switch.get('name'),
-                                       link.get('north_facing_port'))
-                self.__add_switch_port(n_switch.get('name'),
-                                       s_switch.get('name'),
-                                       link.get('south_facing_port'))
+                             addr1=s_switch['mac'],
+                             addr2=n_switch['mac'])
+                self.__add_switch_port(s_switch['name'],
+                                       n_switch['name'],
+                                       link['north_facing_port'])
+                self.__add_switch_port(n_switch['name'],
+                                       s_switch['name'],
+                                       link['south_facing_port'])
                 logger.info('Adding Switch Link %s %s port:%d <--> port:%d' % (
                     link['south_node'], link['north_node'],
                     link['north_facing_port'], link['south_facing_port']))
@@ -75,15 +75,15 @@ class ExerciseTopo(Topo):
                     n_host = external.get(link.get('north_node'))
                 # ignore externals
                 if n_host is not None:
-                    self.addHost(n_host.get('name'),
-                                 ip=n_host.get('ip') + '/24',
-                                 mac=n_host.get('mac'))
-                    self.addLink(n_host.get('name'), s_switch.get('name'),
+                    self.addHost(n_host['name'],
+                                 ip=n_host['ip'] + '/24',
+                                 mac=n_host['mac'])
+                    self.addLink(n_host['name'], s_switch['name'],
                                  delay=link['latency'], bw=link['bandwidth'],
-                                 addr1=n_host.get('mac'),
-                                 addr2=s_switch.get('mac'))
-                    self.__add_switch_port(s_switch.get('name'),
-                                           n_host.get('name'), np)
+                                 addr1=n_host['mac'],
+                                 addr2=s_switch['mac'])
+                    self.__add_switch_port(s_switch['name'],
+                                           n_host['name'], np)
                     logger.info(
                         "Adding host %s link %s %s to switch %s %s on port %s",
                         n_host.get('name'), n_host.get('ip'),
@@ -96,15 +96,15 @@ class ExerciseTopo(Topo):
 
                 # ignore externals
                 if s_host is not None:
-                    self.addHost(s_host.get('name'),
-                                 ip=s_host.get('ip') + '/24',
-                                 mac=s_host.get('mac'))
-                    self.addLink(s_host.get('name'), n_switch.get('name'),
+                    self.addHost(s_host['name'],
+                                 ip=s_host['ip'] + '/24',
+                                 mac=s_host['mac'])
+                    self.addLink(s_host['name'], n_switch['name'],
                                  delay=link['latency'], bw=link['bandwidth'],
-                                 addr1=s_host.get('mac'),
-                                 addr2=n_switch.get('mac'))
-                    self.__add_switch_port(n_switch.get('name'),
-                                           s_host.get('name'), sp)
+                                 addr1=s_host['mac'],
+                                 addr2=n_switch['mac'])
+                    self.__add_switch_port(n_switch['name'],
+                                           s_host['name'], sp)
 
                     logger.info("Adding host %s link %s %s to switch %s %s on "
                                 "port %d",
@@ -160,7 +160,7 @@ class ExerciseRunner:
     """
 
     def __init__(self, topo, log_dir, pcap_dir, switch_json,
-                 devices_conf=None, start_cli=False):
+                 devices_conf=None, start_cli=False, load_p4=True):
         """ Initializes some attributes and reads the topology json. Does not
             actually run the exercise. Use run_exercise() for that.
 
@@ -178,6 +178,7 @@ class ExerciseRunner:
         self.links = topo['links']
         self.devices_conf = devices_conf
         self.start_cli = start_cli
+        self.load_p4 = load_p4
 
         # Ensure all the needed directories exist and are directories
         for dir_name in [log_dir, pcap_dir]:
@@ -189,8 +190,8 @@ class ExerciseRunner:
         self.log_dir = log_dir
         self.pcap_dir = pcap_dir
         self.switch_json = switch_json
-        self.topo = ExerciseTopo(self.hosts, self.switches, self.external, self.links,
-                                 self.log_dir)
+        self.topo = ExerciseTopo(self.hosts, self.switches, self.external,
+                                 self.links, self.log_dir)
         self.mininet = self.__setup_mininet()
         self.running = False
         self.daemons = list()
@@ -211,7 +212,9 @@ class ExerciseRunner:
         self.__program_hosts()
 
         logger.info('Programming mininet switches')
-        self.__program_switches()
+        if self.load_p4:
+            logger.info('Loading P4 programs on switches')
+            self.__program_switches()
 
         if self.devices_conf:
             self.daemon_runner = DaemonRunner(self.mininet, self.devices_conf,
@@ -259,23 +262,23 @@ class ExerciseRunner:
             'pcap_dump': pcap_dump_dir,
         }
 
-        class ConfiguredP4RuntimeSwitch(P4RuntimeSwitch):
+        class ConfiguredMininetSwitch(MininetSwitch):
             def __init__(self, *opts, **kwargs):
                 kwargs.update(switch_args)
-                P4RuntimeSwitch.__init__(self, *opts, **kwargs)
+                MininetSwitch.__init__(self, *opts, **kwargs)
 
             def describe(self):
                 logger.info("%s -> gRPC port: %s", self.name,
                             self.grpc_port)
 
-        return ConfiguredP4RuntimeSwitch
+        return ConfiguredMininetSwitch
 
     def __add_external_connections(self):
         for link in self.links:
             external = self.external.get(link['north_node'])
             if external is not None:
                 sw_obj = self.mininet.get(link['south_node'])
-                Intf(external.get('id'), node=sw_obj)
+                Intf(external['id'], node=sw_obj)
 
     def __program_switch_p4runtime(self, sw_dict):
         """ This method will use P4Runtime to program the switch using the

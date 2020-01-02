@@ -28,26 +28,17 @@
 # limitations under the License.
 #
 # noinspection PyCompatibility
+import logging
 from Queue import Queue
 from abc import abstractmethod
 from datetime import datetime
 
 import grpc
-import logging
-from p4.tmp import p4config_pb2
 from p4.v1 import p4runtime_pb2, p4runtime_pb2_grpc
 
 MSG_LOG_MAX_LEN = 1024
 
-# List of all active connections
-connections = []
-
 logger = logging.getLogger('switch')
-
-
-def shutdown_all_switch_connections():
-    for c in connections:
-        c.shutdown()
 
 
 class SwitchConnection(object):
@@ -55,37 +46,40 @@ class SwitchConnection(object):
     def __init__(self, name=None, address='127.0.0.1:50051', device_id=0,
                  proto_dump_file=None):
         self.name = name
-        self.address = address
         self.device_id = device_id
-        self.p4info = None
-        self.channel = grpc.insecure_channel(self.address)
+        channel = grpc.insecure_channel(address)
         if proto_dump_file is not None:
+            logger.info('Adding interceptor with file - [%s]', proto_dump_file)
             interceptor = GrpcRequestLogger(proto_dump_file)
-            self.channel = grpc.intercept_channel(self.channel, interceptor)
-        self.client_stub = p4runtime_pb2_grpc.P4RuntimeStub(self.channel)
+            channel = grpc.intercept_channel(channel, interceptor)
+
+        logger.info('Creating client stub to channel - [%s] at address - [%s]',
+                    channel, address)
+        self.client_stub = p4runtime_pb2_grpc.P4RuntimeStub(channel)
         self.requests_stream = IterableQueue()
         self.stream_msg_resp = self.client_stub.StreamChannel(iter(
             self.requests_stream))
-        self.proto_dump_file = proto_dump_file
-        connections.append(self)
 
     @abstractmethod
     def build_device_config(self, **kwargs):
-        return p4config_pb2.P4DeviceConfig()
+        raise NotImplemented
 
     def shutdown(self):
+        logger.info('Shutting down switch named - [%s]', self.name)
         self.requests_stream.close()
         self.stream_msg_resp.cancel()
 
     def master_arbitration_update(self):
+        logger.info('Master arbitration update on switch - [%s]', self.name)
         request = p4runtime_pb2.StreamMessageRequest()
         request.arbitration.device_id = self.device_id
         request.arbitration.election_id.high = 0
         request.arbitration.election_id.low = 1
         self.requests_stream.put(request)
 
-    def set_forwarding_pipeline_config(self, p4info, **kwargs):
-        device_config = self.build_device_config(**kwargs)
+    def set_forwarding_pipeline_config(self, p4info, device_config):
+        logger.info('Setting Forwarding Pipeline Config on switch - [%s] '
+                    'with info - [%s]', self.name, p4info)
         request = p4runtime_pb2.SetForwardingPipelineConfigRequest()
         request.election_id.low = 1
         request.device_id = self.device_id
@@ -98,12 +92,14 @@ class SwitchConnection(object):
             p4runtime_pb2.SetForwardingPipelineConfigRequest.VERIFY_AND_COMMIT
 
         logger.info('Request for SetForwardingPipelineConfig to device - [%s]',
-                    request.device_id)
+                    self.name)
         self.client_stub.SetForwardingPipelineConfig(request)
         logger.info('Completed SetForwardingPipelineConfig to device - [%s]',
                     request.device_id)
 
     def write_table_entry(self, table_entry):
+        logger.info('Writing table entry on switch [%s] - [%s]',
+                    self.name, table_entry)
         request = p4runtime_pb2.WriteRequest()
         request.device_id = self.device_id
         request.election_id.low = 1
@@ -111,14 +107,16 @@ class SwitchConnection(object):
         update.type = p4runtime_pb2.Update.INSERT
         update.entity.table_entry.CopyFrom(table_entry)
         try:
-            logger.info('Request for writing table entry to device - [%s]',
-                        request.device_id)
+            logger.debug('Request for writing table entry to device %s - [%s]',
+                         self.device_id, request)
             self.client_stub.Write(request)
         except Exception as e:
-            logging.error('Error requesting [%s] table entry - [%s]', request, e)
+            logging.error('Error writing table entry - [%s]', e)
             raise e
 
     def read_table_entries(self, table_id=None):
+        logger.info('Reading table entry on switch [%s] with table ID - [%s]',
+                    self.name, table_id)
         request = p4runtime_pb2.ReadRequest()
         request.device_id = self.device_id
         entity = request.entities.add()
@@ -128,8 +126,8 @@ class SwitchConnection(object):
         else:
             table_entry.table_id = 0
 
-        logger.info('Request for reading table entries to device - [%s]',
-                    request.device_id)
+        logger.debug('Request for reading table entries to device %s - [%s]',
+                     self.device_id, request.device_id)
         for response in self.client_stub.Read(request):
             yield response
 
@@ -144,14 +142,17 @@ class SwitchConnection(object):
         update.entity.packet_replication_engine_entry.CopyFrom(pre_entry)
 
         try:
-            logger.info('Request for writing a clone request to device - [%s]',
-                        request.device_id)
+            logger.debug(
+                'Request for writing a clone request to device %s - [%s]',
+                self.device_id, request)
             self.client_stub.Write(request)
         except Exception as e:
             logging.error('Error requesting [%s] clone - [%s]', request, e)
             raise e
 
     def read_counters(self, counter_id=None, index=None):
+        logger.info('Read counter with ID - [%s] and index - [%s]',
+                    counter_id, index)
         request = p4runtime_pb2.ReadRequest()
         request.device_id = self.device_id
         entity = request.entities.add()
@@ -163,12 +164,14 @@ class SwitchConnection(object):
         if index is not None:
             counter_entry.index.index = index
 
-        logger.info('Request for reading counters to device - [%s]',
-                    request.device_id)
+        logger.debug('Request for reading counters to device %s - [%s]',
+                     self.device_id, request)
         for response in self.client_stub.Read(request):
             yield response
 
     def reset_counters(self, counter_id=None, index=None):
+        logger.info('Reset counter with ID - [%s] and index - [%s]',
+                    counter_id, index)
         request = p4runtime_pb2.WriteRequest()
         request.device_id = self.device_id
         request.election_id.low = 1
@@ -185,8 +188,8 @@ class SwitchConnection(object):
         counter_entry.data.packet_count = 0
         update.entity.counter_entry.CopyFrom(counter_entry)
 
-        logger.info('Request for resetting counters to device - [%s]',
-                    request.device_id)
+        logger.debug('Request for resetting counters to device %s - [%s]',
+                     self.device_id, request)
         self.client_stub.Write(request)
 
 

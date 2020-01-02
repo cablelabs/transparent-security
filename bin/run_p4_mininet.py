@@ -40,6 +40,10 @@ def get_args():
                         type=bool, required=False, default=False)
     parser.add_argument('-dc', '--devices-config', help='Devices config',
                         type=str, required=False)
+    parser.add_argument('-lp', '--load-p4', type=str, required=True,
+                        choices=['True', 'False'],
+                        help='When set, the Exercise class will not attempt '
+                             'to load the P4 program onto the switches')
     return parser.parse_args()
 
 
@@ -79,7 +83,7 @@ if __name__ == '__main__':
         dev_yaml = read_yaml_file(args.devices_config)
     exercise = ExerciseRunner(
         topo, args.log_dir, args.pcap_dir, args.switch_json, dev_yaml,
-        args.start_cli)
+        args.start_cli, eval(args.load_p4))
     exercise.run_exercise()
 
     logger.info('Exercise Runner running indefinitely')

@@ -27,12 +27,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from switch import SwitchConnection
+import logging
+
 from p4.tmp import p4config_pb2
+
+from switch import SwitchConnection
+
+logger = logging.getLogger('bmv2')
 
 
 class Bmv2SwitchConnection(SwitchConnection):
     def build_device_config(self, bmv2_json_file_path=None):
+        logger.info('Building device config for BMV2 with file - [%s]',
+                    bmv2_json_file_path)
         device_config = p4config_pb2.P4DeviceConfig()
         device_config.reassign = True
         with open(bmv2_json_file_path) as f:
