@@ -15,12 +15,16 @@
 provider "aws" {
   access_key = var.access_key
   secret_key = var.secret_key
-  region = var.ec2_region
+  region = var.region
 }
 
-# Note: Script will fail if another process is leveraging the same build_id
-resource "aws_security_group" "transparent-security-img-sg" {
-  name = "transparent-security-gateway-${var.build_id}"
+# AWS EC2 Instance Public Key
+resource "aws_key_pair" "snaps-mini-pk" {
+  public_key = file(var.public_key_file)
+}
+
+resource "aws_security_group" "tps" {
+  name = "tps-pub-${var.build_id}"
   ingress {
     cidr_blocks = ["0.0.0.0/0"]
     from_port = 22
@@ -28,16 +32,38 @@ resource "aws_security_group" "transparent-security-img-sg" {
     protocol = "tcp"
   }
 
-  // Terraform removes the default rule
+  ingress {
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = var.sdn_port
+    to_port = var.sdn_port
+    protocol = "tcp"
+  }
+
+  ingress {
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = var.grpc_port
+    to_port = var.grpc_port
+    protocol = "tcp"
+  }
+
+  ingress {
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = var.switchd_port
+    to_port = var.switchd_port
+    protocol = "tcp"
+  }
+
+  ingress {
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = var.tofino_model_start_port
+    to_port = var.tofino_model_end_port
+    protocol = "tcp"
+  }
+
   egress {
     from_port = 0
     to_port = 0
     protocol = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-}
-
-# AWS EC2 Instance Public Key
-resource "aws_key_pair" "transparent-security-mini-pk" {
-  public_key = file(var.public_key_file)
 }

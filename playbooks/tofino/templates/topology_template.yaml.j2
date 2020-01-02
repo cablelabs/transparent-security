@@ -1,0 +1,217 @@
+hosts:
+  Camera1:
+    name: Camera1
+    id: 5
+    ip: {{ camera1_ip }}
+    tunnels:
+      - host: gateway1
+        virt_intf:  {{ node_nic }}:0
+
+  NAS1:
+    name: NAS1
+    id: 6
+    ip: {{ nas1_ip }}
+    tunnels:
+      - host: gateway1
+        virt_intf:  {{ node_nic }}:0
+
+  Game1:
+    name: Game1
+    id: 7
+    ip: {{ game1_ip }}
+    tunnels:
+      - host: gateway1
+        virt_intf:  {{ node_nic }}:0
+
+  Camera2:
+    name: Camera2
+    id: 8
+    ip: {{ camera2_ip }}
+    tunnels:
+      - host: gateway2
+        virt_intf:  {{ node_nic }}:0
+
+  Game2:
+    name: Game2
+    id: 9
+    ip: {{ game2_ip }}
+    tunnels:
+      - host: gateway2
+        virt_intf:  {{ node_nic }}:0
+
+  Camera3:
+    name: Camera3
+    id: 10
+    ip: {{ camera3_ip }}
+    tunnels:
+      - host: gateway3
+        virt_intf:  {{ node_nic }}:0
+
+  Game3:
+    name: Game3
+    id: 11
+    ip: {{ game3_ip }}
+    tunnels:
+      - host: gateway3
+        virt_intf:  {{ node_nic }}:0
+
+  inet:
+    name: inet
+    id: 12
+    ip: {{ inet_ip }}
+    tunnels:
+      - host: core
+        virt_intf:  {{ node_nic }}:0
+
+  analytics_engine:
+    name: analytics_engine
+    id: 13
+    ip: {{ ae_ip }}
+    tunnels:
+      - host: core
+        virt_intf:  {{ node_nic }}:0
+
+# TODO - Determine how to properly configure a switch MAC value
+switches:
+  gateway1:
+    name: gateway1
+    id: 0
+    ip: {{ gateway1_ip }}
+    mac: 00:00:00:01:01:00
+    grpc: {{ gateway1_ip }}:{{ grpc_port }}
+    type: gateway
+    tunnels:
+      - host: aggregate
+        virt_intf:  {{ switch_nic_prfx }}0
+
+  gateway2:
+    name: gateway2
+    id: 0
+    ip: {{ gateway2_ip }}
+    mac: 00:00:00:01:02:00
+    grpc: {{ gateway2_ip }}:{{ grpc_port }}
+    type: gateway
+    tunnels:
+      - host: aggregate
+        virt_intf:  {{ switch_nic_prfx }}0
+
+  gateway3:
+    name: gateway3
+    id: 0
+    ip: {{ gateway3_ip }}
+    mac: 00:00:00:01:03:00
+    grpc: {{ gateway3_ip }}:{{ grpc_port }}
+    type: gateway
+    tunnels:
+      - host: aggregate
+        virt_intf:  {{ switch_nic_prfx }}0
+
+  aggregate:
+    name: aggregate
+    id: 0
+    ip: {{ agg_ip }}
+    mac: 00:00:00:02:04:00
+    grpc: {{ agg_ip }}:{{ grpc_port }}
+    type: aggregate
+    tunnels:
+      - host: core
+        virt_intf:  {{ switch_nic_prfx }}0
+        bridge_name: br0
+        tunnel_name: gre-tun0
+      - host: gateway1
+        virt_intf:  {{ switch_nic_prfx }}1
+        bridge_name: br1
+        tunnel_name: gre-tun1
+      - host: gateway2
+        virt_intf:  {{ switch_nic_prfx }}2
+        bridge_name: br2
+        tunnel_name: gre-tun2
+      - host: gateway3
+        virt_intf:  {{ switch_nic_prfx }}3
+        bridge_name: br3
+        tunnel_name: gre-tun3
+
+  core:
+    name: core
+    id: 0
+    ip: {{ core_ip }}
+    mac: 00:00:00:03:05:00
+    grpc: {{ core_ip }}:{{ grpc_port }}
+    type: core
+    tunnels:
+      - host: aggregate
+        virt_intf:  {{ switch_nic_prfx }}0
+
+# TODO - This data is somewhat duplicated above but the logic in the controller
+# classes only recognize the structure below. See if this can be changed for
+# mininet too
+links:
+  - north_node: gateway1
+    south_node: Camera1
+    south_facing_port: 1
+    latency: 0ms
+    bandwidth: null
+  - north_node: gateway1
+    south_node: NAS1
+    south_facing_port: 2
+    latency: 0ms
+    bandwidth: null
+  - north_node: gateway1
+    south_node: Game1
+    south_facing_port: 3
+    latency: 0ms
+    bandwidth: null
+  - north_node: gateway2
+    south_node: Camera2
+    south_facing_port: 1
+    latency: 0ms
+    bandwidth: null
+  - north_node: gateway2
+    south_node: Game2
+    south_facing_port: 2
+    latency: 0ms
+    bandwidth: null
+  - north_node: gateway3
+    south_node: Camera3
+    south_facing_port: 1
+    latency: 0ms
+    bandwidth: null
+  - north_node: gateway3
+    south_node: Game3
+    south_facing_port: 2
+    latency: 0ms
+    bandwidth: null
+  - north_node: aggregate
+    south_node: gateway1
+    south_facing_port: 1
+    north_facing_port: 4
+    latency: 0ms
+    bandwidth: null
+  - north_node: aggregate
+    south_node: gateway2
+    south_facing_port: 2
+    north_facing_port: 3
+    latency: 0ms
+    bandwidth: null
+  - north_node: aggregate
+    south_node: gateway3
+    south_facing_port: 3
+    north_facing_port: 3
+    latency: 0ms
+    bandwidth: null
+  - north_node: core
+    south_node: aggregate
+    south_facing_port: 1
+    north_facing_port: 4
+    latency: 0ms
+    bandwidth: null
+  - north_node: inet
+    south_node: core
+    north_facing_port: 2
+    latency: 0ms
+    bandwidth: null
+  - north_node: analytics_engine
+    south_node: core
+    north_facing_port: 3
+    latency: 0ms
+    bandwidth: null
