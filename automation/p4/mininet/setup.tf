@@ -29,19 +29,31 @@ resource "null_resource" "transparent-security-host-ssh-setup" {
   }
 }
 
-#Setup transparent-security directory and install dependencies on the remote machine
-resource "null_resource" "transparent-security-mininet-host-setup" {
+#Create a local inventory to store variables and public IP of remote machine
+resource "null_resource" "transparent-security-local-inventory" {
   depends_on = [null_resource.transparent-security-host-ssh-setup]
   provisioner "local-exec" {
     command = <<EOT
-${var.ANSIBLE_CMD} -u ${var.sudo_user} \
--i ${aws_instance.transparent-security-mininet-integration.public_ip}, \
-${var.SETUP_SOURCE} \
---key-file ${var.private_key_file} \
+${var.ANSIBLE_CMD} \
+${var.LOCAL_INVENTORY} \
 --extra-vars "\
-trans_sec_dir=${var.remote_tps_dir}
-remote_var_inventory=${var.remote_var_inventory}
+public_ip=${aws_instance.transparent-security-mininet-integration.public_ip}
+local_inventory=${var.local_inventory_file}
 "\
+EOT
+  }
+}
+
+
+#Setup transparent-security directory and install dependencies on the remote machine
+resource "null_resource" "transparent-security-mininet-host-setup" {
+  depends_on = [null_resource.transparent-security-local-inventory]
+  provisioner "local-exec" {
+    command = <<EOT
+${var.ANSIBLE_CMD} -u ${var.sudo_user} \
+-i ${var.local_inventory_file} \
+${var.SETUP_MININET_HOST} \
+--key-file ${var.private_key_file} \
 EOT
   }
 }
