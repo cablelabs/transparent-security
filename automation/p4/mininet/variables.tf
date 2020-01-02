@@ -45,6 +45,7 @@ variable "ae_dev_intf" {default = "lo"} # TODO - verify if this is correct???
 variable "ae_monitor_intf" {default = "core1-eth3"}
 variable "service_log_level" {default = "INFO"}
 variable "remote_srvc_log_dir" {default = "/var/log/transparent-security"}
+variable "host_log_dir" {default = "/home/ubuntu/tps-logs"}
 variable "remote_tps_dir" {default = "/home/ubuntu/transparent-security"}
 
 # Variables for ansible playbooks
