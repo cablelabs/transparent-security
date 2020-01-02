@@ -23,6 +23,7 @@ import yaml
 from trans_sec.controller.ddos_sdn_controller import DdosSdnController
 
 FORMAT = '%(levelname)s %(asctime)-15s %(filename)s %(message)s'
+logger = logging.getLogger('sdn_controller')
 
 
 def get_args():
@@ -41,6 +42,8 @@ def get_args():
     parser.add_argument('-t', '--topo', help='Path to topology json',
                         required=False,
                         default='../mininet-start/conf/topology_proposed.json')
+    parser.add_argument('-p', '--platform', help='Switch Platform',
+                        required=True, type=str, choices=['bmv2', 'tofino'])
     parser.add_argument('-sc', '--scenario', help='Path to topology json',
                         required=False, default='scenario2')
     parser.add_argument('-s', '--switch-config-dir', dest='switch_config_dir',
@@ -53,6 +56,10 @@ def get_args():
     parser.add_argument('-hsp', '--http-server-port', dest='http_server_port',
                         type=int, default=9998,
                         help='the http server port defaults to 9998')
+    parser.add_argument('-lp', '--load-p4', type=str, required=True,
+                        choices=['True', 'False'],
+                        help='When set, the controller will not attempt to '
+                             'load the P4 program onto the switches')
     return parser.parse_args()
 
 
@@ -74,9 +81,12 @@ def main():
         else:
             topo = yaml.safe_load(f)
 
+    logger.info(
+        'Starting SDN Controller with topology - [%s] and load_p4 flag - [%s]',
+        topo, eval(args.load_p4))
     sdn_controller = DdosSdnController(
-        topo, args.switch_config_dir, args.http_server_port, args.scenario,
-        args.log_dir)
+        topo, args.platform, args.switch_config_dir, args.http_server_port,
+        args.scenario, args.log_dir, eval(args.load_p4))
     sdn_controller.start()
 
 

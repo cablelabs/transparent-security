@@ -41,7 +41,7 @@ from trans_sec.utils.netstat import check_listening_on_port
 logger = logging.getLogger('p4runtime_switch')
 
 
-class P4RuntimeSwitch(P4Switch):
+class MininetSwitch(P4Switch):
     """
     BMv2 switch with gRPC support
     """
@@ -69,14 +69,14 @@ class P4RuntimeSwitch(P4Switch):
         if grpc_port is not None:
             self.grpc_port = grpc_port
         else:
-            self.grpc_port = P4RuntimeSwitch.next_grpc_port
-            P4RuntimeSwitch.next_grpc_port += 1
+            self.grpc_port = MininetSwitch.next_grpc_port
+            MininetSwitch.next_grpc_port += 1
 
         if thrift_port is not None:
             self.thrift_port = thrift_port
         else:
-            self.thrift_port = P4RuntimeSwitch.next_thrift_port
-            P4RuntimeSwitch.next_thrift_port += 1
+            self.thrift_port = MininetSwitch.next_thrift_port
+            MininetSwitch.next_thrift_port += 1
 
         if check_listening_on_port(self.grpc_port):
             raise Exception(

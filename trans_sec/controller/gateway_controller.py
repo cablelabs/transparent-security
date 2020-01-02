@@ -22,11 +22,11 @@ class GatewayController(AbstractController):
     Implementation of the controller for a switch running the aggregate.p4
     program
     """
-    def __init__(self, p4_build_out, topo, log_dir):
+    def __init__(self, platform, p4_build_out, topo, log_dir, load_p4=True):
         super(self.__class__, self).__init__(
-            p4_build_out, topo, 'gateway',
+            platform, p4_build_out, topo, 'gateway',
             ['MyIngress.forwardedPackets', 'MyIngress.droppedPackets'],
-            log_dir)
+            log_dir, load_p4)
 
     def make_rules(self, sw, sw_info, north_facing_links, south_facing_links):
         """
@@ -38,19 +38,17 @@ class GatewayController(AbstractController):
         """
         if 0 < len(north_facing_links) < 2:
             aggregate_link = north_facing_links[0]
-            aggregate = self.topo.get('switches').get(aggregate_link.get(
-                'north_node'))
+            aggregate = self.topo['switches'][aggregate_link['north_node']]
             logger.info('Gateway: ' + sw_info['name'] +
                         ' connects northbound to Aggregate: ' +
-                        aggregate['name'] +
+                        aggregate.get('name') +
                         ' on physical port ' +
                         str(aggregate_link.get('north_facing_port')) +
                         ' to physical port ' +
                         str(aggregate_link.get('south_facing_port')))
 
             for device_link in south_facing_links:
-                device = self.topo.get('hosts').get(device_link.get(
-                    'south_node'))
+                device = self.topo['hosts'].get(device_link['south_node'])
                 logger.info('Gateway: ' + sw_info['name'] +
                             ' connects to Device: ' + device['name'] +
                             ' on physical port ' +
@@ -62,11 +60,11 @@ class GatewayController(AbstractController):
                 table_entry = self.p4info_helper.build_table_entry(
                     table_name='MyIngress.data_inspection_t',
                     match_fields={
-                        'hdr.ethernet.srcAddr': device.get('mac')
+                        'hdr.ethernet.srcAddr': device['mac']
                     },
                     action_name='MyIngress.data_inspect_packet',
                     action_params={
-                        'device': device.get('id')
+                        'device': device['id']
                     })
                 sw.write_table_entry(table_entry)
                 logger.info('Installed Northbound Packet Inspection '
@@ -80,8 +78,8 @@ class GatewayController(AbstractController):
                 },
                 action_name='MyIngress.data_forward',
                 action_params={
-                    'dstAddr': aggregate.get('mac'),
-                    'port': aggregate_link.get('north_facing_port'),
+                    'dstAddr': aggregate['mac'],
+                    'port': aggregate_link['north_facing_port'],
                     'l2ptr': 0
                 })
             sw.write_table_entry(table_entry)
@@ -95,8 +93,8 @@ class GatewayController(AbstractController):
                 },
                 action_name='MyIngress.data_forward',
                 action_params={
-                    'dstAddr': aggregate.get('mac'),
-                    'port': aggregate_link.get('north_facing_port'),
+                    'dstAddr': aggregate['mac'],
+                    'port': aggregate_link['north_facing_port'],
                     'l2ptr': 0
                 })
             sw.write_table_entry(table_entry)
@@ -110,8 +108,8 @@ class GatewayController(AbstractController):
                 },
                 action_name='MyIngress.data_forward',
                 action_params={
-                    'dstAddr': aggregate.get('mac'),
-                    'port': aggregate_link.get('north_facing_port'),
+                    'dstAddr': aggregate['mac'],
+                    'port': aggregate_link['north_facing_port'],
                     'l2ptr': 0
                 })
             sw.write_table_entry(table_entry)

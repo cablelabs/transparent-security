@@ -22,70 +22,61 @@ class AggregateController(AbstractController):
     Implementation of the controller for a switch running the aggregate.p4
     program
     """
-    def __init__(self, p4_build_out, topo, log_dir):
+    def __init__(self, platform, p4_build_out, topo, log_dir, load_p4=True):
         super(self.__class__, self).__init__(
-            p4_build_out, topo, 'aggregate',
+            platform, p4_build_out, topo, 'aggregate',
             ['MyIngress.forwardedPackets', 'MyIngress.droppedPackets'],
-            log_dir)
+            log_dir, load_p4)
 
-    def make_rules(self, sw, sw_info, north_facing_links, south_facing_links):
-        """
-        Overrides the abstract method from super
-        :param sw: switch object
-        :param sw_info: switch info object
-        :param north_facing_links: northbound links
-        :param south_facing_links: southbound links
-        """
-        for north_facing_link in north_facing_links:
-            core = self.topo.get('switches').get(
-                north_facing_link.get('north_node'))
+    def make_north_rules(self, sw, sw_info, north_link):
+        if north_link.get('north_facing_port'):
+            logger.info('Creating north switch rules - [%s]', north_link)
+            north_node = self.topo['switches'][north_link['north_node']]
             logger.info(
                 'Aggregate: %s connects northbound to Core: %s on physical '
                 'port %s to physical port %s',
-                sw_info['name'], core['name'],
-                str(north_facing_link.get('north_facing_port')),
-                str(north_facing_link.get('south_facing_port')))
+                sw_info['name'], north_node,
+                north_link.get('north_facing_port'),
+                north_link.get('south_facing_port'))
 
-            inet = self.topo.get('hosts').get('inet')
+            inet = self.topo['hosts']['inet']
 
             table_entry = self.p4info_helper.build_table_entry(
                 table_name='MyIngress.data_forward_t',
                 match_fields={
-                    'hdr.ipv4.dstAddr': (inet.get('ip'), 32)
+                    'hdr.ipv4.dstAddr': (inet['ip'], 32)
                 },
                 action_name='MyIngress.data_forward',
                 action_params={
-                    'dstAddr': core.get('mac'),
-                    'port': north_facing_link.get('north_facing_port'),
+                    'dstAddr': north_node['mac'],
+                    'port': north_link['north_facing_port'],
                     'l2ptr': 0
                 })
             sw.write_table_entry(table_entry)
             logger.info('Installed Northbound from port %s to port %s',
-                        north_facing_link.get('north_facing_port'),
-                        north_facing_link.get('south_facing_port'))
+                        north_link.get('north_facing_port'),
+                        north_link.get('south_facing_port'))
+        else:
+            logger.info('No north links to install')
 
-        for south_link in south_facing_links:
-            if self.topo.get('switches').get(
-                    south_link.get('south_node')) is not None:
-                device = self.topo.get('switches').get(
-                    south_link.get('south_node'))
+    def make_south_rules(self, sw, sw_info, south_link):
+        if south_link.get('south_facing_port'):
+            logger.info('Creating south switch rules - [%s]', south_link)
+            if self.topo['switches'].get(south_link['south_node']):
+                device = self.topo['switches'][south_link['south_node']]
                 logger.info(
                     'Aggregate: %s connects to Gateway: %s on physical '
                     'port %s to physical port %s',
                     sw_info['name'], device['name'],
                     str(south_link.get('south_facing_port')),
                     str(south_link.get('north_facing_port')))
-
-            elif self.topo.get('hosts').get(
-                    south_link.get('south_node')) is not None:
-                device = self.topo.get('hosts').get(
-                    south_link.get('south_node'))
+            elif self.topo['hosts'].get(south_link['south_node']) is not None:
+                device = self.topo['hosts'][south_link['south_node']]
                 logger.info(
                     'Aggregate: %s connects to Device: %s on physical '
                     'port %s',
                     sw_info['name'], device['name'],
                     str(south_link.get('south_facing_port')))
-
             else:
                 raise StandardError(
                     'South Bound Link for %s, %s does not exist in topology' %
@@ -95,13 +86,15 @@ class AggregateController(AbstractController):
                 table_entry = self.p4info_helper.build_table_entry(
                     table_name='MyIngress.data_inspection_t',
                     match_fields={
-                        'hdr.ethernet.srcAddr': device.get('mac')
+                        'hdr.ethernet.srcAddr': device['mac']
                     },
                     action_name='MyIngress.data_inspect_packet',
                     action_params={
-                        'device': device.get('id')
+                        'device': device['id']
                     })
                 sw.write_table_entry(table_entry)
                 logger.info(
                     'Installed Northbound Packet Inspection from %s',
                     device.get('mac'))
+        else:
+            logger.info('No south links to install')
