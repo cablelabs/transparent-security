@@ -1,0 +1,40 @@
+# Copyright (c) 2019 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+- hosts: "{{ host_val | default('all') }}"
+  become: yes
+  gather_facts: no
+
+  tasks:
+    - name: Install docker
+      apt:
+        update_cache: yes
+        name: docker.io
+      retries: 3
+      delay: 5
+
+    - name: Create {{ remote_scripts_dir }}
+      file:
+        path: "{{ remote_scripts_dir }}"
+        state: directory
+
+    - name: Clone p4runtime-shell to {{ remote_scripts_dir }}/p4runtime-shell
+      git:
+        repo: https://github.com/p4lang/p4runtime-shell
+        dest: "{{ remote_scripts_dir }}/p4runtime-shell"
+
+    - name: Build p4runtime-shell Docker container from {{ remote_scripts_dir }}/p4runtime-shell
+      become: yes
+      command: docker build -t p4lang/p4runtime-sh .
+      args:
+        chdir: "{{ remote_scripts_dir }}/p4runtime-shell"

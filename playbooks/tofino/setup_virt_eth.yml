@@ -10,14 +10,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-# https://github.com/p4lang/tutorials/blob/master/vm/user-bootstrap.sh
-# Project and script derived in part from the script in the link above
 ---
-- import_playbook: ../dependencies/mininet.yml
-- import_playbook: ../dependencies/protobuf.yml
-- import_playbook: ../dependencies/grpc.yml
-- import_playbook: ../dependencies/bmv2.yml
-- import_playbook: ../dependencies/p4c.yml
-- import_playbook: ../general/p4_runtime_shell.yml
-- import_playbook: ../general/final_env_setup.yml
+
+# Create configured GRE tunnels on the switch VMs
+- hosts: "{{ host_val }}"
+  gather_facts: no
+  become: yes
+
+  environment:
+    SDE: "{{ remote_sde_dir }}"
+    SDE_INSTALL: "{{ remote_sde_dir }}/install"
+
+  tasks:
+    - name: Setup DMA
+      command: $SDE/pkgsrc/ptf-modules/ptf-utils/dma_setup.sh
+
+    - name: Setup Tofino Virtual interfaces
+      command: $SDE/pkgsrc/ptf-modules/ptf-utils/veth_setup.sh

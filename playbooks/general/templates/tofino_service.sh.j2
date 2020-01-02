@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # Copyright (c) 2019 Cable Television Laboratories, Inc.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,13 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# https://github.com/p4lang/tutorials/blob/master/vm/user-bootstrap.sh
-# Project and script derived in part from the script in the link above
----
-- import_playbook: ../dependencies/mininet.yml
-- import_playbook: ../dependencies/protobuf.yml
-- import_playbook: ../dependencies/grpc.yml
-- import_playbook: ../dependencies/bmv2.yml
-- import_playbook: ../dependencies/p4c.yml
-- import_playbook: ../general/p4_runtime_shell.yml
-- import_playbook: ../general/final_env_setup.yml
+# Runs the Tofino model chip emulator
+
+export SDE=~{{ sudo_user }}/bf-sde-{{ sde_version }}
+export SDE_INSTALL=$SDE/install
+
+mkdir {{ log_dir }}
+$SDE/run_tofino_model.sh -p {{ prog_name | default('skip_p4') }} --log-dir={{ log_dir }}

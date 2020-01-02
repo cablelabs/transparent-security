@@ -1,0 +1,58 @@
+# Copyright (c) 2019 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+
+# Create configured GRE tunnels on the switch VMs
+- hosts: switches
+  gather_facts: no
+  become: yes
+  tasks:
+    - name: copy local {{ topo_file_loc }} to {{ topo_file_loc }}
+      copy:
+        src: "{{ topo_file_loc }}"
+        dest: "{{ topo_file_loc }}"
+
+    - name: Read topology {{ topo_file_loc }}
+      set_fact:
+        topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
+
+    - name: set variables for switch links to run gre_tunnel_tasks.yml
+      set_fact:
+        switch: "{{ topo_dict.switches.get(ansible_host) }}"
+        host_type: switch
+
+    - include_tasks: gre_tunnel_tasks.yml
+      loop: "{{ switch.tunnels | list }}"
+
+# Create configured GRE tunnels on the host VMs to the switches
+- hosts: hosts
+  gather_facts: no
+  become: yes
+  tasks:
+    - name: copy local {{ topo_file_loc }} to {{ topo_file_loc }}
+      copy:
+        src: "{{ topo_file_loc }}"
+        dest: "{{ topo_file_loc }}"
+
+    - name: Read topology {{ topo_file_loc }}
+      set_fact:
+        topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
+
+    - name: set variables for host links to run gre_tunnel_tasks.yml
+      set_fact:
+        host: "{{ topo_dict.hosts.get(ansible_host) }}"
+        host_ip: "{{ topo_dict.hosts.get(ansible_host).ip }}"
+        host_type: host
+
+    - include_tasks: gre_tunnel_tasks.yml
+      loop: "{{ host.tunnels | list }}"

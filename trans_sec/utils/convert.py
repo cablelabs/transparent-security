@@ -27,6 +27,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import logging
 import math
 import re
 import socket
@@ -39,6 +40,7 @@ from byte strings:
 - Ethernet address strings
 '''
 
+logger = logging.getLogger('convert')
 mac_pattern = re.compile('^([\da-fA-F]{2}:){5}([\da-fA-F]{2})$')
 
 
@@ -90,10 +92,12 @@ def encode(x, bitwidth):
     """
     Tries to infer the type of `x` and encode it
     """
+    logger.info('Encoding - [%s] with - [%s]', x, bitwidth)
     bitwidth_bytes = bitwidth_to_bytes(bitwidth)
     if (type(x) == list or type(x) == tuple) and len(x) == 1:
         x = x[0]
     if isinstance(x, str):
+        logger.debug('Encoding [%s] as a string value', x)
         if matches_mac(x):
             encoded_bytes = encode_mac(x)
         elif matches_ipv4(x):
@@ -102,6 +106,7 @@ def encode(x, bitwidth):
             # Assume that the string is already encoded
             encoded_bytes = x
     elif isinstance(x, unicode):
+        logger.debug('Encoding [%s] as a unicode value', x)
         t = x.encode('utf-8')
         if matches_mac(t):
             encoded_bytes = encode_mac(t)
@@ -111,8 +116,16 @@ def encode(x, bitwidth):
             # Assume that the string is already encoded
             encoded_bytes = x
     elif type(x) == int:
+        logger.debug('Encoding [%s] as a int value', x)
         encoded_bytes = encode_num(x, bitwidth)
     else:
-        raise Exception("Encoding objects of %r is not supported" % type(x))
+        if x:
+            raise Exception(
+                "Encoding objects of %r is not supported" % type(x))
+        else:
+            raise Exception('Value to encode is None')
+
+    logger.debug('Length of encoded bytes - [%s] - bitwidth_bytes - [%s]',
+                 len(encoded_bytes), bitwidth_bytes)
     assert (len(encoded_bytes) == bitwidth_bytes)
     return encoded_bytes

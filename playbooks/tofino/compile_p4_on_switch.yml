@@ -10,14 +10,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-# https://github.com/p4lang/tutorials/blob/master/vm/user-bootstrap.sh
-# Project and script derived in part from the script in the link above
 ---
-- import_playbook: ../dependencies/mininet.yml
-- import_playbook: ../dependencies/protobuf.yml
-- import_playbook: ../dependencies/grpc.yml
-- import_playbook: ../dependencies/bmv2.yml
-- import_playbook: ../dependencies/p4c.yml
-- import_playbook: ../general/p4_runtime_shell.yml
-- import_playbook: ../general/final_env_setup.yml
+- hosts: "{{ host_val }}"
+
+  gather_facts: no
+
+  tasks:
+    - name: Compile P4 program {{ p4_prog }}
+      command: "{{ bf_tools_dir }}/p4_build.sh {{ remote_tps_dir }}/p4/{{ package }}/{{ program }}"
+      environment:
+        SDE: "{{ remote_sde_dir }}"

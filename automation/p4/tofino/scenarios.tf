@@ -10,14 +10,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-# https://github.com/p4lang/tutorials/blob/master/vm/user-bootstrap.sh
-# Project and script derived in part from the script in the link above
----
-- import_playbook: ../dependencies/mininet.yml
-- import_playbook: ../dependencies/protobuf.yml
-- import_playbook: ../dependencies/grpc.yml
-- import_playbook: ../dependencies/bmv2.yml
-- import_playbook: ../dependencies/p4c.yml
-- import_playbook: ../general/p4_runtime_shell.yml
-- import_playbook: ../general/final_env_setup.yml
+
+resource "null_resource" "transparent-security-run-senario-tests" {
+  depends_on = [null_resource.tps-tofino-setup-nodes]
+
+  provisioner "remote-exec" {
+    inline = [
+      "sudo pip install ansible",
+      "${var.ANSIBLE_CMD} -i ${var.remote_inventory_file} ${var.remote_pb_dir}/scenarios/${var.scenario_name}.yml",
+    ]
+  }
+
+  connection {
+    host        = aws_instance.orchestrator.public_ip
+    type        = "ssh"
+    user        = var.sudo_user
+    private_key = file(var.private_key_file)
+  }
+}
