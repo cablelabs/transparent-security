@@ -17,5 +17,8 @@
 # adding P4 runtime for the TPS SDN Controller
 - import_playbook: ../dependencies/p4runtime.yml
 
+# install p4runtime-shell for debugging purposes
+- import_playbook: ../general/p4_runtime_shell.yml
+
 # disables unattended upgrades
 - import_playbook: ../general/final_env_setup.yml

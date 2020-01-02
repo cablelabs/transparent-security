@@ -11,9 +11,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
-- hosts: all
+- hosts: "{{ host_val | default('all') }}"
 
   gather_facts: no
+
+  vars:
+    orig_src_dir: "{{ trans_sec_source_dir | default('../../..') }}/"
+    dest_dir: "{{ trans_sec_dest_dir | default(trans_sec_dir) }}"
 
   tasks:
     - name: install python-pip
@@ -27,11 +31,11 @@
       delay: 10
       until: apt_rc is not failed
 
-    - name: Copy local transparent-security source to remote {{ trans_sec_dir }} directory
+    - name: Copy local transparent-security source from {{ orig_src_dir }} to remote {{ dest_dir }} directory
       synchronize:
         # Top-level source directory relative to this directory
-        src: ../../../
-        dest: "{{ trans_sec_dir }}"
+        src: "{{ orig_src_dir }}"
+        dest: "{{ dest_dir }}"
         dirs: yes
         rsync_opts:
           - "--exclude=.idea"
@@ -40,5 +44,6 @@
           - "--exclude=*/.terraform*"
           - "--exclude=*.tfstate"
 
-    - name: install {{ trans_sec_dir }} and dependencies into python runtime
-      command: sudo pip install -e {{ trans_sec_dir }}
+    - name: install {{ dest_dir }} and dependencies into python runtime
+      become: yes
+      command: "pip install -e {{ dest_dir }}"
