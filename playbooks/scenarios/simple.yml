@@ -17,9 +17,10 @@
 - import_playbook: test_cases/send_receive.yml
   vars:
     receiver: inet
-    receiver_log_file: "{{ log_dir }}/receiver-inet-1.out"
+    receiver_log_file: "{{ host_log_dir }}/receiver-inet-1.out"
     sender: Camera1
-    sender_log_file: "{{ log_dir }}/sender-Camera1.out"
+    sender_intf: "{{ host_sender_intf | default('Camera1-eth0') }}"
+    sender_log_filename: sender-Camera1.out
     send_port: 4321
     send_src_port: 5432
     send_to_ip: 10.2.5.2
@@ -29,9 +30,10 @@
 - import_playbook: test_cases/send_receive.yml
   vars:
     receiver: inet
-    receiver_log_file: "{{ log_dir }}/receiver-inet-2.out"
+    receiver_log_file: "{{ host_log_dir }}/receiver-inet-2.out"
     sender: Camera2
-    sender_log_file: "{{ log_dir }}/sender-Camera2.out"
+    sender_intf: "{{ host_sender_intf | default('Camera2-eth0') }}"
+    sender_log_filename: sender-Camera2.out
     send_port: 4322
     send_src_port: 5433
     send_to_ip: 10.2.5.2
@@ -42,11 +44,12 @@
 - import_playbook: test_cases/send_receive.yml
   vars:
     receiver: inet
-    receiver_log_file: "{{ log_dir }}/receiver-inet-3.out"
+    receiver_log_file: "{{ host_log_dir }}/receiver-inet-3.out"
     min_received_packet_count: 99
     max_received_packet_count: 150
     sender: Camera3
-    sender_log_file: "{{ log_dir }}/sender-Camera3.out"
+    sender_intf: "{{ host_sender_intf | default('Camera3-eth0') }}"
+    sender_log_filename: sender-Camera3.out
     send_port: 4323
     send_src_port: 5434
     send_to_ip: 10.2.5.2

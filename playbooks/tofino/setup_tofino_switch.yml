@@ -1,0 +1,49 @@
+# Copyright (c) 2019 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+- import_playbook: setup_virt_eth.yml
+  vars:
+    host_val: "{{ switches }}"
+    remote_sde_dir: "{{ sde_dir }}"
+
+- import_playbook: compile_p4_on_switch.yml
+  vars:
+    host_val: "{{ switches }}"
+    package: "{{ p4_pkg }}"
+    program: "{{ p4_prog }}"
+    remote_sde_dir: "{{ sde_dir }}"
+    bf_tools_dir: "/home/{{ switch_sudo_user }}/tools"
+    remote_tps_dir: "{{ tps_dir }}"
+
+# Start tofino model chip emulator
+- import_playbook: ../general/start_service.yml
+  vars:
+    host_val: "{{ switches }}"
+    service_name: tps-tofino-model
+    local_srvc_script_tmplt_file: "{{ tps_dir }}/playbooks/general/templates/tofino_service.sh.j2"
+    port_to_wait: "{{ tofino_model_port }}"
+    sudo_user: "{{ switch_sudo_user }}"
+    prog_name: "{{ p4_pkg }}"
+    wait_timeout: 120
+
+# Start switchd
+- import_playbook: ../general/start_service.yml
+  vars:
+    host_val: "{{ switches }}"
+    service_name: tps-tofino-switchd
+    local_srvc_script_tmplt_file: "{{ tps_dir }}/playbooks/general/templates/switchd_service_with_p4.sh.j2"
+    port_to_wait: "{{ switchd_port }}"
+    sudo_user: "{{ switch_sudo_user }}"
+    prog_name: "{{ p4_pkg }}"
+    wait_timeout: 120
+    srvc_start_pause_time: 30

@@ -13,5 +13,5 @@
 
 # Outputs
 output "ip" {
-  value = "${aws_instance.transparent-security-mininet-integration.public_ip}"
+  value = aws_instance.transparent-security-mininet-integration.public_ip
 }

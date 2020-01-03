@@ -67,6 +67,7 @@ pi_version=${var.pi_version}
 bm_version=${var.bm_version}
 bf_sde_version=${var.bf_sde_version}
 bf_sde_s3_bucket=${var.bf_sde_s3_bucket}
+remote_scripts_dir=${var.remote_scripts_dir}
 "\
 EOT
   }

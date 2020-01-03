@@ -1,0 +1,48 @@
+# Copyright (c) 2019 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+- hosts: "{{ host_val | default('all') }}"
+  gather_facts: no
+  become: yes
+
+  environment:
+    SDE: "{{ sde_dir }}"
+    SDE_INSTALL: "{{ sde_dir }}/install"
+
+  tasks:
+    - name: Ensure {{ remote_scripts_dir }} directory has been created
+      file:
+        path: "{{ remote_scripts_dir }}/p4"
+        state: directory
+
+    - set_fact:
+        configure_command: "$SDE/pkgsrc/p4-build/configure --prefix='$SDE_INSTALL' --with-p4c='$SDE_INSTALL/bin/p4c' P4_VERSION='p4-16' P4_ARCHITECTURE='v1model' P4JOBS=8 P4FLAGS='-g --verbose 2 --create-graphs' --with-tofino P4PPFLAGS=''"
+    - name: Configure P4 programs {{ p4_progs }}
+      command: "{{ configure_command }} P4_PATH='{{ remote_tps_dir }}/p4/{{ item }}/{{ item }}.p4' P4_NAME='{{ item }}' P4_PREFIX='{{ item }}'"
+      loop: "{{ p4_progs }}"
+
+    - set_fact:
+        compile_command: "$SDE_INSTALL/bin/bf-p4c --std p4-16 --arch v1model --p4runtime-format text"
+    - name: Compile P4 programs {{ p4_progs }}
+      command: "{{ compile_command }} --p4runtime-files {{ remote_scripts_dir }}/p4/{{ item }}.p4info.pb.txt {{ remote_tps_dir }}/p4/{{ item }}/{{ item }}.p4"
+      loop: "{{ p4_progs }}"
+
+    - set_fact:
+        bfrt_command: "$SDE_INSTALL/bin/p4c-gen-bfrt-conf --device tofino"
+    - name: p4c-gen-bfrt-conf {{ p4_progs }}
+      shell: "{{ bfrt_command }} --name {{ item }} --testdir {{ remote_tps_dir }}/../{{ item }}.tofino --pipe $SDE_INSTALL/bin/p4c-manifest-config --pipe {{ remote_tps_dir }}/../{{ item }}.tofino/manifest.json"
+      loop: "{{ p4_progs }}"
+
+    - name: Copy compiled artifacts to {{ remote_scripts_dir }}/p4
+      command: "cp -r {{ remote_tps_dir }}/../{{ item }}.tofino/ {{ remote_scripts_dir }}/p4/"
+      loop: "{{ p4_progs }}"
