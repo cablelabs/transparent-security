@@ -18,10 +18,6 @@
       become: yes
       apt:
         update_cache: yes
-
-    - name: Install apt dependencies
-      become: yes
-      apt:
         name:
           - python-pip
 
@@ -30,6 +26,13 @@
       pip:
         name:
           - boto3
+
+    - name: install jsonschema==2.6.0 due to 9.0 p4studio_build.py bug
+      become: yes
+      pip:
+        name:
+          - jsonschema==2.6.0
+      when: bf_sde_version is version_compare('9.0', operator='eq', strict=True)
 
     - name: get bf-sde-{{ bf_sde_version }}.tar
       aws_s3:
@@ -70,9 +73,20 @@
         line: ". {{ install_dir }}/tools/set_sde.bash"
         state: present
 
-    - name: Copy transparent-security profile
-      copy:
-        src: ./templates/tps-bf-sde-profile.yml
+    - name: Set default switch_profile variable
+      set_fact:
+        switch_profile: "{{ tofino_switch_profile | default('a0_tofino') }}"
+
+    - name: Set switch_profile fact for BF SDE < 8.9.0
+      set_fact:
+        switch_profile: DC_BASIC_PROFILE
+      when: bf_sde_version is version_compare('8.9.0', operator='lt', strict=True)
+
+    - name: Copy transparent-security profile with switch_profile {{ switch_profile }}
+      template:
+        src: ./templates/tps-bf-sde-profile.yml.j2
         dest: "$SDE/p4studio_build/profiles/tps-profile.yaml"
+      vars:
+        arch: "{{ tofino_arch | default('tofino') }}"
       environment:
         SDE: "{{ install_dir }}/bf-sde-{{ bf_sde_version }}"
