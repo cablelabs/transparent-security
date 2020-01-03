@@ -11,11 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
-# Install p4runtime-shell on the controller
-- import_playbook: ../general/p4_runtime_shell.yml
-  vars:
-    host_val: hosts
-
 # Compile P4 programs for the SDN Controller
 - import_playbook: compile_p4.yml
   vars:
