@@ -1,5 +1,3 @@
-#!/usr/bin/env python2
-
 # Copyright (c) 2019 Cable Television Laboratories, Inc.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,16 +11,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
-- hosts: "{{ host_val | default('all') }}"
-  gather_facts: no
-  become: yes
-
-  tasks:
-    - name: Ensure {{ remote_scripts_dir }} directory has been created
-      file:
-        path: "{{ remote_scripts_dir }}/p4"
-        state: directory
-
-    - name: Compile P4 programs {{ p4_progs }}
-      command: "p4c-bm2-ss --p4v 16 --p4runtime-format text --p4runtime-file {{ remote_scripts_dir }}/p4/{{ item }}.p4info -o {{ remote_scripts_dir }}/p4/{{ item }}.json {{ remote_tps_dir }}/p4/{{ item }}/{{ item }}.p4"
-      loop: "{{ p4_progs }}"
+- import_playbook: ../general/setup_source.yml
+- import_playbook: generate_inventory.yml

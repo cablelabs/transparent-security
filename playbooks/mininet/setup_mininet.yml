@@ -1,0 +1,62 @@
+# Copyright (c) 2019 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+- import_playbook: generate_topology.yml
+  vars:
+    host_val: localhost
+
+- import_playbook: start_mininet.yml
+  vars:
+    host_val: localhost
+    service_name: tps-mininet
+    srvc_desc: 'Mininet for TPS'
+    local_srvc_script_tmplt_file: ../general/templates/mininet_service.sh.j2
+    srvc_start_pause_time: 20
+    port_to_wait: 50051
+    run_daemons: True
+
+- import_playbook: ../general/start_service.yml
+  vars:
+    host_val: localhost
+    service_name: transparent-security-sdn
+    srvc_desc: 'SDN'
+    local_srvc_script_tmplt_file: ../general/templates/sdn_mininet.sh.j2
+    srvc_start_pause_time: 15
+    port_to_wait: 9998
+
+- import_playbook: ../general/start_service.yml
+  vars:
+    host_val: localhost
+    service_name: transparent-security-ae
+    srvc_desc: 'TPS-AE'
+    srvc_type: 'SIMPLE'
+    local_srvc_script_tmplt_file: ../general/templates/ae_service.sh.j2
+    monitor_intf: core1-eth3
+
+- import_playbook: ../general/start_service.yml
+  vars:
+    host_val: localhost
+    service_name: transparent-security-core1-eth1-logger
+    srvc_desc: 'core1-eth1-logger'
+    srvc_type: 'LOGGING'
+    local_srvc_script_tmplt_file: ../general/templates/ae_service.sh.j2
+    monitor_intf: core1-eth1
+
+- import_playbook: ../general/start_service.yml
+  vars:
+    host_val: localhost
+    service_name: transparent-security-core1-eth2-logger
+    srvc_desc: 'core1-eth2-logger'
+    srvc_type: 'LOGGING'
+    local_srvc_script_tmplt_file: ../general/templates/ae_service.sh.j2
+    monitor_intf: core1-eth2

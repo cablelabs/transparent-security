@@ -32,7 +32,9 @@ variable "ANSIBLE_CMD" {default = "export ANSIBLE_HOST_KEY_CHECKING=False; ansib
 variable "ANSIBLE_PB_PATH" {default = "../../../playbooks"}
 variable "src_dir" {default = "~/transparent-security"}
 variable "remote_scripts_dir" {default = "/etc/transparent-security"}
+variable "remote_pb_dir" {default = "/home/ubuntu/transparent-security/playbooks"}
 variable "remote_inventory_file" {default = "/home/ubuntu/transparent-security.ini"}
+variable "local_inventory_file" {default = "~/local_variables.ini"}
 variable "run_daemons" {default = "True"}
 variable "topo_file" {default = "mininet-sim-topology.yaml"}
 variable "dev_daemon_file" {default = "device-daemons.yml"}
@@ -49,9 +51,12 @@ variable "remote_tps_dir" {default = "/home/ubuntu/transparent-security"}
 
 # Variables for ansible playbooks
 variable "SETUP_SOURCE" {default = "../../../playbooks/general/setup_source.yml"}
+variable "LOCAL_INVENTORY" {default = "../../../playbooks/mininet/local_inventory.yml"}
+variable "SETUP_MININET_HOST" {default = "../../../playbooks/mininet/setup_host.yml"}
 variable "START_MININET" {default = "../../../playbooks/mininet/start_mininet.yml"}
 variable "GENERATE_TOPOLOGY" {default = "../../../playbooks/mininet/generate_topology.yml"}
 variable "START_SERVICE" {default = "../../../playbooks/general/start_service.yml"}
 variable "SCENARIOS_DIR" {default = "../../../playbooks/scenarios"}
 variable "remote_scenario_pb_dir" {default = "/home/ubuntu/transparent-security/playbooks/scenarios"}
 variable "scenario_name" {default = "simple"}
+variable "setup_mininet" {default = "setup_mininet.yml"}
