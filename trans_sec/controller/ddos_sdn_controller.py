@@ -19,9 +19,8 @@ from dateutil import parser
 from trans_sec.controller.aggregate_controller import AggregateController
 from trans_sec.controller.core_controller import CoreController
 from trans_sec.controller.gateway_controller import GatewayController
-from trans_sec.controller.http_server_flask import SDNControllerServer
-from trans_sec.p4runtime_lib.switch import shutdown_all_switch_connections
 from trans_sec.packet.packet_telemetry import PacketTelemetry
+from trans_sec.controller.http_server_flask import SDNControllerServer
 
 # Logger stuff
 logger = getLogger('ddos_sdn_controller')
@@ -36,8 +35,8 @@ class DdosSdnController:
     """
     SDN controller for quelling DDoS attacks
     """
-    def __init__(self, topo, switch_config_dir, http_server_port, scenario,
-                 log_dir):
+    def __init__(self, topo, platform, switch_config_dir, http_server_port,
+                 scenario, log_dir, load_p4=True):
 
         self.topo = topo
         self.switch_config_dir = switch_config_dir
@@ -46,19 +45,16 @@ class DdosSdnController:
         # Init switch controllers
         self.controllers = {
             GATEWAY_CTRL_KEY: GatewayController(
-                self.switch_config_dir, self.topo, log_dir),
+                platform, self.switch_config_dir, self.topo, log_dir, load_p4),
             AGG_CTRL_KEY: AggregateController(
-                self.switch_config_dir, self.topo, log_dir),
+                platform, self.switch_config_dir, self.topo, log_dir, load_p4),
             CORE_CTRL_KEY: CoreController(
-                self.switch_config_dir, self.topo, log_dir),
+                platform, self.switch_config_dir, self.topo, log_dir, load_p4),
         }
 
         self.http_server = SDNControllerServer(self, http_server_port)
-
         self.last_scenario_time = datetime.now()
         self.last_attack_time = datetime.now()
-
-        # TODO/FIXME - remove hardcoding and determine what this value is for
         self.mitigation = dict(activeScenario=scenario,
                                timeActivated=datetime.now())
         self.attack = dict(
@@ -66,9 +62,17 @@ class DdosSdnController:
             attackEnd=datetime.now(), attackType=None)
 
     def start(self):
-        self.http_server.start()
+        logger.info('Starting Controllers')
+        for controller in self.controllers.values():
+            controller.start()
+
         self.__make_switch_rules()
         self.__build_skeleton_packet_telemetry()
+
+        logger.info('Starting HTTP server on port - [%s]',
+                    self.http_server.port)
+        self.http_server.start()
+
         self.__main_loop()
 
     def stop(self):
@@ -128,19 +132,22 @@ class DdosSdnController:
         Creates the rules for each controller
         :return:
         """
+        logger.info('Creating switch rules on #%s different controllers',
+                    len(self.controllers))
         for controller in self.controllers.values():
             controller.make_switch_rules()
 
     def __build_skeleton_packet_telemetry(self):
+        logger.info('Building skeleton packet telemetry')
         for host, host_info in self.topo['hosts'].items():
             self.packet_telemetry.add_host(
-                host_info.get('id'), host_info.get('mac'),
-                host_info.get('name'), host_info.get('type'))
+                host_info['id'], host_info['mac'],
+                host_info['name'], host_info['type'])
 
         for switch, switch_info in self.topo['switches'].items():
             self.packet_telemetry.add_switch(
-                switch_info.get('id'), switch_info.get('mac'),
-                switch_info.get('name'), switch_info.get('type'))
+                switch_info['id'], switch_info['mac'],
+                switch_info['name'], switch_info['type'])
 
         for switch, switch_info in self.topo['switches'].items():
             conditions = {'north_node': switch}
@@ -163,14 +170,14 @@ class DdosSdnController:
                     else:
                         device = self.topo.get('switches').get(device_name)
                         self.packet_telemetry.add_child(
-                            switch_info.get('id'), device.get('id'))
+                            switch_info['id'], device['id'])
                         logger.debug(
                             'Added Switch %s southbound of %s',
                             device.get('name'), switch_info.get('name'))
                 else:
                     device = self.topo.get('hosts').get(device_name)
                     self.packet_telemetry.add_child(
-                        switch_info.get('id'), device.get('id'))
+                        switch_info['id'], device['id'])
                     logger.debug(
                         'Added Device %s southbound of %s' %
                         (device.get('name'), switch_info.get('name')))
@@ -182,7 +189,7 @@ class DdosSdnController:
         """
         logger.info('Attack received - %s', attack)
 
-        conditions = {'mac': attack.get('src_mac')}
+        conditions = {'mac': attack['src_mac']}
         values = self.topo.get('hosts').values()
         host = filter(
             lambda item: all(
@@ -200,7 +207,7 @@ class DdosSdnController:
                     or self.mitigation.get('activeScenario') == 'scenario3'):
                 logger.info('Adding attack to aggregate')
                 self.controllers.get(AGG_CTRL_KEY).add_attacker(attack, host)
-            self.packet_telemetry.register_attack(host.get('id'))
+            self.packet_telemetry.register_attack(host['id'])
         else:
             logger.error('No Device Matches MAC [%s]', attack.get('src_mac'))
 
@@ -208,6 +215,7 @@ class DdosSdnController:
         """
         Starts polling thread
         """
+        logger.info('Starting polling thread')
         try:
             delta = 0.0
             while True:
@@ -223,9 +231,11 @@ class DdosSdnController:
         except KeyboardInterrupt:
             logger.warning(' Shutting down.')
 
-        shutdown_all_switch_connections()
-
     def __retrieve_and_send_packet_telemetry(self):
         for controller in self.controllers.values():
             controller.update_all_counters(self.packet_telemetry)
             controller.reset_all_counters(self.packet_telemetry)
+
+    def __send_packet_telemetry(self):
+        self.packet_telemetry.total()
+        self.packet_telemetry.build_msg()

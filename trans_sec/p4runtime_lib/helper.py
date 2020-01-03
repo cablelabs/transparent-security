@@ -116,26 +116,39 @@ class P4InfoHelper(object):
         return self.get_match_field(table_name, field_id=match_field_id).name
 
     def get_match_field_pb(self, table_name, match_field_name, value):
+        logger.info(
+            'Retrieving match field on table name - [%s], match field - [%s], '
+            'value - [%s]', table_name, match_field_name, value)
+
         p4info_match = self.get_match_field(table_name, match_field_name)
         bit_width = p4info_match.bitwidth
         p4runtime_match = p4runtime_pb2.FieldMatch()
         p4runtime_match.field_id = p4info_match.id
         match_type = p4info_match.match_type
+
+        logger.info(
+            'Encoding value [%s] for exact match with bitwidth - [%s]',
+            value, bit_width)
+
         if match_type == p4info_pb2.MatchField.EXACT:
+            logger.info('Encoding for EXACT matches')
             exact = p4runtime_match.exact
             exact.value = encode(value, bit_width)
         elif match_type == p4info_pb2.MatchField.LPM:
+            logger.info('Encoding for LPM matches')
             lpm = p4runtime_match.lpm
             lpm.value = encode(value[0], bit_width)
             lpm.prefix_len = value[1]
         elif match_type == p4info_pb2.MatchField.TERNARY:
-            lpm = p4runtime_match.ternary
-            lpm.value = encode(value[0], bit_width)
-            lpm.mask = encode(value[1], bit_width)
+            logger.info('Encoding for TERNARY matches')
+            ternary = p4runtime_match.ternary
+            ternary.value = encode(value[0], bit_width)
+            ternary.mask = encode(value[1], bit_width)
         elif match_type == p4info_pb2.MatchField.RANGE:
-            lpm = p4runtime_match.range
-            lpm.low = encode(value[0], bit_width)
-            lpm.high = encode(value[1], bit_width)
+            logger.info('Encoding for RANGE matches')
+            range_match = p4runtime_match.range
+            range_match.low = encode(value[0], bit_width)
+            range_match.high = encode(value[1], bit_width)
         else:
             raise Exception("Unsupported match type with type %r" % match_type)
         return p4runtime_match
@@ -183,6 +196,9 @@ class P4InfoHelper(object):
         return self.get_action_param(action_name, action_id=param_id).name
 
     def get_action_param_pb(self, action_name, param_name, value):
+        logger.info(
+            'Retrieving action param for action - [%s], param - [%s], '
+            'value - [%s]', action_name, param_name, value)
         p4info_param = self.get_action_param(action_name, param_name)
         p4runtime_param = p4runtime_pb2.Action.Param()
         p4runtime_param.param_id = p4info_param.id
@@ -192,6 +208,8 @@ class P4InfoHelper(object):
     def build_table_entry(self, table_name, match_fields=None,
                           default_action=False, action_name=None,
                           action_params=None, priority=None):
+        logger.info('Building table entry to table - [%s] with params - [%s]',
+                    table_name, action_params)
         table_entry = p4runtime_pb2.TableEntry()
         table_entry.table_id = self.get_tables_id(table_name)
 
@@ -211,6 +229,7 @@ class P4InfoHelper(object):
             action = table_entry.action.action
             action.action_id = self.get_actions_id(action_name)
             if action_params:
+                logger.info('Action params - [%s]', action_params)
                 action.params.extend([
                     self.get_action_param_pb(action_name, field_name, value)
                     for field_name, value in action_params.items()
@@ -219,6 +238,8 @@ class P4InfoHelper(object):
 
     @staticmethod
     def reset_counter(counter_id, index):
+        logger.info('Resetting counter with ID - [%s] and index - [%s]',
+                    counter_id, index)
         counter_entry = p4runtime_pb2.CounterEntry()
         if counter_id is not None:
             counter_entry.counter_id = counter_id
@@ -231,11 +252,12 @@ class P4InfoHelper(object):
 
     @staticmethod
     def build_clone_entry(clone_egress):
+        logger.info('Building clone entry with egress_port value of - [%s]',
+                    clone_egress)
         pre_entry = p4runtime_pb2.PacketReplicationEngineEntry()
         clone_session_entry = p4runtime_pb2.CloneSessionEntry()
         clone_session_entry.session_id = 5
         clone_session_entry.replicas.add(egress_port=clone_egress, instance=1)
-        clone_session_entry.packet_length_bytes = 0
         pre_entry.clone_session_entry.CopyFrom(clone_session_entry)
         logger.info('Clone entry - [%s]', pre_entry)
         return pre_entry

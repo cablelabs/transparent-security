@@ -12,30 +12,49 @@
 # limitations under the License.
 from logging import getLogger
 
-from trans_sec.p4runtime_lib import bmv2, helper
+from trans_sec.p4runtime_lib import bmv2, helper, tofino
 
 logger = getLogger('abstract_controller')
 
 
 class AbstractController(object):
-    """
-    Base controller class for a particular P4 switch implementation
-    """
-
-    def __init__(self, p4_build_out, topo, switch_type, counters, log_dir):
+    def __init__(self, platform, p4_build_out, topo, switch_type, counters,
+                 log_dir, load_p4):
         """
         Constructor
-        :param p4_build_out:
-        :param topo: a dict representing the mininet topology
-        :param switch_type:
+        :param platform: the platform on which the switches are running
+                         (bmv2|tofino)
+        :param p4_build_out: the build artifact directory
+        :param topo: the topology config dictionary
+        :param switch_type: the type of switch (aggregate|core|gateway)
         :param counters:
+        :param log_dir: the directory to which to write the log entries
+        :param load_p4: when True, the forwarding pipeline configuration will
+                        be sent to the switch
         """
+        self.platform = platform
         self.p4_bin_dir = p4_build_out
         self.topo = topo
         self.counters = counters
         self.switch_type = switch_type
         self.log_dir = log_dir
-        self.switches = []
+        self.load_p4 = load_p4
+        self.switches = list()
+
+        if self.platform == 'bmv2':
+            p4info_txt = "{0}/{1}.{2}".format(
+                self.p4_bin_dir, self.switch_type, 'p4info')
+        elif self.platform == 'tofino':
+            p4info_txt = "{0}/{1}.{2}".format(
+                self.p4_bin_dir, self.switch_type, 'p4info.pb.txt')
+        else:
+            raise Exception('Switch type - {} is not supported'.format(
+                            self.switch_type))
+        self.p4info_helper = helper.P4InfoHelper(p4info_txt)
+
+    def start(self):
+        logger.info('Adding helpers to switch of type - [%s]',
+                    self.switch_type)
         self.__add_helpers()
 
     def make_rules(self, sw, sw_info, north_facing_links, south_facing_links):
@@ -46,40 +65,30 @@ class AbstractController(object):
         :param north_facing_links: northbound links
         :param south_facing_links: southbound links
         """
+        for north_link in north_facing_links:
+            logger.info('Creating rules for the north link - [%s]', north_link)
+            self.make_north_rules(sw, sw_info, north_link)
+
+        for south_link in south_facing_links:
+            logger.info('Creating rules for the south link - [%s]', south_link)
+            self.make_south_rules(sw, sw_info, south_link)
+
+    def make_north_rules(self, sw, sw_info, north_link):
+        raise NotImplemented
+
+    def make_south_rules(self, sw, sw_info, south_link):
         raise NotImplemented
 
     def __add_helpers(self):
-        for name, switch in self.topo.get('switches').items():
-            if switch.get('type') == self.switch_type:
-                self.__setup_helper(name, switch)
-
-    def __setup_helper(self, name, switch):
-        """
-        Initializes self.p4info_helper and self.switches list for Mininet
-        :param name: the switch name
-        :param switch: the switch object
-        """
-        self.p4info_helper = helper.P4InfoHelper(
-            "{0}/{1}.p4info".format(self.p4_bin_dir, self.switch_type))
-        new_switch = bmv2.Bmv2SwitchConnection(
-            name=name,
-            address=switch.get('grpc'),
-            device_id=switch.get('id'),
-            proto_dump_file='{}/{}-switch-controller.log'.format(
-                self.log_dir, name))
-        new_switch.master_arbitration_update()
-
-        bmv2_json_file_path = "{0}/{1}.json".format(
-            self.p4_bin_dir, self.switch_type)
-        logger.info('Setting forward pipeline config with bmv2 json - [%s]',
-                    bmv2_json_file_path)
-        new_switch.set_forwarding_pipeline_config(
-            p4info=self.p4info_helper.p4info,
-            bmv2_json_file_path=bmv2_json_file_path)
-        self.switches.append(new_switch)
-        logger.info(
-            'Installed P4 %s on BMV2 using '
-            'SetForwardingPipelineConfig', name)
+        logger.info('Setting up helpers')
+        for name, switch in self.topo['switches'].items():
+            logger.info('Setting up helper for - [%s] of type - [%s]',
+                        name, switch.get('type'))
+            if switch['type'] == self.switch_type:
+                if self.platform == 'bmv2':
+                    self.__setup_bmv2_helper(name, switch)
+                elif self.platform == 'tofino':
+                    self.__setup_tofino_helper(name, switch)
 
     def reset_all_counters(self, packet_telemetry):
         logger.info('Resetting counters')
@@ -92,7 +101,7 @@ class AbstractController(object):
                                  device.get('device_id'))
                     switch_obj.reset_counters(
                         self.p4info_helper.get_counters_id(counter),
-                        device.get('device_id'))
+                        device['device_id'])
 
     def update_all_counters(self, packet_telemetry):
         logger.info('Updating counters for all switches')
@@ -141,14 +150,14 @@ class AbstractController(object):
             table_entry = self.p4info_helper.build_table_entry(
                 table_name='MyIngress.data_drop_t',
                 match_fields={
-                    'hdr.inspection.srcAddr': (attack.get('src_mac')),
-                    'hdr.ipv4.srcAddr': (attack.get('src_ip')),
-                    'hdr.ipv4.dstAddr': (attack.get('dst_ip')),
-                    'hdr.udp.dst_port': (int(attack.get('dst_port')))
+                    'hdr.inspection.srcAddr': (attack['src_mac']),
+                    'hdr.ipv4.srcAddr': (attack['src_ip']),
+                    'hdr.ipv4.dstAddr': (attack['dst_ip']),
+                    'hdr.udp.dst_port': (int(attack['dst_port']))
                 },
                 action_name='MyIngress.data_drop',
                 action_params={
-                    'device': host.get('id')
+                    'device': host['id']
                 })
             logger.debug('Writing table entry [%s]', table_entry)
             switch.write_table_entry(table_entry)
@@ -172,13 +181,85 @@ class AbstractController(object):
         :param switch_name: the name of the switch
         :return:
         """
-        sw_info = self.topo.get('switches').get(switch_name)
+        sw_info = self.topo['switches'][switch_name]
         conditions = {'south_node': switch_name}
         north_facing_links = filter(
             lambda item: all((item[k] == v for (k, v) in conditions.items())),
-            self.topo.get('links'))
+            self.topo['links'])
         conditions = {'north_node': switch_name}
         south_facing_links = filter(
             lambda item: all((item[k] == v for (k, v) in conditions.items())),
-            self.topo.get('links'))
+            self.topo['links'])
         return sw_info, north_facing_links, south_facing_links
+
+    def __setup_bmv2_helper(self, name, switch):
+        """
+        Initializes self.p4info_helper for BMV2 switches
+        :param name: the switch name
+        :param switch: the switch object
+        """
+        logger.info('Adding BMV P4 Info Helper to switch - [%s]', switch)
+
+        new_switch = bmv2.Bmv2SwitchConnection(
+            name=name,
+            address=switch['grpc'],
+            device_id=switch['id'],
+            proto_dump_file='{}/{}-switch-controller.log'.format(
+                self.log_dir, name))
+        new_switch.master_arbitration_update()
+
+        bmv2_json_file_path = "{0}/{1}.json".format(
+            self.p4_bin_dir, self.switch_type)
+        device_config = new_switch.build_device_config(
+            bmv2_json_file_path=bmv2_json_file_path)
+
+        if self.load_p4:
+            logger.info('Setting forwarding pipeline config on - [%s]', name)
+            new_switch.set_forwarding_pipeline_config(
+                self.p4info_helper.p4info, device_config)
+        else:
+            logger.warn('Switches should already be configured')
+
+        self.switches.append(new_switch)
+        logger.info('Instantiated connection to BMV2 switch - [%s]',
+                    name)
+
+    def __setup_tofino_helper(self, name, switch):
+        """
+        Creates the Tofino switch connection and loads the P4 program when
+        self.load_p4 is True
+        :param name: the switch name
+        :param switch: the switch dict object from topology
+        """
+        logger.info('Adding Tofino P4 Info Helper to switch - [%s]', switch)
+
+        new_switch = tofino.TofinoSwitchConnection(
+            name=name,
+            address=switch['grpc'],
+            device_id=switch['id'])
+        new_switch.master_arbitration_update()
+
+        bin_path = "{0}/{1}.tofino/pipe/tofino.bin".format(
+            self.p4_bin_dir, self.switch_type)
+        cxt_json_path = "{0}/{1}.tofino/pipe/context.json".format(
+            self.p4_bin_dir, self.switch_type)
+        device_config = new_switch.build_device_config(
+            prog_name=name,
+            bin_path=bin_path,
+            cxt_json_path=cxt_json_path)
+
+        logger.info(
+            'Loading P4 application to Tofino switch - [%s] with bin - [%s] '
+            'and context - [%s]',
+            name, bin_path, cxt_json_path)
+
+        if self.load_p4:
+            logger.info('Setting forwarding pipeline config on - [%s]', name)
+            new_switch.set_forwarding_pipeline_config(
+                self.p4info_helper.p4info, device_config)
+        else:
+            logger.warn('Switch [%s] should already be configured', name)
+
+        self.switches.append(new_switch)
+        logger.info('Instantiated connection to Tofino switch - [%s]',
+                    self.switch_type, name)

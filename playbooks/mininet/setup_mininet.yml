@@ -30,9 +30,10 @@
     host_val: localhost
     service_name: transparent-security-sdn
     srvc_desc: 'SDN'
-    local_srvc_script_tmplt_file: ../general/templates/sdn_mininet.sh.j2
+    local_srvc_script_tmplt_file: ../general/templates/sdn_controller.sh.j2
     srvc_start_pause_time: 15
     port_to_wait: 9998
+    p4_platform: bmv2
 
 - import_playbook: ../general/start_service.yml
   vars:
