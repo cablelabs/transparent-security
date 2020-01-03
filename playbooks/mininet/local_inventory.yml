@@ -18,6 +18,6 @@
       vars:
         public_ip: "{{ public_ip }}"
       template:
-        src: templates/inventory.yaml.j2
+        src: templates/local_inventory.ini.j2
         dest: "{{ local_inventory }}"
       delegate_to: localhost
