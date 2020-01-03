@@ -39,6 +39,9 @@ ${var.LOCAL_INVENTORY} \
 --extra-vars "\
 public_ip=${aws_instance.transparent-security-mininet-integration.public_ip}
 local_inventory=${var.local_inventory_file}
+host_log_dir=${var.host_log_dir}
+remote_inventory_file=${var.remote_inventory_file}
+trans_sec_dir=${var.remote_tps_dir}
 "\
 EOT
   }

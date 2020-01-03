@@ -1,4 +1,5 @@
 {{ public_ip }}
 [all:vars]
-trans_sec_dir=/home/ubuntu/transparent-security
-remote_inventory_file=/home/ubuntu/transparent-security.ini
+trans_sec_dir={{ remote_inventory_file }}
+remote_inventory_file={{ remote_inventory_file }}
+host_log_dir={{ host_log_dir }}
