@@ -46,3 +46,4 @@
     sudo_user: "{{ switch_sudo_user }}"
     prog_name: "{{ p4_pkg }}"
     wait_timeout: 120
+    srvc_start_pause_time: 30
