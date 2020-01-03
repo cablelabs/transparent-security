@@ -116,7 +116,7 @@
         - "host_sudo_user={{ host_sudo_user }}"
 
     - include_tasks: etc_hosts_tasks.yml
-      loop: "{{ topo_dict.hosts.keys() }}"
+      loop: "{{ topo_dict.hosts.keys() | list }}"
 
     - include_tasks: etc_hosts_tasks.yml
-      loop: "{{ topo_dict.switches.keys() }}"
+      loop: "{{ topo_dict.switches.keys() | list }}"
