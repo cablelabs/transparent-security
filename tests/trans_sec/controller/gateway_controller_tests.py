@@ -42,5 +42,5 @@ class GatewayControllerTests(unittest.TestCase):
         """
         Tests constructor for class CoreController
         """
-        controller = GatewayController("config_dir", self.topo, '/tmp')
+        controller = GatewayController('bmv2', 'config_dir', self.topo, '/tmp')
         self.assertIsNotNone(controller)

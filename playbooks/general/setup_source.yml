@@ -18,6 +18,7 @@
   vars:
     orig_src_dir: "{{ trans_sec_source_dir | default('../../..') }}/"
     dest_dir: "{{ trans_sec_dest_dir | default(trans_sec_dir) }}"
+    run_tests: "{{ python_unit_tests | default(false) }}"
 
   tasks:
     - name: install python-pip
@@ -47,3 +48,10 @@
     - name: install {{ dest_dir }} and dependencies into python runtime
       become: yes
       command: "pip install -e {{ dest_dir }}"
+
+    - name: run python unit tests
+      become: yes
+      command: python setup.py test
+      args:
+        chdir: "{{ dest_dir }}"
+      when: run_tests

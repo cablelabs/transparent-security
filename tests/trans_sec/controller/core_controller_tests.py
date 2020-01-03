@@ -42,5 +42,5 @@ class CoreControllerTests(unittest.TestCase):
         """
         Tests constructor for class CoreController
         """
-        controller = CoreController("config_dir", self.topo, '/tmp')
+        controller = CoreController('bmv2', 'config_dir', self.topo, '/tmp')
         self.assertIsNotNone(controller)
