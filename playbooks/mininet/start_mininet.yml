@@ -50,20 +50,17 @@
     - include_tasks: set_ip.yml
       loop: "{{ topo_dict.links }}"
 
-    - name: Create ansible inventory file {{ remote_ansible_inventory }}
-      file:
+    - name: Add entries to ansible inventory at {{ remote_ansible_inventory }}
+      lineinfile:
         path: "{{ remote_ansible_inventory }}"
-        state: touch
+        insertbefore: BOF
+        line: "{{ item }}"
+        state: present
+      loop: "{{ topo_dict.hosts.keys() | list }}"
 
     - name: Add localhost to {{ remote_ansible_inventory }}
       lineinfile:
         path: "{{ remote_ansible_inventory }}"
+        insertbefore: BOF
         line: "localhost"
         state: present
-
-    - name: Add entries to ansible inventory at {{ remote_ansible_inventory }}
-      lineinfile:
-        path: "{{ remote_ansible_inventory }}"
-        line: "{{ item }}"
-        state: present
-      loop: "{{ topo_dict.hosts.keys() | list }}"

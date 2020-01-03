@@ -64,7 +64,7 @@ resource "null_resource" "transparent-security-start-sim" {
   provisioner "remote-exec" {
     inline = [
       "sudo pip install ansible",
-      "${var.ANSIBLE_CMD} -i ${var.remote_var_inventory}  ${var.remote_pb_dir}/mininet/${var.setup_mininet}"
+      "${var.ANSIBLE_CMD} -i ${var.remote_inventory_file}  ${var.remote_pb_dir}/mininet/${var.setup_mininet}"
     ]
   }
 

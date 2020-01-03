@@ -33,7 +33,6 @@ variable "ANSIBLE_PB_PATH" {default = "../../../playbooks"}
 variable "src_dir" {default = "~/transparent-security"}
 variable "remote_scripts_dir" {default = "/etc/transparent-security"}
 variable "remote_pb_dir" {default = "/home/ubuntu/transparent-security/playbooks"}
-variable "remote_var_inventory" {default = "/home/ubuntu/variables.ini"}
 variable "remote_inventory_file" {default = "/home/ubuntu/transparent-security.ini"}
 variable "local_inventory_file" {default = "~/local_variables.ini"}
 variable "run_daemons" {default = "True"}

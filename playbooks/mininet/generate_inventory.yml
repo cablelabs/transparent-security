@@ -14,29 +14,30 @@
 - hosts: all
   gather_facts: no
   tasks:
-    - name: Create ansible inventory file {{ remote_var_inventory | default('/home/ubuntu/variables.ini') }}
+    - name: Create ansible inventory file {{ remote_inventory_file }}
       file:
-        path: "{{ remote_var_inventory | default('/home/ubuntu/variabels.ini') }}"
+        path: "{{ remote_inventory_file }}"
         state: touch
 
-    - name: Create inventory variables heading at {{ remote_var_inventory }}
+    - name: Create inventory variables heading at {{ remote_inventory_file }}
       lineinfile:
-        path: "{{ remote_var_inventory | default('/home/ubuntu/variabels.ini') }}"
+        path: "{{ remote_inventory_file }}"
         line: "[all:vars]"
         state: present
 
-    - name: Add variable entries to ansible inventory at {{ remote_var_inventory }}
+    - name: Add variable entries to ansible inventory at {{ remote_inventory_file }}
       lineinfile:
-        path: "{{ remote_var_inventory | default('/home/ubuntu/variabels.ini') }}"
+        path: "{{ remote_inventory_file }}"
         line: "{{ item }}"
         state: present
       loop:
         - "trans_sec_dir={{ src_dir | default('~/transparent-security') }}"
         - "srvc_log_dir={{ remote_srvc_log_dir | default('/var/log/transparent-security') }}"
         - "log_level={{ service_log_level | default('INFO') }}"
+        - "log_dir={{ remote_srvc_log_dir | default('/var/log/transparent-security') }}"
         - "remote_tps_dir={{ remote_tps_dir | default('/home/ubuntu/transparent-security') }}"
         - "remote_scripts_dir={{ remote_scripts_dir | default('/etc/transparent-security') }}"
-        - "remote_ansible_inventory={{ remote_ansible_inventory | default('/home/ubuntu/transparent-security.ini') }}"
+        - "remote_ansible_inventory={{ remote_inventory_file | default('/home/ubuntu/transparent-security.ini') }}"
         - "topo_file={{ topo_file | default('mininet-sim-topology.yaml') }}"
         - "topo_file_loc=/etc/transparent-security/mininet-sim-topology.yaml"
         - "devices_conf_file={{ dev_daemon_file | default('/etc/transparent-security/device-daemons.yml') }}"
