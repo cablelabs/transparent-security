@@ -12,4 +12,7 @@
 # limitations under the License.
 ---
 - import_playbook: ../general/setup_source.yml
+  vars:
+    python_unit_tests: true
+
 - import_playbook: generate_inventory.yml
