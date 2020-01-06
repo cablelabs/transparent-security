@@ -55,7 +55,7 @@ resource "null_resource" "env_provision" {
 ${var.ANSIBLE_CMD} -u ${var.sudo_user} \
 -i ${aws_instance.transparent-security-build-img.public_ip}, \
 -u ${var.sudo_user} \
-${var.ANSIBLE_PB_PATH}/${var.env_type}/env_build.yml \
+${var.ANSIBLE_PB_PATH}/env-build/${var.env_type}/env_build.yml \
 --key-file ${var.private_key_file} \
 --extra-vars "\
 aws_access_key=${var.access_key}
