@@ -392,7 +392,12 @@ sudo service ssh status
 sudo visudo
 %sudo  ALL=(ALL:ALL) NOPASSWD: ALL
 ```
-
+- Install Python packages
+```bash
+sudo apt-get update
+sudo apt-get install python2.7 -y
+sudo ln /usr/bin/python2.7 /usr/bin/python
+```
 - Create and inject SSH keys to be able to access the mininet hosts
 ```bash
 ssh-keygen -t rsa -N '' -f ~/.ssh/id_rsa
@@ -452,7 +457,7 @@ Note - The transparent-security.ini refers to the inventory file on the remote m
 
 ### 6.6. Test with an attack scenario
 
-- On the remote VM, execute the attack scenario to validate attack detection and mitigation.  
+- On the VM, execute the attack scenario to validate attack detection and mitigation.  
 - To use the sample scenario provided by CableLabs, run the following command on the remote VM -
 ```bash
 export ANSIBLE_HOST_KEY_CHECKING=False
