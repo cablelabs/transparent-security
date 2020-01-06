@@ -425,14 +425,22 @@ host_log_dir=/home/ubuntu/tps-logs
 Note - Copy the example inventory file docs/example-local-inventory.ini to a working directory and
  make changes to adapt the file to your local environment.
  
-### 6.3. Setup transparent-security directory and install dependencies on the VM
+### 6.3. Build the environment to run mininet simulation
+
+- On the local machine, run the env_build.yml to install the necessary software packages to run mininet.
+```bash
+export ANSIBLE_HOST_KEY_CHECKING=False; ansible-playbook -u ubuntu -i ~/variables.ini playbooks/mininet/env-build.yml
+```
+Note - The env-build approximately takes 45-60 minutes to finish.
+
+### 6.4. Setup transparent-security directory and install dependencies on the VM
          
  - On the local machine, run the following command to setup the mininet host - 
  ```bash
  export ANSIBLE_HOST_KEY_CHECKING=False
  ansible-playbook -u ubuntu -i <local-inventory-file> transparent-security/playbooks/mininet/setup_host.yml --key-file ~/.ssh/id_rsa
  ```
-### 6.4. Start mininet simulation
+### 6.5. Start mininet simulation
 
 - On the VM, install ansible before proceeding to begin simulation.
 ```bash
@@ -440,9 +448,9 @@ sudo pip install ansible
 export ANSIBLE_HOST_KEY_CHECKING=False
 ansible-playbook -u ubuntu -i transparent-security.ini transparent-security/playbooks/mininet/setup_mininet.yml
 ```
-Note - The transparent-security.ini refers to the inventory file on the remote machine which is generated in Step 6.3.
+Note - The transparent-security.ini refers to the inventory file on the remote machine which is generated in Step 6.4.
 
-### 6.5. Test with an attack scenario
+### 6.6. Test with an attack scenario
 
 - On the remote VM, execute the attack scenario to validate attack detection and mitigation.  
 - To use the sample scenario provided by CableLabs, run the following command on the remote VM -
