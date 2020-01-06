@@ -5,7 +5,9 @@
 1. Introduction
 2. Client system setup
 3. [Optional] Create an OS instance for running the mininet simulator
-4. Run minine simulator
+4. Run mininet simulator (using Terraform)
+5. [Optional] Run mininet simulator (using ansible)
+6. [Optional] Run mininet simulator on a local VM
 
 ## 1. Introduction
 
@@ -21,7 +23,7 @@ When running builds and simulations this project reccomends running them on a cl
 You will use a local system for:
 
 * Running Ansible and Terraform to orchestrate the simulator
-* Downloading the Transparnet Secuirty source
+* Downloading the Transparent Security source
 * Configuring the input file
 
 The local system can be Linux, Mac OS or Windows.  We provide examples for Linux.  This has also been testing on Mac OS.
@@ -186,7 +188,7 @@ aws_security_group.transparent-security-img-sg: Refreshing state... [id=sg-057e5
 Destroy complete! Resources: 4 destroyed.
 ```
 
-## 4. Run minine simulator
+## 4. Run mininet simulator (using Terraform)
 
 Use the environment file create in section 2.4
 
@@ -238,7 +240,7 @@ ip = "34.211.114.181"
 
 ### 4.3 SSH into EC2 Mininet VM
 
-Login to the VM running the simulator.  Use the SSH kyes indicated in the variable file to login
+Login to the VM running the simulator.  Use the SSH keys indicated in the variable file to login
 to the VM.
 
 ```bash
@@ -294,4 +296,157 @@ Sample output:
 Destroy complete! Resources: 12 destroyed.
 
 Process finished with exit code 0
+```
+
+## 5. [Optional] Run mininet simulator (using ansible)
+
+### 5.1. Launch an AWS instance using pre-built AMI
+
+- From the EC2 dashboard, launch a new instance with the AMI provided by CableLabs.  
+- Configure the security group for the instance as follows-  
+
+|       Type     | Protocol | Port Range |   Source  |
+|:---------------:|:--------:|:----------:|:---------:|
+| Custom TCP Rule |    TCP   |    8080    | 0.0.0.0/0 |
+|       SSH       |    TCP   |     22     | 0.0.0.0/0 |
+| Custom TCP Rule |    TCP   |    3000    | 0.0.0.0/0 |
+|      HTTPS      |    TCP   |     443    | 0.0.0.0/0 |
+
+- Review and launch the instance. When prompted, generate a new key-pair and save it on the local machine.
+
+### 5.2. Create a local ansible inventory
+
+- Create a inventory file on the local machine (example: _local_variables.ini_) to configure required variables and
+ public IP of the remote VM instance.
+- Copy the example inventory file docs/example-local-inventory.ini to a working directory and
+ make changes to adapt the file to your local environment.
+- Example local inventory
+```
+34.221.8.236
+[all:vars]
+trans_sec_dir=/home/ubuntu/transparent-security
+remote_inventory_file=/home/ubuntu/transparent-security.ini
+host_log_dir=/home/ubuntu/tps-logs
+```
+
+### 5.3. Create and inject own SSH keys
+
+- Login to the remote VM
+```bash
+ssh -i <saved key-pair> ubuntu@<public IP of VM>
+```
+- Create and inject SSH keys to be able to access the mininet hosts
+```bash
+ssh-keygen -t rsa -N '' -f ~/.ssh/id_rsa
+touch ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+```
+
+### 5.4. Setup transparent-security directory and install dependencies on the remote VM
+
+- On the local machine, run the following command to setup the mininet host - 
+```bash
+export ANSIBLE_HOST_KEY_CHECKING=False
+ansible-playbook -u ubuntu -i <local-inventory-file> transparent-security/playbooks/mininet/setup_host.yml --key-file ~/.ssh/id_rsa
+```
+
+### 5.5. Start mininet simulation
+
+- On the remote VM, install ansible before proceeding to begin simulation.
+```bash
+sudo pip install ansible
+export ANSIBLE_HOST_KEY_CHECKING=False
+ansible-playbook -u ubuntu -i transparent-security.ini transparent-security/playbooks/mininet/setup_mininet.yml
+```
+Note - The transparent-security.ini refers to the inventory file on the remote machine which is generated in Step 5.4.
+
+### 5.6. Test with an attack scenario
+
+- On the remote VM, execute the attack scenario to validate attack detection and mitigation.  
+- To use the sample scenario provided by CableLabs, run the following command on the remote VM -
+```bash
+export ANSIBLE_HOST_KEY_CHECKING=False
+ansible-playbook -u ubuntu -i transparent-security.ini transparent-security/playbooks/scenarios/simple.yml
+```
+
+## 6. [Optional] Run mininet simulator on a local VM
+
+For this purpose, we use a Ubuntu 16.04 VirtualBox VM running on the local machine. 
+
+### 6.1. Setup the local VM
+
+- The network settings for the VM would have to allow access to the internet (to install
+dependencies) and a channel for communication with the local machine.
+    - Bridged Adapter
+    - Host-only Adapter
+
+- Enable SSH on the VM and verify the SSH service to be active
+```bash
+sudo apt-get install openssh-server
+sudo service ssh status
+```
+
+- Allow passwordless sudo by editing the /etc/sudoers file
+```bash
+sudo visudo
+%sudo  ALL=(ALL:ALL) NOPASSWD: ALL
+```
+
+- Create and inject SSH keys to be able to access the mininet hosts
+```bash
+ssh-keygen -t rsa -N '' -f ~/.ssh/id_rsa
+touch ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+```
+
+### 6.2. Setup the local machine
+
+- Copy the SSH key to the VM. On the local machine,
+```bash
+ssh-copy-id -i <public-key-file> VM_user@VM_host
+```
+
+- Create a inventory file on the local machine to configure variables and VM IP address.
+```bash
+192.168.0.111
+[all:vars]
+grpc_version=v1.19.1
+p4c_version=fbe395bbf1eed9653323ac73b20cf6c06af2121e
+protobuf_version=3.6.x
+pi_version=1539ecd8a50c159b011d9c5a9c0eba99f122a845
+bm_version=16c699953ee02306731ebf9a9241ea9fe3bbdc8c
+remote_scripts_dir=/etc/transparent-security
+trans_sec_dir=/home/ubuntu/transparent-security
+remote_inventory_file=/home/ubuntu/transparent-security.ini
+host_log_dir=/home/ubuntu/tps-logs
+```
+Note - Copy the example inventory file docs/example-local-inventory.ini to a working directory and
+ make changes to adapt the file to your local environment.
+ 
+### 6.3. Setup transparent-security directory and install dependencies on the VM
+         
+ - On the local machine, run the following command to setup the mininet host - 
+ ```bash
+ export ANSIBLE_HOST_KEY_CHECKING=False
+ ansible-playbook -u ubuntu -i <local-inventory-file> transparent-security/playbooks/mininet/setup_host.yml --key-file ~/.ssh/id_rsa
+ ```
+### 6.4. Start mininet simulation
+
+- On the VM, install ansible before proceeding to begin simulation.
+```bash
+sudo pip install ansible
+export ANSIBLE_HOST_KEY_CHECKING=False
+ansible-playbook -u ubuntu -i transparent-security.ini transparent-security/playbooks/mininet/setup_mininet.yml
+```
+Note - The transparent-security.ini refers to the inventory file on the remote machine which is generated in Step 6.3.
+
+### 6.5. Test with an attack scenario
+
+- On the remote VM, execute the attack scenario to validate attack detection and mitigation.  
+- To use the sample scenario provided by CableLabs, run the following command on the remote VM -
+```bash
+export ANSIBLE_HOST_KEY_CHECKING=False
+ansible-playbook -u ubuntu -i transparent-security.ini transparent-security/playbooks/scenarios/simple.yml
 ```
