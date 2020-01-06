@@ -8,6 +8,7 @@
 4. Run mininet simulator (using Terraform)
 5. [Optional] Run mininet simulator (using ansible)
 6. [Optional] Run mininet simulator on a local VM
+7. Using Mininet
 
 ## 1. Introduction
 
@@ -18,7 +19,7 @@ This document provides instructuions to:
 
 ## 2. Client system setup
 
-When running builds and simulations this project reccomends running them on a cloud infrastructure.  These instructuion are using AWS EC2.  With minor changes these could be run on other cloud types.
+When running builds and simulations this project recommends running them on a cloud infrastructure.  These instructions are using AWS EC2.  With minor changes these could be run on other cloud types.
 
 You will use a local system for:
 
@@ -28,13 +29,13 @@ You will use a local system for:
 
 The local system can be Linux, Mac OS or Windows.  We provide examples for Linux.  This has also been testing on Mac OS.
 
-### 2.1 Install dependences on local client
+### 2.1 Install dependencies on local client
 
-Install git, python-ansible and terrafrom.
+Install git, python-ansible and terraform.
 
 #### 2.1.1 Install git
 
-Instal the git client.
+Install the git client.
 
 On Ubuntu:
 
@@ -77,13 +78,13 @@ ansible 2.9.2
 
 #### 2.1.2 Install Terraform
 
-See terroaform docuementation for installation instructruction.
+See terraform documentation for installation instructions.
 
 [Terraform Download page](https://www.terraform.io/downloads.html)
 
 ### 2.2. Download Transparent Secuirty from Git
 
-Download the latest source from [Transparent Secuirty GitHub](https://github.com/cablelabs/transparent-security)
+Download the latest source from [Transparent Security GitHub](https://github.com/cablelabs/transparent-security)
 
 ```bash
 git clone https://github.com/cablelabs/transparent-security
@@ -126,7 +127,7 @@ This step is optional if you are running on AWS and use the AMI provided by Cabl
 
 Section 3.1 provides instructions for using Terraform to build an AMI on your AWS.
 
-Section 3.2 provides instructions for building an image in another environemnt or on baremetal.
+Section 3.2 provides instructions for building an image in another environment or on baremetal.
 
 ### 3.1. Build an AMI for running mininet on AWS
 
@@ -161,7 +162,7 @@ Save the ami-id and it to your variables file.
 
 #### 3.1.2 Remove the AMI for terraform state
 
-Remove the AMI from the terrafrom state so that it will remain after destroying the VM.
+Remove the AMI from the terraform state so that it will remain after destroying the VM.
 
 ```bash
 terraform state rm aws_ami_from_instance.transparent-security-env-build
@@ -190,7 +191,7 @@ Destroy complete! Resources: 4 destroyed.
 
 ## 4. Run mininet simulator (using Terraform)
 
-Use the environment file create in section 2.4
+Use the environment file created in section 2.4
 
 ### 4.1 Run terraform to launch the simulator on AWS.
 
@@ -369,6 +370,8 @@ Note - The transparent-security.ini refers to the inventory file on the remote m
 export ANSIBLE_HOST_KEY_CHECKING=False
 ansible-playbook -u ubuntu -i transparent-security.ini transparent-security/playbooks/scenarios/simple.yml
 ```
+Note - Refer the Wiki page [Attack Scenario](https://github.com/cablelabs/transparent-security/wiki/2.-Attack-Scenario) for a 
+detailed explanation of the attack scenario.
 
 ## 6. [Optional] Run mininet simulator on a local VM
 
@@ -413,20 +416,7 @@ cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
 ssh-copy-id -i <public-key-file> VM_user@VM_host
 ```
 
-- Create a inventory file on the local machine to configure variables and VM IP address.
-```bash
-192.168.0.111
-[all:vars]
-grpc_version=v1.19.1
-p4c_version=fbe395bbf1eed9653323ac73b20cf6c06af2121e
-protobuf_version=3.6.x
-pi_version=1539ecd8a50c159b011d9c5a9c0eba99f122a845
-bm_version=16c699953ee02306731ebf9a9241ea9fe3bbdc8c
-remote_scripts_dir=/etc/transparent-security
-trans_sec_dir=/home/ubuntu/transparent-security
-remote_inventory_file=/home/ubuntu/transparent-security.ini
-host_log_dir=/home/ubuntu/tps-logs
-```
+- Create a inventory file on the local machine to configure variables and VM IP address.  
 Note - Copy the example inventory file docs/example-local-inventory.ini to a working directory and
  make changes to adapt the file to your local environment.
  
@@ -463,3 +453,10 @@ Note - The transparent-security.ini refers to the inventory file on the remote m
 export ANSIBLE_HOST_KEY_CHECKING=False
 ansible-playbook -u ubuntu -i transparent-security.ini transparent-security/playbooks/scenarios/simple.yml
 ```
+Note - Refer the Wiki page [Attack Scenario](https://github.com/cablelabs/transparent-security/wiki/2.-Attack-Scenario) for a 
+detailed explanation of the attack scenario.
+
+## 7. Using Mininet
+
+- Refer the Wiki page [Using Mininet](https://github.com/cablelabs/transparent-security/wiki/3.-Using-Mininet) for
+information on the default mininet architecture, how to access devices and capture packet-level data.
