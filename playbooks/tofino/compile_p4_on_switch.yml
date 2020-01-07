@@ -15,7 +15,14 @@
 
   gather_facts: no
 
+  environment:
+    SDE: "{{ sde_dir }}"
+    SDE_INSTALL: "{{ sde_dir }}/install"
+
   tasks:
+    - name: Copy TPS P4 include to /usr/local/share/p4c/p4include/
+      shell: "cp {{ remote_tps_dir }}/p4/include/* $SDE_INSTALL/share/p4c/p4include/"
+
     - name: Compile P4 program {{ p4_prog }}
       command: "{{ bf_tools_dir }}/p4_build.sh {{ remote_tps_dir }}/p4/{{ package }}/{{ program }}"
       environment:
