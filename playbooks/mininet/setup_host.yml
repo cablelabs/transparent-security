@@ -14,5 +14,6 @@
 - import_playbook: ../general/setup_source.yml
   vars:
     python_unit_tests: true
+    p4_bin_dir: /usr/local
 
 - import_playbook: generate_inventory.yml

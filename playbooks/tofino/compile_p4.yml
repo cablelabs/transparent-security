@@ -25,9 +25,6 @@
         path: "{{ remote_scripts_dir }}/p4"
         state: directory
 
-    - name: Copy TPS P4 include to /usr/local/share/p4c/p4include/
-      shell: "cp {{ remote_tps_dir }}/p4/include/* $SDE_INSTALL/share/p4c/p4include/"
-
     - set_fact:
         configure_command: "$SDE/pkgsrc/p4-build/configure --prefix='$SDE_INSTALL' --with-p4c='$SDE_INSTALL/bin/p4c' P4_VERSION='p4-16' P4_ARCHITECTURE='v1model' P4JOBS=8 P4FLAGS='-g --verbose 2 --create-graphs' --with-tofino P4PPFLAGS=''"
     - name: Configure P4 programs {{ p4_progs }}
