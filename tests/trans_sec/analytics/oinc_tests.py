@@ -13,7 +13,6 @@
 # Unit tests for http_session.py
 import logging
 import sys
-import time
 import unittest
 
 import mock
