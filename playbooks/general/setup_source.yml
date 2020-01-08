@@ -19,6 +19,7 @@
     orig_src_dir: "{{ trans_sec_source_dir | default('../../..') }}/"
     dest_dir: "{{ trans_sec_dest_dir | default(trans_sec_dir) }}"
     run_tests: "{{ python_unit_tests | default(false) }}"
+    share_dir: "{{ p4_bin_dir | default('') }}"
 
   tasks:
     - name: install python-pip
@@ -55,3 +56,8 @@
       args:
         chdir: "{{ dest_dir }}"
       when: run_tests
+
+    - name: Copy TPS P4 includes from {{ dest_dir }}/p4/include/* to {{ share_dir }}/share/p4c/p4include/
+      become: yes
+      shell: "cp {{ dest_dir }}/p4/include/* {{ share_dir }}/share/p4c/p4include/"
+      when: share_dir != ''

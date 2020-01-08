@@ -1,3 +1,4 @@
+/*
 # Copyright (c) 2019 Cable Television Laboratories, Inc.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -10,17 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
----
-- hosts: "{{ host_val }}"
+*/
+/* -*- P4_16 -*- */
+#define MAX_HOPS 9
 
-  gather_facts: no
-
-  environment:
-    SDE: "{{ sde_dir }}"
-    SDE_INSTALL: "{{ sde_dir }}/install"
-
-  tasks:
-    - name: Compile P4 program {{ p4_prog }}
-      command: "{{ bf_tools_dir }}/p4_build.sh {{ remote_tps_dir }}/p4/{{ package }}/{{ program }}"
-      environment:
-        SDE: "{{ remote_sde_dir }}"
+const bit<16> TYPE_INSPECTION = 0x1212;
+const bit<8> TYPE_UDP = 0x11;
+const bit<16> TYPE_IPV4 = 0x800;
+const bit<32> MAX_DEVICE_ID = 15;
+const bit<9> DROP_PORT = 511;

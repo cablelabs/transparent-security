@@ -51,13 +51,8 @@ variable "host_log_dir" {default = "/home/ubuntu/tps-logs"}
 variable "remote_tps_dir" {default = "/home/ubuntu/transparent-security"}
 
 # Variables for ansible playbooks
-variable "SETUP_SOURCE" {default = "../../../playbooks/general/setup_source.yml"}
 variable "LOCAL_INVENTORY" {default = "../../../playbooks/mininet/local_inventory.yml"}
 variable "SETUP_MININET_HOST" {default = "../../../playbooks/mininet/setup_host.yml"}
-variable "START_MININET" {default = "../../../playbooks/mininet/start_mininet.yml"}
-variable "GENERATE_TOPOLOGY" {default = "../../../playbooks/mininet/generate_topology.yml"}
-variable "START_SERVICE" {default = "../../../playbooks/general/start_service.yml"}
-variable "SCENARIOS_DIR" {default = "../../../playbooks/scenarios"}
 variable "remote_scenario_pb_dir" {default = "/home/ubuntu/transparent-security/playbooks/scenarios"}
 variable "scenario_name" {default = "simple"}
 variable "setup_mininet" {default = "setup_mininet.yml"}

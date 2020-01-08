@@ -32,7 +32,8 @@ class CoreController(AbstractController):
         """
         super(self.__class__, self).__init__(
             platform, p4_build_out, topo, 'core',
-            ['MyIngress.forwardedPackets'], log_dir, load_p4)
+            ['TpsCoreIngress.forwardedPackets'], log_dir, load_p4,
+            'TpsCoreIngress')
 
     def make_rules(self, sw, sw_info, north_facing_links, south_facing_links):
         super(self.__class__, self).make_rules(
@@ -52,11 +53,11 @@ class CoreController(AbstractController):
                 north_link.get('north_facing_port'),
                 north_device.get('ip'), str(north_device.get('ip_port')))
             table_entry = self.p4info_helper.build_table_entry(
-                table_name='MyIngress.data_forward_t',
+                table_name='{}.data_forward_t'.format(self.p4_ingress),
                 match_fields={
                     'hdr.ipv4.dstAddr': (north_device['ip'], 32)
                 },
-                action_name='MyIngress.data_forward',
+                action_name='{}.data_forward'.format(self.p4_ingress),
                 action_params={
                     'dstAddr': north_device['mac'],
                     'port': north_link['north_facing_port']

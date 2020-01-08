@@ -25,8 +25,8 @@ class AggregateController(AbstractController):
     def __init__(self, platform, p4_build_out, topo, log_dir, load_p4=True):
         super(self.__class__, self).__init__(
             platform, p4_build_out, topo, 'aggregate',
-            ['MyIngress.forwardedPackets', 'MyIngress.droppedPackets'],
-            log_dir, load_p4)
+            ['TpsAggIngress.forwardedPackets', 'TpsAggIngress.droppedPackets'],
+            log_dir, load_p4, 'TpsAggIngress')
 
     def make_north_rules(self, sw, sw_info, north_link):
         if north_link.get('north_facing_port'):
@@ -42,11 +42,11 @@ class AggregateController(AbstractController):
             inet = self.topo['hosts']['inet']
 
             table_entry = self.p4info_helper.build_table_entry(
-                table_name='MyIngress.data_forward_t',
+                table_name='{}.data_forward_t'.format(self.p4_ingress),
                 match_fields={
                     'hdr.ipv4.dstAddr': (inet['ip'], 32)
                 },
-                action_name='MyIngress.data_forward',
+                action_name='{}.data_forward'.format(self.p4_ingress),
                 action_params={
                     'dstAddr': north_node['mac'],
                     'port': north_link['north_facing_port'],
@@ -84,11 +84,12 @@ class AggregateController(AbstractController):
 
             if device is not None:
                 table_entry = self.p4info_helper.build_table_entry(
-                    table_name='MyIngress.data_inspection_t',
+                    table_name='{}.data_inspection_t'.format(self.p4_ingress),
                     match_fields={
                         'hdr.ethernet.srcAddr': device['mac']
                     },
-                    action_name='MyIngress.data_inspect_packet',
+                    action_name='{}.data_inspect_packet'.format(
+                        self.p4_ingress),
                     action_params={
                         'device': device['id']
                     })
