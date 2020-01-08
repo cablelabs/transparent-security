@@ -18,7 +18,7 @@
 ************   C H E C K S U M    V E R I F I C A T I O N   *************
 *************************************************************************/
 
-control MyVerifyChecksum(inout headers hdr, inout metadata meta) {
+control TpsVerifyChecksum(inout headers hdr, inout metadata meta) {
     apply {  }
 }
 
@@ -26,7 +26,7 @@ control MyVerifyChecksum(inout headers hdr, inout metadata meta) {
 *************   C H E C K S U M    C O M P U T A T I O N   **************
 *************************************************************************/
 
-control MyComputeChecksum(inout headers  hdr, inout metadata meta) {
+control TpsComputeChecksum(inout headers  hdr, inout metadata meta) {
      apply {
 	update_checksum(
 	    hdr.ipv4.isValid(),

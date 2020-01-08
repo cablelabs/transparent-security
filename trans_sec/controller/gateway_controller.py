@@ -25,8 +25,8 @@ class GatewayController(AbstractController):
     def __init__(self, platform, p4_build_out, topo, log_dir, load_p4=True):
         super(self.__class__, self).__init__(
             platform, p4_build_out, topo, 'gateway',
-            ['MyIngress.forwardedPackets', 'MyIngress.droppedPackets'],
-            log_dir, load_p4)
+            ['TpsGwIngress.forwardedPackets', 'TpsGwIngress.droppedPackets'],
+            log_dir, load_p4, 'TpsGwIngress')
 
     def make_rules(self, sw, sw_info, north_facing_links, south_facing_links):
         """
@@ -58,11 +58,12 @@ class GatewayController(AbstractController):
 
                 # Northbound Traffic Inspection
                 table_entry = self.p4info_helper.build_table_entry(
-                    table_name='MyIngress.data_inspection_t',
+                    table_name='{}.data_inspection_t'.format(self.p4_ingress),
                     match_fields={
                         'hdr.ethernet.srcAddr': device['mac']
                     },
-                    action_name='MyIngress.data_inspect_packet',
+                    action_name='{}.data_inspect_packet'.format(
+                        self.p4_ingress),
                     action_params={
                         'device': device['id']
                     })
@@ -72,11 +73,11 @@ class GatewayController(AbstractController):
 
             # Northbound Routing
             table_entry = self.p4info_helper.build_table_entry(
-                table_name='MyIngress.data_forward_t',
+                table_name='{}.data_forward_t'.format(self.p4_ingress),
                 match_fields={
                     'standard_metadata.ingress_port': 1
                 },
-                action_name='MyIngress.data_forward',
+                action_name='{}.data_forward'.format(self.p4_ingress),
                 action_params={
                     'dstAddr': aggregate['mac'],
                     'port': aggregate_link['north_facing_port'],
@@ -87,11 +88,11 @@ class GatewayController(AbstractController):
                         aggregate_link.get('north_facing_port'))
             # Northbound Routing
             table_entry = self.p4info_helper.build_table_entry(
-                table_name='MyIngress.data_forward_t',
+                table_name='{}.data_forward_t'.format(self.p4_ingress),
                 match_fields={
                     'standard_metadata.ingress_port': 2
                 },
-                action_name='MyIngress.data_forward',
+                action_name='{}.data_forward'.format(self.p4_ingress),
                 action_params={
                     'dstAddr': aggregate['mac'],
                     'port': aggregate_link['north_facing_port'],
@@ -102,11 +103,11 @@ class GatewayController(AbstractController):
                         aggregate_link.get('north_facing_port'))
             # Northbound Routing
             table_entry = self.p4info_helper.build_table_entry(
-                table_name='MyIngress.data_forward_t',
+                table_name='{}.data_forward_t'.format(self.p4_ingress),
                 match_fields={
                     'standard_metadata.ingress_port': 3
                 },
-                action_name='MyIngress.data_forward',
+                action_name='{}.data_forward'.format(self.p4_ingress),
                 action_params={
                     'dstAddr': aggregate['mac'],
                     'port': aggregate_link['north_facing_port'],

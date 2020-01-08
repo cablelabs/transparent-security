@@ -32,7 +32,7 @@ const bit<32> I2E_CLONE_SESSION_ID = 5;
 **************  I N G R E S S   P R O C E S S I N G   *******************
 *************************************************************************/
 
-control MyIngress(inout headers hdr,
+control TpsCoreIngress(inout headers hdr,
                   inout metadata meta,
                   inout standard_metadata_t standard_metadata) {
 
@@ -166,10 +166,10 @@ control MyIngress(inout headers hdr,
 *************************************************************************/
 
 V1Switch(
-MyParser(),
-MyVerifyChecksum(),
-MyIngress(),
-MyEgress(),
-MyComputeChecksum(),
-MyDeparser()
+    TpsParser(),
+    TpsVerifyChecksum(),
+    TpsCoreIngress(),
+    TpsEgress(),
+    TpsComputeChecksum(),
+    TpsDeparser()
 ) main;

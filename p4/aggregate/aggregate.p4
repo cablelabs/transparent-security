@@ -27,7 +27,7 @@
 **************  I N G R E S S   P R O C E S S I N G   *******************
 *************************************************************************/
 
-control MyIngress(inout headers hdr,
+control TpsAggIngress(inout headers hdr,
                   inout metadata meta,
                   inout standard_metadata_t standard_metadata) {
 
@@ -140,10 +140,10 @@ control MyIngress(inout headers hdr,
 *************************************************************************/
 
 V1Switch(
-MyParser(),
-MyVerifyChecksum(),
-MyIngress(),
-MyEgress(),
-MyComputeChecksum(),
-MyDeparser()
+    TpsParser(),
+    TpsVerifyChecksum(),
+    TpsAggIngress(),
+    TpsEgress(),
+    TpsComputeChecksum(),
+    TpsDeparser()
 ) main;
