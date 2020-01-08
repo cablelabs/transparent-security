@@ -14,7 +14,7 @@ from scapy.all import Packet
 from scapy import fields
 
 
-class INSPECT(Packet):
+class GatewayINTInspect(Packet):
     """
     This class represents the INT data being placed onto the packets to help
     generating and parsing

@@ -59,9 +59,9 @@ header udp_t {
 }
 
 /*************************
-INT Data header definition
+External Gateway INT Data header definition
 **************************/
-header inspection_t {
+header gw_int_t {
     macAddr_t srcAddr;
     ip4Addr_t deviceAddr;
     ip4Addr_t dstAddr;
@@ -80,7 +80,7 @@ struct metadata {
 
 struct headers {
     ethernet_t   ethernet;
-    inspection_t inspection;
+    gw_int_t     gw_int;
     ipv4_t       ipv4;
     udp_t        udp;
 }

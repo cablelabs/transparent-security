@@ -40,13 +40,13 @@ control TpsCoreIngress(inout headers hdr,
     counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) droppedPackets;
 
     action data_forward(macAddr_t dstAddr, egressSpec_t port) {
-        hdr.inspection.setInvalid();
+        hdr.gw_int.setInvalid();
         standard_metadata.egress_spec = port;
         hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
         hdr.ethernet.dstAddr = dstAddr;
-        hdr.ipv4.srcAddr = hdr.inspection.deviceAddr;
-        hdr.ipv4.dstAddr = hdr.inspection.dstAddr;
-        hdr.udp.dst_port = hdr.inspection.dstPort;
+        hdr.ipv4.srcAddr = hdr.gw_int.deviceAddr;
+        hdr.ipv4.dstAddr = hdr.gw_int.dstAddr;
+        hdr.udp.dst_port = hdr.gw_int.dstPort;
         hdr.ethernet.etherType = TYPE_IPV4;
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
     }
@@ -70,7 +70,7 @@ control TpsCoreIngress(inout headers hdr,
 
     table data_drop_t {
         key = {
-            hdr.inspection.srcAddr: exact;
+            hdr.gw_int.srcAddr: exact;
             hdr.ipv4.srcAddr: exact;
             hdr.ipv4.dstAddr: exact;
             hdr.udp.dst_port: exact;
@@ -128,11 +128,11 @@ control TpsCoreIngress(inout headers hdr,
             standard_metadata.ingress_global_timestamp : exact;
             standard_metadata.mcast_grp : exact;
             standard_metadata.checksum_error : exact;
-            hdr.inspection.srcAddr: exact;
-            hdr.inspection.deviceAddr: exact;
-            hdr.inspection.dstAddr: exact;
-            hdr.inspection.dstPort: exact;
-            hdr.inspection.proto_id: exact;
+            hdr.gw_int.srcAddr: exact;
+            hdr.gw_int.deviceAddr: exact;
+            hdr.gw_int.dstAddr: exact;
+            hdr.gw_int.dstPort: exact;
+            hdr.gw_int.proto_id: exact;
             hdr.ipv4.srcAddr: exact;
             hdr.ipv4.dstAddr: exact;
             hdr.udp.dst_port: exact;
