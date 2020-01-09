@@ -306,7 +306,6 @@ Each metadata record corrosponds to a bit filed in the instruction set and is 4 
  </tr>
  <tr height=21 style='height:16.0pt'>
   <td rowspan=1 height=84 class=xl65 style='height:64.0pt'>INT Metadata</td>
-  <td colspan=16 height=21 class=xl67 style='height:16.0pt'>Switch ID</td>
-  <td colspan=16 class=xl67>Reserved</td>
+  <td colspan=32 height=21 class=xl67 style='height:16.0pt'>Switch ID</td>
  </tr>
 </table>
