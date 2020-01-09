@@ -425,7 +425,14 @@ Note - The env-build approximately takes 45-60 minutes to finish.
 
 ### 6.4. Setup transparent-security directory and install dependencies on the VM
          
- - On the local machine, run the following command to setup the mininet host - 
+ - On the local machine, run the following command to create the inventory file
+ for setting up the mininet host:
+ ```bash
+ansible-playbook transparent-security/playbooks/mininet/local_inventory.yml \
+--extra-vars "public_ip=<mininet-host-ip> local_inventory=<local-inventory-file>"
+ ```
+
+ - On the local machine, run the following command to setup the mininet host:
  ```bash
  export ANSIBLE_HOST_KEY_CHECKING=False
  ansible-playbook -u ubuntu -i <local-inventory-file> transparent-security/playbooks/mininet/setup_host.yml --key-file ~/.ssh/id_rsa
