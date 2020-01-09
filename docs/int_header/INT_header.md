@@ -1,6 +1,10 @@
 # Transparent Secuirty INT header reference definition
 
-The INT header is an L3 wrapper containing in band network telemetry
+The INT header is an L3 wrapper containing in band network telemetry.
+
+This definitions contains modifications and required fieleds for Transpaerent Secuirty.
+
+  Note: This version of the document is still under discussion and may change.
 
 ## Overview
 
