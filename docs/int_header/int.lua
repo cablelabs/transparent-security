@@ -1,3 +1,5 @@
+-- This reflects the INT header prior to the updated documentation
+
 function octet_to_mac(buff)
     addr = ""
     for i = 0,5,1
