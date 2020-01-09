@@ -6,6 +6,11 @@ This definitions contains modifications and required fieleds for Transpaerent Se
 
   Note: This version of the document is still under discussion and may change.
 
+This header heavily leveraages the P4 INT header.  The changes and subset that are required for
+Transparent Security are noted is this document.
+
+The origional header document is located at [INT-current-spec.pdf](https://p4.org/assets/INT-current-spec.pdf)
+
 ## Overview
 
 The INT header(s) will be inserted between the IP header and the datagram for IPv4 and will be a part of the extended header for IPv6.  The IP header will be updated to indicate that it has an INT header.
