@@ -317,17 +317,12 @@ Process finished with exit code 0
 
 ### 5.2. Create a local ansible inventory
 
-- Create a inventory file on the local machine (example: _local_variables.ini_) to configure required variables and
- public IP of the remote VM instance.
-- Copy the example inventory file docs/example-local-inventory.ini to a working directory and
- make changes to adapt the file to your local environment.
-- Example local inventory
-```
-34.221.8.236
-[all:vars]
-trans_sec_dir=/home/ubuntu/transparent-security
-remote_inventory_file=/home/ubuntu/transparent-security.ini
-host_log_dir=/home/ubuntu/tps-logs
+Generate your local ansible inventory file with the following command where
+<local-inventory-file> is the name of the output inventory file to be used
+in step 5.4 below and <mininet-host-ip> is the IP of the host you want to setup.
+```bash
+ansible-playbook transparent-security/playbooks/mininet/local_inventory.yml \
+--extra-vars "public_ip=<mininet-host-ip> local_inventory=<local-inventory-file>"
 ```
 
 ### 5.3. Create and inject own SSH keys
@@ -430,7 +425,14 @@ Note - The env-build approximately takes 45-60 minutes to finish.
 
 ### 6.4. Setup transparent-security directory and install dependencies on the VM
          
- - On the local machine, run the following command to setup the mininet host - 
+ - On the local machine, run the following command to create the inventory file
+ for setting up the mininet host:
+ ```bash
+ansible-playbook transparent-security/playbooks/mininet/local_inventory.yml \
+--extra-vars "public_ip=<mininet-host-ip> local_inventory=<local-inventory-file>"
+ ```
+
+ - On the local machine, run the following command to setup the mininet host:
  ```bash
  export ANSIBLE_HOST_KEY_CHECKING=False
  ansible-playbook -u ubuntu -i <local-inventory-file> transparent-security/playbooks/mininet/setup_host.yml --key-file ~/.ssh/id_rsa
