@@ -202,41 +202,4 @@ Example table for a device INT header.
  <tr height=21 style='height:16.0pt'>
   <td colspan=32 height=21 class=xl67 style='height:16.0pt'>IPv4 address</td>
  </tr>
- <![if supportMisalignedColumns]>
- <tr height=0 style='display:none'>
-  <td width=171 style='width:128pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
- </tr>
- <![endif]>
 </table>
