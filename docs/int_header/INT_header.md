@@ -80,3 +80,17 @@ This metadat will be updated with each consecutive hop, until the max hop count 
 Each metadata record corrosponds to a bit filed in the instruction set and is 4 octects long.
 
 * Switch ID: Unique identfier for the swtich (4 octects)
+
+## Examples
+
+Example table for a device INT header.
+
+| Octtect      | 0                                                   |   |     |   |   |   |          |   | 1 |   |    |                   |    |    |    |    | 2             |    |    |    |    |    |    |    | 3               |    |    |    |    |    |    |    |
+|--------------|-----------------------------------------------------|---|-----|---|---|---|----------|---|---|---|----|-------------------|----|----|----|----|---------------|----|----|----|----|----|----|----|-----------------|----|----|----|----|----|----|----|
+| Bit          | 0                                                   | 1 | 2   | 3 | 4 | 5 | 6        | 7 | 8 | 9 | 10 | 11                | 12 | 13 | 14 | 15 | 16            | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24              | 25 | 26 | 27 | 28 | 29 | 30 | 31 |
+| Header       | Ver                                                 |   | Rep |   | C | E | Reserved |   |   |   |    | Instruction Count |    |    |    |    | Max Hop Count |    |    |    |    |    |    |    | Total Hop Count |    |    |    |    |    |    |    |
+|              | Instruction Bitmap                                  |   |     |   |   |   |          |   |   |   |    |                   |    |    |    |    | Next Protocol |    |    |    |    |    |    |    | Reserved        |    |    |    |    |    |    |    |
+| INT Metadata | Switch ID                                           |   |     |   |   |   |          |   |   |   |    |                   |    |    |    |    |               |    |    |    |    |    |    |    |                 |    |    |    |    |    |    |    |
+|              | Origionating Device MAC Most signifigant 4 octects  |   |     |   |   |   |          |   |   |   |    |                   |    |    |    |    |               |    |    |    |    |    |    |    |                 |    |    |    |    |    |    |    |
+|              | Origionating Device MAC least signifigant 2 octects |   |     |   |   |   |          |   |   |   |    |                   |    |    |    |    | Reserved      |    |    |    |    |    |    |    |                 |    |    |    |    |    |    |    |
+|              | IPv4 address                                        |   |     |   |   |   |          |   |   |   |    |                   |    |    |    |    |               |    |    |    |    |    |    |    |                 |    |    |    |    |    |    |    |
