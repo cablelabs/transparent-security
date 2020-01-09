@@ -83,7 +83,7 @@ Each metadata record corrosponds to a bit filed in the instruction set and is 4 
 
 ## Examples
 
-Example table for a device INT header.
+### Example table for a device INT header
 
 <table border=0 cellpadding=0 cellspacing=0 width=1419 style='border-collapse:
  collapse;table-layout:fixed;width:1056pt'>
@@ -187,8 +187,7 @@ Example table for a device INT header.
   <td colspan=8 class=xl63>Reserved</td>
  </tr>
  <tr height=21 style='height:16.0pt'>
-  <td rowspan=4 height=84 class=xl65 style='height:64.0pt'>INT Metadata</td>
-  <td colspan=32 class=xl66>Switch ID</td>
+  <td rowspan=3 height=84 class=xl65 style='height:64.0pt'>INT Metadata</td>
  </tr>
  <tr height=21 style='height:16.0pt'>
   <td colspan=32 height=21 class=xl67 style='height:16.0pt'>Origionating Device
@@ -201,5 +200,115 @@ Example table for a device INT header.
  </tr>
  <tr height=21 style='height:16.0pt'>
   <td colspan=32 height=21 class=xl67 style='height:16.0pt'>IPv4 address</td>
+ </tr>
+</table>
+
+### Example table for a switch INT header
+
+<table border=0 cellpadding=0 cellspacing=0 width=1419 style='border-collapse:
+ collapse;table-layout:fixed;width:1056pt'>
+ <col width=171 style='mso-width-source:userset;mso-width-alt:5461;width:128pt'>
+ <col width=39 span=16 style='mso-width-source:userset;mso-width-alt:1237;
+ width:29pt'>
+ <col width=39 style='mso-width-source:userset;mso-width-alt:1237;width:29pt'>
+ <col width=39 span=15 style='mso-width-source:userset;mso-width-alt:1237;
+ width:29pt'>
+ <tr height=21 style='height:16.0pt'>
+  <td height=21 width=171 style='height:16.0pt;width:128pt'>Description</td>
+  <td width=39 style='width:29pt'></td>
+  <td width=39 style='width:29pt'></td>
+  <td width=39 style='width:29pt'></td>
+  <td width=39 style='width:29pt'></td>
+  <td width=39 style='width:29pt'></td>
+  <td width=39 style='width:29pt'></td>
+  <td width=39 style='width:29pt'></td>
+  <td width=39 style='width:29pt'></td>
+  <td width=39 style='width:29pt'></td>
+  <td width=39 style='width:29pt'></td>
+  <td width=39 style='width:29pt'></td>
+  <td width=39 style='width:29pt'></td>
+  <td width=39 style='width:29pt'></td>
+  <td width=39 style='width:29pt'></td>
+  <td width=39 style='width:29pt'></td>
+  <td width=39 style='width:29pt'></td>
+  <td width=39 style='width:29pt'></td>
+  <td width=39 style='width:29pt'></td>
+  <td width=39 style='width:29pt'></td>
+  <td width=39 style='width:29pt'></td>
+  <td width=39 style='width:29pt'></td>
+  <td width=39 style='width:29pt'></td>
+  <td width=39 style='width:29pt'></td>
+  <td width=39 style='width:29pt'></td>
+  <td width=39 style='width:29pt'></td>
+  <td width=39 style='width:29pt'></td>
+  <td width=39 style='width:29pt'></td>
+  <td width=39 style='width:29pt'></td>
+  <td width=39 style='width:29pt'></td>
+  <td width=39 style='width:29pt'></td>
+  <td width=39 style='width:29pt'></td>
+  <td width=39 style='width:29pt'></td>
+ </tr>
+ <tr height=21 style='height:16.0pt'>
+  <td height=21 style='height:16.0pt'>Octtect</td>
+  <td colspan=8 class=xl64>0</td>
+  <td colspan=8 class=xl64>1</td>
+  <td colspan=8 class=xl64>2</td>
+  <td colspan=8 class=xl64>3</td>
+ </tr>
+ <tr height=21 style='height:16.0pt'>
+  <td height=21 style='height:16.0pt'>Bit</td>
+  <td align=right>0</td>
+  <td align=right>1</td>
+  <td align=right>2</td>
+  <td align=right>3</td>
+  <td align=right>4</td>
+  <td align=right>5</td>
+  <td align=right>6</td>
+  <td align=right>7</td>
+  <td align=right>8</td>
+  <td align=right>9</td>
+  <td align=right>10</td>
+  <td align=right>11</td>
+  <td align=right>12</td>
+  <td align=right>13</td>
+  <td align=right>14</td>
+  <td align=right>15</td>
+  <td align=right>16</td>
+  <td align=right>17</td>
+  <td align=right>18</td>
+  <td align=right>19</td>
+  <td align=right>20</td>
+  <td align=right>21</td>
+  <td align=right>22</td>
+  <td align=right>23</td>
+  <td align=right>24</td>
+  <td align=right>25</td>
+  <td align=right>26</td>
+  <td align=right>27</td>
+  <td align=right>28</td>
+  <td align=right>29</td>
+  <td align=right>30</td>
+  <td align=right>31</td>
+ </tr>
+ <tr height=21 style='height:16.0pt'>
+  <td rowspan=2 height=42 class=xl65 style='height:32.0pt'>Header</td>
+  <td colspan=2 class=xl63>Ver</td>
+  <td colspan=2 class=xl63>Rep</td>
+  <td>C</td>
+  <td>E</td>
+  <td colspan=5 class=xl63>Reserved</td>
+  <td colspan=5 class=xl63>Instruction Count</td>
+  <td colspan=8 class=xl63>Max Hop Count</td>
+  <td colspan=8 class=xl63>Total Hop Count</td>
+ </tr>
+ <tr height=21 style='height:16.0pt'>
+  <td colspan=16 height=21 class=xl66 style='height:16.0pt'>Instruction Bitmap</td>
+  <td colspan=8 class=xl67>Next Protocol</td>
+  <td colspan=8 class=xl63>Reserved</td>
+ </tr>
+ <tr height=21 style='height:16.0pt'>
+  <td rowspan=1 height=84 class=xl65 style='height:64.0pt'>INT Metadata</td>
+  <td colspan=16 height=21 class=xl67 style='height:16.0pt'>Switch ID</td>
+  <td colspan=16 class=xl67>Reserved</td>
  </tr>
 </table>
