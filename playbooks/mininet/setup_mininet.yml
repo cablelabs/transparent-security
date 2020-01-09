@@ -23,31 +23,30 @@
     local_srvc_script_tmplt_file: ../general/templates/mininet_service.sh.j2
     srvc_start_pause_time: 20
     port_to_wait: 50051
-    run_daemons: True
 
 - import_playbook: ../general/start_service.yml
   vars:
     host_val: localhost
-    service_name: transparent-security-sdn
+    service_name: tps-sdn
     srvc_desc: 'SDN'
     local_srvc_script_tmplt_file: ../general/templates/sdn_controller.sh.j2
     srvc_start_pause_time: 15
-    port_to_wait: 9998
+    port_to_wait: "{{ sdn_port }}"
     p4_platform: bmv2
 
 - import_playbook: ../general/start_service.yml
   vars:
     host_val: localhost
-    service_name: transparent-security-ae
+    service_name: tps-ae
     srvc_desc: 'TPS-AE'
     srvc_type: 'SIMPLE'
     local_srvc_script_tmplt_file: ../general/templates/ae_service.sh.j2
-    monitor_intf: core1-eth3
+    monitor_intf: "{{ ae_monitor_intf }}"
 
 - import_playbook: ../general/start_service.yml
   vars:
     host_val: localhost
-    service_name: transparent-security-core1-eth1-logger
+    service_name: tps-core1-eth1-logger
     srvc_desc: 'core1-eth1-logger'
     srvc_type: 'LOGGING'
     local_srvc_script_tmplt_file: ../general/templates/ae_service.sh.j2
@@ -56,7 +55,7 @@
 - import_playbook: ../general/start_service.yml
   vars:
     host_val: localhost
-    service_name: transparent-security-core1-eth2-logger
+    service_name: tps-core1-eth2-logger
     srvc_desc: 'core1-eth2-logger'
     srvc_type: 'LOGGING'
     local_srvc_script_tmplt_file: ../general/templates/ae_service.sh.j2

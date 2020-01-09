@@ -29,18 +29,16 @@ variable "instance_type" {default = "t2.2xlarge"}
 variable "ANSIBLE_CMD" {default = "export ANSIBLE_HOST_KEY_CHECKING=False; ansible-playbook"}
 
 # File paths are relative to this directory
-variable "ANSIBLE_PB_PATH" {default = "../../../playbooks"}
-variable "src_dir" {default = "~/transparent-security"}
 variable "remote_scripts_dir" {default = "/etc/transparent-security"}
 variable "remote_pb_dir" {default = "/home/ubuntu/transparent-security/playbooks"}
 variable "remote_inventory_file" {default = "/home/ubuntu/transparent-security.ini"}
-variable "local_inventory_file" {default = "~/local_variables.ini"}
+variable "local_inventory_file" {default = "~/mininet_setup.ini"}
 variable "run_daemons" {default = "True"}
 variable "topo_file" {default = "mininet-sim-topology.yaml"}
 variable "dev_daemon_file" {default = "device-daemons.yml"}
-variable "local_scripts_dir" {default = "../../../playbooks/general/templates"}
 variable "clone_egress_port" {default = "3"}
 variable "sdn_host" {default = "localhost"}
+variable "ae_host" {default = "localhost"}
 variable "sdn_port" {default = "9998"}
 variable "sdn_dev_intf" {default = "lo"} # TODO - verify if this is correct???
 variable "ae_dev_intf" {default = "lo"} # TODO - verify if this is correct???

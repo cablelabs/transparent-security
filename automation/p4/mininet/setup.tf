@@ -39,9 +39,24 @@ ${var.LOCAL_INVENTORY} \
 --extra-vars "\
 public_ip=${aws_instance.transparent-security-mininet-integration.public_ip}
 local_inventory=${var.local_inventory_file}
-host_log_dir=${var.host_log_dir}
 remote_inventory_file=${var.remote_inventory_file}
-trans_sec_dir=${var.remote_tps_dir}
+src_dir=${var.remote_tps_dir}
+remote_srvc_log_dir=${var.remote_srvc_log_dir}
+service_log_level=${var.service_log_level}
+log_dir=${var.remote_srvc_log_dir}
+host_log_dir=${var.host_log_dir}
+remote_tps_dir=${var.remote_tps_dir}
+remote_scripts_dir=${var.remote_scripts_dir}
+topo_file_loc=${var.remote_scripts_dir}/${var.topo_file}
+dev_daemon_file=${var.dev_daemon_file}
+sdn_host=${var.sdn_host}
+sdn_port=${var.sdn_port}
+ae_host=${var.ae_host}
+ae_monitor_intf=${var.ae_monitor_intf}
+sdn_dev_intf=${var.sdn_dev_intf}
+ae_dev_intf=${var.ae_dev_intf}
+clone_egress_port=${var.clone_egress_port}
+run_daemons=${var.run_daemons}
 "\
 EOT
   }
