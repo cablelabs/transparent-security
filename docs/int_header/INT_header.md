@@ -202,17 +202,6 @@ Example table for a device INT header.
  <tr height=21 style='height:16.0pt'>
   <td colspan=32 height=21 class=xl67 style='height:16.0pt'>IPv4 address</td>
  </tr>
- <tr height=63 style='height:48.0pt;mso-xlrowspan:3'>
-  <td height=63 colspan=33 style='height:48.0pt;mso-ignore:colspan'></td>
- </tr>
- <tr height=21 style='height:16.0pt'>
-  <td height=21 class=xl68 style='height:16.0pt'>Addition to spec</td>
-  <td colspan=32 style='mso-ignore:colspan'></td>
- </tr>
- <tr height=21 style='height:16.0pt'>
-  <td height=21 class=xl69 style='height:16.0pt'>Extension of spec</td>
-  <td colspan=32 style='mso-ignore:colspan'></td>
- </tr>
  <![if supportMisalignedColumns]>
  <tr height=0 style='display:none'>
   <td width=171 style='width:128pt'></td>
