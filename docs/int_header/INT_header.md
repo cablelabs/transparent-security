@@ -188,8 +188,6 @@ Each metadata record corrosponds to a bit filed in the instruction set and is 4 
  </tr>
  <tr height=21 style='height:16.0pt'>
   <td rowspan=3 height=84 class=xl65 style='height:64.0pt'>INT Metadata</td>
- </tr>
- <tr height=21 style='height:16.0pt'>
   <td colspan=32 height=21 class=xl67 style='height:16.0pt'>Origionating Device
   MAC Most signifigant 4 octects<span style='mso-spacerun:yes'> </span></td>
  </tr>
