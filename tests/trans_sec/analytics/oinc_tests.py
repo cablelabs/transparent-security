@@ -13,7 +13,6 @@
 # Unit tests for http_session.py
 import logging
 import sys
-import time
 import unittest
 
 import mock
@@ -22,7 +21,7 @@ from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import Ether
 
 from trans_sec.analytics.oinc import SimpleAE
-from trans_sec.packet.inspect_layer import INSPECT
+from trans_sec.packet.inspect_layer import GatewayINTInspect
 from trans_sec.utils.http_session import HttpSession
 
 # noinspection PyCompatibility
@@ -49,7 +48,7 @@ class SimpleAETests(unittest.TestCase):
         :return:
         """
         pkt = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
-               INSPECT() /
+               GatewayINTInspect() /
                IP(dst='localhost', src='localhost') /
                UDP(dport=1234, sport=1234) /
                'hello')
@@ -62,7 +61,7 @@ class SimpleAETests(unittest.TestCase):
         """
         pkt = Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff')
         pkt = (pkt /
-               INSPECT() /
+               GatewayINTInspect() /
                IP(dst='localhost', src='localhost') /
                UDP(dport=1234, sport=1234) /
                'hello')
@@ -80,13 +79,13 @@ class SimpleAETests(unittest.TestCase):
         :return:
         """
         pkt1 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
-                INSPECT(srcAddr='ff:ff:ff:ff:ff:ff') /
+                GatewayINTInspect(srcAddr='ff:ff:ff:ff:ff:ff') /
                 IP(dst='localhost', src='localhost') /
                 UDP(dport=1234, sport=1234) /
                 'hello')
 
         pkt2 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
-                INSPECT(srcAddr='ff:ff:ff:ff:ff:aa') /
+                GatewayINTInspect(srcAddr='ff:ff:ff:ff:ff:aa') /
                 IP(dst='localhost', src='localhost') /
                 UDP(dport=1234, sport=1234) /
                 'hello')

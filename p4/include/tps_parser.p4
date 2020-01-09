@@ -39,8 +39,8 @@ parser TpsParser(packet_in packet,
     }
 
     state parse_inspection {
-        packet.extract(hdr.inspection);
-        transition select(hdr.inspection.proto_id) {
+        packet.extract(hdr.gw_int);
+        transition select(hdr.gw_int.proto_id) {
             TYPE_IPV4: parse_ipv4;
             default: accept;
         }

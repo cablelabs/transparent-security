@@ -58,12 +58,12 @@ control TpsGwIngress(inout headers hdr,
     }
 
     action data_inspect_packet(bit<32> device) {
-        hdr.inspection.setValid();
-        hdr.inspection.srcAddr = hdr.ethernet.srcAddr;
-        hdr.inspection.deviceAddr = hdr.ipv4.srcAddr;
-        hdr.inspection.dstAddr  = hdr.ipv4.dstAddr;
-        hdr.inspection.dstPort = hdr.udp.dst_port;
-        hdr.inspection.proto_id = TYPE_IPV4;
+        hdr.gw_int.setValid();
+        hdr.gw_int.srcAddr = hdr.ethernet.srcAddr;
+        hdr.gw_int.deviceAddr = hdr.ipv4.srcAddr;
+        hdr.gw_int.dstAddr  = hdr.ipv4.dstAddr;
+        hdr.gw_int.dstPort = hdr.udp.dst_port;
+        hdr.gw_int.proto_id = TYPE_IPV4;
         hdr.ethernet.etherType = TYPE_INSPECTION;
         forwardedPackets.count(device);
     }
@@ -87,7 +87,7 @@ control TpsGwIngress(inout headers hdr,
 
     table data_drop_t {
         key = {
-            hdr.inspection.srcAddr: exact;
+            hdr.gw_int.srcAddr: exact;
             hdr.ipv4.srcAddr: exact;
             hdr.ipv4.dstAddr: exact;
             hdr.udp.dst_port: exact;

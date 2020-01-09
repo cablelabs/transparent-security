@@ -58,7 +58,7 @@ control TpsAggIngress(inout headers hdr,
     }
 
     action data_inspect_packet(bit<32> device) {
-        hdr.inspection.setValid();
+        hdr.gw_int.setValid();
         forwardedPackets.count(device);
     }
 
@@ -81,7 +81,7 @@ control TpsAggIngress(inout headers hdr,
 
     table data_drop_t {
         key = {
-            hdr.inspection.srcAddr: exact;
+            hdr.gw_int.srcAddr: exact;
             hdr.ipv4.srcAddr: exact;
             hdr.ipv4.dstAddr: exact;
             hdr.udp.dst_port: exact;
