@@ -39,8 +39,8 @@ control TpsAggIngress(inout headers hdr,
 
     action data_forward(macAddr_t dstAddr, egressSpec_t port, bit<32> l2ptr) {
         standard_metadata.egress_spec = port;
-        hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
-        hdr.ethernet.dstAddr = dstAddr;
+        hdr.ethernet.src_mac = hdr.ethernet.dst_mac;
+        hdr.ethernet.dst_mac = dstAddr;
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
         meta.fwd.l2ptr = l2ptr;
     }
@@ -64,7 +64,7 @@ control TpsAggIngress(inout headers hdr,
 
     table data_inspection_t {
         key = {
-            hdr.ethernet.srcAddr: exact;
+            hdr.ethernet.src_mac: exact;
         }
         actions = {
             data_inspect_packet;
@@ -100,8 +100,8 @@ control TpsAggIngress(inout headers hdr,
 
     action control_forward(macAddr_t mac, egressSpec_t port) {
         standard_metadata.egress_spec = port;
-        hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
-        hdr.ethernet.dstAddr = mac;
+        hdr.ethernet.src_mac = hdr.ethernet.dst_mac;
+        hdr.ethernet.dst_mac = mac;
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
     }
 

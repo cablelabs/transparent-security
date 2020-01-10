@@ -86,7 +86,7 @@ class AggregateController(AbstractController):
                 table_entry = self.p4info_helper.build_table_entry(
                     table_name='{}.data_inspection_t'.format(self.p4_ingress),
                     match_fields={
-                        'hdr.ethernet.srcAddr': device['mac']
+                        'hdr.ethernet.src_mac': device['mac']
                     },
                     action_name='{}.data_inspect_packet'.format(
                         self.p4_ingress),

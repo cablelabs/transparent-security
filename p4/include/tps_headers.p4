@@ -25,8 +25,8 @@ typedef bit<32> ip4Addr_t;
 Ethernet header definition
 **************************/
 header ethernet_t {
-    macAddr_t dstAddr;
-    macAddr_t srcAddr;
+    macAddr_t dst_mac;
+    macAddr_t src_mac;
     bit<16>   etherType;
 }
 
