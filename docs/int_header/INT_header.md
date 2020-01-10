@@ -2,14 +2,14 @@
 
 The INT header is an L3 wrapper containing in band network telemetry.
 
-These definitions contains modifications and required fieleds for Transpaerent Secuirty.
+These definitions contains modifications and required fields for Transpaerent Secuirty.
 
   Note: This version of the document is still under discussion and may change.
 
 This header heavily leverages the P4 INT header.  The changes and subset that are required for
-Transparent Security are noted is this document.
+Transparent Security noted in this document.
 
-The origional header document is located at [INT-current-spec.pdf](https://p4.org/assets/INT-current-spec.pdf)
+The original header document is located at [INT-current-spec.pdf](https://p4.org/assets/INT-current-spec.pdf)
 
 ## Overview
 
@@ -17,7 +17,7 @@ The INT header(s) will be inserted between the IP header and the datagram for IP
 
 The INT header is defined in two portions.  One is the Header for the INT metadata and the second is the actual metadata.
 
-There are two INT headers that will be used with Transparent Secuirty.  One for the originating device on the customer premisis and the second is for the network path (Switches and gateways).
+There are two INT headers that will be used with Transparent Security.  One for the originating device on the customer premises and the second is for the network path (Switches and gateways).
 
 ## IP Header update
 
@@ -84,7 +84,7 @@ Each metadata record corresponds to a bit filed in the instruction set and is 4 
 
 This section is deviating from the INT spec as we are removing the leading bit to indicate the last record.
 
-This metadata will be updated with each consecutive hop, until the max hop count has been reached.  The additional hop infomration will be inserted between the INT metadata header and the metadata from the previous hop.
+This metadata will be updated with each consecutive hop, until the max hop count has been reached.  The additional hop information will be inserted between the INT metadata header and the metadata from the previous hop.
 
 Each metadata record corresponds to a bit filed in the instruction set and is 4 octets long.
 
@@ -138,7 +138,7 @@ Each metadata record corresponds to a bit filed in the instruction set and is 4 
   <td width=39 style='width:29pt'></td>
  </tr>
  <tr height=21 style='height:16.0pt'>
-  <td height=21 style='height:16.0pt'>Octtect</td>
+  <td height=21 style='height:16.0pt'>Octet</td>
   <td colspan=8 class=xl64>0</td>
   <td colspan=8 class=xl64>1</td>
   <td colspan=8 class=xl64>2</td>
@@ -256,7 +256,7 @@ Each metadata record corresponds to a bit filed in the instruction set and is 4 
   <td width=39 style='width:29pt'></td>
  </tr>
  <tr height=21 style='height:16.0pt'>
-  <td height=21 style='height:16.0pt'>Octtect</td>
+  <td height=21 style='height:16.0pt'>Octet</td>
   <td colspan=8 class=xl64>0</td>
   <td colspan=8 class=xl64>1</td>
   <td colspan=8 class=xl64>2</td>
