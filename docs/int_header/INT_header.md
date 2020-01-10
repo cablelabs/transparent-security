@@ -35,7 +35,7 @@ IPv4:
 
 IPv6:
 
-* Set the Next Header to be the identifier for an IPv6 extension header to the INT procol number.  If exisint extension headers are in place, INT will prepend to the first extension header.
+* Set the Next Header to be the identifier for an IPv6 extension header to the INT procol number.  If existing extension headers are in place, INT will prepend to the first extension header.
 * The INT header next header field will be the existing IPv6 next header value.
 * The Hdr Ext Len will be updated appropriately
 
