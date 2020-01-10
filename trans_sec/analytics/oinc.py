@@ -18,7 +18,7 @@ import time
 from anytree import search, Node, RenderTree
 from scapy.all import bind_layers
 from scapy.all import sniff
-from scapy.layers.inet import IP
+from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import Ether
 import threading
 from trans_sec.packet.inspect_layer import GatewayINTInspect
@@ -105,11 +105,10 @@ def extract_int_data(packet):
     :return:
     """
     out = dict(
-        srcMac=packet[Ether].src,
         devMac=packet[GatewayINTInspect].srcAddr,
         devAddr=packet[GatewayINTInspect].deviceAddr,
-        dstAddr=packet[GatewayINTInspect].dstAddr,
-        dstPort=packet[GatewayINTInspect].dstPort,
+        dstAddr=packet[IP].dst,
+        dstPort=packet[UDP].dport,
         protocol=packet[GatewayINTInspect].proto_id,
         packetLen=len(packet),
     )

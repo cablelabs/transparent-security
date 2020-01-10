@@ -20,8 +20,6 @@ control debug_meta(in metadata meta, in headers hdr)
         key = {
            hdr.gw_int.srcAddr: exact;
            hdr.gw_int.deviceAddr: exact;
-           hdr.gw_int.dstAddr: exact;
-           hdr.gw_int.dstPort: exact;
            hdr.gw_int.proto_id: exact;
            hdr.ipv4.srcAddr: exact;
            hdr.ipv4.dstAddr: exact;
