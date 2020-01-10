@@ -24,8 +24,6 @@ from trans_sec.analytics.oinc import SimpleAE
 from trans_sec.packet.inspect_layer import GatewayINTInspect
 from trans_sec.utils.http_session import HttpSession
 
-# noinspection PyCompatibility
-
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 logger = logging.getLogger('oinc_tests')

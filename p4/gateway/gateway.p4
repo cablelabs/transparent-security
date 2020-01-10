@@ -61,8 +61,6 @@ control TpsGwIngress(inout headers hdr,
         hdr.gw_int.setValid();
         hdr.gw_int.srcAddr = hdr.ethernet.srcAddr;
         hdr.gw_int.deviceAddr = hdr.ipv4.srcAddr;
-        hdr.gw_int.dstAddr  = hdr.ipv4.dstAddr;
-        hdr.gw_int.dstPort = hdr.udp.dst_port;
         hdr.gw_int.proto_id = TYPE_IPV4;
         hdr.ethernet.etherType = TYPE_INSPECTION;
         forwardedPackets.count(device);

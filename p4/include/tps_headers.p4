@@ -64,8 +64,6 @@ External Gateway INT Data header definition
 header gw_int_t {
     macAddr_t srcAddr;
     ip4Addr_t deviceAddr;
-    ip4Addr_t dstAddr;
-    bit<16>   dstPort;
     bit<16>   proto_id;
 }
 
