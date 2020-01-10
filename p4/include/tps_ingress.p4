@@ -24,7 +24,7 @@ control debug_meta(in metadata meta, in headers hdr)
            hdr.ipv4.srcAddr: exact;
            hdr.ipv4.dstAddr: exact;
            hdr.udp.dst_port: exact;
-           hdr.ethernet.dstAddr: exact;
+           hdr.ethernet.dst_mac: exact;
            hdr.ipv4.identification: exact;
         }
         actions = { NoAction; }

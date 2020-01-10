@@ -42,8 +42,8 @@ control TpsCoreIngress(inout headers hdr,
     action data_forward(macAddr_t dstAddr, egressSpec_t port) {
         hdr.gw_int.setInvalid();
         standard_metadata.egress_spec = port;
-        hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
-        hdr.ethernet.dstAddr = dstAddr;
+        hdr.ethernet.src_mac = hdr.ethernet.dst_mac;
+        hdr.ethernet.dst_mac = dstAddr;
         hdr.ipv4.srcAddr = hdr.gw_int.src_ipv4;
         hdr.ethernet.etherType = TYPE_IPV4;
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
@@ -95,8 +95,8 @@ control TpsCoreIngress(inout headers hdr,
 
     action control_forward(macAddr_t mac, egressSpec_t port) {
         standard_metadata.egress_spec = port;
-        hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
-        hdr.ethernet.dstAddr = mac;
+        hdr.ethernet.src_mac = hdr.ethernet.dst_mac;
+        hdr.ethernet.dst_mac = mac;
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
     }
 
@@ -132,7 +132,7 @@ control TpsCoreIngress(inout headers hdr,
             hdr.ipv4.srcAddr: exact;
             hdr.ipv4.dstAddr: exact;
             hdr.udp.dst_port: exact;
-            hdr.ethernet.dstAddr: exact;
+            hdr.ethernet.dst_mac: exact;
             hdr.ipv4.identification: exact;
         }
         actions = { NoAction; }
