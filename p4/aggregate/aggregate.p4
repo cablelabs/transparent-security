@@ -59,6 +59,7 @@ control TpsAggIngress(inout headers hdr,
 
     action data_inspect_packet(bit<32> device) {
         hdr.gw_int.setValid();
+        hdr.sw_int.setValid();
         forwardedPackets.count(device);
     }
 

@@ -21,6 +21,7 @@ control debug_meta(in metadata meta, in headers hdr)
            hdr.gw_int.src_mac: exact;
            hdr.gw_int.src_ipv4: exact;
            hdr.gw_int.proto_id: exact;
+           hdr.sw_int.switch_id: exact;
            hdr.ipv4.srcAddr: exact;
            hdr.ipv4.dstAddr: exact;
            hdr.udp.dst_port: exact;

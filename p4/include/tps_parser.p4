@@ -32,17 +32,24 @@ parser TpsParser(packet_in packet,
     state parse_ethernet {
         packet.extract(hdr.ethernet);
         transition select(hdr.ethernet.etherType) {
-            TYPE_INSPECTION: parse_inspection;
+            TYPE_INSPECTION: parse_gw_int;
             TYPE_IPV4: parse_ipv4;
             default: accept;
         }
     }
 
-    state parse_inspection {
+    state parse_gw_int {
         packet.extract(hdr.gw_int);
         transition select(hdr.gw_int.proto_id) {
-            TYPE_IPV4: parse_ipv4;
+            TYPE_IPV4: parse_sw_int_ipv4;
             default: accept;
+        }
+    }
+
+    state parse_sw_int_ipv4 {
+        packet.extract(hdr.sw_int);
+        transition select(hdr.sw_int.switch_id) {
+            default: parse_ipv4;
         }
     }
 
