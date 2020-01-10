@@ -62,8 +62,8 @@ header udp_t {
 External Gateway INT Data header definition
 **************************/
 header gw_int_t {
-    macAddr_t srcAddr;
-    ip4Addr_t deviceAddr;
+    macAddr_t src_mac;
+    ip4Addr_t src_ipv4;
     bit<16>   proto_id;
 }
 

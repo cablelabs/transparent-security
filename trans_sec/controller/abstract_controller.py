@@ -151,7 +151,7 @@ class AbstractController(object):
             table_entry = self.p4info_helper.build_table_entry(
                 table_name='{}.data_drop_t'.format(self.p4_ingress),
                 match_fields={
-                    'hdr.gw_int.srcAddr': (attack['src_mac']),
+                    'hdr.gw_int.src_mac': (attack['src_mac']),
                     'hdr.ipv4.srcAddr': (attack['src_ip']),
                     'hdr.ipv4.dstAddr': (attack['dst_ip']),
                     'hdr.udp.dst_port': (int(attack['dst_port']))

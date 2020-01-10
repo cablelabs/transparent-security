@@ -77,13 +77,13 @@ class SimpleAETests(unittest.TestCase):
         :return:
         """
         pkt1 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
-                GatewayINTInspect(srcAddr='ff:ff:ff:ff:ff:ff') /
+                GatewayINTInspect(src_mac='ff:ff:ff:ff:ff:ff') /
                 IP(dst='localhost', src='localhost') /
                 UDP(dport=1234, sport=1234) /
                 'hello')
 
         pkt2 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
-                GatewayINTInspect(srcAddr='ff:ff:ff:ff:ff:aa') /
+                GatewayINTInspect(src_mac='ff:ff:ff:ff:ff:aa') /
                 IP(dst='localhost', src='localhost') /
                 UDP(dport=1234, sport=1234) /
                 'hello')

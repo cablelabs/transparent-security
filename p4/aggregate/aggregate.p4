@@ -81,7 +81,7 @@ control TpsAggIngress(inout headers hdr,
 
     table data_drop_t {
         key = {
-            hdr.gw_int.srcAddr: exact;
+            hdr.gw_int.src_mac: exact;
             hdr.ipv4.srcAddr: exact;
             hdr.ipv4.dstAddr: exact;
             hdr.udp.dst_port: exact;
