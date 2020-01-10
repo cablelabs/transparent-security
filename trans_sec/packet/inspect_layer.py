@@ -21,7 +21,7 @@ class GatewayINTInspect(Packet):
     """
     name = "INSPECT"
     fields_desc = [
-        fields.MACField('srcAddr', 'ff:ff:ff:ff:ff:ff'),
-        fields.IPField('deviceAddr', '0.0.0.0'),
+        fields.MACField('src_mac', 'ff:ff:ff:ff:ff:ff'),
+        fields.IPField('src_ipv4', '0.0.0.0'),
         fields.ShortField('proto_id', 0x800),
     ]

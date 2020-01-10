@@ -18,8 +18,8 @@ control debug_meta(in metadata meta, in headers hdr)
 {
     table dbg_table {
         key = {
-           hdr.gw_int.srcAddr: exact;
-           hdr.gw_int.deviceAddr: exact;
+           hdr.gw_int.src_mac: exact;
+           hdr.gw_int.src_ipv4: exact;
            hdr.gw_int.proto_id: exact;
            hdr.ipv4.srcAddr: exact;
            hdr.ipv4.dstAddr: exact;

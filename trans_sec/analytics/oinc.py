@@ -105,8 +105,8 @@ def extract_int_data(packet):
     :return:
     """
     out = dict(
-        devMac=packet[GatewayINTInspect].srcAddr,
-        devAddr=packet[GatewayINTInspect].deviceAddr,
+        devMac=packet[GatewayINTInspect].src_mac,
+        devAddr=packet[GatewayINTInspect].src_ipv4,
         dstAddr=packet[IP].dst,
         dstPort=packet[UDP].dport,
         protocol=packet[GatewayINTInspect].proto_id,
