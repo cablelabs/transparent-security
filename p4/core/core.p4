@@ -45,8 +45,6 @@ control TpsCoreIngress(inout headers hdr,
         hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
         hdr.ethernet.dstAddr = dstAddr;
         hdr.ipv4.srcAddr = hdr.gw_int.deviceAddr;
-        hdr.ipv4.dstAddr = hdr.gw_int.dstAddr;
-        hdr.udp.dst_port = hdr.gw_int.dstPort;
         hdr.ethernet.etherType = TYPE_IPV4;
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
     }

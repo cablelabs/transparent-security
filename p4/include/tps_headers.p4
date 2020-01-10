@@ -69,6 +69,10 @@ header gw_int_t {
     bit<16>   proto_id;
 }
 
+header sw_int_t {
+    bit<32>   switch_id;
+}
+
 struct fwd_meta_t {
     bit<32> l2ptr;
     bit<24> out_bd;
@@ -81,6 +85,7 @@ struct metadata {
 struct headers {
     ethernet_t   ethernet;
     gw_int_t     gw_int;
+    sw_int_t     sw_int;
     ipv4_t       ipv4;
     udp_t        udp;
 }
