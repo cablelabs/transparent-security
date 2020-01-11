@@ -102,11 +102,15 @@ def extract_int_data(packet):
     """
     Parses the required data from the packet
     :param packet: the packet to parse
-    :return:
+    :return: dict with choice header fields extracted
     """
+    logger.debug('Extracting data from packet from switch_id [%s]',
+                 packet[GatewayINTInspect].switch_id)
+
     out = dict(
         devMac=packet[GatewayINTInspect].src_mac,
         devAddr=packet[GatewayINTInspect].src_ipv4,
+        switchId=packet[GatewayINTInspect].switch_id,
         dstAddr=packet[IP].dst,
         dstPort=packet[UDP].dport,
         protocol=packet[GatewayINTInspect].proto_id,
@@ -241,6 +245,7 @@ class SimpleAE(PacketAnalytics):
         """
         logger.debug('Packet data - [%s]', packet.summary())
         int_data = extract_int_data(packet)
+        logger.debug('GW INT data - [%s]', int_data)
         attack_map_key = hash(str(int_data))
         if not self.count_map.get(attack_map_key):
             self.count_map[attack_map_key] = list()

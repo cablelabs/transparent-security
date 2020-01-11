@@ -19,9 +19,10 @@ class GatewayINTInspect(Packet):
     This class represents the INT data being placed onto the packets to help
     generating and parsing
     """
-    name = "INSPECT"
+    name = "GW_INT"
     fields_desc = [
         fields.MACField('src_mac', 'ff:ff:ff:ff:ff:ff'),
         fields.IPField('src_ipv4', '0.0.0.0'),
         fields.ShortField('proto_id', 0x800),
+        fields.IntField('switch_id', 0)
     ]
