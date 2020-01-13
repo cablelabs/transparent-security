@@ -109,7 +109,7 @@ def extract_int_data(packet):
 
     out = dict(
         devMac=packet[GatewayINTInspect].src_mac,
-        devAddr=packet[GatewayINTInspect].src_ipv4,
+        devAddr=packet[IP].src,
         switchId=packet[GatewayINTInspect].switch_id,
         dstAddr=packet[IP].dst,
         dstPort=packet[UDP].dport,

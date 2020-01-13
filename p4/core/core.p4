@@ -47,7 +47,6 @@ control TpsCoreIngress(inout headers hdr,
         standard_metadata.egress_spec = port;
         hdr.ethernet.src_mac = hdr.ethernet.dst_mac;
         hdr.ethernet.dst_mac = dstAddr;
-        hdr.ipv4.srcAddr = hdr.gw_int.src_ipv4;
         hdr.ethernet.etherType = TYPE_IPV4;
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
     }
@@ -130,7 +129,6 @@ control TpsCoreIngress(inout headers hdr,
             standard_metadata.mcast_grp : exact;
             standard_metadata.checksum_error : exact;
             hdr.gw_int.src_mac: exact;
-            hdr.gw_int.src_ipv4: exact;
             hdr.gw_int.proto_id: exact;
             hdr.sw_int.switch_id: exact;
             hdr.ipv4.srcAddr: exact;
