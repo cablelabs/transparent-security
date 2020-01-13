@@ -58,7 +58,9 @@ control TpsGwIngress(inout headers hdr,
     }
 
     action data_inspect_packet(bit<32> device) {
+        hdr.gw_int_header.setValid();
         hdr.gw_int.setValid();
+        hdr.sw_int_header.setValid();
         hdr.sw_int.setValid();
         hdr.gw_int.src_mac = hdr.ethernet.src_mac;
         hdr.gw_int.src_ipv4 = hdr.ipv4.srcAddr;

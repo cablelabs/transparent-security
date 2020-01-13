@@ -71,6 +71,22 @@ header sw_int_t {
     bit<32>   switch_id;
 }
 
+header int_header_t {
+    bit<2>  ver;
+    bit<2>  rep;
+    bit<1>  c;
+    bit<1>  e;
+    bit<5>  rsvd1;
+    bit<5>  ins_cnt;
+    bit<8>  max_hop_cnt;
+    bit<8>  total_hop_cnt;
+    bit<4>  instruction_mask_0003; /* split the bits for lookup */
+    bit<4>  instruction_mask_0407;
+    bit<4>  instruction_mask_0811;
+    bit<4>  instruction_mask_1215;
+    bit<16> rsvd2;
+}
+
 struct fwd_meta_t {
     bit<32> l2ptr;
     bit<24> out_bd;
@@ -82,7 +98,9 @@ struct metadata {
 
 struct headers {
     ethernet_t   ethernet;
+    int_header_t gw_int_header;
     gw_int_t     gw_int;
+    int_header_t sw_int_header;
     sw_int_t     sw_int;
     ipv4_t       ipv4;
     udp_t        udp;

@@ -21,8 +21,10 @@ class GatewayINTInspect(Packet):
     """
     name = "GW_INT"
     fields_desc = [
+        fields.LongField('gw_int_header', 0),
         fields.MACField('src_mac', 'ff:ff:ff:ff:ff:ff'),
         fields.IPField('src_ipv4', '0.0.0.0'),
         fields.ShortField('proto_id', 0x800),
+        fields.LongField('sw_int_header', 0),
         fields.IntField('switch_id', 0)
     ]

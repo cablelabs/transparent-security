@@ -40,7 +40,9 @@ control TpsCoreIngress(inout headers hdr,
     counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) droppedPackets;
 
     action data_forward(macAddr_t dstAddr, egressSpec_t port) {
+        hdr.gw_int_header.setInvalid();
         hdr.gw_int.setInvalid();
+        hdr.sw_int_header.setInvalid();
         hdr.sw_int.setInvalid();
         standard_metadata.egress_spec = port;
         hdr.ethernet.src_mac = hdr.ethernet.dst_mac;
