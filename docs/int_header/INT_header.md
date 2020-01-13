@@ -194,7 +194,7 @@ Each metadata record corresponds to a bit filed in the instruction set and is 4 
   <td colspan=8 class=xl63>Reserved</td>
  </tr>
  <tr height=21 style='height:16.0pt'>
-  <td rowspan=3 height=84 class=xl65 style='height:64.0pt'>INT Metadata</td>
+  <td rowspan=2 height=84 class=xl65 style='height:64.0pt'>INT Metadata</td>
   <td colspan=32 height=21 class=xl67 style='height:16.0pt'>Originating Device
   MAC Most signifigant 4 octets<span style='mso-spacerun:yes'> </span></td>
  </tr>
@@ -202,9 +202,6 @@ Each metadata record corresponds to a bit filed in the instruction set and is 4 
   <td colspan=16 height=21 class=xl67 style='height:16.0pt'>Originating Device
   MAC least signifigant 2 octets</td>
   <td colspan=16 class=xl67>Reserved</td>
- </tr>
- <tr height=21 style='height:16.0pt'>
-  <td colspan=32 height=21 class=xl67 style='height:16.0pt'>Originating Device IPv4 address</td>
  </tr>
 </table>
 
