@@ -60,11 +60,10 @@ This format will be used for both the device INT header and the network path INT
 * Max Hop Count (8b): 1 for the device INT header and configurable for the network header.
 * Total Hop Count (8b): The current hop count for the network header and 1 for the device header.
 * INT instructions are encoded as a bitmap in the 16 bit INT Instruction field: the first 8 bits
-corresponds to a specific standard metadata as specified in Section 3 of the P4 INT spec.  The 9th-11th are defined in the metadata section below.  For the device ID the default is 000000001110000000.  If the originating device is using IPv6, then the originating IP address is not captured and the bit mask for the device INT header will be 000000001100000000.  For the network INT header the bit mask would be 100000000000000000.   Additional metadata can be added for the network INT header for performance and additional use cases.
+corresponds to a specific standard metadata as specified in Section 3 of the P4 INT spec.  The 9th-11th are defined in the metadata section below.  For the device ID the default is 000000001100000000.  For the network INT header the bit mask would be 100000000000000000.   Additional metadata can be added for the network INT header for performance and additional use cases.
   * bit0 (MSB): Switch ID
   * bit8: Originating Device MAC (Most signifigant 4 octets)
   * bit9: Originating Device MAC (Least signifigant 2 octets + 2 octets of 0 padding)
-  * bit10: Originating Device IPv4 address (4 octets)
 * Next header IPv6 / Protocol IPv4 (1 octect)  If this is the last INT (header before the data gram), this will be the initial protocol from the IP header.  If there are subsequent headers then this will be 63 to denote that another INT header is to follow.
 * Reservered (1 octets)
 
@@ -78,7 +77,6 @@ Each metadata record corresponds to a bit filed in the instruction set and is 4 
 
 * Originating Device MAC Most signifigant 4 octets (4 octets)
 * Originating Device MAC least signifigant 2 octets + 2 octets of padding (4 octets)
-* Originating Device IPv4 (4 octets)
 
 ### Network INT Metadata (32 bits per hop)
 
