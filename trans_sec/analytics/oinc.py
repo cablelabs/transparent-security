@@ -21,7 +21,8 @@ from scapy.all import sniff
 from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import Ether
 import threading
-from trans_sec.packet.inspect_layer import GatewayINTInspect
+from trans_sec.packet.inspect_layer import GatewayINTInspect, GatewayINTHeader, \
+    SwitchINTInspect, SwitchINTHeader
 
 logger = logging.getLogger('oinc')
 
@@ -53,8 +54,12 @@ class PacketAnalytics(object):
                            (i.e. 0x1212 for Ethernet)
         """
         logger.info("AE monitoring iface %s", iface)
-        bind_layers(Ether, GatewayINTInspect, type=ether_type)
-        bind_layers(GatewayINTInspect, IP, proto_id=proto_id)
+        bind_layers(Ether, GatewayINTHeader)
+        bind_layers(GatewayINTHeader, GatewayINTInspect)
+        bind_layers(GatewayINTInspect, SwitchINTHeader)
+        bind_layers(SwitchINTHeader, SwitchINTInspect)
+        bind_layers(SwitchINTInspect, IP)
+        bind_layers(IP, UDP)
         sniff(iface=iface,
               prn=lambda packet: self.handle_packet(packet, ether_type),
               stop_filter=lambda p: self.sniff_stop.is_set())
@@ -106,14 +111,26 @@ def extract_int_data(packet):
     """
     logger.debug('Extracting data from packet from switch_id [%s]',
                  packet[GatewayINTInspect].switch_id)
+    dev_mac = packet[GatewayINTInspect].src_mac
+    logger.debug('dev_mac - [%s]', dev_mac)
+    dev_addr = packet[IP].src
+    logger.debug('dev_addr - [%s]', dev_addr)
+    switch_id = packet[SwitchINTInspect].switch_id
+    logger.debug('switch_id - [%s]', switch_id)
+    dst_addr = packet[IP].dst
+    logger.debug('dst_addr - [%s]', dst_addr)
+    dst_port = packet[UDP].dport
+    logger.debug('dst_port - [%s]', dst_port)
+    protocol = packet[IP].proto
+    logger.debug('protocol - [%s]', protocol)
 
     out = dict(
-        devMac=packet[GatewayINTInspect].src_mac,
-        devAddr=packet[IP].src,
-        switchId=packet[GatewayINTInspect].switch_id,
-        dstAddr=packet[IP].dst,
-        dstPort=packet[UDP].dport,
-        protocol=packet[GatewayINTInspect].proto_id,
+        devMac=dev_mac,
+        devAddr=dev_addr,
+        switchId=switch_id,
+        dstAddr=dst_addr,
+        dstPort=dst_port,
+        protocol=protocol,
         packetLen=len(packet),
     )
     logger.debug('Extracted header data [%s]', out)
@@ -247,6 +264,7 @@ class SimpleAE(PacketAnalytics):
         int_data = extract_int_data(packet)
         logger.debug('GW INT data - [%s]', int_data)
         attack_map_key = hash(str(int_data))
+        logger.debug('Attack map key - [%s]', attack_map_key)
         if not self.count_map.get(attack_map_key):
             self.count_map[attack_map_key] = list()
 

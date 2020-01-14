@@ -21,7 +21,8 @@ from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import Ether
 
 from trans_sec.analytics.oinc import SimpleAE
-from trans_sec.packet.inspect_layer import GatewayINTInspect
+from trans_sec.packet.inspect_layer import GatewayINTInspect, GatewayINTHeader, \
+    SwitchINTHeader, SwitchINTInspect
 from trans_sec.utils.http_session import HttpSession
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -46,8 +47,11 @@ class SimpleAETests(unittest.TestCase):
         :return:
         """
         pkt = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
+               GatewayINTHeader() /
                GatewayINTInspect() /
-               IP(dst='localhost', src='localhost') /
+               SwitchINTHeader() /
+               SwitchINTInspect() /
+               IP(dst='10.1.0.1', src='10.2.0.1') /
                UDP(dport=1234, sport=1234) /
                'hello')
         self.ae.handle_packet(pkt)
@@ -59,8 +63,11 @@ class SimpleAETests(unittest.TestCase):
         """
         pkt = Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff')
         pkt = (pkt /
+               GatewayINTHeader() /
                GatewayINTInspect() /
-               IP(dst='localhost', src='localhost') /
+               SwitchINTHeader() /
+               SwitchINTInspect() /
+               IP(dst='10.1.0.1', src='10.2.0.1') /
                UDP(dport=1234, sport=1234) /
                'hello')
 
@@ -77,24 +84,34 @@ class SimpleAETests(unittest.TestCase):
         :return:
         """
         pkt1 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
+                GatewayINTHeader() /
                 GatewayINTInspect(src_mac='ff:ff:ff:ff:ff:ff') /
-                IP(dst='localhost', src='localhost') /
+                SwitchINTHeader() /
+                SwitchINTInspect() /
+                IP(dst='10.1.0.1', src='10.2.0.1') /
                 UDP(dport=1234, sport=1234) /
                 'hello')
 
         pkt2 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
+                GatewayINTHeader() /
                 GatewayINTInspect(src_mac='ff:ff:ff:ff:ff:aa') /
-                IP(dst='localhost', src='localhost') /
+                SwitchINTHeader() /
+                SwitchINTInspect() /
+                IP(dst='10.1.0.1', src='10.2.0.1') /
                 UDP(dport=1234, sport=1234) /
                 'hello')
 
-        for index in range(0, self.ae.packet_count + 1):
+        for index in range(0, self.ae.packet_count):
             logger.info('Iteration #%s', index)
             ret_val1 = self.ae.handle_packet(pkt1)
             ret_val2 = self.ae.handle_packet(pkt2)
+            logger.info('Checking index - [%s] - count - [%s]',
+                        index, self.ae.packet_count)
             if index < self.ae.packet_count:
+                logger.info('Expecting false - [%s]', ret_val1)
                 self.assertFalse(ret_val1)
                 self.assertFalse(ret_val2)
             else:
+                logger.info('Expecting true - [%s]', ret_val1)
                 self.assertTrue(ret_val1)
                 self.assertTrue(ret_val2)

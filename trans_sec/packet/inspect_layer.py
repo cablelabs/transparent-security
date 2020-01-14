@@ -14,6 +14,17 @@ from scapy.all import Packet
 from scapy import fields
 
 
+class GatewayINTHeader(Packet):
+    """
+    This class represents the INT data being placed onto the packets to help
+    generating and parsing
+    """
+    name = "GW_INT_HDR"
+    fields_desc = [
+        fields.LongField('gw_int_header', 0),
+    ]
+
+
 class GatewayINTInspect(Packet):
     """
     This class represents the INT data being placed onto the packets to help
@@ -21,9 +32,28 @@ class GatewayINTInspect(Packet):
     """
     name = "GW_INT"
     fields_desc = [
-        fields.LongField('gw_int_header', 0),
         fields.MACField('src_mac', 'ff:ff:ff:ff:ff:ff'),
         fields.ShortField('proto_id', 0x800),
+    ]
+
+
+class SwitchINTHeader(Packet):
+    """
+    This class represents the INT data being placed onto the packets to help
+    generating and parsing
+    """
+    name = "SW_INT_HDR"
+    fields_desc = [
         fields.LongField('sw_int_header', 0),
-        fields.IntField('switch_id', 0)
+    ]
+
+
+class SwitchINTInspect(Packet):
+    """
+    This class represents the INT data being placed onto the packets to help
+    generating and parsing
+    """
+    name = "SW_INT"
+    fields_desc = [
+        fields.IntField('switch_id', 0),
     ]
