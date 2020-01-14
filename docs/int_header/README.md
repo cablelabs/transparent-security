@@ -14,4 +14,6 @@ header definition.
 
 Usage:
 
-    wireshark -X lua_script:./int.lua
+```bash
+wireshark -X lua_script:./int.lua
+```
