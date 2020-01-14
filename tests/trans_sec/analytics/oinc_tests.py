@@ -21,8 +21,9 @@ from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import Ether
 
 from trans_sec.analytics.oinc import SimpleAE
-from trans_sec.packet.inspect_layer import GatewayINTInspect, GatewayINTHeader, \
-    SwitchINTHeader, SwitchINTInspect
+from trans_sec.packet.inspect_layer import (
+    GatewayINTHeaderMeta, GatewayINTInspect, SwitchINTHeaderMeta,
+    SwitchINTInspect)
 from trans_sec.utils.http_session import HttpSession
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -47,9 +48,9 @@ class SimpleAETests(unittest.TestCase):
         :return:
         """
         pkt = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
-               GatewayINTHeader() /
+               GatewayINTHeaderMeta() /
                GatewayINTInspect() /
-               SwitchINTHeader() /
+               SwitchINTHeaderMeta() /
                SwitchINTInspect() /
                IP(dst='10.1.0.1', src='10.2.0.1') /
                UDP(dport=1234, sport=1234) /
@@ -63,9 +64,9 @@ class SimpleAETests(unittest.TestCase):
         """
         pkt = Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff')
         pkt = (pkt /
-               GatewayINTHeader() /
+               GatewayINTHeaderMeta() /
                GatewayINTInspect() /
-               SwitchINTHeader() /
+               SwitchINTHeaderMeta() /
                SwitchINTInspect() /
                IP(dst='10.1.0.1', src='10.2.0.1') /
                UDP(dport=1234, sport=1234) /
@@ -84,18 +85,18 @@ class SimpleAETests(unittest.TestCase):
         :return:
         """
         pkt1 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
-                GatewayINTHeader() /
+                GatewayINTHeaderMeta() /
                 GatewayINTInspect(src_mac='ff:ff:ff:ff:ff:ff') /
-                SwitchINTHeader() /
+                SwitchINTHeaderMeta() /
                 SwitchINTInspect() /
                 IP(dst='10.1.0.1', src='10.2.0.1') /
                 UDP(dport=1234, sport=1234) /
                 'hello')
 
         pkt2 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
-                GatewayINTHeader() /
+                GatewayINTHeaderMeta() /
                 GatewayINTInspect(src_mac='ff:ff:ff:ff:ff:aa') /
-                SwitchINTHeader() /
+                SwitchINTHeaderMeta() /
                 SwitchINTInspect() /
                 IP(dst='10.1.0.1', src='10.2.0.1') /
                 UDP(dport=1234, sport=1234) /

@@ -21,8 +21,9 @@ from scapy.all import sniff
 from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import Ether
 import threading
-from trans_sec.packet.inspect_layer import GatewayINTInspect, GatewayINTHeader, \
-    SwitchINTInspect, SwitchINTHeader
+from trans_sec.packet.inspect_layer import (
+    GatewayINTInspect, SwitchINTInspect, SwitchINTHeaderMeta,
+    GatewayINTHeaderMeta)
 
 logger = logging.getLogger('oinc')
 
@@ -54,10 +55,10 @@ class PacketAnalytics(object):
                            (i.e. 0x1212 for Ethernet)
         """
         logger.info("AE monitoring iface %s", iface)
-        bind_layers(Ether, GatewayINTHeader)
-        bind_layers(GatewayINTHeader, GatewayINTInspect)
-        bind_layers(GatewayINTInspect, SwitchINTHeader)
-        bind_layers(SwitchINTHeader, SwitchINTInspect)
+        bind_layers(Ether, GatewayINTHeaderMeta)
+        bind_layers(GatewayINTHeaderMeta, GatewayINTInspect)
+        bind_layers(GatewayINTInspect, SwitchINTHeaderMeta)
+        bind_layers(SwitchINTHeaderMeta, SwitchINTInspect)
         bind_layers(SwitchINTInspect, IP)
         bind_layers(IP, UDP)
         sniff(iface=iface,
@@ -123,6 +124,8 @@ def extract_int_data(packet):
     logger.debug('dst_port - [%s]', dst_port)
     protocol = packet[IP].proto
     logger.debug('protocol - [%s]', protocol)
+    packet_len = len(packet)
+    logger.debug('packet length - [%s]', packet_len)
 
     out = dict(
         devMac=dev_mac,
