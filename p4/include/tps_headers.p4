@@ -63,7 +63,6 @@ External Gateway INT Data header definition
 **************************/
 header gw_int_t {
     macAddr_t src_mac;
-    bit<16>   proto_id;
 }
 
 header sw_int_t {
@@ -83,8 +82,9 @@ header int_header_t {
     bit<4>  instruction_mask_0407;
     bit<4>  instruction_mask_0811;
     bit<4>  instruction_mask_1215;
-    bit<16> rsvd2;
+    bit<16> next_proto;
 }
+
 
 struct fwd_meta_t {
     bit<32> l2ptr;

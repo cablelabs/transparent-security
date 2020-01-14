@@ -129,7 +129,6 @@ control TpsCoreIngress(inout headers hdr,
             standard_metadata.mcast_grp : exact;
             standard_metadata.checksum_error : exact;
             hdr.gw_int.src_mac: exact;
-            hdr.gw_int.proto_id: exact;
             hdr.ipv4.srcAddr: exact;
             hdr.ipv4.dstAddr: exact;
             hdr.udp.dst_port: exact;

@@ -40,15 +40,15 @@ parser TpsParser(packet_in packet,
 
     state parse_gw_int_header {
         packet.extract(hdr.gw_int_header);
-        transition parse_gw_int;
-    }
-
-    state parse_gw_int {
-        packet.extract(hdr.gw_int);
-        transition select(hdr.gw_int.proto_id) {
-            TYPE_IPV4: parse_sw_int_header_ipv4;
+        transition select(hdr.gw_int_header.next_proto) {
+            TYPE_IPV4: parse_gw_int_ipv4;
             default: accept;
         }
+    }
+
+    state parse_gw_int_ipv4 {
+        packet.extract(hdr.gw_int);
+        transition parse_sw_int_header_ipv4;
     }
 
     state parse_sw_int_header_ipv4 {

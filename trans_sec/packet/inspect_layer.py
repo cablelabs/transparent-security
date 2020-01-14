@@ -22,8 +22,7 @@ class INTHeaderMeta(Packet):
     name = "INT_HDR"
     fields_desc = [
         fields.BitField('stuff', 0, 48),
-        fields.ByteField('next_proto', 0),
-        fields.ByteField('reserved', 0),
+        fields.ShortField('next_proto', 0),
     ]
 
 
@@ -43,7 +42,6 @@ class GatewayINTInspect(Packet):
     name = "GW_INT"
     fields_desc = [
         fields.MACField('src_mac', 'ff:ff:ff:ff:ff:ff'),
-        fields.ShortField('proto_id', 0x800),
     ]
 
 

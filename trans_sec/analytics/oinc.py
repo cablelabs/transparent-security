@@ -46,11 +46,10 @@ class PacketAnalytics(object):
         self.count_map = dict()
         self.sniff_stop = threading.Event()
 
-    def start_sniffing(self, iface, proto_id, ether_type):
+    def start_sniffing(self, iface, ether_type):
         """
         Starts the sniffer thread
         :param iface: the interface to sniff
-        :param proto_id:
         :param ether_type: the type of packets to process
                            (i.e. 0x1212 for Ethernet)
         """
