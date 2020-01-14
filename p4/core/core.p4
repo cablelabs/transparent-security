@@ -43,7 +43,7 @@ control TpsCoreIngress(inout headers hdr,
         hdr.gw_int_header.setInvalid();
         hdr.gw_int.setInvalid();
         hdr.sw_int_header.setInvalid();
-        hdr.sw_int.setInvalid();
+        hdr.sw_int[0].setInvalid();
         standard_metadata.egress_spec = port;
         hdr.ethernet.src_mac = hdr.ethernet.dst_mac;
         hdr.ethernet.dst_mac = dstAddr;
@@ -130,7 +130,6 @@ control TpsCoreIngress(inout headers hdr,
             standard_metadata.checksum_error : exact;
             hdr.gw_int.src_mac: exact;
             hdr.gw_int.proto_id: exact;
-            hdr.sw_int.switch_id: exact;
             hdr.ipv4.srcAddr: exact;
             hdr.ipv4.dstAddr: exact;
             hdr.udp.dst_port: exact;

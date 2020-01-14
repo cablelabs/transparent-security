@@ -61,7 +61,7 @@ control TpsAggIngress(inout headers hdr,
         hdr.gw_int_header.setValid();
         hdr.gw_int.setValid();
         hdr.sw_int_header.setValid();
-        hdr.sw_int.setValid();
+        hdr.sw_int[0].setValid();
         forwardedPackets.count(device);
     }
 

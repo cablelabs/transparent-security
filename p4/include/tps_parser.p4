@@ -57,8 +57,8 @@ parser TpsParser(packet_in packet,
     }
 
     state parse_sw_int_ipv4 {
-        packet.extract(hdr.sw_int);
-        transition select(hdr.sw_int.switch_id) {
+        packet.extract(hdr.sw_int.next);
+        transition select(hdr.sw_int.last.switch_id) {
             default: parse_ipv4;
         }
     }

@@ -100,7 +100,7 @@ struct headers {
     int_header_t gw_int_header;
     gw_int_t     gw_int;
     int_header_t sw_int_header;
-    sw_int_t     sw_int;
+    sw_int_t[10] sw_int;
     ipv4_t       ipv4;
     udp_t        udp;
 }

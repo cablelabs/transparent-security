@@ -61,10 +61,10 @@ control TpsGwIngress(inout headers hdr,
         hdr.gw_int_header.setValid();
         hdr.gw_int.setValid();
         hdr.sw_int_header.setValid();
-        hdr.sw_int.setValid();
+        hdr.sw_int[0].setValid();
         hdr.gw_int.src_mac = hdr.ethernet.src_mac;
         hdr.gw_int.proto_id = TYPE_IPV4;
-        hdr.sw_int.switch_id = device;
+        hdr.sw_int[0].switch_id = device;
         hdr.ethernet.etherType = TYPE_INSPECTION;
         forwardedPackets.count(device);
     }
