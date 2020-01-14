@@ -94,6 +94,33 @@ Each metadata record corresponds to a bit filed in the instruction set and is 4 
 
 ### Example table for a device INT header
 
+#### Hex example
+
+00:02:01:01:  ver,rep,c,e=0 inst count=2 max_hop=1 curr_hop=1
+
+00:C0:11:00: Bitmak with bits 8 & 9 set= 00:C0, Next protocol = UDP
+
+00:0c:29:1c:ac:16 MAC address
+
+:00:00: Reserved after MAC address
+
+01:00:50:00:13:5e:b0: UDP Header for port 80
+
+68:65:6c:6c:6f:20:77:6f:72:6c:64: "hello world" in hex
+
+```bash
+sudo mz ens33 -c 100 -B 172.16.98.1 -t ip "proto=253, p=\
+00:02:01:01:\
+00:C0:11:00:\
+00:0c:29:1c:ac:16\
+:00:00:\
+01:00:50:00:13:5e:b0:\
+68:65:6c:6c:6f:20:77:6f:72:6c:64\
+, ttl=5"
+```
+
+#### HTML table
+
 <table border=0 cellpadding=0 cellspacing=0 width=1419 style='border-collapse:
  collapse;table-layout:fixed;width:1056pt'>
  <col width=171 style='mso-width-source:userset;mso-width-alt:5461;width:128pt'>
