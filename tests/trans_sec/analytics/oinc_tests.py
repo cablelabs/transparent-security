@@ -23,7 +23,7 @@ from scapy.layers.l2 import Ether
 from trans_sec.analytics.oinc import SimpleAE
 from trans_sec.packet.inspect_layer import (
     GatewayINTHeaderMeta, GatewayINTInspect, SwitchINTHeaderMeta,
-    SwitchINTInspect, INTMeta, SwitchINT, GatewayINT)
+    SwitchINTInspect)
 from trans_sec.utils.http_session import HttpSession
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -48,14 +48,14 @@ class SimpleAETests(unittest.TestCase):
         :return:
         """
         pkt = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
-               IP(dst='10.1.0.1', src='10.2.0.1') /
+               IP(dst='10.1.0.1', src='10.2.0.1', proto=0xfd) /
                SwitchINTHeaderMeta() /
                SwitchINTInspect() /
                GatewayINTHeaderMeta() /
                GatewayINTInspect() /
                UDP(dport=1234, sport=1234) /
                'hello transparent-security')
-        self.ae.handle_packet(pkt)
+        self.ae.process_packet(pkt, 0xfd)
 
     def test_start_one_attack(self):
         """
@@ -63,7 +63,7 @@ class SimpleAETests(unittest.TestCase):
         :return:
         """
         pkt = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
-               IP(dst='10.1.0.1', src='10.2.0.1') /
+               IP(dst='10.1.0.1', src='10.2.0.1', proto=0xfd) /
                SwitchINTHeaderMeta() /
                SwitchINTInspect() /
                GatewayINTHeaderMeta() /
@@ -72,7 +72,7 @@ class SimpleAETests(unittest.TestCase):
                'hello transparent-security')
 
         for index in range(0, self.ae.packet_count + 1):
-            ret_val = self.ae.handle_packet(pkt)
+            ret_val = self.ae.process_packet(pkt, 0xfd)
             if index < self.ae.packet_count:
                 self.assertFalse(ret_val)
             else:
@@ -84,8 +84,7 @@ class SimpleAETests(unittest.TestCase):
         :return:
         """
         pkt1 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
-                SwitchINT() /
-                IP(dst='10.1.0.1', src='10.2.0.1') /
+                IP(dst='10.1.0.1', src='10.2.0.1', proto=0xfd) /
                 SwitchINTHeaderMeta() /
                 SwitchINTInspect() /
                 GatewayINTHeaderMeta() /
@@ -94,7 +93,7 @@ class SimpleAETests(unittest.TestCase):
                 'hello transparent-security')
 
         pkt2 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
-                IP(dst='10.1.0.1', src='10.2.0.1') /
+                IP(dst='10.1.0.1', src='10.2.0.1', proto=0xfd) /
                 SwitchINTHeaderMeta() /
                 SwitchINTInspect() /
                 GatewayINTHeaderMeta() /
@@ -104,8 +103,8 @@ class SimpleAETests(unittest.TestCase):
 
         for index in range(0, self.ae.packet_count):
             logger.info('Iteration #%s', index)
-            ret_val1 = self.ae.handle_packet(pkt1)
-            ret_val2 = self.ae.handle_packet(pkt2)
+            ret_val1 = self.ae.process_packet(pkt1, 0xfd)
+            ret_val2 = self.ae.process_packet(pkt2, 0xfd)
             logger.info('Checking index - [%s] - count - [%s]',
                         index, self.ae.packet_count)
             if index < self.ae.packet_count:

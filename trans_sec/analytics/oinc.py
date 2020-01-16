@@ -13,20 +13,18 @@
 import abc
 import datetime
 import logging
+import threading
 import time
 
 from anytree import search, Node, RenderTree
 from scapy.all import bind_layers
 from scapy.all import sniff
-from scapy.layers.inet import IP, UDP, TCP
+from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import Ether
-import threading
-
-from scapy.packet import split_layers
 
 from trans_sec.packet.inspect_layer import (
     GatewayINTInspect, SwitchINTInspect, SwitchINTHeaderMeta,
-    GatewayINTHeaderMeta, INTMeta, SwitchINT, GatewayINT, TpsUDP)
+    GatewayINTHeaderMeta)
 
 logger = logging.getLogger('oinc')
 
@@ -49,34 +47,22 @@ class PacketAnalytics(object):
         self.count_map = dict()
         self.sniff_stop = threading.Event()
 
-    def start_sniffing(self, iface):
+    def start_sniffing(self, iface, ip_proto=0xfd):
         """
         Starts the sniffer thread
         :param iface: the interface to sniff
-        :param ether_type: the type of packets to process
-                           (i.e. 0x1212 for Ethernet)
+        :param ip_proto: the IP protocol to sniff (default TPS - 253)
         """
         logger.info("AE monitoring iface %s", iface)
-        # bind_layers(Ether, IP, type=0x800)
-        # bind_layers(IP, INTMeta, proto=0xfd)
-        # bind_layers(INTMeta, UDP, gw_next_proto=0x11)
-        # bind_layers(Ether, IP)
-        # bind_layers(IP, SwitchINT)
-        # bind_layers(SwitchINT, GatewayINT)
-        # bind_layers(GatewayINT, UDP)
         bind_layers(Ether, IP)
         bind_layers(IP, SwitchINTHeaderMeta)
         bind_layers(SwitchINTHeaderMeta, SwitchINTInspect)
         bind_layers(SwitchINTInspect, GatewayINTHeaderMeta)
         bind_layers(GatewayINTHeaderMeta, GatewayINTInspect)
         bind_layers(GatewayINTInspect, UDP)
-        bind_layers(Ether, IP)
-        bind_layers(IP, SwitchINT)
-        bind_layers(SwitchINT, GatewayINT)
-        bind_layers(GatewayINT, UDP)
         logger.debug("Completed bind_layers")
         sniff(iface=iface,
-              prn=lambda packet: self.handle_packet(packet),
+              prn=lambda packet: self.handle_packet(packet, ip_proto),
               stop_filter=lambda p: self.sniff_stop.is_set())
 
     def stop_sniffing(self):
@@ -85,29 +71,14 @@ class PacketAnalytics(object):
         """
         self.sniff_stop.set()
 
-    def handle_packet(self, packet):
+    def handle_packet(self, packet, ip_proto):
         """
         Determines whether or not to process this packet
         :param packet: the packet to process
+        :param ip_proto: the IP protocol to filter
         :return T/F - True when an attack has been triggered
         """
-        # bind_layers(Ether, IP)
-        # bind_layers(IP, SwitchINT)
-        # bind_layers(SwitchINT, GatewayINT)
-        # bind_layers(GatewayINT, UDP)
-
-        # bind_layers(Ether, IP, type=0x800)
-        # bind_layers(IP, SwitchINTHeaderMeta)
-        # bind_layers(SwitchINTHeaderMeta, SwitchINTInspect)
-        # bind_layers(SwitchINTInspect, GatewayINTHeaderMeta)
-        # bind_layers(GatewayINTHeaderMeta, GatewayINTInspect)
-        # bind_layers(GatewayINTInspect, UDP)
-        # bind_layers(Ether, IP)
-        # bind_layers(IP, SwitchINT)
-        # bind_layers(SwitchINT, GatewayINT)
-        # bind_layers(GatewayINT, UDP)
-
-        return self.process_packet(packet)
+        return self.process_packet(packet, ip_proto)
 
     def _send_attack(self, **attack_dict):
         """
@@ -119,10 +90,11 @@ class PacketAnalytics(object):
         self.sdn_interface.post('attack', attack_dict)
 
     @abc.abstractmethod
-    def process_packet(self, packet):
+    def process_packet(self, packet, ip_proto):
         """
         Processes a packet to determine if an attack is occurring
         :param packet: the packet to process
+        :param ip_proto: the IP protocol to filter
         :return: T/F - True when an attack has been triggered
         """
         return
@@ -159,14 +131,16 @@ def log_int_packet(packet):
         logger.debug('eth dst_mac - [%s]', packet[Ether].dst)
         logger.debug('eth src_mac - [%s]', packet[Ether].src)
         logger.debug('eth type - [%s]', packet[Ether].type)
-        logger.debug('swh max_hops - [%s]', packet[SwitchINTHeaderMeta].max_hops)
+        logger.debug('swh max_hops - [%s]',
+                     packet[SwitchINTHeaderMeta].max_hops)
         logger.debug('swh total_hops - [%s]',
                      packet[SwitchINTHeaderMeta].total_hops)
         logger.debug('swh next_proto - [%s]',
                      packet[SwitchINTHeaderMeta].next_proto)
         logger.debug('switch_id - [%s]', packet[SwitchINTInspect].switch_id)
         logger.debug('gwh ver - [%s]', packet[GatewayINTHeaderMeta].ver)
-        logger.debug('gwh max_hops - [%s]', packet[GatewayINTHeaderMeta].max_hops)
+        logger.debug('gwh max_hops - [%s]',
+                     packet[GatewayINTHeaderMeta].max_hops)
         logger.debug('gw total_hops - [%s]',
                      packet[GatewayINTHeaderMeta].total_hops)
         logger.debug('gw next_proto - [%s]',
@@ -189,7 +163,7 @@ class Oinc(PacketAnalytics):
                                              sample_interval)
         self.tree = Node('root')
 
-    def process_packet(self, packet):
+    def process_packet(self, packet, ip_proto):
         mac, src_ip, dst_ip, dst_port, packet_size = self.__parse_tree(packet)
 
         if mac:
@@ -297,94 +271,101 @@ class SimpleAE(PacketAnalytics):
         # Holds the last time an attack call was issued to the SDN controller
         self.attack_map = dict()
 
-    def process_packet(self, packet):
+    def process_packet(self, packet, ip_proto):
         """
-        Processes a packet to determine if an attack is occurring
+        Processes a packet to determine if an attack is occurring if the IP
+        protocol is as expected
         :param packet: the packet to process
+        :param ip_proto: the IP protocol to filter
         :return: T/F - True when an attack has been triggered
         """
-        # bind_layers(Ether, IP, type=0x800)
-        # bind_layers(IP, SwitchINTHeaderMeta)
-        # bind_layers(SwitchINTHeaderMeta, SwitchINTInspect)
-        # bind_layers(SwitchINTInspect, GatewayINTHeaderMeta)
-        # bind_layers(GatewayINTHeaderMeta, GatewayINTInspect)
-        # bind_layers(GatewayINTInspect, UDP)
-        # bind_layers(Ether, IP)
-        # bind_layers(IP, SwitchINT)
-        # bind_layers(SwitchINT, GatewayINT)
-        # bind_layers(GatewayINT, UDP)
-
-        # bind_layers(Ether, IP)
-        # bind_layers(IP, SwitchINT)
-        # bind_layers(SwitchINT, GatewayINT)
-        # bind_layers(GatewayINT, UDP)
-
         logger.debug('Packet data - [%s]', packet.summary())
-        int_data = extract_int_data(packet)
+        protocol = None
+        try:
+            protocol = packet[IP].proto
+        except Exception as e:
+            logger.warn('Unable to process packet - [%s] with error [%s]',
+                        packet.summary(), e)
 
-        if int_data:
-            logger.debug('GW INT data - [%s]', int_data)
-            attack_map_key = hash(str(int_data))
-            logger.debug('Attack map key - [%s]', attack_map_key)
-            if not self.count_map.get(attack_map_key):
-                self.count_map[attack_map_key] = list()
+        if protocol == ip_proto:
+            int_data = extract_int_data(packet)
 
-            curr_time = datetime.datetime.now()
-            self.count_map.get(attack_map_key).append(curr_time)
-            times = self.count_map.get(attack_map_key)
-            count = 0
-            for eval_time in times:
-                delta = (curr_time - eval_time).total_seconds()
-                if delta > self.sample_interval:
-                    times.remove(eval_time)
-                else:
-                    count += 1
-
-            if count > self.packet_count:
-                logger.debug('Attack detected - count [%s] with key [%s]',
-                             count, attack_map_key)
-
-                attack_dict = dict(
-                    src_mac=int_data['devMac'],
-                    src_ip=int_data['devAddr'],
-                    dst_ip=int_data['dstAddr'],
-                    dst_port=int_data['dstPort'],
-                    packet_size=int_data['packetLen'],
-                    attack_type='UDP Flood')
-
-                # Send to SDN
-                last_attack = self.attack_map.get(attack_map_key)
-                if not last_attack or time.time() - last_attack > 1:
-                    logger.info('Calling SDN, last attack sent - [%s]',
-                                last_attack)
-                    try:
-                        self.attack_map[attack_map_key] = time.time()
-                        self._send_attack(**attack_dict)
-                        return True
-                    except Exception as e:
-                        logger.error('Unexpected error [%s]', e)
-                        return False
-                else:
-                    logger.debug(
-                        'Not calling SDN as last attack notification for %s'
-                        ' was only %s seconds ago',
-                        attack_dict, time.time() - last_attack)
-                    return False
+            if int_data:
+                return self.__process(int_data)
             else:
-                logger.debug('No attack detected - count [%s]', count)
+                logger.warn('Unable to debug INT data')
                 return False
         else:
-            logger.warn('Unable to debug INT data')
+            logger.warn('Cannot process IP proto of - [%s]', protocol)
+            return False
+
+    def __process(self, int_data):
+        """
+        Processes INT data for analysis
+        :param int_data: the data to process
+        :return:
+        """
+        logger.debug('GW INT data - [%s]', int_data)
+        attack_map_key = hash(str(int_data))
+        logger.debug('Attack map key - [%s]', attack_map_key)
+        if not self.count_map.get(attack_map_key):
+            self.count_map[attack_map_key] = list()
+
+        curr_time = datetime.datetime.now()
+        self.count_map.get(attack_map_key).append(curr_time)
+        times = self.count_map.get(attack_map_key)
+        count = 0
+        for eval_time in times:
+            delta = (curr_time - eval_time).total_seconds()
+            if delta > self.sample_interval:
+                times.remove(eval_time)
+            else:
+                count += 1
+
+        if count > self.packet_count:
+            logger.debug('Attack detected - count [%s] with key [%s]',
+                         count, attack_map_key)
+
+            attack_dict = dict(
+                src_mac=int_data['devMac'],
+                src_ip=int_data['devAddr'],
+                dst_ip=int_data['dstAddr'],
+                dst_port=int_data['dstPort'],
+                packet_size=int_data['packetLen'],
+                attack_type='UDP Flood')
+
+            # Send to SDN
+            last_attack = self.attack_map.get(attack_map_key)
+            if not last_attack or time.time() - last_attack > 1:
+                logger.info('Calling SDN, last attack sent - [%s]',
+                            last_attack)
+                try:
+                    self.attack_map[attack_map_key] = time.time()
+                    self._send_attack(**attack_dict)
+                    return True
+                except Exception as e:
+                    logger.error('Unexpected error [%s]', e)
+                    return False
+            else:
+                logger.debug(
+                    'Not calling SDN as last attack notification for %s'
+                    ' was only %s seconds ago',
+                    attack_dict, time.time() - last_attack)
+                return False
+        else:
+            logger.debug('No attack detected - count [%s]', count)
+            return False
 
 
 class IntLoggerAE(PacketAnalytics):
     """
     Logs only INT packets
     """
-    def process_packet(self, packet):
+    def process_packet(self, packet, ip_proto):
         """
         Logs the INT data within the packet
         :param packet: the INT packet
+        :param ip_proto: the IP protocol to process
         :return: False
         """
         logger.info('INT Packet data - [%s]', extract_int_data(packet))
@@ -395,20 +376,21 @@ class LoggerAE(PacketAnalytics):
     """
     Logging only
     """
-    def handle_packet(self, packet, ether_type=None):
+    def handle_packet(self, packet, ip_proto=None):
         """
         Logs every received packet's summary data
         :param packet: extracts data from here
-        :param ether_type: does nothing here
+        :param ip_proto: does nothing here
         :return: False
         """
         logger.info('Packet data - [%s]', packet.summary())
         return False
 
-    def process_packet(self, packet):
+    def process_packet(self, packet, ip_proto):
         """
         No need to implement
         :param packet: the packet that'll never come in
+        :param ip_proto: does nothing here
         :raises NotImplemented
         """
         raise NotImplemented
