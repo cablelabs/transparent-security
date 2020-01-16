@@ -60,7 +60,17 @@ class PacketAnalytics(object):
         # bind_layers(Ether, IP, type=0x800)
         # bind_layers(IP, INTMeta, proto=0xfd)
         # bind_layers(INTMeta, UDP, gw_next_proto=0x11)
-        bind_layers( Ether, IP)
+        # bind_layers(Ether, IP)
+        # bind_layers(IP, SwitchINT)
+        # bind_layers(SwitchINT, GatewayINT)
+        # bind_layers(GatewayINT, UDP)
+        bind_layers(Ether, IP)
+        bind_layers(IP, SwitchINTHeaderMeta)
+        bind_layers(SwitchINTHeaderMeta, SwitchINTInspect)
+        bind_layers(SwitchINTInspect, GatewayINTHeaderMeta)
+        bind_layers(GatewayINTHeaderMeta, GatewayINTInspect)
+        bind_layers(GatewayINTInspect, UDP)
+        bind_layers(Ether, IP)
         bind_layers(IP, SwitchINT)
         bind_layers(SwitchINT, GatewayINT)
         bind_layers(GatewayINT, UDP)
@@ -79,9 +89,24 @@ class PacketAnalytics(object):
         """
         Determines whether or not to process this packet
         :param packet: the packet to process
-        :param ether_type: the type of packet to process
         :return T/F - True when an attack has been triggered
         """
+        # bind_layers(Ether, IP)
+        # bind_layers(IP, SwitchINT)
+        # bind_layers(SwitchINT, GatewayINT)
+        # bind_layers(GatewayINT, UDP)
+
+        # bind_layers(Ether, IP, type=0x800)
+        # bind_layers(IP, SwitchINTHeaderMeta)
+        # bind_layers(SwitchINTHeaderMeta, SwitchINTInspect)
+        # bind_layers(SwitchINTInspect, GatewayINTHeaderMeta)
+        # bind_layers(GatewayINTHeaderMeta, GatewayINTInspect)
+        # bind_layers(GatewayINTInspect, UDP)
+        # bind_layers(Ether, IP)
+        # bind_layers(IP, SwitchINT)
+        # bind_layers(SwitchINT, GatewayINT)
+        # bind_layers(GatewayINT, UDP)
+
         return self.process_packet(packet)
 
     def _send_attack(self, **attack_dict):
@@ -111,9 +136,9 @@ def extract_int_data(packet):
     """
     log_int_packet(packet)
     out = dict(
-        devMac=packet[GatewayINT].src_mac,
+        devMac=packet[GatewayINTInspect].src_mac,
         devAddr=packet[IP].src,
-        switchId=packet[SwitchINT].switch_id,
+        switchId=packet[SwitchINTInspect].switch_id,
         dstAddr=packet[IP].dst,
         dstPort=packet[UDP].dport,
         protocol=packet[IP].proto,
@@ -122,24 +147,25 @@ def extract_int_data(packet):
     logger.debug('Extracted header data [%s]', out)
     return out
 
+
 def log_int_packet(packet):
     logger.debug('packet length - [%s]', len(packet))
     logger.debug('eth dst_mac - [%s]', packet[Ether].dst)
     logger.debug('eth src_mac - [%s]', packet[Ether].src)
     logger.debug('eth type - [%s]', packet[Ether].type)
-    logger.debug('swh max_hops - [%s]', packet[SwitchINT].max_hops)
+    logger.debug('swh max_hops - [%s]', packet[SwitchINTHeaderMeta].max_hops)
     logger.debug('swh total_hops - [%s]',
-                 packet[SwitchINT].total_hops)
+                 packet[SwitchINTHeaderMeta].total_hops)
     logger.debug('swh next_proto - [%s]',
-                 packet[SwitchINT].next_proto)
-    logger.debug('switch_id - [%s]', packet[SwitchINT].switch_id)
-    logger.debug('gwh ver - [%s]', packet[GatewayINT].ver)
-    logger.debug('gwh max_hops - [%s]', packet[GatewayINT].max_hops)
+                 packet[SwitchINTHeaderMeta].next_proto)
+    logger.debug('switch_id - [%s]', packet[SwitchINTInspect].switch_id)
+    logger.debug('gwh ver - [%s]', packet[GatewayINTHeaderMeta].ver)
+    logger.debug('gwh max_hops - [%s]', packet[GatewayINTHeaderMeta].max_hops)
     logger.debug('gw total_hops - [%s]',
-                 packet[GatewayINT].total_hops)
+                 packet[GatewayINTHeaderMeta].total_hops)
     logger.debug('gw next_proto - [%s]',
-                 packet[GatewayINT].next_proto)
-    logger.debug('gw src_mac - [%s]', packet[GatewayINT].src_mac)
+                 packet[GatewayINTHeaderMeta].next_proto)
+    logger.debug('gw src_mac - [%s]', packet[GatewayINTInspect].src_mac)
     logger.debug('dev_addr - [%s]', packet[IP].src)
     logger.debug('dst_addr - [%s]', packet[IP].dst)
     logger.debug('protocol - [%s]', packet[IP].proto)
@@ -269,6 +295,22 @@ class SimpleAE(PacketAnalytics):
         :param packet: the packet to process
         :return: T/F - True when an attack has been triggered
         """
+        # bind_layers(Ether, IP, type=0x800)
+        # bind_layers(IP, SwitchINTHeaderMeta)
+        # bind_layers(SwitchINTHeaderMeta, SwitchINTInspect)
+        # bind_layers(SwitchINTInspect, GatewayINTHeaderMeta)
+        # bind_layers(GatewayINTHeaderMeta, GatewayINTInspect)
+        # bind_layers(GatewayINTInspect, UDP)
+        # bind_layers(Ether, IP)
+        # bind_layers(IP, SwitchINT)
+        # bind_layers(SwitchINT, GatewayINT)
+        # bind_layers(GatewayINT, UDP)
+
+        # bind_layers(Ether, IP)
+        # bind_layers(IP, SwitchINT)
+        # bind_layers(SwitchINT, GatewayINT)
+        # bind_layers(GatewayINT, UDP)
+
         logger.debug('Packet data - [%s]', packet.summary())
         int_data = extract_int_data(packet)
         logger.debug('GW INT data - [%s]', int_data)

@@ -48,9 +48,11 @@ class SimpleAETests(unittest.TestCase):
         :return:
         """
         pkt = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
-               SwitchINT() /
-               GatewayINT() /
                IP(dst='10.1.0.1', src='10.2.0.1') /
+               SwitchINTHeaderMeta() /
+               SwitchINTInspect() /
+               GatewayINTHeaderMeta() /
+               GatewayINTInspect() /
                UDP(dport=1234, sport=1234) /
                'hello transparent-security')
         self.ae.handle_packet(pkt)
@@ -60,11 +62,12 @@ class SimpleAETests(unittest.TestCase):
         Tests to ensure that one attack has been triggered
         :return:
         """
-        pkt = Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff')
-        pkt = (pkt /
-               SwitchINT() /
-               GatewayINT() /
+        pkt = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
                IP(dst='10.1.0.1', src='10.2.0.1') /
+               SwitchINTHeaderMeta() /
+               SwitchINTInspect() /
+               GatewayINTHeaderMeta() /
+               GatewayINTInspect() /
                UDP(dport=1234, sport=1234) /
                'hello transparent-security')
 
@@ -82,15 +85,20 @@ class SimpleAETests(unittest.TestCase):
         """
         pkt1 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
                 SwitchINT() /
-                GatewayINT(src_mac='ff:ff:ff:ff:ff:ff') /
                 IP(dst='10.1.0.1', src='10.2.0.1') /
+                SwitchINTHeaderMeta() /
+                SwitchINTInspect() /
+                GatewayINTHeaderMeta() /
+                GatewayINTInspect(src_mac='ff:ff:ff:ff:ff:ff') /
                 UDP(dport=1234, sport=1234) /
                 'hello transparent-security')
 
         pkt2 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
-                SwitchINT() /
-                GatewayINT(src_mac='ff:ff:ff:ff:ff:aa') /
                 IP(dst='10.1.0.1', src='10.2.0.1') /
+                SwitchINTHeaderMeta() /
+                SwitchINTInspect() /
+                GatewayINTHeaderMeta() /
+                GatewayINTInspect(src_mac='ff:ff:ff:ff:ff:aa') /
                 UDP(dport=1234, sport=1234) /
                 'hello transparent-security')
 
