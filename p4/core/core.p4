@@ -40,14 +40,14 @@ control TpsCoreIngress(inout headers hdr,
     counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) droppedPackets;
 
     action data_forward(macAddr_t dstAddr, egressSpec_t port) {
+        hdr.ipv4.protocol = hdr.gw_int_header.next_proto;
         hdr.gw_int_header.setInvalid();
         hdr.gw_int.setInvalid();
         hdr.sw_int_header.setInvalid();
-        hdr.sw_int[0].setInvalid();
+        hdr.sw_int.setInvalid();
         standard_metadata.egress_spec = port;
         hdr.ethernet.src_mac = hdr.ethernet.dst_mac;
         hdr.ethernet.dst_mac = dstAddr;
-        hdr.ethernet.etherType = TYPE_IPV4;
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
     }
 
@@ -140,20 +140,17 @@ control TpsCoreIngress(inout headers hdr,
     }
 
      apply {
+        dbg_table.apply();
         if (hdr.ipv4.isValid()) {
-            dbg_table.apply();
-            if (hdr.udp.isValid()) {
-                 data_drop_t.apply();
-                 if (standard_metadata.egress_spec != DROP_PORT) {
-                     data_clone_t.apply();
-                     data_forward_t.apply();
-                 }
-            }
-            else {
-                control_forward_t.apply();
-            }
+             data_drop_t.apply();
+             if (standard_metadata.egress_spec != DROP_PORT) {
+                 data_clone_t.apply();
+                 data_forward_t.apply();
+             }
         }
-
+        else {
+            control_forward_t.apply();
+        }
     }
 }
 

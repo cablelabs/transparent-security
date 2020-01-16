@@ -31,24 +31,16 @@ parser TpsParser(packet_in packet,
 
     state parse_ethernet {
         packet.extract(hdr.ethernet);
-        transition select(hdr.ethernet.etherType) {
-            TYPE_INSPECTION: parse_gw_int_header;
-            TYPE_IPV4: parse_ipv4;
-            default: accept;
-        }
+        transition parse_ipv4;
     }
 
-    state parse_gw_int_header {
-        packet.extract(hdr.gw_int_header);
-        transition select(hdr.gw_int_header.next_proto) {
-            TYPE_IPV4: parse_gw_int_ipv4;
+    state parse_ipv4 {
+        packet.extract(hdr.ipv4);
+        transition select(hdr.ipv4.protocol) {
+            TYPE_UDP: parse_udp;
+            TYPE_INSPECTION: parse_sw_int_header_ipv4;
             default: accept;
         }
-    }
-
-    state parse_gw_int_ipv4 {
-        packet.extract(hdr.gw_int);
-        transition parse_sw_int_header_ipv4;
     }
 
     state parse_sw_int_header_ipv4 {
@@ -57,18 +49,18 @@ parser TpsParser(packet_in packet,
     }
 
     state parse_sw_int_ipv4 {
-        packet.extract(hdr.sw_int.next);
-        transition select(hdr.sw_int.last.switch_id) {
-            default: parse_ipv4;
-        }
+        packet.extract(hdr.sw_int);
+        transition parse_gw_int_header;
     }
 
-    state parse_ipv4 {
-        packet.extract(hdr.ipv4);
-        transition select(hdr.ipv4.protocol) {
-            TYPE_UDP : parse_udp;
-            default: accept;
-        }
+    state parse_gw_int_header {
+        packet.extract(hdr.gw_int_header);
+        transition parse_gw_int_ipv4;
+    }
+
+    state parse_gw_int_ipv4 {
+        packet.extract(hdr.gw_int);
+        transition parse_udp;
     }
 
     state parse_udp {

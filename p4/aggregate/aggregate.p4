@@ -41,6 +41,7 @@ control TpsAggIngress(inout headers hdr,
         standard_metadata.egress_spec = port;
         hdr.ethernet.src_mac = hdr.ethernet.dst_mac;
         hdr.ethernet.dst_mac = dstAddr;
+        hdr.ipv4.totalLen = 74;
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
         meta.fwd.l2ptr = l2ptr;
     }
@@ -61,7 +62,7 @@ control TpsAggIngress(inout headers hdr,
         hdr.gw_int_header.setValid();
         hdr.gw_int.setValid();
         hdr.sw_int_header.setValid();
-        hdr.sw_int[0].setValid();
+        hdr.sw_int.setValid();
         forwardedPackets.count(device);
     }
 
@@ -123,18 +124,15 @@ control TpsAggIngress(inout headers hdr,
 
      apply {
         if (hdr.ipv4.isValid()) {
-            if (hdr.udp.isValid()) {
-                data_drop_t.apply();
-                if (standard_metadata.egress_spec != DROP_PORT) {
-                    data_inspection_t.apply();
-                    data_forward_t.apply();
-                }
-            }
-            else {
-                control_forward_t.apply();
+            data_drop_t.apply();
+            if (standard_metadata.egress_spec != DROP_PORT) {
+                data_inspection_t.apply();
+                data_forward_t.apply();
             }
         }
-
+        else {
+            control_forward_t.apply();
+        }
     }
 }
 

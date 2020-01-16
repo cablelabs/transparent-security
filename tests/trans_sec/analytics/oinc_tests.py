@@ -23,7 +23,7 @@ from scapy.layers.l2 import Ether
 from trans_sec.analytics.oinc import SimpleAE
 from trans_sec.packet.inspect_layer import (
     GatewayINTHeaderMeta, GatewayINTInspect, SwitchINTHeaderMeta,
-    SwitchINTInspect)
+    SwitchINTInspect, INTMeta, SwitchINT, GatewayINT)
 from trans_sec.utils.http_session import HttpSession
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -48,13 +48,11 @@ class SimpleAETests(unittest.TestCase):
         :return:
         """
         pkt = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
-               GatewayINTHeaderMeta() /
-               GatewayINTInspect() /
-               SwitchINTHeaderMeta() /
-               SwitchINTInspect() /
+               SwitchINT() /
+               GatewayINT() /
                IP(dst='10.1.0.1', src='10.2.0.1') /
                UDP(dport=1234, sport=1234) /
-               'hello')
+               'hello transparent-security')
         self.ae.handle_packet(pkt)
 
     def test_start_one_attack(self):
@@ -64,13 +62,11 @@ class SimpleAETests(unittest.TestCase):
         """
         pkt = Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff')
         pkt = (pkt /
-               GatewayINTHeaderMeta() /
-               GatewayINTInspect() /
-               SwitchINTHeaderMeta() /
-               SwitchINTInspect() /
+               SwitchINT() /
+               GatewayINT() /
                IP(dst='10.1.0.1', src='10.2.0.1') /
                UDP(dport=1234, sport=1234) /
-               'hello')
+               'hello transparent-security')
 
         for index in range(0, self.ae.packet_count + 1):
             ret_val = self.ae.handle_packet(pkt)
@@ -85,22 +81,18 @@ class SimpleAETests(unittest.TestCase):
         :return:
         """
         pkt1 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
-                GatewayINTHeaderMeta() /
-                GatewayINTInspect(src_mac='ff:ff:ff:ff:ff:ff') /
-                SwitchINTHeaderMeta() /
-                SwitchINTInspect() /
+                SwitchINT() /
+                GatewayINT(src_mac='ff:ff:ff:ff:ff:ff') /
                 IP(dst='10.1.0.1', src='10.2.0.1') /
                 UDP(dport=1234, sport=1234) /
-                'hello')
+                'hello transparent-security')
 
         pkt2 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
-                GatewayINTHeaderMeta() /
-                GatewayINTInspect(src_mac='ff:ff:ff:ff:ff:aa') /
-                SwitchINTHeaderMeta() /
-                SwitchINTInspect() /
+                SwitchINT() /
+                GatewayINT(src_mac='ff:ff:ff:ff:ff:aa') /
                 IP(dst='10.1.0.1', src='10.2.0.1') /
                 UDP(dport=1234, sport=1234) /
-                'hello')
+                'hello transparent-security')
 
         for index in range(0, self.ae.packet_count):
             logger.info('Iteration #%s', index)

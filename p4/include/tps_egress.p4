@@ -35,11 +35,11 @@ control TpsEgress(inout headers hdr,
 control TpsDeparser(packet_out packet, in headers hdr) {
     apply {
         packet.emit(hdr.ethernet);
-        packet.emit(hdr.gw_int_header);
-        packet.emit(hdr.gw_int);
+        packet.emit(hdr.ipv4);
         packet.emit(hdr.sw_int_header);
         packet.emit(hdr.sw_int);
-        packet.emit(hdr.ipv4);
+        packet.emit(hdr.gw_int_header);
+        packet.emit(hdr.gw_int);
         packet.emit(hdr.udp);
     }
 }

@@ -18,12 +18,15 @@ import time
 from anytree import search, Node, RenderTree
 from scapy.all import bind_layers
 from scapy.all import sniff
-from scapy.layers.inet import IP, UDP
+from scapy.layers.inet import IP, UDP, TCP
 from scapy.layers.l2 import Ether
 import threading
+
+from scapy.packet import split_layers
+
 from trans_sec.packet.inspect_layer import (
     GatewayINTInspect, SwitchINTInspect, SwitchINTHeaderMeta,
-    GatewayINTHeaderMeta)
+    GatewayINTHeaderMeta, INTMeta, SwitchINT, GatewayINT, TpsUDP)
 
 logger = logging.getLogger('oinc')
 
@@ -46,7 +49,7 @@ class PacketAnalytics(object):
         self.count_map = dict()
         self.sniff_stop = threading.Event()
 
-    def start_sniffing(self, iface, ether_type):
+    def start_sniffing(self, iface):
         """
         Starts the sniffer thread
         :param iface: the interface to sniff
@@ -54,14 +57,16 @@ class PacketAnalytics(object):
                            (i.e. 0x1212 for Ethernet)
         """
         logger.info("AE monitoring iface %s", iface)
-        bind_layers(Ether, GatewayINTHeaderMeta)
-        bind_layers(GatewayINTHeaderMeta, GatewayINTInspect)
-        bind_layers(GatewayINTInspect, SwitchINTHeaderMeta)
-        bind_layers(SwitchINTHeaderMeta, SwitchINTInspect)
-        bind_layers(SwitchINTInspect, IP)
-        bind_layers(IP, UDP)
+        # bind_layers(Ether, IP, type=0x800)
+        # bind_layers(IP, INTMeta, proto=0xfd)
+        # bind_layers(INTMeta, UDP, gw_next_proto=0x11)
+        bind_layers( Ether, IP)
+        bind_layers(IP, SwitchINT)
+        bind_layers(SwitchINT, GatewayINT)
+        bind_layers(GatewayINT, UDP)
+        logger.debug("Completed bind_layers")
         sniff(iface=iface,
-              prn=lambda packet: self.handle_packet(packet, ether_type),
+              prn=lambda packet: self.handle_packet(packet),
               stop_filter=lambda p: self.sniff_stop.is_set())
 
     def stop_sniffing(self):
@@ -70,19 +75,14 @@ class PacketAnalytics(object):
         """
         self.sniff_stop.set()
 
-    def handle_packet(self, packet, ether_type=None):
+    def handle_packet(self, packet):
         """
         Determines whether or not to process this packet
         :param packet: the packet to process
         :param ether_type: the type of packet to process
         :return T/F - True when an attack has been triggered
         """
-        if not ether_type or (ether_type and packet[Ether].type == ether_type):
-            return self.process_packet(packet)
-        else:
-            logger.debug('Could not process packet with ether type %s',
-                         ether_type)
-            return False
+        return self.process_packet(packet)
 
     def _send_attack(self, **attack_dict):
         """
@@ -109,34 +109,41 @@ def extract_int_data(packet):
     :param packet: the packet to parse
     :return: dict with choice header fields extracted
     """
-    logger.debug('Extracting data from packet from switch_id [%s]',
-                 packet[GatewayINTInspect].switch_id)
-    dev_mac = packet[GatewayINTInspect].src_mac
-    logger.debug('dev_mac - [%s]', dev_mac)
-    dev_addr = packet[IP].src
-    logger.debug('dev_addr - [%s]', dev_addr)
-    switch_id = packet[SwitchINTInspect].switch_id
-    logger.debug('switch_id - [%s]', switch_id)
-    dst_addr = packet[IP].dst
-    logger.debug('dst_addr - [%s]', dst_addr)
-    dst_port = packet[UDP].dport
-    logger.debug('dst_port - [%s]', dst_port)
-    protocol = packet[IP].proto
-    logger.debug('protocol - [%s]', protocol)
-    packet_len = len(packet)
-    logger.debug('packet length - [%s]', packet_len)
-
+    log_int_packet(packet)
     out = dict(
-        devMac=dev_mac,
-        devAddr=dev_addr,
-        switchId=switch_id,
-        dstAddr=dst_addr,
-        dstPort=dst_port,
-        protocol=protocol,
+        devMac=packet[GatewayINT].src_mac,
+        devAddr=packet[IP].src,
+        switchId=packet[SwitchINT].switch_id,
+        dstAddr=packet[IP].dst,
+        dstPort=packet[UDP].dport,
+        protocol=packet[IP].proto,
         packetLen=len(packet),
     )
     logger.debug('Extracted header data [%s]', out)
     return out
+
+def log_int_packet(packet):
+    logger.debug('packet length - [%s]', len(packet))
+    logger.debug('eth dst_mac - [%s]', packet[Ether].dst)
+    logger.debug('eth src_mac - [%s]', packet[Ether].src)
+    logger.debug('eth type - [%s]', packet[Ether].type)
+    logger.debug('swh max_hops - [%s]', packet[SwitchINT].max_hops)
+    logger.debug('swh total_hops - [%s]',
+                 packet[SwitchINT].total_hops)
+    logger.debug('swh next_proto - [%s]',
+                 packet[SwitchINT].next_proto)
+    logger.debug('switch_id - [%s]', packet[SwitchINT].switch_id)
+    logger.debug('gwh ver - [%s]', packet[GatewayINT].ver)
+    logger.debug('gwh max_hops - [%s]', packet[GatewayINT].max_hops)
+    logger.debug('gw total_hops - [%s]',
+                 packet[GatewayINT].total_hops)
+    logger.debug('gw next_proto - [%s]',
+                 packet[GatewayINT].next_proto)
+    logger.debug('gw src_mac - [%s]', packet[GatewayINT].src_mac)
+    logger.debug('dev_addr - [%s]', packet[IP].src)
+    logger.debug('dst_addr - [%s]', packet[IP].dst)
+    logger.debug('protocol - [%s]', packet[IP].proto)
+    logger.debug('dst_port - [%s]', packet[UDP].dport)
 
 
 class Oinc(PacketAnalytics):

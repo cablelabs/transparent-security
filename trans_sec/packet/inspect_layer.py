@@ -13,16 +13,93 @@
 from scapy.all import Packet
 from scapy import fields
 
+class INTMeta(Packet):
 
+    fields_desc = [
+        fields.BitField('sw_ver', 0, 2),
+        fields.BitField('sw_rep', 0, 2),
+        fields.BitField('sw_c', 0, 1),
+        fields.BitField('sw_e', 0, 1),
+        fields.BitField('sw_res1', 0, 5),
+        fields.BitField('sw_instr_cnt', 0, 5),
+        fields.ByteField('sw_max_hops', 0),
+        fields.ByteField('sw_total_hops', 0),
+        fields.BitField('sw_instr_bitmap', 0, 16),
+        fields.ByteField('sw_next_proto', 0),
+        fields.ByteField('sw_res2', 0),
+        fields.IntField('switch_id', 0),
+        fields.BitField('gw_ver', 0, 2),
+        fields.BitField('gw_rep', 0, 2),
+        fields.BitField('gw_c', 0, 1),
+        fields.BitField('gw_e', 0, 1),
+        fields.BitField('gw_res1', 0, 5),
+        fields.BitField('gw_instr_cnt', 0, 5),
+        fields.ByteField('gw_max_hops', 0),
+        fields.ByteField('gw_total_hops', 0),
+        fields.BitField('gw_instr_bitmap', 0, 16),
+        fields.ByteField('gw_next_proto', 0),
+        fields.ByteField('gw_res2', 0),
+        fields.MACField('src_mac', 'ff:ff:ff:ff:ff:ff')
+    ]
+
+class GatewayINT(Packet):
+
+    fields_desc = [
+        fields.BitField('ver', 0, 2),
+        fields.BitField('rep', 0, 2),
+        fields.BitField('c', 0, 1),
+        fields.BitField('e', 0, 1),
+        fields.BitField('res1', 0, 5),
+        fields.BitField('instr_cnt', 0, 5),
+        fields.ByteField('max_hops', 0),
+        fields.ByteField('total_hops', 0),
+        fields.BitField('instr_bitmap', 0, 16),
+        fields.ByteField('next_proto', 0),
+        fields.ByteField('res2', 0),
+        fields.MACField('src_mac', 'ff:ff:ff:ff:ff:ff')
+    ]
+
+class SwitchINT(Packet):
+
+    fields_desc = [
+        fields.BitField('ver', 0, 2),
+        fields.BitField('rep', 0, 2),
+        fields.BitField('c', 0, 1),
+        fields.BitField('e', 0, 1),
+        fields.BitField('res1', 0, 5),
+        fields.BitField('instr_cnt', 0, 5),
+        fields.ByteField('max_hops', 0),
+        fields.ByteField('total_hops', 0),
+        fields.BitField('instr_bitmap', 0, 16),
+        fields.ByteField('next_proto', 0),
+        fields.ByteField('res2', 0),
+        fields.IntField('switch_id', 0),
+    ]
+
+class TpsUDP(Packet):
+    fields_desc = [
+        fields.ShortField("sport", 0),
+        fields.ShortField("dport", 0),
+        fields.ShortField("len", None),
+        fields.ShortField("chksum", None),
+    ]
 class INTHeaderMeta(Packet):
     """
     This class represents the INT data being placed onto the packets to help
     generating and parsing
     """
-    name = "INT_HDR"
     fields_desc = [
-        fields.BitField('stuff', 0, 48),
-        fields.ShortField('next_proto', 0),
+        fields.BitField('ver', 0, 2),
+        fields.BitField('rep', 0, 2),
+        fields.BitField('c', 0, 1),
+        fields.BitField('e', 0, 1),
+        fields.BitField('res1', 0, 5),
+        fields.BitField('instr_cnt', 0, 5),
+        fields.ByteField('max_hops', 0),
+        fields.ByteField('total_hops', 0),
+        fields.BitField('instr_bitmap', 0, 16),
+        fields.ByteField('next_proto', 0),
+        fields.ByteField('res2', 0),
     ]
 
 

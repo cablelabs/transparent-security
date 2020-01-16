@@ -82,7 +82,8 @@ header int_header_t {
     bit<4>  instruction_mask_0407;
     bit<4>  instruction_mask_0811;
     bit<4>  instruction_mask_1215;
-    bit<16> next_proto;
+    bit<8> next_proto;
+    bit<8> rsvd2;
 }
 
 
@@ -100,7 +101,7 @@ struct headers {
     int_header_t gw_int_header;
     gw_int_t     gw_int;
     int_header_t sw_int_header;
-    sw_int_t[10] sw_int;
+    sw_int_t     sw_int;
     ipv4_t       ipv4;
     udp_t        udp;
 }

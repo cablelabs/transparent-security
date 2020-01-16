@@ -82,7 +82,7 @@ def main():
         logger.info('LoggerAE instantiated')
         ae = IntLoggerAE(http_session)
 
-    ae.start_sniffing(args.interface, 0x1212)
+    ae.start_sniffing(args.interface)
     sys.stdout.flush()
 
 
