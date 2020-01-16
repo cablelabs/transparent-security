@@ -89,7 +89,8 @@ def get_args():
         '-itd', '--iter-delay',
         help='Seconds betweein iterations of packet groups to be sent',
         required=False, default=1, type=int)
-    parser.add_argument('-t', '--tcp', dest='tcp', required=False)
+    parser.add_argument('-t', '--tcp', dest='tcp', required=False, type=bool,
+                        default=False)
     args = parser.parse_args()
     return args
 

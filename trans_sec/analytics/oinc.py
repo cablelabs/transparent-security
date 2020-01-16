@@ -135,41 +135,49 @@ def extract_int_data(packet):
     :return: dict with choice header fields extracted
     """
     log_int_packet(packet)
-    out = dict(
-        devMac=packet[GatewayINTInspect].src_mac,
-        devAddr=packet[IP].src,
-        switchId=packet[SwitchINTInspect].switch_id,
-        dstAddr=packet[IP].dst,
-        dstPort=packet[UDP].dport,
-        protocol=packet[IP].proto,
-        packetLen=len(packet),
-    )
+
+    try:
+        out = dict(
+            devMac=packet[GatewayINTInspect].src_mac,
+            devAddr=packet[IP].src,
+            switchId=packet[SwitchINTInspect].switch_id,
+            dstAddr=packet[IP].dst,
+            dstPort=packet[UDP].dport,
+            protocol=packet[IP].proto,
+            packetLen=len(packet),
+        )
+    except Exception as e:
+        logger.error('Error extracting header data - %s', e)
+        return None
     logger.debug('Extracted header data [%s]', out)
     return out
 
 
 def log_int_packet(packet):
-    logger.debug('packet length - [%s]', len(packet))
-    logger.debug('eth dst_mac - [%s]', packet[Ether].dst)
-    logger.debug('eth src_mac - [%s]', packet[Ether].src)
-    logger.debug('eth type - [%s]', packet[Ether].type)
-    logger.debug('swh max_hops - [%s]', packet[SwitchINTHeaderMeta].max_hops)
-    logger.debug('swh total_hops - [%s]',
-                 packet[SwitchINTHeaderMeta].total_hops)
-    logger.debug('swh next_proto - [%s]',
-                 packet[SwitchINTHeaderMeta].next_proto)
-    logger.debug('switch_id - [%s]', packet[SwitchINTInspect].switch_id)
-    logger.debug('gwh ver - [%s]', packet[GatewayINTHeaderMeta].ver)
-    logger.debug('gwh max_hops - [%s]', packet[GatewayINTHeaderMeta].max_hops)
-    logger.debug('gw total_hops - [%s]',
-                 packet[GatewayINTHeaderMeta].total_hops)
-    logger.debug('gw next_proto - [%s]',
-                 packet[GatewayINTHeaderMeta].next_proto)
-    logger.debug('gw src_mac - [%s]', packet[GatewayINTInspect].src_mac)
-    logger.debug('dev_addr - [%s]', packet[IP].src)
-    logger.debug('dst_addr - [%s]', packet[IP].dst)
-    logger.debug('protocol - [%s]', packet[IP].proto)
-    logger.debug('dst_port - [%s]', packet[UDP].dport)
+    try:
+        logger.debug('packet length - [%s]', len(packet))
+        logger.debug('eth dst_mac - [%s]', packet[Ether].dst)
+        logger.debug('eth src_mac - [%s]', packet[Ether].src)
+        logger.debug('eth type - [%s]', packet[Ether].type)
+        logger.debug('swh max_hops - [%s]', packet[SwitchINTHeaderMeta].max_hops)
+        logger.debug('swh total_hops - [%s]',
+                     packet[SwitchINTHeaderMeta].total_hops)
+        logger.debug('swh next_proto - [%s]',
+                     packet[SwitchINTHeaderMeta].next_proto)
+        logger.debug('switch_id - [%s]', packet[SwitchINTInspect].switch_id)
+        logger.debug('gwh ver - [%s]', packet[GatewayINTHeaderMeta].ver)
+        logger.debug('gwh max_hops - [%s]', packet[GatewayINTHeaderMeta].max_hops)
+        logger.debug('gw total_hops - [%s]',
+                     packet[GatewayINTHeaderMeta].total_hops)
+        logger.debug('gw next_proto - [%s]',
+                     packet[GatewayINTHeaderMeta].next_proto)
+        logger.debug('gw src_mac - [%s]', packet[GatewayINTInspect].src_mac)
+        logger.debug('dev_addr - [%s]', packet[IP].src)
+        logger.debug('dst_addr - [%s]', packet[IP].dst)
+        logger.debug('protocol - [%s]', packet[IP].proto)
+        logger.debug('dst_port - [%s]', packet[UDP].dport)
+    except Exception as e:
+        logger.error('Error parsing header - %s', e)
 
 
 class Oinc(PacketAnalytics):
@@ -313,56 +321,60 @@ class SimpleAE(PacketAnalytics):
 
         logger.debug('Packet data - [%s]', packet.summary())
         int_data = extract_int_data(packet)
-        logger.debug('GW INT data - [%s]', int_data)
-        attack_map_key = hash(str(int_data))
-        logger.debug('Attack map key - [%s]', attack_map_key)
-        if not self.count_map.get(attack_map_key):
-            self.count_map[attack_map_key] = list()
 
-        curr_time = datetime.datetime.now()
-        self.count_map.get(attack_map_key).append(curr_time)
-        times = self.count_map.get(attack_map_key)
-        count = 0
-        for eval_time in times:
-            delta = (curr_time - eval_time).total_seconds()
-            if delta > self.sample_interval:
-                times.remove(eval_time)
-            else:
-                count += 1
+        if int_data:
+            logger.debug('GW INT data - [%s]', int_data)
+            attack_map_key = hash(str(int_data))
+            logger.debug('Attack map key - [%s]', attack_map_key)
+            if not self.count_map.get(attack_map_key):
+                self.count_map[attack_map_key] = list()
 
-        if count > self.packet_count:
-            logger.debug('Attack detected - count [%s] with key [%s]',
-                         count, attack_map_key)
+            curr_time = datetime.datetime.now()
+            self.count_map.get(attack_map_key).append(curr_time)
+            times = self.count_map.get(attack_map_key)
+            count = 0
+            for eval_time in times:
+                delta = (curr_time - eval_time).total_seconds()
+                if delta > self.sample_interval:
+                    times.remove(eval_time)
+                else:
+                    count += 1
 
-            attack_dict = dict(
-                src_mac=int_data['devMac'],
-                src_ip=int_data['devAddr'],
-                dst_ip=int_data['dstAddr'],
-                dst_port=int_data['dstPort'],
-                packet_size=int_data['packetLen'],
-                attack_type='UDP Flood')
+            if count > self.packet_count:
+                logger.debug('Attack detected - count [%s] with key [%s]',
+                             count, attack_map_key)
 
-            # Send to SDN
-            last_attack = self.attack_map.get(attack_map_key)
-            if not last_attack or time.time() - last_attack > 1:
-                logger.info('Calling SDN, last attack sent - [%s]',
-                            last_attack)
-                try:
-                    self.attack_map[attack_map_key] = time.time()
-                    self._send_attack(**attack_dict)
-                    return True
-                except Exception as e:
-                    logger.error('Unexpected error [%s]', e)
+                attack_dict = dict(
+                    src_mac=int_data['devMac'],
+                    src_ip=int_data['devAddr'],
+                    dst_ip=int_data['dstAddr'],
+                    dst_port=int_data['dstPort'],
+                    packet_size=int_data['packetLen'],
+                    attack_type='UDP Flood')
+
+                # Send to SDN
+                last_attack = self.attack_map.get(attack_map_key)
+                if not last_attack or time.time() - last_attack > 1:
+                    logger.info('Calling SDN, last attack sent - [%s]',
+                                last_attack)
+                    try:
+                        self.attack_map[attack_map_key] = time.time()
+                        self._send_attack(**attack_dict)
+                        return True
+                    except Exception as e:
+                        logger.error('Unexpected error [%s]', e)
+                        return False
+                else:
+                    logger.debug(
+                        'Not calling SDN as last attack notification for %s'
+                        ' was only %s seconds ago',
+                        attack_dict, time.time() - last_attack)
                     return False
             else:
-                logger.debug(
-                    'Not calling SDN as last attack notification for %s'
-                    ' was only %s seconds ago',
-                    attack_dict, time.time() - last_attack)
+                logger.debug('No attack detected - count [%s]', count)
                 return False
         else:
-            logger.debug('No attack detected - count [%s]', count)
-            return False
+            logger.warn('Unable to debug INT data')
 
 
 class IntLoggerAE(PacketAnalytics):
