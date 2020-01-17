@@ -37,8 +37,6 @@ control TpsCoreIngress(inout headers hdr,
                   inout standard_metadata_t standard_metadata) {
 
 
-    counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) droppedPackets;
-
     action data_forward(macAddr_t dstAddr, egressSpec_t port) {
         hdr.ipv4.protocol = hdr.gw_int_header.next_proto;
         hdr.gw_int_header.setInvalid();
@@ -57,26 +55,6 @@ control TpsCoreIngress(inout headers hdr,
         }
         actions = {
             data_forward;
-            NoAction;
-        }
-        size = 1024;
-        default_action = NoAction();
-    }
-
-    action data_drop(bit<32> device) {
-        mark_to_drop(standard_metadata);
-        droppedPackets.count(device);
-    }
-
-    table data_drop_t {
-        key = {
-            hdr.gw_int.src_mac: exact;
-            hdr.ipv4.srcAddr: exact;
-            hdr.ipv4.dstAddr: exact;
-            hdr.udp.dst_port: exact;
-        }
-        actions = {
-            data_drop;
             NoAction;
         }
         size = 1024;
@@ -102,51 +80,22 @@ control TpsCoreIngress(inout headers hdr,
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
     }
 
-    action control_drop() {
-        mark_to_drop(standard_metadata);
-    }
-
     table control_forward_t {
         key = {
             hdr.ipv4.dstAddr: lpm;
         }
         actions = {
             control_forward;
-            control_drop;
             NoAction;
         }
         size = 1024;
         default_action = NoAction();
     }
 
-    table dbg_table {
-        key = {
-            standard_metadata.ingress_port : exact;
-            standard_metadata.egress_spec : exact;
-            standard_metadata.egress_port : exact;
-            standard_metadata.instance_type : exact;
-            standard_metadata.ingress_global_timestamp : exact;
-            standard_metadata.mcast_grp : exact;
-            standard_metadata.checksum_error : exact;
-            hdr.gw_int.src_mac: exact;
-            hdr.ipv4.srcAddr: exact;
-            hdr.ipv4.dstAddr: exact;
-            hdr.udp.dst_port: exact;
-            hdr.ethernet.dst_mac: exact;
-            hdr.ipv4.identification: exact;
-        }
-        actions = { NoAction; }
-        const default_action = NoAction();
-    }
-
      apply {
-        dbg_table.apply();
         if (hdr.ipv4.isValid()) {
-             data_drop_t.apply();
-             if (standard_metadata.egress_spec != DROP_PORT) {
-                 data_clone_t.apply();
-                 data_forward_t.apply();
-             }
+             data_clone_t.apply();
+             data_forward_t.apply();
         }
         else {
             control_forward_t.apply();
