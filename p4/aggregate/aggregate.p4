@@ -20,7 +20,6 @@
 #include <tps_headers.p4>
 #include <tps_parser.p4>
 #include <tps_checksum.p4>
-#include <tps_ingress.p4>
 #include <tps_egress.p4>
 
 /*************************************************************************
@@ -30,9 +29,6 @@
 control TpsAggIngress(inout headers hdr,
                   inout metadata meta,
                   inout standard_metadata_t standard_metadata) {
-
-    debug_meta() debug_meta_ingress_start;
-    debug_meta() debug_meta_ingress_end;
 
     counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) forwardedPackets;
     counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) droppedPackets;
@@ -59,6 +55,7 @@ control TpsAggIngress(inout headers hdr,
     }
 
     action data_inspect_packet(bit<32> device) {
+        /* TODO - Ensure this is getting called by SDN and set INT values here */
         hdr.gw_int_header.setValid();
         hdr.gw_int.setValid();
         hdr.sw_int_header.setValid();
