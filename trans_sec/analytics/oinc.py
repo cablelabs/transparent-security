@@ -284,8 +284,8 @@ class SimpleAE(PacketAnalytics):
         try:
             protocol = packet[IP].proto
         except Exception as e:
-            logger.warn('Unable to process packet - [%s] with error [%s]',
-                        packet.summary(), e)
+            logger.debug('Unable to process packet - [%s] with error [%s]',
+                         packet.summary(), e)
 
         if protocol == ip_proto:
             int_data = extract_int_data(packet)
@@ -296,7 +296,7 @@ class SimpleAE(PacketAnalytics):
                 logger.warn('Unable to debug INT data')
                 return False
         else:
-            logger.warn('Cannot process IP proto of - [%s]', protocol)
+            logger.debug('Cannot process IP proto of - [%s]', protocol)
             return False
 
     def __process(self, int_data):
