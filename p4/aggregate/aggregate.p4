@@ -75,27 +75,6 @@ control TpsAggIngress(inout headers hdr,
         default_action = NoAction();
     }
 
-    action data_drop(bit<32> device) {
-        mark_to_drop(standard_metadata);
-        droppedPackets.count(device);
-    }
-
-    /* TODO - REMOVE ME and all other drop stuff */
-    table data_drop_t {
-        key = {
-            hdr.gw_int.src_mac: exact;
-            hdr.ipv4.srcAddr: exact;
-            hdr.ipv4.dstAddr: exact;
-            hdr.udp.dst_port: exact;
-        }
-        actions = {
-            data_drop;
-            NoAction;
-        }
-        size = 1024;
-        default_action = NoAction();
-    }
-
     action control_drop() {
         mark_to_drop(standard_metadata);;
     }
@@ -122,7 +101,6 @@ control TpsAggIngress(inout headers hdr,
 
      apply {
         if (hdr.ipv4.isValid()) {
-            data_drop_t.apply();
             if (standard_metadata.egress_spec != DROP_PORT) {
                 data_inspection_t.apply();
                 data_forward_t.apply();

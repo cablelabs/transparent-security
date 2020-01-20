@@ -195,13 +195,10 @@ class DdosSdnController:
             values)
         if len(host) != 0:
             host = host[0]
-            # logger.info('Adding attack to gateway')
-            logger.info('Adding attack to aggregate')
+            logger.info('Adding attack to gateway')
             try:
-                # self.controllers.get(GATEWAY_CTRL_KEY).add_attacker(
-                #     attack, host)
-                self.controllers.get(AGG_CTRL_KEY).add_attacker(
-                    attack, host, src_mac_hdr_ref='hdr.gw_int.src_mac')
+                self.controllers.get(GATEWAY_CTRL_KEY).add_attacker(
+                    attack, host)
                 self.packet_telemetry.register_attack(host['id'])
             except Exception as e:
                 logger.error(
