@@ -80,6 +80,7 @@ control TpsAggIngress(inout headers hdr,
         droppedPackets.count(device);
     }
 
+    /* TODO - REMOVE ME and all other drop stuff */
     table data_drop_t {
         key = {
             hdr.gw_int.src_mac: exact;

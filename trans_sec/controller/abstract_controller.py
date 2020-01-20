@@ -145,18 +145,25 @@ class AbstractController(object):
                             north_facing_links=north_links,
                             south_facing_links=south_links)
 
-    def add_attacker(self, attack, host):
+    def add_attacker(self, attack, host,
+                     drop_action_name='data_drop',
+                     drop_table_name='data_drop_t',
+                     src_mac_hdr_ref='hdr.ethernet.src_mac',
+                     src_addr_hdr_ref='hdr.ipv4.srcAddr',
+                     dst_addr_hdr_ref='hdr.ipv4.dstAddr',
+                     dst_port_hdr_ref='hdr.udp.dst_port'):
+
         logger.info('Adding attacker [%s] from host [%s]', attack, host)
         for switch in self.switches:
             table_entry = self.p4info_helper.build_table_entry(
-                table_name='{}.data_drop_t'.format(self.p4_ingress),
+                table_name='{}.{}'.format(self.p4_ingress, drop_table_name),
                 match_fields={
-                    'hdr.gw_int.src_mac': (attack['src_mac']),
-                    'hdr.ipv4.srcAddr': (attack['src_ip']),
-                    'hdr.ipv4.dstAddr': (attack['dst_ip']),
-                    'hdr.udp.dst_port': (int(attack['dst_port']))
+                    src_mac_hdr_ref: (attack['src_mac']),
+                    src_addr_hdr_ref: (attack['src_ip']),
+                    dst_addr_hdr_ref: (attack['dst_ip']),
+                    dst_port_hdr_ref: (int(attack['dst_port']))
                 },
-                action_name='{}.data_drop'.format(self.p4_ingress),
+                action_name='{}.{}'.format(self.p4_ingress, drop_action_name),
                 action_params={
                     'device': host['id']
                 })

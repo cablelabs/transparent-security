@@ -36,7 +36,7 @@ class DdosSdnController:
     SDN controller for quelling DDoS attacks
     """
     def __init__(self, topo, platform, switch_config_dir, http_server_port,
-                 scenario, log_dir, load_p4=True):
+                 log_dir, load_p4=True):
 
         self.topo = topo
         self.switch_config_dir = switch_config_dir
@@ -55,8 +55,6 @@ class DdosSdnController:
         self.http_server = SDNControllerServer(self, http_server_port)
         self.last_scenario_time = datetime.now()
         self.last_attack_time = datetime.now()
-        self.mitigation = dict(activeScenario=scenario,
-                               timeActivated=datetime.now())
         self.attack = dict(
             active=False, durationSec=0, attackStart=datetime.now(),
             attackEnd=datetime.now(), attackType=None)
@@ -197,17 +195,18 @@ class DdosSdnController:
             values)
         if len(host) != 0:
             host = host[0]
-            logger.info('Attack scenario - [%s]',
-                        self.mitigation.get('activeScenario'))
-            if self.mitigation.get('activeScenario') == 'scenario3':
-                logger.info('Adding attack to gateway')
-                self.controllers.get(GATEWAY_CTRL_KEY).add_attacker(
-                    attack, host)
-            if (self.mitigation.get('activeScenario') == 'scenario2'
-                    or self.mitigation.get('activeScenario') == 'scenario3'):
-                logger.info('Adding attack to aggregate')
-                self.controllers.get(AGG_CTRL_KEY).add_attacker(attack, host)
-            self.packet_telemetry.register_attack(host['id'])
+            # logger.info('Adding attack to gateway')
+            logger.info('Adding attack to aggregate')
+            try:
+                # self.controllers.get(GATEWAY_CTRL_KEY).add_attacker(
+                #     attack, host)
+                self.controllers.get(AGG_CTRL_KEY).add_attacker(
+                    attack, host, src_mac_hdr_ref='hdr.gw_int.src_mac')
+                self.packet_telemetry.register_attack(host['id'])
+            except Exception as e:
+                logger.error(
+                    'Error adding attacker to host - [%s] with error - [%s])',
+                    host, e)
         else:
             logger.error('No Device Matches MAC [%s]', attack.get('src_mac'))
 
