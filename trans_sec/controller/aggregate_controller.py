@@ -91,7 +91,8 @@ class AggregateController(AbstractController):
                     action_name='{}.data_inspect_packet'.format(
                         self.p4_ingress),
                     action_params={
-                        'device': device['id']
+                        'device': device['id'],
+                        'switch_id': sw_info['id']
                     })
                 sw.write_table_entry(table_entry)
                 logger.info(

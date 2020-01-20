@@ -54,12 +54,13 @@ control TpsAggIngress(inout headers hdr,
         default_action = NoAction();
     }
 
-    action data_inspect_packet(bit<32> device) {
+    action data_inspect_packet(bit<32> device, bit<32> switch_id) {
         /* TODO - Ensure this is getting called by SDN and set INT values here */
         hdr.gw_int_header.setValid();
         hdr.gw_int.setValid();
         hdr.sw_int_header.setValid();
         hdr.sw_int.setValid();
+        hdr.sw_int.switch_id = switch_id;
         forwardedPackets.count(device);
     }
 
