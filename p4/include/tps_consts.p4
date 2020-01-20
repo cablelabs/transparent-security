@@ -17,6 +17,5 @@
 
 const bit<8> TYPE_INSPECTION = 0xfd;
 const bit<8> TYPE_UDP = 0x11;
-const bit<8> TYPE_IPV4 = 0x800;
 const bit<32> MAX_DEVICE_ID = 15;
 const bit<9> DROP_PORT = 511;

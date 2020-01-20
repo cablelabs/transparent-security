@@ -18,12 +18,43 @@
 #include <tps_consts.p4>
 
 /*************************************************************************
-*********************** P A R S E R  ***********************************
+******************* Gateway TPS P A R S E R  *****************************
 *************************************************************************/
-parser TpsParser(packet_in packet,
-                out headers hdr,
-                inout metadata meta,
-                inout standard_metadata_t standard_metadata) {
+parser TpsGwParser(packet_in packet,
+                   out headers hdr,
+                   inout metadata meta,
+                   inout standard_metadata_t standard_metadata) {
+
+    state start {
+        transition parse_ethernet;
+    }
+
+    state parse_ethernet {
+        packet.extract(hdr.ethernet);
+        transition  parse_ipv4;
+    }
+
+    state parse_ipv4 {
+        packet.extract(hdr.ipv4);
+        transition select(hdr.ipv4.protocol) {
+            TYPE_UDP: parse_udp;
+            default: accept;
+        }
+    }
+
+    state parse_udp {
+        packet.extract(hdr.udp);
+        transition accept;
+    }
+}
+
+/*************************************************************************
+****************** Aggregate TPS P A R S E R  ****************************
+*************************************************************************/
+parser TpsAggParser(packet_in packet,
+                    out headers hdr,
+                    inout metadata meta,
+                    inout standard_metadata_t standard_metadata) {
 
     state start {
         transition parse_ethernet;
@@ -37,37 +68,71 @@ parser TpsParser(packet_in packet,
     state parse_ipv4 {
         packet.extract(hdr.ipv4);
         transition select(hdr.ipv4.protocol) {
-            TYPE_UDP: parse_udp;
-            TYPE_INSPECTION: parse_sw_int_header_ipv4;
+            TYPE_INSPECTION: parse_sw_int_header;
             default: accept;
         }
     }
 
-    state parse_sw_int_header_ipv4 {
+    state parse_sw_int_header {
         packet.extract(hdr.sw_int_header);
-        transition parse_sw_int_ipv4;
+        transition parse_sw_int;
     }
 
-    state parse_sw_int_ipv4 {
+    /* TODO - remove me when handling multiple switch_ids */
+    state parse_sw_int {
+        packet.extract(hdr.sw_int);
+        transition accept;
+    }
+}
+
+/*************************************************************************
+******************** Core TPS P A R S E R  *******************************
+*************************************************************************/
+parser TpsCoreParser(packet_in packet,
+                     out headers hdr,
+                     inout metadata meta,
+                     inout standard_metadata_t standard_metadata) {
+
+    state start {
+        transition parse_ethernet;
+    }
+
+    state parse_ethernet {
+        packet.extract(hdr.ethernet);
+        transition  parse_ipv4;
+    }
+
+    state parse_ipv4 {
+        packet.extract(hdr.ipv4);
+        transition select(hdr.ipv4.protocol) {
+            TYPE_INSPECTION: parse_sw_int_header;
+            default: accept;
+        }
+    }
+
+    state parse_sw_int_header {
+        packet.extract(hdr.sw_int_header);
+        transition parse_sw_int;
+    }
+
+    /* TODO - make sw_int an array and make parser more dynamic as there can be any number of sw_int headers */
+    state parse_sw_int {
         packet.extract(hdr.sw_int);
         transition parse_gw_int_header;
     }
-
+/*
+    state parse_sw_int_2 {
+        packet.extract(hdr.sw_int_2);
+        transition parse_gw_int_header;
+    }
+*/
     state parse_gw_int_header {
         packet.extract(hdr.gw_int_header);
-        transition parse_gw_int_ipv4;
+        transition parse_gw_int;
     }
 
-    state parse_gw_int_ipv4 {
+    state parse_gw_int {
         packet.extract(hdr.gw_int);
-        transition parse_udp;
+        transition accept;
     }
-
-    state parse_udp {
-        packet.extract(hdr.udp);
-        transition select(hdr.udp.dst_port) {
-            default: accept;
-        }
-    }
-
 }

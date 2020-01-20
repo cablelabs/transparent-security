@@ -33,8 +33,8 @@ const bit<32> I2E_CLONE_SESSION_ID = 5;
 *************************************************************************/
 
 control TpsCoreIngress(inout headers hdr,
-                  inout metadata meta,
-                  inout standard_metadata_t standard_metadata) {
+                       inout metadata meta,
+                       inout standard_metadata_t standard_metadata) {
 
 
     action data_forward(macAddr_t dstAddr, egressSpec_t port) {
@@ -108,7 +108,7 @@ control TpsCoreIngress(inout headers hdr,
 *************************************************************************/
 
 V1Switch(
-    TpsParser(),
+    TpsCoreParser(),
     TpsVerifyChecksum(),
     TpsCoreIngress(),
     TpsEgress(),

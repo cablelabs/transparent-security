@@ -27,8 +27,8 @@
 *************************************************************************/
 
 control TpsAggIngress(inout headers hdr,
-                  inout metadata meta,
-                  inout standard_metadata_t standard_metadata) {
+                      inout metadata meta,
+                      inout standard_metadata_t standard_metadata) {
 
     counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) forwardedPackets;
     counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) droppedPackets;
@@ -60,6 +60,7 @@ control TpsAggIngress(inout headers hdr,
         hdr.gw_int.setValid();
         hdr.sw_int_header.setValid();
         hdr.sw_int.setValid();
+        hdr.sw_int_header.total_hop_cnt = hdr.sw_int_header.total_hop_cnt + 1;
         hdr.sw_int.switch_id = switch_id;
         forwardedPackets.count(device);
     }
@@ -118,7 +119,7 @@ control TpsAggIngress(inout headers hdr,
 *************************************************************************/
 
 V1Switch(
-    TpsParser(),
+    TpsAggParser(),
     TpsVerifyChecksum(),
     TpsAggIngress(),
     TpsEgress(),

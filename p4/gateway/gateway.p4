@@ -27,8 +27,8 @@
 *************************************************************************/
 
 control TpsGwIngress(inout headers hdr,
-                  inout metadata meta,
-                  inout standard_metadata_t standard_metadata) {
+                     inout metadata meta,
+                     inout standard_metadata_t standard_metadata) {
 
     counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) forwardedPackets;
     counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) droppedPackets;
@@ -60,6 +60,8 @@ control TpsGwIngress(inout headers hdr,
         hdr.sw_int.setValid();
         hdr.gw_int.src_mac = hdr.ethernet.src_mac;
         hdr.gw_int_header.next_proto = hdr.ipv4.protocol;
+        hdr.sw_int_header.max_hop_cnt = 2;
+        hdr.sw_int_header.total_hop_cnt = hdr.sw_int_header.total_hop_cnt + 1;
         hdr.sw_int.switch_id = switch_id;
         hdr.ipv4.protocol = TYPE_INSPECTION;
         forwardedPackets.count(device);
@@ -143,7 +145,7 @@ control TpsGwIngress(inout headers hdr,
 *************************************************************************/
 
 V1Switch(
-    TpsParser(),
+    TpsGwParser(),
     TpsVerifyChecksum(),
     TpsGwIngress(),
     TpsEgress(),
