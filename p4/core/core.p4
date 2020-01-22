@@ -43,6 +43,14 @@ control TpsCoreIngress(inout headers hdr,
         hdr.gw_int.setInvalid();
         hdr.sw_int_header.setInvalid();
         hdr.sw_int.setInvalid();
+        hdr.sw_int_2.setInvalid();
+
+        /*
+        TODO - find a better means for resetting the totalLen value after
+           invalidating the INT headers which will be problematic when
+           implementing header stacks for holding switch_ids */
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen - 30;
+
         standard_metadata.egress_spec = port;
         hdr.ethernet.src_mac = hdr.ethernet.dst_mac;
         hdr.ethernet.dst_mac = dstAddr;

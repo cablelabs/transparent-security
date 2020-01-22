@@ -69,4 +69,5 @@ class SwitchINTInspect(Packet):
     name = "SW_INT"
     fields_desc = [
         fields.IntField('switch_id', 0),
+        fields.IntField('switch_id_2', 0),
     ]

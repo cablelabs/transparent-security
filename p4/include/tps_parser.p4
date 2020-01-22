@@ -75,14 +75,9 @@ parser TpsAggParser(packet_in packet,
 
     state parse_sw_int_header {
         packet.extract(hdr.sw_int_header);
-        transition parse_sw_int;
-    }
-
-    /* TODO - remove me when handling multiple switch_ids */
-    state parse_sw_int {
-        packet.extract(hdr.sw_int);
         transition accept;
     }
+
 }
 
 /*************************************************************************
@@ -118,14 +113,14 @@ parser TpsCoreParser(packet_in packet,
     /* TODO - make sw_int an array and make parser more dynamic as there can be any number of sw_int headers */
     state parse_sw_int {
         packet.extract(hdr.sw_int);
-        transition parse_gw_int_header;
+        transition parse_sw_int_2;
     }
-/*
+
     state parse_sw_int_2 {
         packet.extract(hdr.sw_int_2);
         transition parse_gw_int_header;
     }
-*/
+
     state parse_gw_int_header {
         packet.extract(hdr.gw_int_header);
         transition parse_gw_int;

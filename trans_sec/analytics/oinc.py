@@ -113,6 +113,7 @@ def extract_int_data(packet):
             devMac=packet[GatewayINTInspect].src_mac,
             devAddr=packet[IP].src,
             switchId=packet[SwitchINTInspect].switch_id,
+            switchId2=packet[SwitchINTInspect].switch_id_2,
             dstAddr=packet[IP].dst,
             dstPort=packet[UDP].dport,
             protocol=packet[IP].proto,
@@ -305,7 +306,6 @@ class SimpleAE(PacketAnalytics):
         :param int_data: the data to process
         :return:
         """
-        logger.debug('GW INT data - [%s]', int_data)
         attack_map_key = hash(str(int_data))
         logger.debug('Attack map key - [%s]', attack_map_key)
         if not self.count_map.get(attack_map_key):

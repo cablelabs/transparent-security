@@ -37,11 +37,6 @@ control TpsAggIngress(inout headers hdr,
         standard_metadata.egress_spec = port;
         hdr.ethernet.src_mac = hdr.ethernet.dst_mac;
         hdr.ethernet.dst_mac = dstAddr;
-
-        /* TODO - Increment ME by 4 after implementing switch_id
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen +4;
-        */
-
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
         meta.fwd.l2ptr = l2ptr;
     }
@@ -59,9 +54,10 @@ control TpsAggIngress(inout headers hdr,
     }
 
     action data_inspect_packet(bit<32> device, bit<32> switch_id) {
-        /* TODO - Ensure this is getting called by SDN and set INT values here */
+        hdr.sw_int.setValid();
         hdr.sw_int_header.total_hop_cnt = hdr.sw_int_header.total_hop_cnt + 1;
         hdr.sw_int.switch_id = switch_id;
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen + 4;
         forwardedPackets.count(device);
     }
 

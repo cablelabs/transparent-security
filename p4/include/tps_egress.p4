@@ -38,6 +38,7 @@ control TpsDeparser(packet_out packet, in headers hdr) {
         packet.emit(hdr.ipv4);
         packet.emit(hdr.sw_int_header);
         packet.emit(hdr.sw_int);
+        packet.emit(hdr.sw_int_2);
         packet.emit(hdr.gw_int_header);
         packet.emit(hdr.gw_int);
         packet.emit(hdr.udp);
