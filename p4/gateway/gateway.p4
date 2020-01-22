@@ -58,6 +58,7 @@ control TpsGwIngress(inout headers hdr,
         hdr.gw_int.setValid();
         hdr.sw_int_header.setValid();
         hdr.sw_int.setValid();
+        hdr.ipv4.totalLen = 74;
         hdr.gw_int.src_mac = hdr.ethernet.src_mac;
         hdr.gw_int_header.next_proto = hdr.ipv4.protocol;
         hdr.sw_int_header.max_hop_cnt = 2;

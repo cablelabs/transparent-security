@@ -107,6 +107,7 @@ def device_send(args):
     src_mac = args.src_mac
     if not src_mac:
         src_mac = get_if_hwaddr(interface)
+    logger.info('Device mac - [%s]')
 
     pkt = Ether(src=src_mac, dst=args.switch_ethernet) / IP(
         dst=addr, src=args.source_addr)

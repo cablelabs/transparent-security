@@ -78,8 +78,9 @@ class SwitchConnection(object):
         self.requests_stream.put(request)
 
     def set_forwarding_pipeline_config(self, p4info, device_config):
-        logger.info('Setting Forwarding Pipeline Config on switch - [%s] '
-                    'with info - [%s]', self.name, p4info)
+        logger.info('Setting Forwarding Pipeline Config on switch - [%s] ',
+                    self.name)
+        logger.debug('P4Info - [%s] ', p4info)
         request = p4runtime_pb2.SetForwardingPipelineConfigRequest()
         request.election_id.low = 1
         request.device_id = self.device_id
