@@ -184,7 +184,7 @@ If the INT header is created on a swtich inside the head end.  This occurs when 
   <td>E</td>
   <td>M</td>
   <td colspan=10 class=xl63>Reserved</td>
-  <td colspan=5 class=xl63>Hop Max Length</td>
+  <td colspan=5 class=xl63>Metadata Length in 4 Byte words = 3</td>
   <td colspan=8 class=xl63>Remaining Hop Cnt</td>
  </tr>
  <tr height=21 style='height:16.0pt'>
