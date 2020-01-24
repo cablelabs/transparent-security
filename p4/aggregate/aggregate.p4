@@ -31,7 +31,6 @@ control TpsAggIngress(inout headers hdr,
                       inout standard_metadata_t standard_metadata) {
 
     counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) forwardedPackets;
-    counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) droppedPackets;
 
     action data_forward(macAddr_t dstAddr, egressSpec_t port, bit<32> l2ptr) {
         standard_metadata.egress_spec = port;

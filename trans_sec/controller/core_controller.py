@@ -31,8 +31,9 @@ class CoreController(AbstractController):
         :param log_dir: the directory to send the logs
         """
         super(self.__class__, self).__init__(
-            platform, p4_build_out, topo, 'core', list(), log_dir, load_p4,
-            'TpsCoreIngress')
+            platform, p4_build_out, topo, 'core',
+            ['TpsCoreIngress.forwardedPackets'],
+            log_dir, load_p4, 'TpsCoreIngress')
 
     def make_rules(self, sw, sw_info, north_facing_links, south_facing_links):
         super(self.__class__, self).make_rules(

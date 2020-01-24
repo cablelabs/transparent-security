@@ -25,7 +25,7 @@ class AggregateController(AbstractController):
     def __init__(self, platform, p4_build_out, topo, log_dir, load_p4=True):
         super(self.__class__, self).__init__(
             platform, p4_build_out, topo, 'aggregate',
-            ['TpsAggIngress.forwardedPackets', 'TpsAggIngress.droppedPackets'],
+            ['TpsAggIngress.forwardedPackets'],
             log_dir, load_p4, 'TpsAggIngress')
 
     def make_north_rules(self, sw, sw_info, north_link):
