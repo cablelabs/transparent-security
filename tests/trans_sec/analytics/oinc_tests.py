@@ -22,8 +22,7 @@ from scapy.layers.l2 import Ether
 
 from trans_sec.analytics.oinc import SimpleAE
 from trans_sec.packet.inspect_layer import (
-    GatewayINTHeaderMeta, GatewayINTInspect, SwitchINTHeaderMeta,
-    SwitchINTInspect)
+    IntShim, IntMeta, IntMeta2, IntHeader)
 from trans_sec.utils.http_session import HttpSession
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -49,10 +48,10 @@ class SimpleAETests(unittest.TestCase):
         """
         pkt = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
                IP(dst='10.1.0.1', src='10.2.0.1', proto=0xfd) /
-               SwitchINTHeaderMeta() /
-               SwitchINTInspect() /
-               GatewayINTHeaderMeta() /
-               GatewayINTInspect() /
+               IntShim() /
+               IntHeader() /
+               IntMeta() /
+               IntMeta2() /
                UDP(dport=1234, sport=1234) /
                'hello transparent-security')
         self.ae.process_packet(pkt, 0xfd)
@@ -64,10 +63,10 @@ class SimpleAETests(unittest.TestCase):
         """
         pkt = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
                IP(dst='10.1.0.1', src='10.2.0.1', proto=0xfd) /
-               SwitchINTHeaderMeta() /
-               SwitchINTInspect() /
-               GatewayINTHeaderMeta() /
-               GatewayINTInspect() /
+               IntShim() /
+               IntHeader() /
+               IntMeta() /
+               IntMeta2() /
                UDP(dport=1234, sport=1234) /
                'hello transparent-security')
 
@@ -85,19 +84,19 @@ class SimpleAETests(unittest.TestCase):
         """
         pkt1 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
                 IP(dst='10.1.0.1', src='10.2.0.1', proto=0xfd) /
-                SwitchINTHeaderMeta() /
-                SwitchINTInspect() /
-                GatewayINTHeaderMeta() /
-                GatewayINTInspect(src_mac='ff:ff:ff:ff:ff:ff') /
+                IntShim() /
+                IntHeader() /
+                IntMeta() /
+                IntMeta2(orig_mac='ff:ff:ff:ff:ff:ff') /
                 UDP(dport=1234, sport=1234) /
                 'hello transparent-security')
 
         pkt2 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
                 IP(dst='10.1.0.1', src='10.2.0.1', proto=0xfd) /
-                SwitchINTHeaderMeta() /
-                SwitchINTInspect() /
-                GatewayINTHeaderMeta() /
-                GatewayINTInspect(src_mac='ff:ff:ff:ff:ff:aa') /
+                IntShim() /
+                IntHeader() /
+                IntMeta() /
+                IntMeta2(orig_mac='ff:ff:ff:ff:ff:aa') /
                 UDP(dport=1234, sport=1234) /
                 'hello transparent-security')
 

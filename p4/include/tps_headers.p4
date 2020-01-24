@@ -61,31 +61,31 @@ header udp_t {
 /*************************
 External Gateway INT Data header definition
 **************************/
-header gw_int_t {
-    macAddr_t src_mac;
+header int_ip_shim_t { /* 4 */
+    bit<8>  type;
+    bit<8>  reserved;
+    bit<8>  next_proto;
+    bit<8>  length;
 }
 
-header sw_int_t {
-    bit<32>   switch_id;
-}
-
-header int_header_t {
-    bit<2>  ver;
+header int_header_t { /* 8 */
+    bit<4>  ver;
     bit<2>  rep;
     bit<1>  c;
     bit<1>  e;
-    bit<5>  rsvd1;
-    bit<5>  ins_cnt;
-    bit<8>  max_hop_cnt;
-    bit<8>  total_hop_cnt;
-    bit<4>  instruction_mask_0003; /* split the bits for lookup */
-    bit<4>  instruction_mask_0407;
-    bit<4>  instruction_mask_0811;
-    bit<4>  instruction_mask_1215;
-    bit<8> next_proto;
-    bit<8> rsvd2;
+    bit<1>  m;
+    bit<10> rsvd1;
+    bit<5>  meta_len;
+    bit<8>  remaining_hop_cnt;
+    bit<16> instructions;
+    bit<16> rsvd2;
 }
 
+header int_metadata_t { /* 12 */
+    bit<32>  switch_id;
+    bit<48>  orig_mac;
+    bit<16>  reserved;
+}
 
 struct fwd_meta_t {
     bit<32> l2ptr;
@@ -97,12 +97,11 @@ struct metadata {
 }
 
 struct headers {
-    ethernet_t   ethernet;
-    int_header_t sw_int_header;
-    sw_int_t     sw_int;
-    sw_int_t     sw_int_2;
-    int_header_t gw_int_header;
-    gw_int_t     gw_int;
-    ipv4_t       ipv4;
-    udp_t        udp;
+    ethernet_t     ethernet;
+    ipv4_t         ipv4;
+    int_ip_shim_t  int_shim;
+    int_header_t   int_header;
+    int_metadata_t int_meta;
+    int_metadata_t int_meta_2;
+    udp_t          udp;
 }

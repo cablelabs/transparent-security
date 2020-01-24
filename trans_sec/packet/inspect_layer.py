@@ -14,60 +14,58 @@ from scapy.all import Packet
 from scapy import fields
 
 
-class INTHeaderMeta(Packet):
+class IntShim(Packet):
     """
-    This class represents the INT data being placed onto the packets to help
+    This class represents the INT shim being placed onto the packets to help
     generating and parsing
     """
     fields_desc = [
-        fields.BitField('ver', 0, 2),
+        fields.ByteField('type', 0),
+        fields.ByteField('reserved', 0),
+        fields.ByteField('next_proto', 0),
+        fields.ByteField('length', 0),
+    ]
+
+
+class IntHeader(Packet):
+    """
+    This class represents the INT header data being placed onto the packets to
+    help generating and parsing
+    """
+    fields_desc = [
+        fields.BitField('ver', 0, 4),
         fields.BitField('rep', 0, 2),
         fields.BitField('c', 0, 1),
         fields.BitField('e', 0, 1),
-        fields.BitField('res1', 0, 5),
-        fields.BitField('instr_cnt', 0, 5),
-        fields.ByteField('max_hops', 0),
-        fields.ByteField('total_hops', 0),
+        fields.BitField('m', 0, 1),
+        fields.BitField('res1', 0, 10),
+        fields.BitField('meta_len', 0, 5),
+        fields.ByteField('remaining_hop_cnt', 0),
         fields.BitField('instr_bitmap', 0, 16),
-        fields.ByteField('next_proto', 0),
-        fields.ByteField('res2', 0),
+        fields.BitField('res2', 0, 16),
     ]
 
 
-class GatewayINTHeaderMeta(INTHeaderMeta):
+class IntMeta(Packet):
     """
-    This class represents the INT data being placed onto the packets to help
-    generating and parsing
+    This class represents the INT metadata being placed onto the packets
     """
-    name = "GW_INT_HDR"
-
-
-class GatewayINTInspect(Packet):
-    """
-    This class represents the INT data being placed onto the packets to help
-    generating and parsing
-    """
-    name = "GW_INT"
-    fields_desc = [
-        fields.MACField('src_mac', 'ff:ff:ff:ff:ff:ff'),
-    ]
-
-
-class SwitchINTHeaderMeta(INTHeaderMeta):
-    """
-    This class represents the INT data being placed onto the packets to help
-    generating and parsing
-    """
-    name = "SW_INT_HDR"
-
-
-class SwitchINTInspect(Packet):
-    """
-    This class represents the INT data being placed onto the packets to help
-    generating and parsing
-    """
-    name = "SW_INT"
     fields_desc = [
         fields.IntField('switch_id', 0),
-        fields.IntField('switch_id_2', 0),
+        fields.MACField('orig_mac', 0),
+        fields.BitField('reserved', 0, 16),
     ]
+
+
+class IntMeta1(IntMeta):
+    """
+    This class represents the first INT metadata being placed onto the packets
+    """
+    name = "INT_META_1"
+
+
+class IntMeta2(IntMeta):
+    """
+    This class represents the second INT metadata being placed onto the packets
+    """
+    name = "INT_META_2"

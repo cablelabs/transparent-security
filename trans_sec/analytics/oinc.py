@@ -23,8 +23,7 @@ from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import Ether
 
 from trans_sec.packet.inspect_layer import (
-    GatewayINTInspect, SwitchINTInspect, SwitchINTHeaderMeta,
-    GatewayINTHeaderMeta)
+    IntHeader, IntMeta, IntMeta2, IntShim)
 
 logger = logging.getLogger('oinc')
 
@@ -55,11 +54,12 @@ class PacketAnalytics(object):
         """
         logger.info("AE monitoring iface %s", iface)
         bind_layers(Ether, IP)
-        bind_layers(IP, SwitchINTHeaderMeta)
-        bind_layers(SwitchINTHeaderMeta, SwitchINTInspect)
-        bind_layers(SwitchINTInspect, GatewayINTHeaderMeta)
-        bind_layers(GatewayINTHeaderMeta, GatewayINTInspect)
-        bind_layers(GatewayINTInspect, UDP)
+        bind_layers(IP, IntShim)
+        bind_layers(IntShim, IntHeader)
+        bind_layers(IntHeader, IntMeta)
+        # bind_layers(IntMeta, UDP)
+        bind_layers(IntMeta, IntMeta2)
+        bind_layers(IntMeta2, UDP)
         logger.debug("Completed bind_layers")
         sniff(iface=iface,
               prn=lambda packet: self.handle_packet(packet, ip_proto),
@@ -110,10 +110,10 @@ def extract_int_data(packet):
 
     try:
         out = dict(
-            devMac=packet[GatewayINTInspect].src_mac,
+            devMac=packet[IntMeta2].orig_mac,
             devAddr=packet[IP].src,
-            switchId=packet[SwitchINTInspect].switch_id,
-            switchId2=packet[SwitchINTInspect].switch_id_2,
+            switchId=packet[IntMeta].switch_id,
+            switchId2=packet[IntMeta2].switch_id,
             dstAddr=packet[IP].dst,
             dstPort=packet[UDP].dport,
             protocol=packet[IP].proto,
@@ -132,21 +132,15 @@ def log_int_packet(packet):
         logger.debug('eth dst_mac - [%s]', packet[Ether].dst)
         logger.debug('eth src_mac - [%s]', packet[Ether].src)
         logger.debug('eth type - [%s]', packet[Ether].type)
-        logger.debug('swh max_hops - [%s]',
-                     packet[SwitchINTHeaderMeta].max_hops)
-        logger.debug('swh total_hops - [%s]',
-                     packet[SwitchINTHeaderMeta].total_hops)
+        logger.debug('swh remaining_hops - [%s]',
+                     packet[IntHeader].remaining_hop_cnt)
         logger.debug('swh next_proto - [%s]',
-                     packet[SwitchINTHeaderMeta].next_proto)
-        logger.debug('switch_id - [%s]', packet[SwitchINTInspect].switch_id)
-        logger.debug('gwh ver - [%s]', packet[GatewayINTHeaderMeta].ver)
-        logger.debug('gwh max_hops - [%s]',
-                     packet[GatewayINTHeaderMeta].max_hops)
-        logger.debug('gw total_hops - [%s]',
-                     packet[GatewayINTHeaderMeta].total_hops)
+                     packet[IntShim].next_proto)
+        logger.debug('gw switch_id - [%s]', packet[IntMeta2].switch_id)
+        logger.debug('agg switch_id - [%s]', packet[IntMeta].switch_id)
         logger.debug('gw next_proto - [%s]',
-                     packet[GatewayINTHeaderMeta].next_proto)
-        logger.debug('gw src_mac - [%s]', packet[GatewayINTInspect].src_mac)
+                     packet[IntShim].next_proto)
+        logger.debug('gw src_mac - [%s]', packet[IntMeta2].src_mac)
         logger.debug('dev_addr - [%s]', packet[IP].src)
         logger.debug('dst_addr - [%s]', packet[IP].dst)
         logger.debug('protocol - [%s]', packet[IP].proto)

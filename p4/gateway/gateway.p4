@@ -54,26 +54,23 @@ control TpsGwIngress(inout headers hdr,
     }
 
     action data_inspect_packet(bit<32> device, bit<32> switch_id) {
-        hdr.sw_int_header.setValid();
-        hdr.sw_int.setValid();
-        hdr.gw_int_header.setValid();
-        hdr.gw_int.setValid();
+        hdr.int_shim.setValid();
+        hdr.int_header.setValid();
+        hdr.int_meta.setValid();
 
-        hdr.sw_int_header.max_hop_cnt = 2;
-        hdr.sw_int_header.total_hop_cnt = hdr.sw_int_header.total_hop_cnt + 1;
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen + 8;
-
-        hdr.sw_int.switch_id = switch_id;
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen + 4;
-
-        hdr.gw_int.src_mac = hdr.ethernet.src_mac;
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen + 6;
-
-        hdr.gw_int_header.next_proto = hdr.ipv4.protocol;
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen + 8;
-
-        hdr.sw_int_header.next_proto = TYPE_INSPECTION;
         hdr.ipv4.protocol = TYPE_INSPECTION;
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen + 24;
+
+        hdr.int_shim.next_proto = hdr.ipv4.protocol;
+        hdr.int_shim.length = 24;
+        hdr.int_shim.type = 1;
+
+        hdr.int_header.remaining_hop_cnt = 10; /* TODO - find a better means to determine this value */
+        hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt -1;
+
+        hdr.int_meta.switch_id = switch_id;
+        hdr.int_meta.orig_mac = hdr.ethernet.src_mac;
+
         forwardedPackets.count(device);
     }
 
