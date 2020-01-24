@@ -23,7 +23,7 @@
 #include <tps_egress.p4>
 
 /*************************************************************************
-**************  I N G R E S S   P R O C E S S I N G   *******************
+**************  I N G R E S S   P R O C E S S I N G   ********************
 *************************************************************************/
 
 control TpsAggIngress(inout headers hdr,
@@ -83,26 +83,6 @@ control TpsAggIngress(inout headers hdr,
         mark_to_drop(standard_metadata);;
     }
 
-    action control_forward(macAddr_t mac, egressSpec_t port) {
-        standard_metadata.egress_spec = port;
-        hdr.ethernet.src_mac = hdr.ethernet.dst_mac;
-        hdr.ethernet.dst_mac = mac;
-        hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
-    }
-
-    table control_forward_t {
-        key = {
-            hdr.ipv4.dstAddr: lpm;
-        }
-        actions = {
-            control_forward;
-            control_drop;
-            NoAction;
-        }
-        size = 1024;
-        default_action = NoAction();
-    }
-
      apply {
         if (hdr.ipv4.isValid()) {
             if (standard_metadata.egress_spec != DROP_PORT) {
@@ -110,14 +90,11 @@ control TpsAggIngress(inout headers hdr,
                 data_forward_t.apply();
             }
         }
-        else {
-            control_forward_t.apply();
-        }
     }
 }
 
 /*************************************************************************
-***********************  S W I T C H  *******************************
+***********************  S W I T C H  ************************************
 *************************************************************************/
 
 V1Switch(

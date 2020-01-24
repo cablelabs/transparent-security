@@ -66,14 +66,3 @@ class CoreController(AbstractController):
             logger.info(
                 'Installed Host %s ipv4 cloning rule on %s',
                 north_device.get('ip'), sw.name)
-
-    def make_south_rules(self, sw, sw_info, south_link):
-        south_device = self.topo['hosts'].get(south_link['south_node'])
-        if not south_device:
-            south_device = self.topo['switches'].get(south_link['south_node'])
-            if south_device is None:
-                raise Exception('Could not locate south node device')
-
-        logger.info('Core: %s connects to south device %s on port %s',
-                    sw_info['name'], south_device['name'],
-                    str(south_link.get('south_facing_port')))

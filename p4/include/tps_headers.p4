@@ -58,9 +58,9 @@ header udp_t {
     bit<16> cksum;
 }
 
-/*************************
+/******************************************
 External Gateway INT Data header definition
-**************************/
+*******************************************/
 header int_ip_shim_t { /* 4 */
     bit<8>  type;
     bit<8>  reserved;
