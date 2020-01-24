@@ -112,8 +112,8 @@ def extract_int_data(packet):
         out = dict(
             devMac=packet[IntMeta2].orig_mac,
             devAddr=packet[IP].src,
-            # TODO/FIXME - why is this value incorrect for the agg???
-            # switchId=packet[IntMeta1].switch_id,
+            # TODO/FIXME - Will need to grab the last one once we have a list
+            #  of IntMeta
             switchId2=packet[IntMeta2].switch_id,
             dstAddr=packet[IP].dst,
             dstPort=packet[UDP].dport,
@@ -129,23 +129,22 @@ def extract_int_data(packet):
 
 def log_int_packet(packet):
     try:
-        logger.debug('packet length - [%s]', len(packet))
-        logger.debug('eth dst_mac - [%s]', packet[Ether].dst)
-        logger.debug('eth src_mac - [%s]', packet[Ether].src)
-        logger.debug('eth type - [%s]', packet[Ether].type)
-        logger.debug('swh remaining_hops - [%s]',
+        logger.debug('Packet length - [%s]', len(packet))
+        logger.debug('ETH dst_mac - [%s] src_mac - [%s] type - [%s]',
+                     packet[Ether].dst, packet[Ether].src, packet[Ether].type)
+        logger.debug('IP src - [%s] dst - [%s] proto - [%s]',
+                     packet[IP].src, packet[IP].dst, packet[IP].proto)
+        logger.debug('UDP sport - [%s] dport - [%s]',
+                     packet[UDP].sport, packet[UDP].dport)
+        logger.debug('IH remaining_hops - [%s]',
                      packet[IntHeader].remaining_hop_cnt)
-        logger.debug('swh next_proto - [%s]',
-                     packet[IntShim].next_proto)
-        logger.debug('gw switch_id - [%s]', packet[IntMeta2].switch_id)
-        logger.debug('agg switch_id - [%s]', packet[IntMeta1].switch_id)
-        logger.debug('gw next_proto - [%s]',
-                     packet[IntShim].next_proto)
-        logger.debug('gw src_mac - [%s]', packet[IntMeta1].orig_mac)
-        logger.debug('dev_addr - [%s]', packet[IP].src)
-        logger.debug('dst_addr - [%s]', packet[IP].dst)
-        logger.debug('protocol - [%s]', packet[IP].proto)
-        logger.debug('dst_port - [%s]', packet[UDP].dport)
+        logger.debug('IS type - [%s] next_proto - [%s] length - [%s]',
+                     packet[IntShim].type, packet[IntShim].next_proto,
+                     packet[IntShim].length)
+        logger.debug('IM1 switch_id - [%s] orig_mac - [%s]',
+                     packet[IntMeta1].switch_id, packet[IntMeta1].orig_mac)
+        logger.debug('IM2 switch_id - [%s] orig_mac - [%s]',
+                     packet[IntMeta2].switch_id, packet[IntMeta2].orig_mac)
     except Exception as e:
         logger.error('Error parsing header - %s', e)
 

@@ -83,20 +83,20 @@ class AggregateController(AbstractController):
                     (sw.name, south_link.get('south_node')))
 
             if device is not None:
-                table_entry = self.p4info_helper.build_table_entry(
-                    table_name='{}.data_inspection_t'.format(self.p4_ingress),
-                    match_fields={
-                        'hdr.ethernet.src_mac': device['mac']
-                    },
-                    action_name='{}.data_inspect_packet'.format(
-                        self.p4_ingress),
-                    action_params={
+                action_params = {
                         'device': device['id'],
                         'switch_id': sw_info['id']
-                    })
+                }
+                table_entry = self.p4info_helper.build_table_entry(
+                    table_name='{}.data_inspection_t'.format(self.p4_ingress),
+                    match_fields={'hdr.ethernet.src_mac': device['mac']},
+                    action_name='{}.data_inspect_packet'.format(
+                        self.p4_ingress),
+                    action_params=action_params)
                 sw.write_table_entry(table_entry)
                 logger.info(
-                    'Installed Northbound Packet Inspection from %s',
-                    device.get('mac'))
+                    'Installed Northbound Packet Inspection for device with'
+                    ' MAC - [%s] with action params - [%s]',
+                    device.get('mac'), action_params)
         else:
             logger.info('No south links to install')
