@@ -59,9 +59,10 @@ The original protocol / next header will be restored and the size and checksum w
 
 The hop-by-hop INT header will follow the header as described in section 4.7. INT Hop-by-Hop Metadata Header Format in the current INT specification.
 
-* INT instructions are encoded as a bitmap in the 16 bit INT Instruction field:
-* Transparent Secuirty requires the bit0 (MSB): Switch ID and adds two new bits to include
-the MAC address of the origionating device.
+* INT instructions are encoded as a bitmap in the 16 bit INT Instruction field and adds two new bits to include
+the MAC address of the origionating device:
+
+  * Transparent Secuirty requires the bit0 (MSB): 
   * bit8: Originating Device MAC (Most signifigant 4 octets)
   * bit9: Originating Device MAC (Least signifigant 2 octets + 2 octets of 0 padding)
 
