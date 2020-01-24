@@ -75,7 +75,7 @@ parser TpsAggParser(packet_in packet,
 
     state parse_int_shim {
         packet.extract(hdr.int_shim);
-        transition accept;
+        transition parse_int_hdr;
     }
 
     state parse_int_hdr {
