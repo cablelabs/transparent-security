@@ -18,7 +18,6 @@
 # Create packet sniffer
 - hosts: "{{ receiver }}"
   gather_facts: no
-#  become: yes
   vars:
     receive_timeout: "{{ receiver_timeout_seconds | default(999999) }}"
     receiver_log_file: "{{ host_log_dir}}/{{ reciever_log_filename }}"
@@ -48,7 +47,6 @@
 # Generate packets from the sender
 - hosts: "{{ sender }}"
   gather_facts: no
-#  become: yes
   vars:
     packet_count: "{{ send_packet_count | default(1) }}"
     send_msg: "{{ the_message | default('hello transparent-security') }}"
@@ -70,8 +68,8 @@
         state: touch
         mode: 0777
 
-    - name: Sending {{ packet_count }} UDP packets to port {{ send_port }} every {{ interval }} seconds {{ loops }}x each with a delay between bursts of {{ loop_delay }} seconds from {{ sender }} after delay {{ send_delay}}
-      shell: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/send_packets.py -y {{ send_delay }} -i {{ interval }} -it {{ loops }} -itd {{ loop_delay }} -z {{ sender_intf }} -r {{ send_to_ip }} -sp {{ send_src_port }} -p {{ send_port }} -f {{ sender_log_file }} -c {{ packet_count }} -m '{{ send_msg }}'"
+    - name: Sending {{ packet_count }} UDP packets to {{ send_to_ip }}:{{ send_port }} and dst_mac {{ dst_switch_mac }} every {{ interval }} seconds {{ loops }}x each with a delay between bursts of {{ loop_delay }} seconds from {{ sender }} after delay {{ send_delay}}
+      shell: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/send_packets.py -y {{ send_delay }} -i {{ interval }} -it {{ loops }} -itd {{ loop_delay }} -z {{ sender_intf }} -r {{ send_to_ip }} -sp {{ send_src_port }} -p {{ send_port }} -f {{ sender_log_file }} -c {{ packet_count }} -s {{ dst_switch_mac }} -m '{{ send_msg }}'"
       async: 180
 
 # Validate sent packets were received
