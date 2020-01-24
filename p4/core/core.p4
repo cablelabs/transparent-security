@@ -38,18 +38,17 @@ control TpsCoreIngress(inout headers hdr,
 
 
     action data_forward(macAddr_t dstAddr, egressSpec_t port) {
-        hdr.ipv4.protocol = hdr.gw_int_header.next_proto;
-        hdr.gw_int_header.setInvalid();
-        hdr.gw_int.setInvalid();
-        hdr.sw_int_header.setInvalid();
-        hdr.sw_int.setInvalid();
-        hdr.sw_int_2.setInvalid();
+        hdr.ipv4.protocol = hdr.int_shim.next_proto;
+        hdr.int_shim.setInvalid();
+        hdr.int_header.setInvalid();
+        hdr.int_meta.setInvalid();
+        hdr.int_meta_2.setInvalid();
 
         /*
         TODO - find a better means for resetting the totalLen value after
            invalidating the INT headers which will be problematic when
            implementing header stacks for holding switch_ids */
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen - 30;
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen - 36;
 
         standard_metadata.egress_spec = port;
         hdr.ethernet.src_mac = hdr.ethernet.dst_mac;

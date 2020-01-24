@@ -54,10 +54,13 @@ control TpsAggIngress(inout headers hdr,
     }
 
     action data_inspect_packet(bit<32> device, bit<32> switch_id) {
-        hdr.sw_int.setValid();
-        hdr.sw_int_header.total_hop_cnt = hdr.sw_int_header.total_hop_cnt + 1;
-        hdr.sw_int.switch_id = switch_id;
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen + 4;
+        hdr.int_meta.setValid();
+        hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt - 1;
+        hdr.int_meta.switch_id = switch_id;
+        hdr.int_meta.orig_mac = hdr.ethernet.src_mac;
+        /* TODO - Find a better means of increasing these sizes */
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen + 12;
+        hdr.int_shim.length = hdr.int_shim.length + 12;
         forwardedPackets.count(device);
     }
 

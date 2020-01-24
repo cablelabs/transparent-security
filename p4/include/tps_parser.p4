@@ -68,13 +68,18 @@ parser TpsAggParser(packet_in packet,
     state parse_ipv4 {
         packet.extract(hdr.ipv4);
         transition select(hdr.ipv4.protocol) {
-            TYPE_INSPECTION: parse_sw_int_header;
+            TYPE_INSPECTION: parse_int_shim;
             default: accept;
         }
     }
 
-    state parse_sw_int_header {
-        packet.extract(hdr.sw_int_header);
+    state parse_int_shim {
+        packet.extract(hdr.int_shim);
+        transition accept;
+    }
+
+    state parse_int_hdr {
+        packet.extract(hdr.int_header);
         transition accept;
     }
 
@@ -100,34 +105,29 @@ parser TpsCoreParser(packet_in packet,
     state parse_ipv4 {
         packet.extract(hdr.ipv4);
         transition select(hdr.ipv4.protocol) {
-            TYPE_INSPECTION: parse_sw_int_header;
+            TYPE_INSPECTION: parse_int_shim;
             default: accept;
         }
     }
 
-    state parse_sw_int_header {
-        packet.extract(hdr.sw_int_header);
-        transition parse_sw_int;
+    state parse_int_shim {
+        packet.extract(hdr.int_shim);
+        transition parse_int_hdr;
     }
 
-    /* TODO - make sw_int an array and make parser more dynamic as there can be any number of sw_int headers */
-    state parse_sw_int {
-        packet.extract(hdr.sw_int);
-        transition parse_sw_int_2;
+    state parse_int_hdr {
+        packet.extract(hdr.int_header);
+        transition parse_int_meta_1;
     }
 
-    state parse_sw_int_2 {
-        packet.extract(hdr.sw_int_2);
-        transition parse_gw_int_header;
+    state parse_int_meta_1 {
+        packet.extract(hdr.int_meta);
+        transition parse_int_meta_2;
     }
 
-    state parse_gw_int_header {
-        packet.extract(hdr.gw_int_header);
-        transition parse_gw_int;
-    }
-
-    state parse_gw_int {
-        packet.extract(hdr.gw_int);
+    state parse_int_meta_2 {
+        packet.extract(hdr.int_meta_2);
         transition accept;
     }
+
 }
