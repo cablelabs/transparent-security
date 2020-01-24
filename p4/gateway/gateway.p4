@@ -58,10 +58,11 @@ control TpsGwIngress(inout headers hdr,
         hdr.int_header.setValid();
         hdr.int_meta.setValid();
 
-        hdr.ipv4.protocol = TYPE_INSPECTION;
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + 24;
 
         hdr.int_shim.next_proto = hdr.ipv4.protocol;
+        hdr.ipv4.protocol = TYPE_INSPECTION;
+
         hdr.int_shim.length = 24;
         hdr.int_shim.type = 1;
 

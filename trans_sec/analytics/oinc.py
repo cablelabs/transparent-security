@@ -23,7 +23,7 @@ from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import Ether
 
 from trans_sec.packet.inspect_layer import (
-    IntHeader, IntMeta, IntMeta2, IntShim)
+    IntHeader, IntMeta1, IntMeta2, IntShim)
 
 logger = logging.getLogger('oinc')
 
@@ -56,9 +56,9 @@ class PacketAnalytics(object):
         bind_layers(Ether, IP)
         bind_layers(IP, IntShim)
         bind_layers(IntShim, IntHeader)
-        bind_layers(IntHeader, IntMeta)
+        bind_layers(IntHeader, IntMeta1)
         # bind_layers(IntMeta, UDP)
-        bind_layers(IntMeta, IntMeta2)
+        bind_layers(IntMeta1, IntMeta2)
         bind_layers(IntMeta2, UDP)
         logger.debug("Completed bind_layers")
         sniff(iface=iface,
@@ -112,7 +112,8 @@ def extract_int_data(packet):
         out = dict(
             devMac=packet[IntMeta2].orig_mac,
             devAddr=packet[IP].src,
-            switchId=packet[IntMeta].switch_id,
+            # TODO/FIXME - why is this value incorrect for the agg???
+            # switchId=packet[IntMeta1].switch_id,
             switchId2=packet[IntMeta2].switch_id,
             dstAddr=packet[IP].dst,
             dstPort=packet[UDP].dport,
@@ -137,10 +138,10 @@ def log_int_packet(packet):
         logger.debug('swh next_proto - [%s]',
                      packet[IntShim].next_proto)
         logger.debug('gw switch_id - [%s]', packet[IntMeta2].switch_id)
-        logger.debug('agg switch_id - [%s]', packet[IntMeta].switch_id)
+        logger.debug('agg switch_id - [%s]', packet[IntMeta1].switch_id)
         logger.debug('gw next_proto - [%s]',
                      packet[IntShim].next_proto)
-        logger.debug('gw src_mac - [%s]', packet[IntMeta2].src_mac)
+        logger.debug('gw src_mac - [%s]', packet[IntMeta1].orig_mac)
         logger.debug('dev_addr - [%s]', packet[IP].src)
         logger.debug('dst_addr - [%s]', packet[IP].dst)
         logger.debug('protocol - [%s]', packet[IP].proto)
