@@ -9,15 +9,13 @@ These definitions contains modifications and required fields for Transpaerent Se
 This header heavily leverages the P4 INT header.  The changes and subset that are required for
 Transparent Security noted in this document.
 
-The original header document is located at [INT-current-spec.pdf](https://p4.org/assets/INT-current-spec.pdf)
+The current draft of theh 2.0 INT header document is located at [INT.pdf](https://github.com/p4lang/p4-applications/blob/master/docs/INT.pdf)
 
 ## Overview
 
-The INT header(s) will be inserted between the IP header and the datagram for IPv4 and will be a part of the extended header for IPv6.  The IP header will be updated to indicate that it has an INT header.
+The INT IP shim header and the INT header(s) will be inserted after the IP header and before the datagram for IPv4 and will be a part of the extended header for IPv6.  The IP header will be updated to indicate that it has an INT header.
 
-The INT header is defined in two portions.  One is the Header for the INT metadata and the second is the actual metadata.
-
-There are two INT headers that will be used with Transparent Security.  One for the originating device on the customer premises and the second is for the network path (Switches and gateways).
+The INT header is defined in two portions.  One is the Header for the INT metadata and the second is the actual metadata.  For both of these, we follow the INT specification with the addition of two bitmasks.  This additional value, an 8 octctet value for the originating device ID will be proposed to be added to the INT specification.
 
 ## IP Header update
 
@@ -39,54 +37,47 @@ IPv6:
 * The INT header next header field will be the existing IPv6 next header value.
 * The Hdr Ext Len will be updated appropriately
 
+### IP header shim
+
+Need to develop and IP shim.  This shim shall be 4 bytes and include the origional protocl (IPv4) or next protol (IPv6) and the lenght of the INT meta data.
+
+Type: (1 octect) This field indicates the type of INT Header following the shim header. Two Type values are used: one for the hop-by-hop header type and the other for the destination header type.
+
+Reservered: (1 octect)
+
+Length: (1 octect) This is the total length of INT metadata header, INT stack and the shim header in 4-byte words. A non-INT device may read this field and skip over INT headers.
+
+Protocol: (1 octect) If IP protocol / next header is used to indicate INT, this field optionally stores the original protocol / next header value. Otherwise, this field is reserved.
+
 ### Decapsulation
 
-The original protocol / next header will be restored and the size and checksum will be recalculated as appropriate.
+The original protocol / next header will be restored and the size and checksum will be recalculated as appropriate.  The IP shim header and INT header are also removed.
 
 ## INT Header
 
 ### INT metadata header (64 bits)
 
-This format will be used for both the device INT header and the network path INT header.  The INT instruction bitmask will indicate which data will be used.
+The hop-by-hop INT header will follow the header as described in section 4.7. INT Hop-by-Hop Metadata Header Format in the current INT specification.
 
-* Each INT metadata header is 8B long and should be 0 when initialized
-  * Ver (2b): INT metadata header version. Should be zero for this version
-  * Rep (2b): Replication requested. Should be zero
-  * C (1b): Copy. Should be zero
-  * E (1b): Max Hop Count exceeded. Set to 1 for the device INT header and when the max hop count has been exceeded with the networking header.
-  * Reserved (4b): Always zero.
-* Instruction Count (5b): The number of instructions that are set (i.e., number of
-1’s) in the instruction bitmap. This is 00010 (decimal 2) for the default gateway INT header.  Can be changed to add additional data.
-* Max Hop Count (8b): 1 for the device INT header and configurable for the network header.
-* Total Hop Count (8b): The current hop count for the network header and 1 for the device header.
-* INT instructions are encoded as a bitmap in the 16 bit INT Instruction field: the first 8 bits
-corresponds to a specific standard metadata as specified in Section 3 of the P4 INT spec.  The 9th-11th are defined in the metadata section below.  For the device ID the default is 000000001100000000.  For the network INT header the bit mask would be 100000000000000000.   Additional metadata can be added for the network INT header for performance and additional use cases.
-  * bit0 (MSB): Switch ID
+* INT instructions are encoded as a bitmap in the 16 bit INT Instruction field:
+* Transparent Secuirty requires the bit0 (MSB): Switch ID and adds two new bits to include
+the MAC address of the origionating device.
   * bit8: Originating Device MAC (Most signifigant 4 octets)
   * bit9: Originating Device MAC (Least signifigant 2 octets + 2 octets of 0 padding)
-* Next header IPv6 / Protocol IPv4 (1 octect)  If this is the last INT (header before the data gram), this will be the initial protocol from the IP header.  If there are subsequent headers then this will be 63 to denote that another INT header is to follow.
-* Reservered (1 octets)
 
-### Device INT Metadata (96 bits)
-
-This section is deviating from the INT spec as we are removing the leading bit to indicate the last record.
+### INT Metadata record (96 bits)
 
 This metadata will only contain one record and will not be updated on subsequent hops.
 
 Each metadata record corresponds to a bit filed in the instruction set and is 4 octets long.
 
+* Switch ID: Unique identifier for the swtich (4 octets)
 * Originating Device MAC Most signifigant 4 octets (4 octets)
 * Originating Device MAC least signifigant 2 octets + 2 octets of padding (4 octets)
 
-### Network INT Metadata (32 bits per hop)
+On the customer's gateway, the gateway enters it's ID as the switch ID and it inserts the originating devices MAC address.
 
-This section is deviating from the INT spec as we are removing the leading bit to indicate the last record.
-
-This metadata will be updated with each consecutive hop, until the max hop count has been reached.  The additional hop information will be inserted between the INT metadata header and the metadata from the previous hop.
-
-Each metadata record corresponds to a bit filed in the instruction set and is 4 octets long.
-
-* Switch ID: Unique identifier for the swtich (4 octets)
+If the INT header is created on a swtich inside the head end.  This occurs when a header is not adding on the customer premises.  Two entries are added, one for the gateway device.  In a DOCSIS network this is the cable modem.
 
 ## Examples
 
@@ -178,23 +169,32 @@ Each metadata record corresponds to a bit filed in the instruction set and is 4 
   <td align=right>31</td>
  </tr>
  <tr height=21 style='height:16.0pt'>
+  <td height=42 class=xl65 style='height:32.0pt'>IP Shim</td>
+  <td colspan=8 class=xl63>Type</td>
+  <td colspan=8 class=xl63>Reserved</td>
+  <td colspan=8 class=xl63>Next Protocol</td>
+  <td colspan=8 class=xl63>Length</td>
+ </tr>
+ <tr height=21 style='height:16.0pt'>
   <td rowspan=2 height=42 class=xl65 style='height:32.0pt'>Header</td>
-  <td colspan=2 class=xl63>Ver</td>
+  <td colspan=4 class=xl63>Ver</td>
   <td colspan=2 class=xl63>Rep</td>
   <td>C</td>
   <td>E</td>
-  <td colspan=5 class=xl63>Reserved</td>
-  <td colspan=5 class=xl63>Instruction Count</td>
-  <td colspan=8 class=xl63>Max Hop Count</td>
-  <td colspan=8 class=xl63>Total Hop Count</td>
+  <td>M</td>
+  <td colspan=10 class=xl63>Reserved</td>
+  <td colspan=5 class=xl63>Hop Max Length</td>
+  <td colspan=8 class=xl63>Remaining Hop Cnt</td>
  </tr>
  <tr height=21 style='height:16.0pt'>
   <td colspan=16 height=21 class=xl66 style='height:16.0pt'>Instruction Bitmap</td>
-  <td colspan=8 class=xl67>Next Protocol</td>
-  <td colspan=8 class=xl63>Reserved</td>
+  <td colspan=16 class=xl63>Reserved</td>
  </tr>
  <tr height=21 style='height:16.0pt'>
-  <td rowspan=2 height=84 class=xl65 style='height:64.0pt'>INT Metadata</td>
+  <td rowspan=3 height=84 class=xl65 style='height:64.0pt'>INT Metadata</td>
+  <td colspan=32 height=21 class=xl67 style='height:16.0pt'>Switch ID</td>
+</tr>
+ <tr height=21 style='height:16.0pt'>
   <td colspan=32 height=21 class=xl67 style='height:16.0pt'>Originating Device
   MAC Most signifigant 4 octets<span style='mso-spacerun:yes'> </span></td>
  </tr>
@@ -202,114 +202,5 @@ Each metadata record corresponds to a bit filed in the instruction set and is 4 
   <td colspan=16 height=21 class=xl67 style='height:16.0pt'>Originating Device
   MAC least signifigant 2 octets</td>
   <td colspan=16 class=xl67>Reserved</td>
- </tr>
-</table>
-
-### Example table for a switch INT header
-
-<table border=0 cellpadding=0 cellspacing=0 width=1419 style='border-collapse:
- collapse;table-layout:fixed;width:1056pt'>
- <col width=171 style='mso-width-source:userset;mso-width-alt:5461;width:128pt'>
- <col width=39 span=16 style='mso-width-source:userset;mso-width-alt:1237;
- width:29pt'>
- <col width=39 style='mso-width-source:userset;mso-width-alt:1237;width:29pt'>
- <col width=39 span=15 style='mso-width-source:userset;mso-width-alt:1237;
- width:29pt'>
- <tr height=21 style='height:16.0pt'>
-  <td height=21 width=171 style='height:16.0pt;width:128pt'>Description</td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
-  <td width=39 style='width:29pt'></td>
- </tr>
- <tr height=21 style='height:16.0pt'>
-  <td height=21 style='height:16.0pt'>Octet</td>
-  <td colspan=8 class=xl64>0</td>
-  <td colspan=8 class=xl64>1</td>
-  <td colspan=8 class=xl64>2</td>
-  <td colspan=8 class=xl64>3</td>
- </tr>
- <tr height=21 style='height:16.0pt'>
-  <td height=21 style='height:16.0pt'>Bit</td>
-  <td align=right>0</td>
-  <td align=right>1</td>
-  <td align=right>2</td>
-  <td align=right>3</td>
-  <td align=right>4</td>
-  <td align=right>5</td>
-  <td align=right>6</td>
-  <td align=right>7</td>
-  <td align=right>8</td>
-  <td align=right>9</td>
-  <td align=right>10</td>
-  <td align=right>11</td>
-  <td align=right>12</td>
-  <td align=right>13</td>
-  <td align=right>14</td>
-  <td align=right>15</td>
-  <td align=right>16</td>
-  <td align=right>17</td>
-  <td align=right>18</td>
-  <td align=right>19</td>
-  <td align=right>20</td>
-  <td align=right>21</td>
-  <td align=right>22</td>
-  <td align=right>23</td>
-  <td align=right>24</td>
-  <td align=right>25</td>
-  <td align=right>26</td>
-  <td align=right>27</td>
-  <td align=right>28</td>
-  <td align=right>29</td>
-  <td align=right>30</td>
-  <td align=right>31</td>
- </tr>
- <tr height=21 style='height:16.0pt'>
-  <td rowspan=2 height=42 class=xl65 style='height:32.0pt'>Header</td>
-  <td colspan=2 class=xl63>Ver</td>
-  <td colspan=2 class=xl63>Rep</td>
-  <td>C</td>
-  <td>E</td>
-  <td colspan=5 class=xl63>Reserved</td>
-  <td colspan=5 class=xl63>Instruction Count</td>
-  <td colspan=8 class=xl63>Max Hop Count</td>
-  <td colspan=8 class=xl63>Total Hop Count</td>
- </tr>
- <tr height=21 style='height:16.0pt'>
-  <td colspan=16 height=21 class=xl66 style='height:16.0pt'>Instruction Bitmap</td>
-  <td colspan=8 class=xl67>Next Protocol</td>
-  <td colspan=8 class=xl63>Reserved</td>
- </tr>
- <tr height=21 style='height:16.0pt'>
-  <td rowspan=1 height=84 class=xl65 style='height:64.0pt'>INT Metadata</td>
-  <td colspan=32 height=21 class=xl67 style='height:16.0pt'>Switch ID</td>
  </tr>
 </table>
