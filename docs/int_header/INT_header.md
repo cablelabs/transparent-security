@@ -1,57 +1,57 @@
-# Transparent Secuirty INT header reference definition
+# Transparent Security INT header reference definition
 
-The INT header is an L3 wrapper containing in band network telemetry.
+The INT header is an L3 wrapper containing in-band network telemetry.
 
-These definitions contains modifications and required fields for Transpaerent Secuirty.
+These definitions contain modifications and required fields for Transparent Security.
 
   Note: This version of the document is still under discussion and may change.
 
 This header heavily leverages the P4 INT header.  The changes and subset that are required for
 Transparent Security noted in this document.
 
-The current draft of theh 2.0 INT header document is located at [INT.pdf](https://github.com/p4lang/p4-applications/blob/master/docs/INT.pdf)
+The current draft of the 2.0 INT header document is located at [INT.pdf](https://github.com/p4lang/p4-applications/blob/master/docs/INT.pdf)
 
 ## Overview
 
 The INT IP shim header and the INT header(s) will be inserted after the IP header and before the datagram for IPv4 and will be a part of the extended header for IPv6.  The IP header will be updated to indicate that it has an INT header.
 
-The INT header is defined in two portions.  One is the Header for the INT metadata and the second is the actual metadata.  For both of these, we follow the INT specification with the addition of two bitmasks.  This additional value, an 8 octctet value for the originating device ID will be proposed to be added to the INT specification.
+The INT header is defined in two portions.  One is the Header for the INT metadata and the second is the actual metadata.  For both of these, we follow the INT specification with the addition of two bitmasks.  This additional value, an 8 octet value for the originating device ID will be proposed to be added to the INT specification.
 
-Please reffer to the 2.0 draft or release version of the P4 Application for the metadata header format.  This document includes the definition of the additional metadata types for the origionating device and a proposed IP shim.
+Please refer to the 2.0 draft or release version of the P4 Application for the metadata header format.  This document includes the definition of the additional metadata types for the originating device and a proposed IP shim.
 
-The other shim types, including UDP/TCP can also be used with the probe marker and not the differentiated service bit (DSCP), but those do not cover the range of IP traffic that is used in DDoS attacks.
+The other shim types, including UDP/TCP, can also be used with the probe marker and not the differentiated service bit (DSCP), but those do not cover the range of IP traffic that is used in DDoS attacks.
 
 ## IP Header update
 
 ### Encapsulation
 
-We want to preserve the routing and other information on the packet, so we will modify the protocol (IPv4) / next header (IPv6), length and for IPv4 the header checksum.
+We want to preserve the routing and other information on the packet, so we will modify the protocol (IPv4) / next header (IPv6), length and IPv4 the header checksum.
 
-Define a new L3 protocol.  The protocol for the INT header will be 63 "Any local network", since the INT header should never be exposed outside of the service providers network.  There is no specification for protocol 63.
+Define a new L3 protocol.  The protocol for the INT header will be 63 "Any local network" since the INT header should never be exposed outside of the service providers network.  There is no specification for protocol 63.
 
 IPv4:
 
-* Update the total length to match the new size.
-* Set the protocol to the INT protocol number. 253
+* Update the total length to match the new size
+* Set the protocol to the INT protocol number
 * Update the header checksum
 
 IPv6:
 
-* Set the Next Header to be the identifier for an IPv6 extension header to the INT procol number.  If existing extension headers are in place, INT will prepend to the first extension header.
-* The INT header next header field will be the existing IPv6 next header value.
+* Set the Next Header to be the identifier for an IPv6 extension header to the INT protocol number.  If existing extension headers are in place, INT will prepend to the first extension header
+* The INT header next header field will be the existing IPv6 next header value
 * The Hdr Ext Len will be updated appropriately
 
 ### IP header shim (4 bytes)
 
-This shim shall be 4 bytes and include the origional protocl (IPv4) or next protol (IPv6) and the lenght of the INT meta data.
+This shim shall be 4 bytes and include the original protocol (IPv4) or next protocol (IPv6) and the length of the INT metadata.
 
-Type: (1 octect) This field indicates the type of INT Header following the shim header. Two Type values are used: one for the hop-by-hop header type and the other for the destination header type.
+Type: (1 octet) This field indicates the type of INT Header following the shim header. Two Type values are used: one for the hop-by-hop header type and the other for the destination header type.
 
-Reservered: (1 octect)
+Reserved: (1 octet)
 
-Length: (1 octect) This is the total length of INT metadata header, INT stack and the shim header in 4-byte words. A non-INT device may read this field and skip over INT headers.
+Length: (1 octet) This is the total length of INT metadata header, INT stack and the shim header in 4-byte words. A non-INT device may read this field and skip over INT headers.
 
-Protocol: (1 octect) If IP protocol / next header is used to indicate INT, this field optionally stores the original protocol / next header value. Otherwise, this field is reserved.
+Protocol: (1 octet) If IP protocol / next header is used to indicate INT, this field optionally stores the original protocol / next header value. Otherwise, this field is reserved.
 
 ### Decapsulation
 
@@ -64,28 +64,28 @@ The original protocol / next header will be restored and the size and checksum w
 The hop-by-hop INT header will follow the header as described in section 4.7. INT Hop-by-Hop Metadata Header Format in the current INT specification.
 
 * INT instructions are encoded as a bitmap in the 16 bit INT Instruction field and adds two new bits to include
-the MAC address of the origionating device:
+the MAC address of the originating device:
 
-  * Transparent Secuirty the following bits:
-  * bit0: 4 octect Switch ID which is unique accross the network
-  * bit8: Originating Device MAC (Most signifigant 4 octets)
-  * bit9: Originating Device MAC (Least signifigant 2 octets + 2 octets of 0 padding)
+  * Transparent Security the following bits:
+  * bit0: 4 octet Switch ID which is unique across the network
+  * bit8: Originating Device MAC (Most significant 4 octets)
+  * bit9: Originating Device MAC (Least significant 2 octets + 2 octets of 0 padding)
 
-### Per Hop INT Metadata record (12 bytes)
+### Per-Hop INT Metadata record (12 bytes)
 
 This metadata will only contain one record and will not be updated on subsequent hops.
 
 Each metadata record corresponds to a bit filed in the instruction set and is 4 octets long.
 
-* Switch ID: Unique identifier for the swtich (4 octets)
-* Originating Device MAC Most signifigant 4 octets (4 octets)
-* Originating Device MAC least signifigant 2 octets + 2 octets of reserved padding (4 octets)
+* Switch ID: Unique identifier for the switch (4 octets)
+* Originating Device MAC Most significant 4 octets (4 octets)
+* Originating Device MAC least significant 2 octets + 2 octets of reserved padding (4 octets)
 
-On the customer's gateway, the gateway enters it's ID as the switch ID and it inserts the originating devices MAC address.
+On the customer's gateway, the gateway enters its ID as the switch ID and it inserts the originating devices MAC address.
 
-If the INT header is created on a swtich inside the head end.  This occurs when a header is not adding on the customer premises.  Two entries are added, one for the gateway device.  In a DOCSIS network this is the cable modem.
+If the INT header is created on a switch inside the head end.  This occurs when a header is not added at the customer premises.  Two entries are added, one for the gateway device.  In a DOCSIS network, this is the cable modem.
 
-On subsequent hops where it isn't connected to the originating device or the originating device is not know, 0xFFFFFFFF be  will inserted in the two "Originating Device MAC" records.
+On subsequent hops where it isn't connected to the originating device or the originating device is not know, 0xFFFFFFFF will be inserted in the two "Originating Device MAC" records.
 
 ## Examples
 
