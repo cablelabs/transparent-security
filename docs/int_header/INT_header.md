@@ -67,11 +67,11 @@ The hop-by-hop INT header will follow the header as described in section 4.7. IN
 the MAC address of the origionating device:
 
   * Transparent Secuirty the following bits:
-  * bit0: 
+  * bit0: 4 octect Switch ID which is unique accross the network
   * bit8: Originating Device MAC (Most signifigant 4 octets)
   * bit9: Originating Device MAC (Least signifigant 2 octets + 2 octets of 0 padding)
 
-### INT Metadata record (12 bytes)
+### Per Hop INT Metadata record (12 bytes)
 
 This metadata will only contain one record and will not be updated on subsequent hops.
 
@@ -84,6 +84,8 @@ Each metadata record corresponds to a bit filed in the instruction set and is 4 
 On the customer's gateway, the gateway enters it's ID as the switch ID and it inserts the originating devices MAC address.
 
 If the INT header is created on a swtich inside the head end.  This occurs when a header is not adding on the customer premises.  Two entries are added, one for the gateway device.  In a DOCSIS network this is the cable modem.
+
+On subsequent hops where it isn't connected to the originating device or the originating device is not know, 0xFFFFFFFF be  will inserted in the two "Originating Device MAC" records.
 
 ## Examples
 
