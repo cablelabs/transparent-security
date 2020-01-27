@@ -17,6 +17,10 @@ The INT IP shim header and the INT header(s) will be inserted after the IP heade
 
 The INT header is defined in two portions.  One is the Header for the INT metadata and the second is the actual metadata.  For both of these, we follow the INT specification with the addition of two bitmasks.  This additional value, an 8 octctet value for the originating device ID will be proposed to be added to the INT specification.
 
+Please reffer to the 2.0 draft or release version of the P4 Application for the metadata header format.  This document includes the definition of the additional metadata types for the origionating device and a proposed IP shim.
+
+The other shim types, including UDP/TCP can also be used with the probe marker and not the differentiated service bit (DSCP), but those do not cover the range of IP traffic that is used in DDoS attacks.
+
 ## IP Header update
 
 ### Encapsulation
@@ -37,9 +41,9 @@ IPv6:
 * The INT header next header field will be the existing IPv6 next header value.
 * The Hdr Ext Len will be updated appropriately
 
-### IP header shim
+### IP header shim (4 bytes)
 
-Need to develop and IP shim.  This shim shall be 4 bytes and include the origional protocl (IPv4) or next protol (IPv6) and the lenght of the INT meta data.
+This shim shall be 4 bytes and include the origional protocl (IPv4) or next protol (IPv6) and the lenght of the INT meta data.
 
 Type: (1 octect) This field indicates the type of INT Header following the shim header. Two Type values are used: one for the hop-by-hop header type and the other for the destination header type.
 
@@ -55,7 +59,7 @@ The original protocol / next header will be restored and the size and checksum w
 
 ## INT Header
 
-### INT metadata header (64 bits)
+### INT metadata header (12 bytes)
 
 The hop-by-hop INT header will follow the header as described in section 4.7. INT Hop-by-Hop Metadata Header Format in the current INT specification.
 
@@ -65,7 +69,7 @@ the MAC address of the origionating device.
   * bit8: Originating Device MAC (Most signifigant 4 octets)
   * bit9: Originating Device MAC (Least signifigant 2 octets + 2 octets of 0 padding)
 
-### INT Metadata record (96 bits)
+### INT Metadata record (12 bytes)
 
 This metadata will only contain one record and will not be updated on subsequent hops.
 
@@ -73,7 +77,7 @@ Each metadata record corresponds to a bit filed in the instruction set and is 4 
 
 * Switch ID: Unique identifier for the swtich (4 octets)
 * Originating Device MAC Most signifigant 4 octets (4 octets)
-* Originating Device MAC least signifigant 2 octets + 2 octets of padding (4 octets)
+* Originating Device MAC least signifigant 2 octets + 2 octets of reserved padding (4 octets)
 
 On the customer's gateway, the gateway enters it's ID as the switch ID and it inserts the originating devices MAC address.
 
@@ -170,24 +174,24 @@ If the INT header is created on a swtich inside the head end.  This occurs when 
  </tr>
  <tr height=21 style='height:16.0pt'>
   <td height=42 class=xl65 style='height:32.0pt'>IP Shim</td>
-  <td colspan=8 class=xl63>Type</td>
+  <td colspan=8 class=xl63>Type = <font color="red">1</font></td>
   <td colspan=8 class=xl63>Reserved</td>
+  <td colspan=8 class=xl63>Length = <font color="red">6</font></td>
   <td colspan=8 class=xl63>Next Protocol</td>
-  <td colspan=8 class=xl63>Length</td>
  </tr>
  <tr height=21 style='height:16.0pt'>
   <td rowspan=2 height=42 class=xl65 style='height:32.0pt'>Header</td>
-  <td colspan=4 class=xl63>Ver</td>
-  <td colspan=2 class=xl63>Rep</td>
-  <td>C</td>
-  <td>E</td>
-  <td>M</td>
+  <td colspan=4 class=xl63>Verstion = <font color="red">2</font></td>
+  <td colspan=2 class=xl63>Rep = <font color="red">0</font></td>
+  <td>C = <font color="red">0</font></td>
+  <td>E = <font color="red">0</font></td>
+  <td>M = <font color="red">0</font></td>
   <td colspan=10 class=xl63>Reserved</td>
-  <td colspan=5 class=xl63>Hop Max Length</td>
+  <td colspan=5 class=xl63>Per-hop Metadata Length = <font color="red">3</font></td>
   <td colspan=8 class=xl63>Remaining Hop Cnt</td>
  </tr>
  <tr height=21 style='height:16.0pt'>
-  <td colspan=16 height=21 class=xl66 style='height:16.0pt'>Instruction Bitmap</td>
+  <td colspan=16 height=21 class=xl66 style='height:16.0pt'>Instruction Bitmap = <font color="red">1000000011000000</font></td>
   <td colspan=16 class=xl63>Reserved</td>
  </tr>
  <tr height=21 style='height:16.0pt'>
