@@ -25,7 +25,7 @@ class AggregateController(AbstractController):
     def __init__(self, platform, p4_build_out, topo, log_dir, load_p4=True):
         super(self.__class__, self).__init__(
             platform, p4_build_out, topo, 'aggregate',
-            ['TpsAggIngress.forwardedPackets', 'TpsAggIngress.droppedPackets'],
+            ['TpsAggIngress.forwardedPackets'],
             log_dir, load_p4, 'TpsAggIngress')
 
     def make_north_rules(self, sw, sw_info, north_link):
@@ -58,45 +58,3 @@ class AggregateController(AbstractController):
                         north_link.get('south_facing_port'))
         else:
             logger.info('No north links to install')
-
-    def make_south_rules(self, sw, sw_info, south_link):
-        if south_link.get('south_facing_port'):
-            logger.info('Creating south switch rules - [%s]', south_link)
-            if self.topo['switches'].get(south_link['south_node']):
-                device = self.topo['switches'][south_link['south_node']]
-                logger.info(
-                    'Aggregate: %s connects to Gateway: %s on physical '
-                    'port %s to physical port %s',
-                    sw_info['name'], device['name'],
-                    str(south_link.get('south_facing_port')),
-                    str(south_link.get('north_facing_port')))
-            elif self.topo['hosts'].get(south_link['south_node']) is not None:
-                device = self.topo['hosts'][south_link['south_node']]
-                logger.info(
-                    'Aggregate: %s connects to Device: %s on physical '
-                    'port %s',
-                    sw_info['name'], device['name'],
-                    str(south_link.get('south_facing_port')))
-            else:
-                raise StandardError(
-                    'South Bound Link for %s, %s does not exist in topology' %
-                    (sw.name, south_link.get('south_node')))
-
-            if device is not None:
-                table_entry = self.p4info_helper.build_table_entry(
-                    table_name='{}.data_inspection_t'.format(self.p4_ingress),
-                    match_fields={
-                        'hdr.ethernet.src_mac': device['mac']
-                    },
-                    action_name='{}.data_inspect_packet'.format(
-                        self.p4_ingress),
-                    action_params={
-                        'device': device['id'],
-                        'switch_id': sw_info['id']
-                    })
-                sw.write_table_entry(table_entry)
-                logger.info(
-                    'Installed Northbound Packet Inspection from %s',
-                    device.get('mac'))
-        else:
-            logger.info('No south links to install')

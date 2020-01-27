@@ -66,6 +66,7 @@ class AbstractController(object):
         :param north_facing_links: northbound links
         :param south_facing_links: southbound links
         """
+        logger.info('Creating rules for switch type - [%s]', self.switch_type)
         for north_link in north_facing_links:
             logger.info('Creating rules for the north link - [%s]', north_link)
             self.make_north_rules(sw, sw_info, north_link)
@@ -78,7 +79,46 @@ class AbstractController(object):
         raise NotImplemented
 
     def make_south_rules(self, sw, sw_info, south_link):
-        raise NotImplemented
+        if south_link.get('south_facing_port'):
+            logger.info('Creating south switch rules - [%s]', south_link)
+            if self.topo['switches'].get(south_link['south_node']):
+                device = self.topo['switches'][south_link['south_node']]
+                logger.info(
+                    'This: %s connects to south switch: %s on physical '
+                    'port %s to physical port %s',
+                    sw_info['name'], device['name'],
+                    str(south_link.get('south_facing_port')),
+                    str(south_link.get('north_facing_port')))
+            elif self.topo['hosts'].get(south_link['south_node']) is not None:
+                device = self.topo['hosts'][south_link['south_node']]
+                logger.info(
+                    'This: %s connects to Device: %s on physical '
+                    'port %s',
+                    sw_info['name'], device['name'],
+                    str(south_link.get('south_facing_port')))
+            else:
+                raise StandardError(
+                    'South Bound Link for %s, %s does not exist in topology' %
+                    (sw.name, south_link.get('south_node')))
+
+            if device is not None:
+                action_params = {
+                        'device': device['id'],
+                        'switch_id': sw_info['id']
+                }
+                table_entry = self.p4info_helper.build_table_entry(
+                    table_name='{}.data_inspection_t'.format(self.p4_ingress),
+                    match_fields={'hdr.ethernet.src_mac': device['mac']},
+                    action_name='{}.data_inspect_packet'.format(
+                        self.p4_ingress),
+                    action_params=action_params)
+                sw.write_table_entry(table_entry)
+                logger.info(
+                    'Installed Northbound Packet Inspection for device - [%s]'
+                    ' with MAC - [%s] with action params - [%s]',
+                    self.switch_type, device.get('mac'), action_params)
+        else:
+            logger.info('No south links to install')
 
     def __add_helpers(self):
         logger.info('Setting up helpers')
@@ -198,6 +238,9 @@ class AbstractController(object):
         south_facing_links = filter(
             lambda item: all((item[k] == v for (k, v) in conditions.items())),
             self.topo['links'])
+
+        logger.debug('Links: north - [%s], south - [%s]',
+                     north_facing_links, south_facing_links)
         return sw_info, north_facing_links, south_facing_links
 
     def __setup_bmv2_helper(self, name, switch):

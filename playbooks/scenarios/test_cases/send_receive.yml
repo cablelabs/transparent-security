@@ -39,8 +39,14 @@
         state: touch
         mode: 0777
 
+    - set_fact:
+        receive_cmd: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/receive_packets.py -i {{ receiver }}-eth0 -f {{ receiver_log_file }}"
+
+    - debug:
+        var: receive_cmd
+
     - name: Receive and log packets from "{{ receiver }}" logged at {{ receiver_log_file }} with async timeout {{ receive_timeout }}
-      shell: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/receive_packets.py -i {{ receiver }}-eth0 -f {{ receiver_log_file }}"
+      shell: "{{ receive_cmd }}"
       async: "{{ receive_timeout }}"
       poll: 0
 
@@ -68,8 +74,14 @@
         state: touch
         mode: 0777
 
+    - set_fact:
+        send_cmd: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/send_packets.py -y {{ send_delay }} -i {{ interval }} -it {{ loops }} -itd {{ loop_delay }} -z {{ sender_intf }} -r {{ send_to_ip }} -sp {{ send_src_port }} -p {{ send_port }} -f {{ sender_log_file }} -c {{ packet_count }} -s {{ dst_switch_mac }} -m '{{ send_msg }}'"
+
+    - debug:
+        var: send_cmd
+
     - name: Sending {{ packet_count }} UDP packets to {{ send_to_ip }}:{{ send_port }} and dst_mac {{ dst_switch_mac }} every {{ interval }} seconds {{ loops }}x each with a delay between bursts of {{ loop_delay }} seconds from {{ sender }} after delay {{ send_delay}}
-      shell: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/send_packets.py -y {{ send_delay }} -i {{ interval }} -it {{ loops }} -itd {{ loop_delay }} -z {{ sender_intf }} -r {{ send_to_ip }} -sp {{ send_src_port }} -p {{ send_port }} -f {{ sender_log_file }} -c {{ packet_count }} -s {{ dst_switch_mac }} -m '{{ send_msg }}'"
+      shell: "{{ send_cmd }}"
       async: 180
 
 # Validate sent packets were received

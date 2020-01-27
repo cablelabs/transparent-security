@@ -31,7 +31,9 @@ parser TpsGwParser(packet_in packet,
 
     state parse_ethernet {
         packet.extract(hdr.ethernet);
-        transition  parse_ipv4;
+        transition select(hdr.ethernet.src_mac) {
+            default:  parse_ipv4;
+        }
     }
 
     state parse_ipv4 {
@@ -62,7 +64,9 @@ parser TpsAggParser(packet_in packet,
 
     state parse_ethernet {
         packet.extract(hdr.ethernet);
-        transition parse_ipv4;
+        transition select(hdr.ethernet.src_mac) {
+            default:  parse_ipv4;
+        }
     }
 
     state parse_ipv4 {
@@ -75,7 +79,7 @@ parser TpsAggParser(packet_in packet,
 
     state parse_int_shim {
         packet.extract(hdr.int_shim);
-        transition accept;
+        transition parse_int_hdr;
     }
 
     state parse_int_hdr {
@@ -99,7 +103,9 @@ parser TpsCoreParser(packet_in packet,
 
     state parse_ethernet {
         packet.extract(hdr.ethernet);
-        transition  parse_ipv4;
+        transition select(hdr.ethernet.src_mac) {
+            default:  parse_ipv4;
+        }
     }
 
     state parse_ipv4 {
