@@ -64,8 +64,8 @@ External Gateway INT Data header definition
 header int_ip_shim_t { /* 4 */
     bit<8>  type;
     bit<8>  reserved;
-    bit<8>  next_proto;
     bit<8>  length;
+    bit<8>  next_proto;
 }
 
 header int_header_t { /* 8 */
