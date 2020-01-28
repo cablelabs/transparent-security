@@ -62,7 +62,7 @@ control TpsAggIngress(inout headers hdr,
         hdr.int_shim.length = hdr.int_shim.length + 12;
 
         hdr.int_meta.switch_id = switch_id;
-        hdr.int_meta.orig_mac = hdr.ethernet.src_mac;
+        hdr.int_meta.orig_mac = 0XFFFFFFFFFFFF;
 
         forwardedPackets.count(device);
     }

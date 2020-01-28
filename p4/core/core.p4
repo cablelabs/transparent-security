@@ -88,7 +88,7 @@ control TpsCoreIngress(inout headers hdr,
         hdr.int_meta_2.switch_id = hdr.int_meta.switch_id;
         hdr.int_meta_2.orig_mac = hdr.int_meta.orig_mac;
         hdr.int_meta.switch_id = switch_id;
-        hdr.int_meta.orig_mac = hdr.ethernet.src_mac;
+        hdr.int_meta.orig_mac = 0xFFFFFFFFFFFF;
 
         /* TODO - this action is not resulting with the INT packet being
              egressed to the configured port (3 in this use case), therefore

@@ -70,7 +70,7 @@ function tps_proto.dissector(buffer,pinfo,tree)
         switch_id = buffer(header_offset,4):uint()
         metaTree:add(buffer(header_offset,4),"Switch ID: " .. switch_id)
         device_mac = octet_to_mac(buffer(header_offset+4,6))
-        metaTree:add(buffer(header_offset+4,6),"Device MAC address: " .. device_mac)
+        metaTree:add(buffer(header_offset+4,6),"Originating Device MAC address: " .. device_mac)
         total_hops = total_hops - 1
         header_offset = header_offset + metalen
     end
