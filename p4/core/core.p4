@@ -25,7 +25,6 @@
 #define BMV2_V1MODEL_INSTANCE_TYPE_INGRESS_CLONE 1
 #define IS_I2E_CLONE(std_meta) (std_meta.instance_type == BMV2_V1MODEL_INSTANCE_TYPE_INGRESS_CLONE)
 #define IOAM_CLONE_SPEC 0x1000
-
 const bit<32> I2E_CLONE_SESSION_ID = 5;
 
 /*************************************************************************
@@ -36,19 +35,25 @@ control TpsCoreIngress(inout headers hdr,
                        inout metadata meta,
                        inout standard_metadata_t standard_metadata) {
 
-    counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) forwardedPackets;
-
     action data_forward(macAddr_t dstAddr, egressSpec_t port) {
+        /*
+        TODO/FIXME - data_inspection should be forwarding to port 3 but is
+            not so I added this line in
+        */
+        clone3(CloneType.I2E, I2E_CLONE_SESSION_ID, standard_metadata);
+
         hdr.ipv4.protocol = hdr.int_shim.next_proto;
         hdr.int_shim.setInvalid();
         hdr.int_header.setInvalid();
         hdr.int_meta.setInvalid();
         hdr.int_meta_2.setInvalid();
+        hdr.int_meta_3.setInvalid();
 
         /*
         TODO - find a better means for resetting the totalLen value after
            invalidating the INT headers which will be problematic when
-           implementing header stacks for holding switch_ids */
+           implementing header stacks for holding switch_ids
+       */
         hdr.ipv4.totalLen = hdr.ipv4.totalLen - 36;
 
         standard_metadata.egress_spec = port;
@@ -69,8 +74,8 @@ control TpsCoreIngress(inout headers hdr,
         default_action = NoAction();
     }
 
-    action data_inspect_packet(bit<32> device, bit<32> switch_id) {
-        hdr.int_meta.setValid();
+    action data_inspect_packet(bit<32> switch_id, egressSpec_t egress_port) {
+        hdr.int_meta_3.setValid();
 
         hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt - 1;
 
@@ -78,10 +83,20 @@ control TpsCoreIngress(inout headers hdr,
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + 12;
         hdr.int_shim.length = hdr.int_shim.length + 12;
 
+        hdr.int_meta_3.switch_id = hdr.int_meta_2.switch_id;
+        hdr.int_meta_3.orig_mac = hdr.int_meta_2.orig_mac;
+        hdr.int_meta_2.switch_id = hdr.int_meta.switch_id;
+        hdr.int_meta_2.orig_mac = hdr.int_meta.orig_mac;
         hdr.int_meta.switch_id = switch_id;
         hdr.int_meta.orig_mac = hdr.ethernet.src_mac;
 
-        forwardedPackets.count(device);
+        /* TODO - this action is not resulting with the INT packet being
+             egressed to the configured port (3 in this use case), therefore
+             I added clone3() to data_forward() to ensure the AE is receiving
+             the required packets */
+        standard_metadata.egress_spec = egress_port;
+
+        recirculate<standard_metadata_t>(standard_metadata);
     }
 
     table data_inspection_t {
@@ -96,23 +111,13 @@ control TpsCoreIngress(inout headers hdr,
         default_action = NoAction();
     }
 
-    action data_clone() {
-        clone3(CloneType.I2E, I2E_CLONE_SESSION_ID, standard_metadata);
-    }
-
-    table data_clone_t {
-        actions = {
-            data_clone;
-            NoAction;
-        }
-        default_action = data_clone;
-    }
-
      apply {
         if (hdr.ipv4.isValid()) {
-            data_inspection_t.apply();
-            data_clone_t.apply();
-            data_forward_t.apply();
+            if (standard_metadata.instance_type == 0) {
+                data_inspection_t.apply();
+            } else {
+                data_forward_t.apply();
+            }
         }
     }
 }

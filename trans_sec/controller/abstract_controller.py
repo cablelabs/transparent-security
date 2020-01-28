@@ -102,23 +102,12 @@ class AbstractController(object):
                     (sw.name, south_link.get('south_node')))
 
             if device is not None:
-                action_params = {
-                        'device': device['id'],
-                        'switch_id': sw_info['id']
-                }
-                table_entry = self.p4info_helper.build_table_entry(
-                    table_name='{}.data_inspection_t'.format(self.p4_ingress),
-                    match_fields={'hdr.ethernet.src_mac': device['mac']},
-                    action_name='{}.data_inspect_packet'.format(
-                        self.p4_ingress),
-                    action_params=action_params)
-                sw.write_table_entry(table_entry)
-                logger.info(
-                    'Installed Northbound Packet Inspection for device - [%s]'
-                    ' with MAC - [%s] with action params - [%s]',
-                    self.switch_type, device.get('mac'), action_params)
+                self.add_data_inspection(sw, device, sw_info)
         else:
             logger.info('No south links to install')
+
+    def add_data_inspection(self, sw, device, sw_info):
+        pass
 
     def __add_helpers(self):
         logger.info('Setting up helpers')

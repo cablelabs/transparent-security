@@ -22,7 +22,7 @@ from scapy.layers.l2 import Ether
 
 from trans_sec.analytics.oinc import SimpleAE
 from trans_sec.packet.inspect_layer import (
-    IntShim, IntMeta, IntMeta2, IntHeader)
+    IntShim, IntMeta2, IntHeader, IntMeta3, IntMeta1)
 from trans_sec.utils.http_session import HttpSession
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -50,7 +50,7 @@ class SimpleAETests(unittest.TestCase):
                IP(dst='10.1.0.1', src='10.2.0.1', proto=0xfd) /
                IntShim() /
                IntHeader() /
-               IntMeta() /
+               IntMeta1() /
                IntMeta2() /
                UDP(dport=1234, sport=1234) /
                'hello transparent-security')
@@ -65,12 +65,14 @@ class SimpleAETests(unittest.TestCase):
                IP(dst='10.1.0.1', src='10.2.0.1', proto=0xfd) /
                IntShim() /
                IntHeader() /
-               IntMeta() /
+               IntMeta1() /
                IntMeta2() /
+               IntMeta3() /
                UDP(dport=1234, sport=1234) /
                'hello transparent-security')
 
         for index in range(0, self.ae.packet_count + 1):
+            logger.debug('Processing packet #%s', index)
             ret_val = self.ae.process_packet(pkt, 0xfd)
             if index < self.ae.packet_count:
                 self.assertFalse(ret_val)
@@ -86,8 +88,9 @@ class SimpleAETests(unittest.TestCase):
                 IP(dst='10.1.0.1', src='10.2.0.1', proto=0xfd) /
                 IntShim() /
                 IntHeader() /
-                IntMeta() /
-                IntMeta2(orig_mac='ff:ff:ff:ff:ff:ff') /
+                IntMeta1() /
+                IntMeta2() /
+                IntMeta3(orig_mac='ff:ff:ff:ff:ff:ff') /
                 UDP(dport=1234, sport=1234) /
                 'hello transparent-security')
 
@@ -95,8 +98,9 @@ class SimpleAETests(unittest.TestCase):
                 IP(dst='10.1.0.1', src='10.2.0.1', proto=0xfd) /
                 IntShim() /
                 IntHeader() /
-                IntMeta() /
-                IntMeta2(orig_mac='ff:ff:ff:ff:ff:aa') /
+                IntMeta1() /
+                IntMeta2() /
+                IntMeta3(orig_mac='ff:ff:ff:ff:ff:aa') /
                 UDP(dport=1234, sport=1234) /
                 'hello transparent-security')
 

@@ -23,7 +23,7 @@ from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import Ether
 
 from trans_sec.packet.inspect_layer import (
-    IntHeader, IntMeta1, IntMeta2, IntShim)
+    IntHeader, IntMeta1, IntMeta2, IntShim, IntMeta3)
 
 logger = logging.getLogger('oinc')
 
@@ -57,9 +57,9 @@ class PacketAnalytics(object):
         bind_layers(IP, IntShim)
         bind_layers(IntShim, IntHeader)
         bind_layers(IntHeader, IntMeta1)
-        # bind_layers(IntMeta, UDP)
         bind_layers(IntMeta1, IntMeta2)
-        bind_layers(IntMeta2, UDP)
+        bind_layers(IntMeta2, IntMeta3)
+        bind_layers(IntMeta3, UDP)
         logger.debug("Completed bind_layers")
         sniff(iface=iface,
               prn=lambda packet: self.handle_packet(packet, ip_proto),
@@ -110,11 +110,13 @@ def extract_int_data(packet):
 
     try:
         out = dict(
-            devMac=packet[IntMeta2].orig_mac,
+            devMac=packet[IntMeta3].orig_mac,
             devAddr=packet[IP].src,
             # TODO/FIXME - Will need to grab the last one once we have a list
             #  of IntMeta
+            switchId1=packet[IntMeta1].switch_id,
             switchId2=packet[IntMeta2].switch_id,
+            switchId3=packet[IntMeta3].switch_id,
             dstAddr=packet[IP].dst,
             dstPort=packet[UDP].dport,
             protocol=packet[IP].proto,

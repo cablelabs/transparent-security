@@ -69,3 +69,10 @@ class IntMeta2(IntMeta):
     This class represents the second INT metadata being placed onto the packets
     """
     name = "INT_META_2"
+
+
+class IntMeta3(IntMeta):
+    """
+    This class represents the third INT metadata being placed onto the packets
+    """
+    name = "INT_META_3"

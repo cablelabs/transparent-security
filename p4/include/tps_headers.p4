@@ -103,5 +103,6 @@ struct headers {
     int_header_t   int_header;
     int_metadata_t int_meta;
     int_metadata_t int_meta_2;
+    int_metadata_t int_meta_3;
     udp_t          udp;
 }
