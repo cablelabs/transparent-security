@@ -24,7 +24,6 @@ parser TpsGwParser(packet_in packet,
                    out headers hdr,
                    inout metadata meta,
                    inout standard_metadata_t standard_metadata) {
-
     state start {
         transition parse_ethernet;
     }
@@ -55,7 +54,6 @@ parser TpsAggParser(packet_in packet,
                     out headers hdr,
                     inout metadata meta,
                     inout standard_metadata_t standard_metadata) {
-
     state start {
         transition parse_ethernet;
     }
@@ -84,7 +82,6 @@ parser TpsAggParser(packet_in packet,
         packet.extract(hdr.int_header);
         transition accept;
     }
-
 }
 
 /*************************************************************************
@@ -94,7 +91,6 @@ parser TpsCoreParser(packet_in packet,
                      out headers hdr,
                      inout metadata meta,
                      inout standard_metadata_t standard_metadata) {
-
     state start {
         transition parse_ethernet;
     }
@@ -138,7 +134,5 @@ parser TpsCoreParser(packet_in packet,
     state parse_int_meta_3 {
         packet.extract(hdr.int_meta_3);
         transition accept;
-        }
     }
-
 }
