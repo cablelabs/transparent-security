@@ -25,8 +25,8 @@
         path: "{{ remote_scripts_dir }}"
         state: directory
 
-    - name: copy topology configuration file
+    - name: Apply topology configuration template {{ topology_template }} to {{ topo_file_loc }}
       become: yes
       template:
-        src: templates/topology_template.yaml.j2
+        src: "{{ topology_template }}"
         dest: "{{ topo_file_loc }}"

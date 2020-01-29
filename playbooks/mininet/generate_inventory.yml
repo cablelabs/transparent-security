@@ -51,3 +51,4 @@
         - "sdn_url=http://{{ sdn_host }}:{{ sdn_port }}"
         - "clone_egress_port={{ clone_egress_port }}"
         - "run_daemons={{ run_daemons }}"
+        - "scenario_name={{ scenario_name }}"
