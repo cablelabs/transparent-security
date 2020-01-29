@@ -70,7 +70,3 @@ if __name__ == '__main__':
         controller = GatewayController()
     else:
         raise NotImplemented
-
-    logger.info('%s running indefinitely', controller.__class__)
-    while True:
-        pass
