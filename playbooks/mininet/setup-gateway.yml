@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-
 # Copyright (c) 2019 Cable Television Laboratories, Inc.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,10 +10,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-# Stops then starts mininet with the given topology
-{% if run_daemons %}
-mn -c; python {{ remote_tps_dir }}/bin/run_p4_mininet.py -t {{ topo_file_loc }} -l {{ srvc_log_dir }} -dc {{ devices_conf_file }} -lp {{ load_p4 | default('False') }}
-{% else %}
-mn -c; python {{ remote_tps_dir }}/bin/run_p4_mininet.py -t {{ topo_file_loc }} -l {{ srvc_log_dir }} -lp {{ load_p4 | default('False') }}
-{% endif %}
+---
+- import_playbook: generate_topology.yml
+  vars:
+    host_val: localhost
+    topology_template: "templates/topology_template-{{ scenario_name }}.yml.j2"
+
+- import_playbook: start_mininet.yml
+  vars:
+    host_val: localhost
+    service_name: tps-mininet
+    srvc_desc: 'Mininet for TPS'
+    local_srvc_script_tmplt_file: ../general/templates/mininet_service.sh.j2
+    srvc_start_pause_time: 20
+    port_to_wait: 50051
+    load_p4: True
