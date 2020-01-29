@@ -15,10 +15,10 @@
   vars:
     host_val: localhost
     service_name: tps-mininet
-    srvc_desc: 'Mininet for gateway.p4'
+    srvc_desc: 'Mininet for core.p4'
     local_srvc_script_tmplt_file: ../general/templates/mininet_service.sh.j2
     srvc_start_pause_time: 20
     port_to_wait: 50051
     load_p4: True
     p4_progs:
-      - gateway
+      - core
