@@ -52,5 +52,7 @@ variable "remote_tps_dir" {default = "/home/ubuntu/transparent-security"}
 variable "LOCAL_INVENTORY" {default = "../../../playbooks/mininet/local_inventory.yml"}
 variable "SETUP_MININET_HOST" {default = "../../../playbooks/mininet/setup_host.yml"}
 variable "remote_scenario_pb_dir" {default = "/home/ubuntu/transparent-security/playbooks/scenarios"}
-variable "scenario_name" {default = "simple"}
-variable "setup_mininet" {default = "setup_mininet.yml"}
+
+# Scenario variables - Default to 6 switches running the udp-flood integration test
+variable "scenario_name" {default = "full"}
+variable "test_case" {default = "udp-flood"}
