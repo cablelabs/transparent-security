@@ -32,16 +32,15 @@ def program_switch(addr, device_id, p4info_fpath, bmv2_json_fpath,
         address=addr, device_id=device_id, proto_dump_file=proto_dump_fpath)
     sw.master_arbitration_update()
     logger.info("Setting pipeline config with file - [%s]", bmv2_json_fpath)
+
+    device_config = sw.build_device_config(bmv2_json_file_path=bmv2_json_fpath)
     sw.set_forwarding_pipeline_config(
-        p4info=p4info_helper.p4info, bmv2_json_file_path=bmv2_json_fpath)
+        p4info=p4info_helper.p4info, device_config=device_config)
 
     if table_entries:
         for entry in table_entries:
             logger.info('Inserting table entry - [%s]', entry)
             insert_table_entry(sw, entry, p4info_helper)
-
-    # TODO - Why is the switch being shutdown here???
-    # sw.shutdown()
 
 
 def insert_table_entry(sw, flow, p4info_helper):

@@ -172,6 +172,8 @@ class ExerciseRunner:
                 switch_json : string  // Path to a compiled p4 json for bmv2
         """
 
+        logger.info('Instantiating P4 Mininet exercise with topology - [%s]',
+                    topo)
         self.hosts = topo['hosts']
         self.switches = topo['switches']
         self.external = topo.get('external')
@@ -241,7 +243,7 @@ class ExerciseRunner:
         """
         switch_class = self.__configure_p4_switch()
 
-        logger.info('Starting mininet')
+        logger.info('Starting mininet with topology - [%s]', self.topo)
         return Mininet(
             topo=self.topo, link=TCLink, host=P4Host, switch=switch_class,
             autoPinCpus=True)
@@ -274,11 +276,13 @@ class ExerciseRunner:
         return ConfiguredMininetSwitch
 
     def __add_external_connections(self):
-        for link in self.links:
-            external = self.external.get(link['north_node'])
-            if external is not None:
-                sw_obj = self.mininet.get(link['south_node'])
-                Intf(external['id'], node=sw_obj)
+        if self.external:
+            logger.info('External dict contents - [%s]', self.external)
+            for link in self.links:
+                external = self.external.get(link['north_node'])
+                if external is not None:
+                    sw_obj = self.mininet.get(link['south_node'])
+                    Intf(external['id'], node=sw_obj)
 
     def __program_switch_p4runtime(self, sw_dict):
         """ This method will use P4Runtime to program the switch using the
@@ -289,7 +293,7 @@ class ExerciseRunner:
         grpc_port = sw_obj.grpc_port
         device_id = sw_obj.device_id
         outfile = '%s/%s-p4rt-exercise.log' % (self.log_dir, sw_name)
-        logger.info('Programming switch - [%s]', sw_name)
+        logger.info('Programming switch - [%s]', sw_dict)
         simple_controller.program_switch(
             addr='127.0.0.1:%d' % grpc_port,
             device_id=device_id,
@@ -327,7 +331,9 @@ class ExerciseRunner:
                 self.__program_switch_p4runtime(sw)
 
     def __program_hosts(self):
+        logger.info('Programming hosts with values - [%s]', self.hosts)
         for name, host in self.hosts.items():
+            logger.debug('Programming host - [%s]', host)
             h = self.mininet.get(host['name'])
             h_iface = h.intfs.values()[0]
             link = h_iface.link
