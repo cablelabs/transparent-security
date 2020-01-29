@@ -14,6 +14,7 @@
 - import_playbook: generate_topology.yml
   vars:
     host_val: localhost
+    template: "templates/topology_template-{{ scenario }}.yml"
 
 - import_playbook: start_mininet.yml
   vars:
