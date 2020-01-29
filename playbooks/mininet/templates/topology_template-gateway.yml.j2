@@ -14,16 +14,16 @@
 
 # IP values must be the third address in an IPv4 /30 CIDR block for running CI
 hosts:
-  host_out:
-    name: host_out
+  host1:
+    name: host1
     id: 1
     switch_ip: 192.168.1.254
     ip: 192.168.1.2
     ip_port: any
     mac: 00:00:00:00:01:01
     type: webcam
-  host_in:
-    name: host_in
+  host2:
+    name: host2
     id: 2
     switch_ip: 10.2.5.254
     ip: 10.2.5.2
@@ -40,13 +40,20 @@ switches:
     type: gateway
     mac: 00:00:00:01:01:00
     grpc: 127.0.0.1:50053
+external:
+  analytics_engine:
+    name: ae
+    id: {{ ae_dev_intf }}
+    ip: {{ ae_ip }}
+    ip_port: 0
+    mac: {{ switch_mac }}
 links:
   - north_node: gateway
-    south_node: host_out
+    south_node: host1
     south_facing_port: 1
     latency: 0ms
     bandwidth: null
-  - north_node: host_out
+  - north_node: host2
     south_node: gateway
     north_facing_port: 2
     latency: 0ms
