@@ -23,6 +23,10 @@
         path: "{{ remote_scripts_dir }}/p4"
         state: directory
 
+    - name: Copy TPS P4 includes from {{ trans_sec_dir }}/p4/include/* to {{ share_dir }}/share/p4c/p4include/
+      become: yes
+      shell: "cp {{ trans_sec_dir }}/p4/include/* {{ share_dir }}/share/p4c/p4include/"
+
     - name: Compile P4 programs {{ p4_progs }}
       command: "p4c-bm2-ss --p4v 16 --p4runtime-format text --p4runtime-file {{ remote_scripts_dir }}/p4/{{ item }}.p4info -o {{ remote_scripts_dir }}/p4/{{ item }}.json {{ remote_tps_dir }}/p4/{{ item }}/{{ item }}.p4"
       loop: "{{ p4_progs }}"
