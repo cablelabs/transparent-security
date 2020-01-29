@@ -68,7 +68,3 @@ if __name__ == '__main__':
 
     for entry in topo:
         simple_controller.insert_table_entry(entry)
-
-    logger.info('Exercise Runner running indefinitely')
-    while True:
-        pass
