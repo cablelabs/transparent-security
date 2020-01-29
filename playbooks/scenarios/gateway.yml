@@ -13,61 +13,22 @@
 # Simple scenario where packets are sent through 3 devices and only the last
 # one will be demonstrating dropped packets
 ---
-# Sending 25 packets within a second 1x through gateway 1
+# Sending 1 UDP packet
 - import_playbook: test_cases/send_receive.yml
   vars:
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-    inet_ip: "{{ topo_dict['hosts']['inet'].ip }}"
-    gateway1_mac: "{{ topo_dict['switches']['gateway1'].mac }}"
+    host2_ip: "{{ topo_dict['hosts']['host2'].ip }}"
+    gateway_mac: "{{ topo_dict['switches']['gateway'].mac }}"
 
-    receiver: node2
-    receiver_log_file: "{{ host_log_dir }}/receiver-inet-1.out"
-    sender: node1
-    sender_intf: "{{ host_sender_intf | default('node1-eth0') }}"
-    sender_log_filename: sender-node1.out
+    receiver: host2
+    receiver_log_file: "{{ host_log_dir }}/receiver-host2-1.out"
+    sender: host1
+    sender_intf: "{{ host_sender_intf | default('host1-eth0') }}"
+    sender_log_filename: sender-host1.out
     send_port: 4321
     send_src_port: 5432
-    send_to_ip: "{{ inet_ip }}"
+    send_to_ip: "{{ host2_ip }}"
     send_packet_count: 1
-    dst_switch_mac: "{{ gateway1_mac }}"
-
-# Sending 50 packets within a second 1x through gateway 2
-- import_playbook: test_cases/send_receive.yml
-  vars:
-    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-    inet_ip: "{{ topo_dict['hosts']['inet'].ip }}"
-    gateway2_mac: "{{ topo_dict['switches']['gateway2'].mac }}"
-
-    receiver: inet
-    receiver_log_file: "{{ host_log_dir }}/receiver-inet-2.out"
-    sender: Camera2
-    sender_intf: "{{ host_sender_intf | default('Camera2-eth0') }}"
-    sender_log_filename: sender-Camera2.out
-    send_port: 4322
-    send_src_port: 5433
-    send_to_ip: "{{ inet_ip }}"
-    send_packet_count: 50
-    dst_switch_mac: "{{ gateway2_mac }}"
-
-# Sending 150 packets within a second 2x through gateway 3.
-# The second set should be dropped else this will fail
-- import_playbook: test_cases/send_receive.yml
-  vars:
-    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-    inet_ip: "{{ topo_dict['hosts']['inet'].ip }}"
-    gateway3_mac: "{{ topo_dict['switches']['gateway3'].mac }}"
-
-    receiver: inet
-    receiver_log_file: "{{ host_log_dir }}/receiver-inet-3.out"
-    min_received_packet_count: 99
-    max_received_packet_count: 150
-    sender: Camera3
-    sender_intf: "{{ host_sender_intf | default('Camera3-eth0') }}"
-    sender_log_filename: sender-Camera3.out
-    send_port: 4323
-    send_src_port: 5434
-    send_to_ip: "{{ inet_ip }}"
-    send_packet_count: 150
-    send_loops: 2
-    send_loop_delay: 30
-    dst_switch_mac: "{{ gateway3_mac }}"
+    dst_switch_mac: "{{ gateway_mac }}"
+    min_received_packet_count: 0
+    max_received_packet_count: 0
