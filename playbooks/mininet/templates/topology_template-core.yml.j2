@@ -1,0 +1,60 @@
+# Copyright (c) 2019 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+
+# IP values must be the third address in an IPv4 /30 CIDR block for running CI
+hosts:
+  host1:
+    name: host1
+    id: 1
+    switch_ip: 192.168.1.254
+    ip: 192.168.1.2
+    ip_port: any
+    mac: 00:00:00:00:01:01
+    type: webcam
+  host2:
+    name: host2
+    id: 2
+    switch_ip: 10.2.5.254
+    ip: 10.2.5.2
+    ip_port: any
+    mac: 00:00:00:00:02:02
+    type: server
+switches:
+  core:
+    name: core
+    id: 0
+    runtime_p4info: {{ remote_scripts_dir }}/p4/core.p4info
+    runtime_json: {{ remote_scripts_dir }}/p4/core.json
+    subnet: 10.1.1.0
+    type: core
+    mac: 00:00:00:01:01:00
+    grpc: 127.0.0.1:50053
+external:
+  analytics_engine:
+    name: ae
+    id: {{ ae_dev_intf }}
+    ip: {{ ae_ip }}
+    ip_port: 0
+    mac: {{ switch_mac }}
+links:
+  - north_node: core
+    south_node: host1
+    south_facing_port: 1
+    latency: 0ms
+    bandwidth: null
+  - north_node: host2
+    south_node: core
+    north_facing_port: 2
+    latency: 0ms
+    bandwidth: null
