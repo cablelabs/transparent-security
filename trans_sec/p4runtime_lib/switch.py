@@ -130,6 +130,7 @@ class SwitchConnection(object):
         logger.debug('Request for reading table entries to device %s - [%s]',
                      self.device_id, request.device_id)
         for response in self.client_stub.Read(request):
+            logger.info('Table read response - [%s]', response)
             yield response
 
     def write_clone_entries(self, pre_entry):

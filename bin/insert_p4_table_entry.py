@@ -13,25 +13,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import argparse
-import json
 import logging
 import sys
+
 import yaml
 
-from trans_sec.controller import simple_controller
+from trans_sec.p4runtime_lib.bmv2 import Bmv2SwitchConnection
+from trans_sec.p4runtime_lib.helper import P4InfoHelper
 
-logger = logging.getLogger('')
+logger = logging.getLogger('insert_p4_table_entry')
 
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-l', '--log-dir', type=str, required=True,
-                        default=None)
-    parser.add_argument('-lf', '--log-file', type=str, required=False,
-                        default='run_p4_mininet.log')
+    parser.add_argument('-a', '--grpc_addr', type=str, required=True,
+                        help='Switch grpc host:port')
+    parser.add_argument('-d', '--dev_id', type=int, required=False, default=0,
+                        help='The device ID (default 0)')
+    parser.add_argument(
+        '-p', '--p4-info-fpath', type=str, required=False, default=0,
+        help='The file path of the switch associated p4info file')
     parser.add_argument('-tc', '--table-config',
                         help='Table insertion config file',
                         type=str, required=False)
+    parser.add_argument('-l', '--log-dir', type=str, required=False,
+                        default=None)
+    parser.add_argument('-lf', '--log-file', type=str, required=False,
+                        default='insert_p4_table.log')
     return parser.parse_args()
 
 
@@ -54,17 +62,34 @@ def read_yaml_file(config_file_path):
 
 
 if __name__ == '__main__':
+    """
+    Inserts entries into P4 tables based on the entries within table config
+    file
+    """
     args = get_args()
-    log_file = '{}/{}'.format(args.log_dir, args.log_file)
-    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG,
-                        filename=log_file)
-
-    topo_file = args.topo
-    if topo_file.endswith('json'):
-        with open(topo_file, 'r') as f:
-            topo = json.load(f)
+    if args.log_dir and args.log_file:
+        log_file = '{}/{}'.format(args.log_dir, args.log_file)
+        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG,
+                            filename=log_file)
     else:
-        topo = read_yaml_file(args.table_config)
+        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
-    for entry in topo:
-        simple_controller.insert_table_entry(entry)
+    table_entry_config = read_yaml_file(args.table_config)
+
+    logger.info('Connecting to BMV2 Switch #[%s] at [%s] loaded with P4 [%s]',
+                args.dev_id, args.grpc_addr, args.p4_info_fpath)
+    p4info_helper = P4InfoHelper(args.p4_info_fpath)
+    switch = Bmv2SwitchConnection(
+        name='test', address=args.grpc_addr, device_id=args.dev_id)
+    switch.master_arbitration_update()
+
+    for entry_config in table_entry_config:
+        logger.info('Entry config - [%s]', entry_config)
+        table_entry = p4info_helper.build_table_entry(
+            table_name=entry_config['table_name'],
+            match_fields=entry_config.get('match_fields'),
+            action_name=entry_config['action_name'],
+            action_params=entry_config.get('action_params'),
+        )
+        logger.info('Writing table entry - [%s]', table_entry)
+        switch.write_table_entry(table_entry)
