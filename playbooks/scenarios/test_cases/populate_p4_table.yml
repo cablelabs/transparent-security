@@ -1,0 +1,44 @@
+# Copyright (c) 2019 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# integration test case where one host creates a packet sniffer and another
+# sends packets. The validation routine counts the number received via the
+# receiver's log file
+---
+
+# Adds a table entry to a P4 switch
+- hosts: localhost
+  gather_facts: no
+  vars:
+    table_entry_config: "{{ te_conf_file }}"
+    log_dir: "{{ p4_te_log_dir }}"
+    log_file: "{{ p4_te_log_file }}"
+  tasks:
+    - name: Create config
+      template:
+        src: ../templates/table_entry.yml.j2
+        dest: "{{ table_entry_config }}"
+      vars:
+        p4_ingress_name: "{{ p4_ingress_classname }}"
+        table_name: "{{ p4_table_name }}"
+        match_fields: "{{ p4_table_match_fields }}"
+        action_params: "{{ p4_table_action_params | default('') }}"
+        action_name: "{{ p4_action_name }}"
+
+    - set_fact:
+        add_table_entry: "/usr/bin/python {{ remote_tps_dir }}/bin/insert_p4_table_entry.py -a {{ grpc_addr }} -d {{ switch_id | default('0') }} -p {{ p4_info_fpath }} -tc {{ table_entry_config }} -l {{ log_dir }} -lf {{ log_file }}"
+
+    - debug:
+        var: add_table_entry
+
+    - name: Adding requested table entry to {{ grpc_addr }} and {{ table_entry_config }} file
+      shell: "{{ add_table_entry }}"

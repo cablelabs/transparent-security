@@ -20,16 +20,16 @@
   gather_facts: no
   vars:
     receive_timeout: "{{ receiver_timeout_seconds | default(999999) }}"
-    receiver_log_file: "{{ host_log_dir}}/{{ reciever_log_filename }}"
+    receiver_log_file: "{{ host_log_dir }}/{{ reciever_log_filename }}"
   tasks:
     - name: Remove {{ receiver_log_file }} from {{ receiver }}
       file:
         path: "{{ receiver_log_file }}"
         state: absent
 
-    - name: Create receiver log directory {{ host_log_dir}}
+    - name: Create receiver log directory {{ host_log_dir }}
       file:
-        path: "{{ host_log_dir}}"
+        path: "{{ host_log_dir }}"
         state: directory
         mode: 0777
 
@@ -56,19 +56,19 @@
   vars:
     packet_count: "{{ send_packet_count | default(1) }}"
     send_msg: "{{ the_message | default('hello transparent-security') }}"
-    send_delay: "{{ send_packets_delay | default(15) }}"
+    send_delay: "{{ send_packets_delay | default(1) }}"
     interval: "{{ send_interval | default(0.005) }}"
     loops: "{{ send_loops | default(1) }}"
     loop_delay: "{{ send_loop_delay | default(1) }}"
-    sender_log_file: "{{ host_log_dir}}/{{ sender_log_filename }}"
+    sender_log_file: "{{ host_log_dir }}/{{ sender_log_filename }}"
   tasks:
-    - name: Create sender log directory {{ host_log_dir}}
+    - name: Create sender log directory {{ host_log_dir }}
       file:
-        path: "{{ host_log_dir}}"
+        path: "{{ host_log_dir }}"
         state: directory
         mode: 0777
 
-    - name: Create sender log file {{ host_log_dir}}/{{ sender_log_filename }}
+    - name: Create sender log file {{ host_log_dir }}/{{ sender_log_filename }}
       file:
         path: "{{ sender_log_file }}"
         state: touch
@@ -90,6 +90,7 @@
   vars:
     min_packet_count: "{{ min_received_packet_count | default(send_packet_count) | int }}"
     max_packet_count: "{{ max_received_packet_count | default(send_packet_count) | int }}"
+    receiver_log_file: "{{ host_log_dir }}/{{ reciever_log_filename }}"
   tasks:
     - name: Parse file with command - [grep {{ send_to_ip }} {{ receiver_log_file }} | grep {{ send_port }} | wc -l]
       shell: "grep {{ send_to_ip }} {{ receiver_log_file }} | grep {{ send_port }} | wc -l"
