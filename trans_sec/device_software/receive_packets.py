@@ -44,9 +44,11 @@ def get_args():
 
 
 def __log_packet(packet):
-    if packet[IP].type == 0xfd:
+    if packet[IP].proto == 0xfd:
+        logger.debug('INT Packet received')
         logger.warn('INT Packet data - [%s]', oinc.extract_int_data(packet))
     else:
+        logger.debug('Non INT Packet received')
         logger.warn('Packet data - [%s]', packet.summary())
 
 
