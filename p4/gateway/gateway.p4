@@ -63,10 +63,10 @@ control TpsGwIngress(inout headers hdr,
         hdr.int_shim.next_proto = hdr.ipv4.protocol;
         hdr.ipv4.protocol = TYPE_INSPECTION;
 
-        hdr.int_shim.length = 24;
+        hdr.int_shim.length = 6;
         hdr.int_shim.type = 1;
 
-        hdr.int_header.meta_len = 12;
+        hdr.int_header.meta_len = 3;
         hdr.int_header.instructions = 0x80c0;
         hdr.int_header.remaining_hop_cnt = 10; /* TODO - find a better means to determine this value */
         hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt -1;

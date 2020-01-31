@@ -54,7 +54,7 @@ control TpsCoreIngress(inout headers hdr,
            invalidating the INT headers which will be problematic when
            implementing header stacks for holding switch_ids
        */
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen - 36;
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen - 48;
 
         standard_metadata.egress_spec = port;
         hdr.ethernet.src_mac = hdr.ethernet.dst_mac;
@@ -81,7 +81,7 @@ control TpsCoreIngress(inout headers hdr,
 
         /* TODO - Find a better means of increasing these sizes using the hdr.int_meta size value */
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + 12;
-        hdr.int_shim.length = hdr.int_shim.length + 12;
+        hdr.int_shim.length = hdr.int_shim.length + 3;
 
         hdr.int_meta_3.switch_id = hdr.int_meta_2.switch_id;
         hdr.int_meta_3.orig_mac = hdr.int_meta_2.orig_mac;

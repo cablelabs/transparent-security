@@ -59,7 +59,7 @@ control TpsAggIngress(inout headers hdr,
 
         /* TODO - Find a better means of increasing these sizes using the hdr.int_meta size value */
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + 12;
-        hdr.int_shim.length = hdr.int_shim.length + 12;
+        hdr.int_shim.length = hdr.int_shim.length + 3;
 
         hdr.int_meta.switch_id = switch_id;
         hdr.int_meta.orig_mac = 0XFFFFFFFFFFFF;

@@ -61,18 +61,18 @@ function tps_proto.dissector(buffer,pinfo,tree)
     header_tree:add(buffer(10,2),"Reserved: " .. reserved)
 
     -- INT Metadata Stack
-    total_hops = (length - 12)/metalen
+    total_hops = ((length*4) - 12)/(metalen*4)
     header_offset = 12
-    subtree = subtree:add(buffer(header_offset,metalen*total_hops),"Metadata Stack")
+    subtree = subtree:add(buffer(header_offset,metalen*total_hops*4),"Metadata Stack")
     while (total_hops >= 1)
     do
-        metaTree = subtree:add(buffer(header_offset,metalen),"Hop " .. total_hops)
+        metaTree = subtree:add(buffer(header_offset,(metalen)),"Hop " .. total_hops)
         switch_id = buffer(header_offset,4):uint()
         metaTree:add(buffer(header_offset,4),"Switch ID: " .. switch_id)
         device_mac = octet_to_mac(buffer(header_offset+4,6))
         metaTree:add(buffer(header_offset+4,6),"Originating Device MAC address: " .. device_mac)
         total_hops = total_hops - 1
-        header_offset = header_offset + metalen
+        header_offset = header_offset + (metalen*4)
     end
 
     -- UDP
