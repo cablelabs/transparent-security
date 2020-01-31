@@ -14,7 +14,9 @@
 # Jinja2 template for use as an input to insert_p4_table_entry.py
 ---
 - table_name: {{ p4_ingress_name }}.{{ table_name }}
+{% if action_name or action_name != '' %}
   action_name: {{ p4_ingress_name }}.{{ action_name }}
+{%  endif %}
 {% if match_fields %}
   match_fields:
 {% for match_field in match_fields %}

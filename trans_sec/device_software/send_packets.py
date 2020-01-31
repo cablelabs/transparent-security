@@ -98,25 +98,30 @@ def get_args():
 def device_send(args):
     addr = socket.gethostbyname(args.destination)
 
+    logger.info('Begin sending packets')
+
     interface = args.interface
     if not interface:
         interface = get_first_if()
+    logger.info('Sending packets to intf - [%s]', args.interface)
+
     logger.info('Delaying %d seconds' % args.delay)
     sleep(args.delay)
 
     src_mac = args.src_mac
     if not src_mac:
         src_mac = get_if_hwaddr(interface)
-    logger.info('Device mac - [%s]')
+    logger.info('Device mac - [%s]', src_mac)
 
     pkt = Ether(src=src_mac, dst=args.switch_ethernet) / IP(
         dst=addr, src=args.source_addr)
+
     if args.tcp:
         pkt = pkt / TCP(dport=args.port, sport=args.source_port) / args.msg
     else:
         pkt = pkt / UDP(dport=args.port, sport=args.source_port) / args.msg
 
-    pkt.show2()
+    logger.debug('Packet to send - [%s]', pkt.show2())
 
     if args.continuous:
         logger.info('Sending a packet to %s every %s',

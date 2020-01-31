@@ -31,6 +31,9 @@ def get_args():
     parser.add_argument('-d', '--dev_id', type=int, required=False, default=0,
                         help='The device ID (default 0)')
     parser.add_argument(
+        '-i', '--insert', type=str, required=False, default='True',
+        help='When true insert record else delete (default "True")')
+    parser.add_argument(
         '-p', '--p4-info-fpath', type=str, required=False, default=0,
         help='The file path of the switch associated p4info file')
     parser.add_argument('-tc', '--table-config',
@@ -85,11 +88,26 @@ if __name__ == '__main__':
 
     for entry_config in table_entry_config:
         logger.info('Entry config - [%s]', entry_config)
-        table_entry = p4info_helper.build_table_entry(
-            table_name=entry_config['table_name'],
-            match_fields=entry_config.get('match_fields'),
-            action_name=entry_config['action_name'],
-            action_params=entry_config.get('action_params'),
-        )
-        logger.info('Writing table entry - [%s]', table_entry)
-        switch.write_table_entry(table_entry)
+        logger.info('Writing table entry - [%s] for insert - [%s]',
+                    entry_config, args.insert)
+
+        try:
+            if args.insert == 'True':
+                table_entry = p4info_helper.build_table_entry(
+                    table_name=entry_config['table_name'],
+                    match_fields=entry_config.get('match_fields'),
+                    action_name=entry_config.get('action_name'),
+                    action_params=entry_config.get('action_params'),
+                )
+                logger.info('Inserting table entry')
+                switch.write_table_entry(table_entry)
+            else:
+                table_entry = p4info_helper.build_table_entry(
+                    table_name=entry_config['table_name'],
+                    match_fields=entry_config.get('match_fields'),
+                )
+                logger.info('Deleting table entry')
+                switch.delete_table_entry(table_entry)
+        except Exception as e:
+            logger.error('Unexpected exception writing table entry - [%s]', e)
+            raise e
