@@ -24,11 +24,10 @@
     log_file: "{{ p4_te_log_file }}"
     insert_flag: "{{ p4_te_insert | default('True') }}"
   tasks:
-    - name: Create config {{ table_entry_config }}
+    - name: Create config
       template:
         src: ../templates/table_entry.yml.j2
         dest: "{{ table_entry_config }}"
-        backup: yes
       vars:
         p4_ingress_name: "{{ p4_ingress_classname }}"
         table_name: "{{ p4_table_name }}"
@@ -37,13 +36,10 @@
         action_name: "{{ p4_action_name | default('') }}"
 
     - set_fact:
-        add_table_entry_cmd: "/usr/bin/python {{ remote_tps_dir }}/bin/write_to_p4_table.py -a {{ switch.grpc }} -d {{ switch.id }} -p {{ switch.runtime_p4info }} -tc {{ table_entry_config }} -l {{ log_dir }} -lf {{ log_file }} -i {{ insert_flag }}"
+        add_table_entry: "/usr/bin/python {{ remote_tps_dir }}/bin/write_to_p4_table.py -a {{ grpc_addr }} -d {{ switch_id | default('0') }} -p {{ p4_info_fpath }} -tc {{ table_entry_config }} -l {{ log_dir }} -lf {{ log_file }} -i {{ insert_flag }}"
 
-    - name: Create log directory {{ log_dir }}
-      file:
-        path: "{{ log_dir }}"
-        state: directory
-        mode: 0777
+    - debug:
+        var: add_table_entry
 
-    - name: Adding requested table entry with command [{{ add_table_entry_cmd }}]
-      shell: "{{ add_table_entry_cmd }}"
+    - name: Adding requested table entry to {{ grpc_addr }} and {{ table_entry_config }} file
+      shell: "{{ add_table_entry }}"

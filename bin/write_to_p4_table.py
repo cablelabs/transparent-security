@@ -91,19 +91,23 @@ if __name__ == '__main__':
         logger.info('Writing table entry - [%s] for insert - [%s]',
                     entry_config, args.insert)
 
-        if args.insert == 'True':
-            table_entry = p4info_helper.build_table_entry(
-                table_name=entry_config['table_name'],
-                match_fields=entry_config.get('match_fields'),
-                action_name=entry_config.get('action_name'),
-                action_params=entry_config.get('action_params'),
-            )
-            logger.info('Inserting table entry')
-            switch.write_table_entry(table_entry)
-        else:
-            table_entry = p4info_helper.build_table_entry(
-                table_name=entry_config['table_name'],
-                match_fields=entry_config.get('match_fields'),
-            )
-            logger.info('Deleting table entry')
-            switch.delete_table_entry(table_entry)
+        try:
+            if args.insert == 'True':
+                table_entry = p4info_helper.build_table_entry(
+                    table_name=entry_config['table_name'],
+                    match_fields=entry_config.get('match_fields'),
+                    action_name=entry_config.get('action_name'),
+                    action_params=entry_config.get('action_params'),
+                )
+                logger.info('Inserting table entry')
+                switch.write_table_entry(table_entry)
+            else:
+                table_entry = p4info_helper.build_table_entry(
+                    table_name=entry_config['table_name'],
+                    match_fields=entry_config.get('match_fields'),
+                )
+                logger.info('Deleting table entry')
+                switch.delete_table_entry(table_entry)
+        except Exception as e:
+            logger.error('Unexpected exception writing table entry - [%s]', e)
+            raise e
