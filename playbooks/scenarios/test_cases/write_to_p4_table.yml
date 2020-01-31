@@ -22,6 +22,7 @@
     table_entry_config: "{{ te_conf_file }}"
     log_dir: "{{ p4_te_log_dir }}"
     log_file: "{{ p4_te_log_file }}"
+    insert_flag: "{{ p4_te_insert | default('True') }}"
   tasks:
     - name: Create config
       template:
@@ -32,10 +33,10 @@
         table_name: "{{ p4_table_name }}"
         match_fields: "{{ p4_table_match_fields }}"
         action_params: "{{ p4_table_action_params | default('') }}"
-        action_name: "{{ p4_action_name }}"
+        action_name: "{{ p4_action_name | default('') }}"
 
     - set_fact:
-        add_table_entry: "/usr/bin/python {{ remote_tps_dir }}/bin/insert_p4_table_entry.py -a {{ grpc_addr }} -d {{ switch_id | default('0') }} -p {{ p4_info_fpath }} -tc {{ table_entry_config }} -l {{ log_dir }} -lf {{ log_file }}"
+        add_table_entry: "/usr/bin/python {{ remote_tps_dir }}/bin/write_to_p4_table.py -a {{ grpc_addr }} -d {{ switch_id | default('0') }} -p {{ p4_info_fpath }} -tc {{ table_entry_config }} -l {{ log_dir }} -lf {{ log_file }} -i {{ insert_flag }}"
 
     - debug:
         var: add_table_entry
