@@ -17,7 +17,7 @@ import logging
 import sys
 
 from scapy.all import sniff
-from scapy.layers.l2 import Ether
+from scapy.layers.inet import IP
 
 from trans_sec.analytics import oinc
 
@@ -32,7 +32,10 @@ def get_args():
         required=True, dest='iface')
     parser.add_argument(
         '-f', '--logfile', help='File to log to defaults to console',
-        required=True, dest='logfile')
+        required=False, dest='logfile')
+    parser.add_argument(
+        '-d', '--duration', default=0, dest='duration', type=int,
+        help='Number of seconds to sniff - 0 is indefinite')
     parser.add_argument(
         '-l', '--loglevel',
         help='Log Level <DEBUG|INFO|WARNING|ERROR> defaults to INFO',
@@ -41,21 +44,34 @@ def get_args():
 
 
 def __log_packet(packet):
-    if packet[Ether].type == 0x1212:
+    if packet[IP].type == 0xfd:
         logger.warn('INT Packet data - [%s]', oinc.extract_int_data(packet))
     else:
         logger.warn('Packet data - [%s]', packet.summary())
 
 
-def device_sniff(iface, log_file, log_level):
+def device_sniff(iface, duration, log_file, log_level):
     numeric_level = getattr(logging, log_level, None)
-    logging.basicConfig(format=FORMAT, level=numeric_level,
-                        filename=log_file)
+
+    if log_file:
+        logging.basicConfig(format=FORMAT, level=numeric_level,
+                            filename=log_file)
+    else:
+        logging.basicConfig(format=FORMAT, level=numeric_level)
+
     logger.info("Sniffing for packets on iface - [%s]", iface)
     sys.stdout.flush()
-    sniff(iface=iface, prn=lambda packet: __log_packet(packet))
+
+    if duration > 0:
+        logger.info('Running sniffer for [%s] seconds', duration)
+        sniff(iface=iface, prn=lambda packet: __log_packet(packet),
+              timeout=duration)
+    else:
+        logger.info('Running sniffer indefinitely')
+        sniff(iface=iface, prn=lambda packet: __log_packet(packet))
 
 
 if __name__ == '__main__':
     cmd_args = get_args()
-    device_sniff(cmd_args.iface, cmd_args.logfile, cmd_args.loglevel.upper())
+    device_sniff(cmd_args.iface, cmd_args.duration,
+                 cmd_args.logfile, cmd_args.loglevel.upper())
