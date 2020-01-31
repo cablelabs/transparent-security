@@ -16,11 +16,12 @@
 ---
 
 # Create packet sniffer
-- hosts: "{{ receiver }}"
+- hosts: "{{ receiver | default('localhost') }}"
   gather_facts: no
   vars:
-    receive_timeout: "{{ receiver_timeout_seconds | default(999999) }}"
-    receiver_log_file: "{{ host_log_dir }}/{{ reciever_log_filename }}"
+    receive_timeout: "{{ receiver_timeout_seconds | default(120) }}"
+    receiver_log_file: "{{ host_log_dir }}/{{ receiver_log_filename }}"
+    sniff_duration: "{{ receiver_sniff_duration | default('150') }}"
   tasks:
     - name: Remove {{ receiver_log_file }} from {{ receiver }}
       file:
@@ -40,7 +41,7 @@
         mode: 0777
 
     - set_fact:
-        receive_cmd: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/receive_packets.py -i {{ receiver }}-eth0 -f {{ receiver_log_file }}"
+        receive_cmd: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/receive_packets.py -i {{ receiver_intf }} -f {{ receiver_log_file }} -d {{ sniff_duration }}"
 
     - debug:
         var: receive_cmd
@@ -51,7 +52,7 @@
       poll: 0
 
 # Generate packets from the sender
-- hosts: "{{ sender }}"
+- hosts: "{{ sender | default('localhost') }}"
   gather_facts: no
   vars:
     packet_count: "{{ send_packet_count | default(1) }}"
@@ -80,7 +81,7 @@
     - debug:
         var: send_cmd
 
-    - name: Sending {{ packet_count }} UDP packets to {{ send_to_ip }}:{{ send_port }} and dst_mac {{ dst_switch_mac }} every {{ interval }} seconds {{ loops }}x each with a delay between bursts of {{ loop_delay }} seconds from {{ sender }} after delay {{ send_delay}}
+    - name: Sending {{ packet_count }} UDP packets to {{ send_to_ip }}:{{ send_port }} and dst_mac {{ dst_switch_mac }} every {{ interval }} seconds {{ loops }}x each with a delay between bursts of {{ loop_delay }} seconds from {{ sender }} after delay {{ send_delay }}
       shell: "{{ send_cmd }}"
       async: 180
 
@@ -90,8 +91,12 @@
   vars:
     min_packet_count: "{{ min_received_packet_count | default(send_packet_count) | int }}"
     max_packet_count: "{{ max_received_packet_count | default(send_packet_count) | int }}"
-    receiver_log_file: "{{ host_log_dir }}/{{ reciever_log_filename }}"
+    receiver_log_file: "{{ host_log_dir }}/{{ receiver_log_filename }}"
   tasks:
+    - name: Pause a sec before parsing {{ receiver_log_file }}
+      pause:
+        seconds: 1
+
     - name: Parse file with command - [grep {{ send_to_ip }} {{ receiver_log_file }} | grep {{ send_port }} | wc -l]
       shell: "grep {{ send_to_ip }} {{ receiver_log_file }} | grep {{ send_port }} | wc -l"
       register: grep_out

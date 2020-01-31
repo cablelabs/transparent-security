@@ -21,9 +21,10 @@
     gateway1_mac: "{{ topo_dict['switches']['gateway1'].mac }}"
 
     receiver: inet
-    reciever_log_filename: receiver-inet-1.out
+    receiver_intf: inet-eth0
+    receiver_log_filename: receiver-inet-1.out
     sender: Camera1
-    sender_intf: "{{ host_sender_intf | default('Camera1-eth0') }}"
+    sender_intf: Camera1-eth0
     sender_log_filename: sender-Camera1.out
     send_port: 4321
     send_src_port: 5432
@@ -39,9 +40,10 @@
     gateway2_mac: "{{ topo_dict['switches']['gateway2'].mac }}"
 
     receiver: inet
-    reciever_log_filename: receiver-inet-2.out
+    receiver_intf: inet-eth0
+    receiver_log_filename: receiver-inet-2.out
     sender: Camera2
-    sender_intf: "{{ host_sender_intf | default('Camera2-eth0') }}"
+    sender_intf: Camera2-eth0
     sender_log_filename: sender-Camera2.out
     send_port: 4322
     send_src_port: 5433
@@ -58,11 +60,12 @@
     gateway3_mac: "{{ topo_dict['switches']['gateway3'].mac }}"
 
     receiver: inet
-    reciever_log_filename: receiver-inet-3.out
+    receiver_intf: inet-eth0
+    receiver_log_filename: receiver-inet-3.out
     min_received_packet_count: 99
     max_received_packet_count: 150
     sender: Camera3
-    sender_intf: "{{ host_sender_intf | default('Camera3-eth0') }}"
+    sender_intf: Camera3-eth0
     sender_log_filename: sender-Camera3.out
     send_port: 4323
     send_src_port: 5434
