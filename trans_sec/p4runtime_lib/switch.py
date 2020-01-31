@@ -99,13 +99,19 @@ class SwitchConnection(object):
                     request.device_id)
 
     def write_table_entry(self, table_entry):
+        self.__write_to_table(table_entry, p4runtime_pb2.Update.INSERT)
+
+    def delete_table_entry(self, table_entry):
+        self.__write_to_table(table_entry, p4runtime_pb2.Update.DELETE)
+
+    def __write_to_table(self, table_entry, type):
         logger.info('Writing table entry on switch [%s] - [%s]',
                     self.name, table_entry)
         request = p4runtime_pb2.WriteRequest()
         request.device_id = self.device_id
         request.election_id.low = 1
         update = request.updates.add()
-        update.type = p4runtime_pb2.Update.INSERT
+        update.type = type
         update.entity.table_entry.CopyFrom(table_entry)
         try:
             logger.debug('Request for writing table entry to device %s - [%s]',
