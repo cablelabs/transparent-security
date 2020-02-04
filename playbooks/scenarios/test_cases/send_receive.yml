@@ -14,16 +14,14 @@
 # sends packets. The validation routine counts the number received via the
 # receiver's log file
 ---
-
 # Create packet sniffer
-- hosts: "{{ receiver | default('localhost') }}"
+- hosts: "{{ rec_host }}"
   gather_facts: no
   vars:
-    receive_timeout: "{{ receiver_timeout_seconds | default(120) }}"
+    receive_timeout: "{{ receiver_timeout_seconds | default(999999) }}"
     receiver_log_file: "{{ host_log_dir }}/{{ receiver_log_filename }}"
-    sniff_duration: "{{ receiver_sniff_duration | default('150') }}"
   tasks:
-    - name: Remove {{ receiver_log_file }} from {{ receiver }}
+    - name: Remove {{ receiver_log_file }} from {{ receiver.name }}
       file:
         path: "{{ receiver_log_file }}"
         state: absent
@@ -41,21 +39,21 @@
         mode: 0777
 
     - set_fact:
-        receive_cmd: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/receive_packets.py -i {{ receiver_intf }} -f {{ receiver_log_file }} -d {{ sniff_duration }}"
+        receive_cmd: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/receive_packets.py -i {{ receiver.name }}-eth0 -f {{ receiver_log_file }}"
 
     - debug:
         var: receive_cmd
 
-    - name: Receive and log packets from "{{ receiver }}" logged at {{ receiver_log_file }} with async timeout {{ receive_timeout }}
+    - name: Receive and log packets from "{{ receiver.name }}" logged at {{ receiver_log_file }} with async timeout {{ receive_timeout }} for potentially {{ send_packet_count }} packets
       shell: "{{ receive_cmd }}"
       async: "{{ receive_timeout }}"
       poll: 0
 
 # Generate packets from the sender
-- hosts: "{{ sender | default('localhost') }}"
+- hosts: "{{ send_host }}"
   gather_facts: no
   vars:
-    packet_count: "{{ send_packet_count | default(1) }}"
+    send_packet_count: "{{ send_packet_count | default(1) }}"
     send_msg: "{{ the_message | default('hello transparent-security') }}"
     send_delay: "{{ send_packets_delay | default(1) }}"
     interval: "{{ send_interval | default(0.005) }}"
@@ -69,19 +67,16 @@
         state: directory
         mode: 0777
 
-    - name: Create sender log file {{ host_log_dir }}/{{ sender_log_filename }}
+    - name: Create sender log file {{ sender_log_file }}
       file:
         path: "{{ sender_log_file }}"
         state: touch
         mode: 0777
 
     - set_fact:
-        send_cmd: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/send_packets.py -y {{ send_delay }} -i {{ interval }} -it {{ loops }} -itd {{ loop_delay }} -z {{ sender_intf }} -r {{ send_to_ip }} -sp {{ send_src_port }} -p {{ send_port }} -f {{ sender_log_file }} -c {{ packet_count }} -s {{ dst_switch_mac }} -m '{{ send_msg }}'"
+        send_cmd: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/send_packets.py -y {{ send_delay }} -i {{ interval }} -it {{ loops }} -itd {{ loop_delay }} -z {{ sender_intf }} -r {{ receiver.ip }} -sp {{ send_src_port }} -p {{ send_port }} -f {{ sender_log_file }} -c {{ send_packet_count }} -s {{ switch.mac }} -m '{{ send_msg }}'"
 
-    - debug:
-        var: send_cmd
-
-    - name: Sending {{ packet_count }} UDP packets to {{ send_to_ip }}:{{ send_port }} and dst_mac {{ dst_switch_mac }} every {{ interval }} seconds {{ loops }}x each with a delay between bursts of {{ loop_delay }} seconds from {{ sender }} after delay {{ send_delay }}
+    - name: Sending packets with command [{{ send_cmd }}]
       shell: "{{ send_cmd }}"
       async: 180
 
@@ -93,12 +88,11 @@
     max_packet_count: "{{ max_received_packet_count | default(send_packet_count) | int }}"
     receiver_log_file: "{{ host_log_dir }}/{{ receiver_log_filename }}"
   tasks:
-    - name: Pause a sec before parsing {{ receiver_log_file }}
-      pause:
-        seconds: 1
+    - set_fact:
+        grep_cmd: "grep {{ receiver.ip }} {{ receiver_log_file }} | grep {{ send_port }} | wc -l"
 
-    - name: Parse file with command - [grep {{ send_to_ip }} {{ receiver_log_file }} | grep {{ send_port }} | wc -l]
-      shell: "grep {{ send_to_ip }} {{ receiver_log_file }} | grep {{ send_port }} | wc -l"
+    - name: Parse file with command [{{ grep_cmd }}]
+      shell: "{{ grep_cmd }}"
       register: grep_out
 
     - set_fact:

@@ -108,6 +108,6 @@ if __name__ == '__main__':
                 )
                 logger.info('Deleting table entry')
                 switch.delete_table_entry(table_entry)
-        except Exception as e:
-            logger.error('Unexpected exception writing table entry - [%s]', e)
+        except StandardError as e:
+            logger.error('Unexpected error writing table entry - [%s]', e)
             raise e
