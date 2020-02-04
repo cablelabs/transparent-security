@@ -14,85 +14,69 @@
 # one will be demonstrating dropped packets
 ---
 # Add table entry to "{{ data_forward_table }}"
-- import_playbook: ../../test_cases/write_to_p4_table.yml
+- import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
-    te_conf_file: ~/te-di-receiver-forward-1.yml
+    te_conf_file: ~/di-inspect-create.yml
     p4_ingress_classname: "{{ ingress_classname }}"
     p4_table_name: "{{ data_forward_table }}"
     p4_action_name: "{{ data_forward_action }}"
-    p4_table_match_fields:
-      - key: "{{ data_forward_match_field }}"
-        value: 1
-    p4_table_action_params:
-      - key: dstAddr
-        value: "{{ topo_dict['hosts']['receiver'].mac }}"
-      - key: port
-        value: 2
-      - key: l2ptr
-        value: 0
+    p4_table_match_fields: "{{ data_forward_match_fields }}"
+    p4_table_action_params: "{{ data_forward_action_params }}"
     p4_te_log_dir: "{{ host_log_dir }}"
     p4_te_log_file: data_inspection_basic_te-di-receiver-forward-create.log
 
 # Add table entry to "{{ data_inspection_table }}"
-- import_playbook: ../../test_cases/write_to_p4_table.yml
+- import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
-    te_conf_file: ~/te-di-receiver-forward-1.yml
+    te_conf_file: ~/di-inspect-create.yml
     p4_ingress_classname: "{{ ingress_classname }}"
     p4_table_name: "{{ data_inspection_table }}"
     p4_action_name: "{{ data_inspection_action }}"
-    p4_table_match_fields:
-      - key: "{{ data_inspection_match_field }}"
-        value: 1
-    p4_table_action_params:
-      - key: device
-        value: "{{ sender.id }}"
-      - key: switch_id
-        value: "{{ switch.id }}"
+    p4_table_match_fields: "{{ data_inspection_match_fields }}"
+    p4_table_action_params: "{{ data_inspection_action_params }}"
     p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: data_inspection_basic_te-di-receiver-forward-create.log
+    p4_te_log_file: di_basic_te-di-receiver-forward-create.log
 
 # Sending UDP packets expect all to be received
-- import_playbook: ../../test_cases/send_receive.yml
+- import_playbook: ../test_cases/send_receive.yml
   vars:
-    receiver_log_filename: "data_inspection_basic_receiver-{{ receiver.name }}-2.out"
-    sender_log_filename: "data_inspection_basic_sender-{{ sender.name }}-2.out"
+    receiver_log_filename: di_basic_receiver-2.out
+    sender_log_filename: di_basic_sender-2.out
     sender_intf: "{{ sender.name }}-eth0"
     send_port: "{{ range(2000, 10000) | random(seed='one') }}"
     send_src_port: "{{ range(2000, 10000) | random(seed='two') }}"
     send_packet_count: "{{ 100 | random(seed='three') }}"
 
 # Delete table entry to "{{ data_forward_table }}"
-- import_playbook: ../../test_cases/write_to_p4_table.yml
+- import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
-    te_conf_file: ~/te-di-receiver-forward-delete-1.yml
+    te_conf_file: ~/di-forward-delete.yml
     p4_ingress_classname: "{{ ingress_classname }}"
     p4_table_name: "{{ data_forward_table }}"
-    p4_table_match_fields:
-      - key: "{{ data_forward_match_field }}"
-        value: 1
+    p4_table_match_fields: "{{ data_forward_match_fields }}"
     p4_te_log_dir: "{{ host_log_dir }}"
     p4_te_log_file: data_inspection_basic_te-di-receiver-forward-revert.log
     p4_te_insert: False
 
 # Delete table entry to "{{ data_inspection_table }}"
-- import_playbook: ../../test_cases/write_to_p4_table.yml
+- import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
-    te_conf_file: ~/te-di-receiver-forward-1.yml
+    te_conf_file: ~/di-inspect-delete.yml
     p4_ingress_classname: "{{ ingress_classname }}"
     p4_table_name: "{{ data_inspection_table }}"
-    p4_table_match_fields:
-      - key: "{{ data_inspection_match_field }}"
-        value: 1
+    p4_table_match_fields: "{{ data_inspection_match_fields }}"
     p4_te_log_dir: "{{ host_log_dir }}"
     p4_te_log_file: data_inspection_basic_te-di-receiver-forward-revert.log
     p4_te_insert: False
 
 # Sending UDP packet expect none to be received
-- import_playbook: ../../test_cases/send_receive.yml
+- import_playbook: ../test_cases/send_receive.yml
   vars:
-    receiver_log_filename: "data_inspection_basic_receiver-{{ receiver.name }}-3.out"
-    sender_log_filename: "data_inspection_basic_sender-{{ sender.name }}-3.out"
+    receiver_log_filename: di_basic_receiver-3.out
+    sender_log_filename: di_basic_sender-3.out
     sender_intf: "{{ sender.name }}-eth0"
     send_port: "{{ range(2000, 10000) | random(seed='two') }}"
     send_src_port: "{{ range(2000, 10000) | random(seed='three') }}"
     send_packet_count: "{{ 100 | random(seed='four') }}"
+    min_received_packet_count: 0
+    max_received_packet_count: 0

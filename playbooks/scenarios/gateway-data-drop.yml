@@ -1,0 +1,56 @@
+# Copyright (c) 2019 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# Simple scenario where packets are sent through 3 devices and only the last
+# one will be demonstrating dropped packets
+---
+
+# Basic Data Drop scenario for UDP
+- import_playbook: single_switch/data_drop_basic.yml
+  vars:
+    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
+    switch: "{{ topo_dict.switches.gateway }}"
+    send_host: host1
+    send_port: 4321
+    sender: "{{ topo_dict.hosts.host1 }}"
+    send_sw_port: "{{ topo_dict.links[0].south_facing_port }}"
+    rec_host: host2
+    receiver: "{{ topo_dict.hosts.host2 }}"
+    rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
+    ingress_classname: TpsGwIngress
+    data_forward_table: data_forward_t
+    data_forward_match_field: standard_metadata.ingress_port
+    data_forward_action: data_forward
+    data_forward_match_fields:
+      - key: standard_metadata.ingress_port
+        value: "{{ send_sw_port }}"
+    data_forward_action_params:
+      - key: dstAddr
+        value: "{{ switch.mac }}"
+      - key: port
+        value: "{{ rec_sw_port }}"
+      - key: l2ptr
+        value: 0
+    data_drop_table: data_drop_t
+    data_drop_action: data_drop
+    data_drop_match_fields:
+      - key: hdr.ethernet.src_mac
+        value: "{{ sender.mac }}"
+      - key: hdr.ipv4.srcAddr
+        value: "{{ sender.ip }}"
+      - key: hdr.ipv4.dstAddr
+        value: "{{ receiver.ip }}"
+      - key: hdr.udp.dst_port
+        value: "{{ send_port }}"
+    data_drop_action_params:
+      - key: device
+        value: "{{ sender.id }}"
