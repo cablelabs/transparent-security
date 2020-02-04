@@ -39,5 +39,11 @@
     - set_fact:
         add_table_entry_cmd: "/usr/bin/python {{ remote_tps_dir }}/bin/write_to_p4_table.py -a {{ switch.grpc }} -d {{ switch.id }} -p {{ switch.runtime_p4info }} -tc {{ table_entry_config }} -l {{ log_dir }} -lf {{ log_file }} -i {{ insert_flag }}"
 
+    - name: Create log directory {{ log_dir }}
+      file:
+        path: "{{ log_dir }}"
+        state: directory
+        mode: 0777
+
     - name: Adding requested table entry with command [{{ add_table_entry_cmd }}]
       shell: "{{ add_table_entry_cmd }}"
