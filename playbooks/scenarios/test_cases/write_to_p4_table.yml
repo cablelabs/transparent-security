@@ -28,6 +28,7 @@
       template:
         src: ../templates/table_entry.yml.j2
         dest: "{{ table_entry_config }}"
+        backup: yes
       vars:
         p4_ingress_name: "{{ p4_ingress_classname }}"
         table_name: "{{ p4_table_name }}"

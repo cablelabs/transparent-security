@@ -1,0 +1,153 @@
+# Copyright (c) 2019 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# Simple scenario where packets are sent through 3 devices and only the last
+# one will be demonstrating dropped packets
+---
+# Add table entry to "{{ data_forward_table }}"
+- import_playbook: ../../test_cases/write_to_p4_table.yml
+  vars:
+    grpc_addr: "{{ switch.grpc }}"
+    switch_id: "{{ switch.id }}"
+    te_conf_file: ~/te-dd-receiver-forward-1.yml
+    p4_ingress_classname: "{{ ingress_classname }}"
+    p4_table_name: "{{ data_forward_table }}"
+    p4_action_name: data_forward
+    p4_table_match_fields:
+      - key: "{{ data_forward_match_field }}"
+        value: "{{ send_sw_port }}"
+    p4_table_action_params:
+      - key: dstAddr
+        value: "{{ switch.mac }}"
+      - key: port
+        value: "{{ rec_sw_port }}"
+      - key: l2ptr
+        value: 0
+    p4_info_fpath: "{{ switch.runtime_p4info }}"
+    p4_te_log_dir: "{{ host_log_dir }}"
+    p4_te_log_file: data_drop_basic_te-df-receiver-forward-1.log
+
+# Sending UDP packets expect all to be received
+- import_playbook: ../../test_cases/send_receive.yml
+  vars:
+    receiver_log_filename: "data_drop_basic_receiver-{{ receiver.name }}-1.out"
+    sender_log_filename: "data_drop_basic_sender-{{ sender.name }}-1.out"
+    sender_intf: "{{ sender.name }}-eth0"
+    send_port: 4321
+    send_src_port: "{{ range(2000, 10000) | random(seed='two') }}"
+    send_packet_count: "{{ 100 | random(seed='three') }}"
+
+# Add table entry to data_drop_t
+- import_playbook: ../../test_cases/write_to_p4_table.yml
+  vars:
+    grpc_addr: "{{ switch.grpc }}"
+    switch_id: "{{ switch.id }}"
+    te_conf_file: ~/te-drop-1.yml
+    p4_ingress_classname: "{{ ingress_classname }}"
+    p4_table_name: "{{ data_drop_table }}"
+    p4_action_name: "{{ data_drop_action }}"
+    p4_table_match_fields:
+      - key: hdr.ethernet.src_mac
+        value: "{{ sender.mac }}"
+      - key: hdr.ipv4.srcAddr
+        value: "{{ sender.mac }}"
+      - key: hdr.ipv4.dstAddr
+        value: "{{ receiver.ip }}"
+      - key: hdr.udp.dst_port
+        value: 4321
+    p4_table_action_params:
+      - key: device
+        value: "{{ sender.id }}"
+    p4_info_fpath: "{{ switch.runtime_p4info }}"
+    p4_te_log_dir: "{{ host_log_dir }}"
+    p4_te_log_file: data_drop_basic_te-drop-add.log
+
+# Sending UDP packets expect none to be received
+- import_playbook: ../../test_cases/send_receive.yml
+  vars:
+    receive_host: "{{ receiver.name }}"
+    receiver_intf: "{{ receiver.name }}-eth0"
+    receiver_log_filename: "data_drop_basic_receiver-{{ receiver.name }}-2.out"
+    sender: "{{ sender.name }}"
+    sender_intf: "{{ sender.name }}-eth0"
+    sender_log_filename: "data_drop_basic_sender-{{ sender.name }}-2.out"
+    send_port: 4321
+    send_src_port: "{{ range(2000, 10000) | random(seed='three') }}"
+    send_packet_count: "{{ 100 | random(seed='four') }}"
+    min_received_packet_count: 0
+    max_received_packet_count: 0
+
+# Delete table entry to table {{ data_drop_table }}
+- import_playbook: ../../test_cases/write_to_p4_table.yml
+  vars:
+    grpc_addr: "{{ switch.grpc }}"
+    switch_id: "{{ switch.id }}"
+    te_conf_file: ~/te-drop-2.yml
+    p4_ingress_classname: "{{ ingress_classname }}"
+    p4_table_name: "{{ data_drop_table }}"
+    p4_table_match_fields:
+      - key: hdr.ethernet.src_mac
+        value: "{{ sender.mac }}"
+      - key: hdr.ipv4.srcAddr
+        value: "{{ sender.mac }}"
+      - key: hdr.ipv4.dstAddr
+        value: "{{ receiver.ip }}"
+      - key: hdr.udp.dst_port
+        value: "{{ range(2000, 10000) | random }}"
+    p4_info_fpath: "{{ switch.runtime_p4info }}"
+    p4_te_log_dir: "{{ host_log_dir }}"
+    p4_te_log_file: data_drop_basic_te-drop-del.log
+    p4_te_insert: False
+
+# Sending UDP packets expect all to be received
+- import_playbook: ../../test_cases/send_receive.yml
+  vars:
+    receive_host: "{{ receiver.name }}"
+    receiver_intf: "{{ receiver.name }}-eth0"
+    receiver_log_filename: "data_drop_basic_receiver-{{ receiver.name }}-3.out"
+    sender: "{{ sender.name }}"
+    sender_intf: "{{ sender.name }}-eth0"
+    sender_log_filename: "data_drop_basic_sender-{{ sender.name }}-3.out"
+    send_port: 4321
+    send_src_port: "{{ range(2000, 10000) | random(seed='four') }}"
+    send_packet_count: "{{ 100 | random(seed='five') }}"
+
+# Delete table entry to "{{ data_forward_table }}"
+- import_playbook: ../../test_cases/write_to_p4_table.yml
+  vars:
+    grpc_addr: "{{ switch.grpc }}"
+    switch_id: "{{ switch.id }}"
+    te_conf_file: ~/te-df-receiver-forward-2-delete.yml
+    p4_ingress_classname: "{{ ingress_classname }}"
+    p4_table_name: "{{ data_forward_table }}"
+    p4_table_match_fields:
+      - key: "{{ data_forward_match_field }}"
+        value: 1
+    p4_info_fpath: "{{ switch.runtime_p4info }}"
+    p4_te_log_dir: "{{ host_log_dir }}"
+    p4_te_log_file: data_drop_basic_te-df-receiver-forward-revert.log
+    p4_te_insert: False
+
+# Sending UDP packets expect none to be received
+- import_playbook: ../../test_cases/send_receive.yml
+  vars:
+    receive_host: "{{ receiver.name }}"
+    receiver_intf: "{{ receiver.name }}-eth0"
+    receiver_log_filename: "data_drop_basic_receiver-{{ receiver.name }}-4.out"
+    sender: "{{ sender.name }}"
+    sender_intf: "{{ sender.name }}-eth0"
+    sender_log_filename: "data_drop_basic_sender-{{ sender.name }}-4.out"
+    send_port: 4321
+    send_src_port: "{{ range(2000, 10000) | random }}"
+    send_packet_count: "{{ 100 | random }}"
+    min_received_packet_count: 0
+    max_received_packet_count: 0
