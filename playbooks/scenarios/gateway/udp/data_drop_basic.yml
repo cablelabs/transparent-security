@@ -16,9 +16,7 @@
 # Add table entry to "{{ data_forward_table }}"
 - import_playbook: ../../test_cases/write_to_p4_table.yml
   vars:
-    grpc_addr: "{{ switch.grpc }}"
-    switch_id: "{{ switch.id }}"
-    te_conf_file: ~/te-dd-receiver-forward-1.yml
+    te_conf_file: ~/te-dd-forward-create.yml
     p4_ingress_classname: "{{ ingress_classname }}"
     p4_table_name: "{{ data_forward_table }}"
     p4_action_name: data_forward
@@ -32,7 +30,6 @@
         value: "{{ rec_sw_port }}"
       - key: l2ptr
         value: 0
-    p4_info_fpath: "{{ switch.runtime_p4info }}"
     p4_te_log_dir: "{{ host_log_dir }}"
     p4_te_log_file: data_drop_basic_te-df-receiver-forward-1.log
 
@@ -49,9 +46,7 @@
 # Add table entry to data_drop_t
 - import_playbook: ../../test_cases/write_to_p4_table.yml
   vars:
-    grpc_addr: "{{ switch.grpc }}"
-    switch_id: "{{ switch.id }}"
-    te_conf_file: ~/te-drop-1.yml
+    te_conf_file: ~/te-dd-drop-create.yml
     p4_ingress_classname: "{{ ingress_classname }}"
     p4_table_name: "{{ data_drop_table }}"
     p4_action_name: "{{ data_drop_action }}"
@@ -59,7 +54,7 @@
       - key: hdr.ethernet.src_mac
         value: "{{ sender.mac }}"
       - key: hdr.ipv4.srcAddr
-        value: "{{ sender.mac }}"
+        value: "{{ sender.ip }}"
       - key: hdr.ipv4.dstAddr
         value: "{{ receiver.ip }}"
       - key: hdr.udp.dst_port
@@ -67,7 +62,6 @@
     p4_table_action_params:
       - key: device
         value: "{{ sender.id }}"
-    p4_info_fpath: "{{ switch.runtime_p4info }}"
     p4_te_log_dir: "{{ host_log_dir }}"
     p4_te_log_file: data_drop_basic_te-drop-add.log
 
@@ -89,21 +83,18 @@
 # Delete table entry to table {{ data_drop_table }}
 - import_playbook: ../../test_cases/write_to_p4_table.yml
   vars:
-    grpc_addr: "{{ switch.grpc }}"
-    switch_id: "{{ switch.id }}"
-    te_conf_file: ~/te-drop-2.yml
+    te_conf_file: ~/te-dd-drop-delete.yml
     p4_ingress_classname: "{{ ingress_classname }}"
     p4_table_name: "{{ data_drop_table }}"
     p4_table_match_fields:
       - key: hdr.ethernet.src_mac
         value: "{{ sender.mac }}"
       - key: hdr.ipv4.srcAddr
-        value: "{{ sender.mac }}"
+        value: "{{ sender.ip }}"
       - key: hdr.ipv4.dstAddr
         value: "{{ receiver.ip }}"
       - key: hdr.udp.dst_port
-        value: "{{ range(2000, 10000) | random }}"
-    p4_info_fpath: "{{ switch.runtime_p4info }}"
+        value: 4321
     p4_te_log_dir: "{{ host_log_dir }}"
     p4_te_log_file: data_drop_basic_te-drop-del.log
     p4_te_insert: False
@@ -124,15 +115,12 @@
 # Delete table entry to "{{ data_forward_table }}"
 - import_playbook: ../../test_cases/write_to_p4_table.yml
   vars:
-    grpc_addr: "{{ switch.grpc }}"
-    switch_id: "{{ switch.id }}"
-    te_conf_file: ~/te-df-receiver-forward-2-delete.yml
+    te_conf_file: ~/te-df-forward-delete.yml
     p4_ingress_classname: "{{ ingress_classname }}"
     p4_table_name: "{{ data_forward_table }}"
     p4_table_match_fields:
       - key: "{{ data_forward_match_field }}"
         value: 1
-    p4_info_fpath: "{{ switch.runtime_p4info }}"
     p4_te_log_dir: "{{ host_log_dir }}"
     p4_te_log_file: data_drop_basic_te-df-receiver-forward-revert.log
     p4_te_insert: False
@@ -147,7 +135,7 @@
     sender_intf: "{{ sender.name }}-eth0"
     sender_log_filename: "data_drop_basic_sender-{{ sender.name }}-4.out"
     send_port: 4321
-    send_src_port: "{{ range(2000, 10000) | random }}"
+    send_src_port: "{{ range(2000, 10000) | random(seed='five') }}"
     send_packet_count: "{{ 100 | random }}"
     min_received_packet_count: 0
     max_received_packet_count: 0

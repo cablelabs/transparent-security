@@ -29,8 +29,6 @@
 # Add table entry to "{{ data_forward_table }}"
 - import_playbook: ../../test_cases/write_to_p4_table.yml
   vars:
-    grpc_addr: "{{ switch.grpc }}"
-    switch_id: "{{ switch.id }}"
     te_conf_file: ~/te-df-receiver-forward-1.yml
     p4_ingress_classname: "{{ ingress_classname }}"
     p4_table_name: "{{ data_forward_table }}"
@@ -45,7 +43,6 @@
         value: "{{ rec_sw_port }}"
       - key: l2ptr
         value: 0
-    p4_info_fpath: "{{ switch.runtime_p4info }}"
     p4_te_log_dir: "{{ host_log_dir }}"
     p4_te_log_file: data_forward_basic_te-df-receiver-forward-1.log
 
@@ -62,15 +59,12 @@
 # Delete table entry to "{{ data_forward_table }}"
 - import_playbook: ../../test_cases/write_to_p4_table.yml
   vars:
-    grpc_addr: "{{ switch.grpc }}"
-    switch_id: "{{ switch.id }}"
     te_conf_file: ~/te-df-receiver-forward-delete-1.yml
     p4_ingress_classname: "{{ ingress_classname }}"
     p4_table_name: "{{ data_forward_table }}"
     p4_table_match_fields:
       - key: "{{ data_forward_match_field }}"
         value: "{{ send_sw_port }}"
-    p4_info_fpath: "{{ switch.runtime_p4info }}"
     p4_te_log_dir: "{{ host_log_dir }}"
     p4_te_log_file: data_forward_basic_te-df-receiver-forward-revert.log
     p4_te_insert: False

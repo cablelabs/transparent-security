@@ -16,8 +16,6 @@
 # Add table entry to "{{ data_forward_table }}"
 - import_playbook: ../../test_cases/write_to_p4_table.yml
   vars:
-    grpc_addr: "{{ switch.grpc }}"
-    switch_id: "{{ switch.id }}"
     te_conf_file: ~/te-di-receiver-forward-1.yml
     p4_ingress_classname: "{{ ingress_classname }}"
     p4_table_name: "{{ data_forward_table }}"
@@ -32,15 +30,12 @@
         value: 2
       - key: l2ptr
         value: 0
-    p4_info_fpath: "{{ switch.runtime_p4info }}"
     p4_te_log_dir: "{{ host_log_dir }}"
     p4_te_log_file: data_inspection_basic_te-di-receiver-forward-create.log
 
 # Add table entry to "{{ data_inspection_table }}"
 - import_playbook: ../../test_cases/write_to_p4_table.yml
   vars:
-    grpc_addr: "{{ switch.grpc }}"
-    switch_id: "{{ switch.id }}"
     te_conf_file: ~/te-di-receiver-forward-1.yml
     p4_ingress_classname: "{{ ingress_classname }}"
     p4_table_name: "{{ data_inspection_table }}"
@@ -53,7 +48,6 @@
         value: "{{ sender.id }}"
       - key: switch_id
         value: "{{ switch.id }}"
-    p4_info_fpath: "{{ switch.runtime_p4info }}"
     p4_te_log_dir: "{{ host_log_dir }}"
     p4_te_log_file: data_inspection_basic_te-di-receiver-forward-create.log
 
@@ -70,15 +64,12 @@
 # Delete table entry to "{{ data_forward_table }}"
 - import_playbook: ../../test_cases/write_to_p4_table.yml
   vars:
-    grpc_addr: "{{ switch.grpc }}"
-    switch_id: "{{ switch.id }}"
     te_conf_file: ~/te-di-receiver-forward-delete-1.yml
     p4_ingress_classname: "{{ ingress_classname }}"
     p4_table_name: "{{ data_forward_table }}"
     p4_table_match_fields:
       - key: "{{ data_forward_match_field }}"
         value: 1
-    p4_info_fpath: "{{ switch.runtime_p4info }}"
     p4_te_log_dir: "{{ host_log_dir }}"
     p4_te_log_file: data_inspection_basic_te-di-receiver-forward-revert.log
     p4_te_insert: False
@@ -86,15 +77,12 @@
 # Delete table entry to "{{ data_inspection_table }}"
 - import_playbook: ../../test_cases/write_to_p4_table.yml
   vars:
-    grpc_addr: "{{ switch.grpc }}"
-    switch_id: "{{ switch.id }}"
     te_conf_file: ~/te-di-receiver-forward-1.yml
     p4_ingress_classname: "{{ ingress_classname }}"
     p4_table_name: "{{ data_inspection_table }}"
     p4_table_match_fields:
       - key: "{{ data_inspection_match_field }}"
         value: 1
-    p4_info_fpath: "{{ switch.runtime_p4info }}"
     p4_te_log_dir: "{{ host_log_dir }}"
     p4_te_log_file: data_inspection_basic_te-di-receiver-forward-revert.log
     p4_te_insert: False
