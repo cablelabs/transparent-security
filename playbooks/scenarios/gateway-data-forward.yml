@@ -27,7 +27,6 @@
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
     ingress_classname: TpsGwIngress
     data_forward_table: data_forward_t
-    data_forward_match_field: standard_metadata.ingress_port
     data_forward_action: data_forward
     data_forward_match_fields:
       - key: standard_metadata.ingress_port
