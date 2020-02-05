@@ -60,3 +60,5 @@
     send_packet_count: 150
     min_received_packet_count: 99
     max_received_packet_count: 150
+    send_loops: 2
+    send_loop_delay: 30
