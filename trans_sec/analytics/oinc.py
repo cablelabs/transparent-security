@@ -45,6 +45,14 @@ class PacketAnalytics(object):
         self.sample_interval = sample_interval
         self.count_map = dict()
         self.sniff_stop = threading.Event()
+        bind_layers(Ether, IP)
+        bind_layers(IP, IntShim)
+        bind_layers(IntShim, IntHeader)
+        bind_layers(IntHeader, IntMeta1)
+        bind_layers(IntMeta1, IntMeta2)
+        bind_layers(IntMeta2, IntMeta3)
+        bind_layers(IntMeta3, UDP)
+        logger.debug("Completed binding packet layers")
 
     def start_sniffing(self, iface, ip_proto=0xfd):
         """
@@ -53,14 +61,6 @@ class PacketAnalytics(object):
         :param ip_proto: the IP protocol to sniff (default TPS - 253)
         """
         logger.info("AE monitoring iface %s", iface)
-        bind_layers(Ether, IP)
-        bind_layers(IP, IntShim)
-        bind_layers(IntShim, IntHeader)
-        bind_layers(IntHeader, IntMeta1)
-        bind_layers(IntMeta1, IntMeta2)
-        bind_layers(IntMeta2, IntMeta3)
-        bind_layers(IntMeta3, UDP)
-        logger.debug("Completed bind_layers")
         sniff(iface=iface,
               prn=lambda packet: self.handle_packet(packet, ip_proto),
               stop_filter=lambda p: self.sniff_stop.is_set())
@@ -108,15 +108,23 @@ def extract_int_data(packet):
     """
     log_int_packet(packet)
 
+    int_shim_len = packet[IntShim].length
+    logger.info('Shim len - [%s]', int_shim_len)
+    hops = (int_shim_len - 3) / 3
+
+    logger.info('Parsing INT header with [%s] hops', hops)
+
+    orig_mac = None
+
+    if hops == 3:
+        orig_mac = packet[IntMeta3].switch_id
+    if hops > 3:
+        raise Exception('Cannot support hops > 3')
+
     try:
         out = dict(
-            devMac=packet[IntMeta3].orig_mac,
+            devMac=orig_mac,
             devAddr=packet[IP].src,
-            # TODO/FIXME - Will need to grab the last one once we have a list
-            #  of IntMeta
-            switchId1=packet[IntMeta1].switch_id,
-            switchId2=packet[IntMeta2].switch_id,
-            switchId3=packet[IntMeta3].switch_id,
             dstAddr=packet[IP].dst,
             dstPort=packet[UDP].dport,
             protocol=packet[IP].proto,

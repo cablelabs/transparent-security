@@ -22,8 +22,8 @@ class IntShim(Packet):
     fields_desc = [
         fields.ByteField('type', 0),
         fields.ByteField('reserved', 0),
-        fields.ByteField('next_proto', 0),
         fields.ByteField('length', 0),
+        fields.ByteField('next_proto', 0),
     ]
 
 
