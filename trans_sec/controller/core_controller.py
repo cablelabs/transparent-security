@@ -31,8 +31,7 @@ class CoreController(AbstractController):
         :param log_dir: the directory to send the logs
         """
         super(self.__class__, self).__init__(
-            platform, p4_build_out, topo, 'core',
-            ['TpsCoreIngress.forwardedPackets'], log_dir, load_p4,
+            platform, p4_build_out, topo, 'core', list(), log_dir, load_p4,
             'TpsCoreIngress')
 
     def make_rules(self, sw, sw_info, north_facing_links, south_facing_links):
@@ -43,6 +42,39 @@ class CoreController(AbstractController):
         sw.write_clone_entries(clone_entry)
         logger.info('Installed clone on %s' % sw.name)
 
+        logger.info('self.topo - [%s]', self.topo)
+        logger.info('north_facing_links - [%s]', north_facing_links)
+        logger.info('south_facing_links - [%s]', south_facing_links)
+        logger.info('sw_info - [%s]', sw_info)
+
+        for north_link in north_facing_links:
+            if 'l2ptr' in north_link:
+                self.__make_int_rules(sw, sw_info, north_link,
+                                      south_facing_links)
+
+    def __make_int_rules(self, sw, sw_info, north_link, south_facing_links):
+        for south_link in south_facing_links:
+            south_node_name = south_link['south_node']
+            south_node_mac = self.topo['switches'][south_node_name]['mac']
+            action_params = {
+                'switch_id': sw_info['id'],
+                'egress_port': north_link['north_facing_port'],
+            }
+            table_name = '{}.data_inspection_t'.format(self.p4_ingress)
+            action_name = '{}.data_inspect_packet'.format(self.p4_ingress)
+            match_fields = {'hdr.ethernet.src_mac': south_node_mac}
+            logger.info(
+                'Insert params into table - [%s] for action [%s] ',
+                'with params [%s] fields [%s] key hdr.ethernet.src_mac [%s]',
+                table_name, action_name, action_params, match_fields,
+                south_node_mac)
+            table_entry = self.p4info_helper.build_table_entry(
+                table_name=table_name,
+                match_fields=match_fields,
+                action_name=action_name,
+                action_params=action_params)
+            sw.write_table_entry(table_entry)
+
     def make_north_rules(self, sw, sw_info, north_link):
         north_device = self.topo['hosts'].get(north_link['north_node'])
         if north_device:
@@ -52,10 +84,14 @@ class CoreController(AbstractController):
                 sw_info['name'], north_device['name'],
                 north_link.get('north_facing_port'),
                 north_device.get('ip'), str(north_device.get('ip_port')))
+
+            logger.info(
+                'Adding data_forward entry to forward packets to  port - [%s]',
+                north_link['north_facing_port'])
             table_entry = self.p4info_helper.build_table_entry(
                 table_name='{}.data_forward_t'.format(self.p4_ingress),
                 match_fields={
-                    'hdr.ipv4.dstAddr': (north_device['ip'], 32)
+                    'hdr.ipv4.dstAddr': (north_device['ip'], 32),
                 },
                 action_name='{}.data_forward'.format(self.p4_ingress),
                 action_params={
@@ -66,14 +102,3 @@ class CoreController(AbstractController):
             logger.info(
                 'Installed Host %s ipv4 cloning rule on %s',
                 north_device.get('ip'), sw.name)
-
-    def make_south_rules(self, sw, sw_info, south_link):
-        south_device = self.topo['hosts'].get(south_link['south_node'])
-        if not south_device:
-            south_device = self.topo['switches'].get(south_link['south_node'])
-            if south_device is None:
-                raise Exception('Could not locate south node device')
-
-        logger.info('Core: %s connects to south device %s on port %s',
-                    sw_info['name'], south_device['name'],
-                    str(south_link.get('south_facing_port')))

@@ -18,47 +18,121 @@
 #include <tps_consts.p4>
 
 /*************************************************************************
-*********************** P A R S E R  ***********************************
+******************* Gateway TPS P A R S E R  *****************************
 *************************************************************************/
-parser TpsParser(packet_in packet,
-                out headers hdr,
-                inout metadata meta,
-                inout standard_metadata_t standard_metadata) {
-
+parser TpsGwParser(packet_in packet,
+                   out headers hdr,
+                   inout metadata meta,
+                   inout standard_metadata_t standard_metadata) {
     state start {
         transition parse_ethernet;
     }
 
     state parse_ethernet {
         packet.extract(hdr.ethernet);
-        transition select(hdr.ethernet.etherType) {
-            TYPE_INSPECTION: parse_inspection;
-            TYPE_IPV4: parse_ipv4;
-            default: accept;
-        }
-    }
-
-    state parse_inspection {
-        packet.extract(hdr.gw_int);
-        transition select(hdr.gw_int.proto_id) {
-            TYPE_IPV4: parse_ipv4;
-            default: accept;
-        }
+        transition parse_ipv4;
     }
 
     state parse_ipv4 {
         packet.extract(hdr.ipv4);
         transition select(hdr.ipv4.protocol) {
-            TYPE_UDP : parse_udp;
+            TYPE_UDP: parse_udp;
             default: accept;
         }
     }
 
     state parse_udp {
         packet.extract(hdr.udp);
-        transition select(hdr.udp.dst_port) {
+        transition accept;
+    }
+}
+
+/*************************************************************************
+****************** Aggregate TPS P A R S E R  ****************************
+*************************************************************************/
+parser TpsAggParser(packet_in packet,
+                    out headers hdr,
+                    inout metadata meta,
+                    inout standard_metadata_t standard_metadata) {
+    state start {
+        transition parse_ethernet;
+    }
+
+    state parse_ethernet {
+        packet.extract(hdr.ethernet);
+        transition select(hdr.ethernet.src_mac) {
+            default:  parse_ipv4;
+        }
+    }
+
+    state parse_ipv4 {
+        packet.extract(hdr.ipv4);
+        transition select(hdr.ipv4.protocol) {
+            TYPE_INSPECTION: parse_int_shim;
             default: accept;
         }
     }
 
+    state parse_int_shim {
+        packet.extract(hdr.int_shim);
+        transition parse_int_hdr;
+    }
+
+    state parse_int_hdr {
+        packet.extract(hdr.int_header);
+        transition accept;
+    }
+}
+
+/*************************************************************************
+******************** Core TPS P A R S E R  *******************************
+*************************************************************************/
+parser TpsCoreParser(packet_in packet,
+                     out headers hdr,
+                     inout metadata meta,
+                     inout standard_metadata_t standard_metadata) {
+    state start {
+        transition parse_ethernet;
+    }
+
+    state parse_ethernet {
+        packet.extract(hdr.ethernet);
+        transition parse_ipv4;
+    }
+
+    state parse_ipv4 {
+        packet.extract(hdr.ipv4);
+        transition select(hdr.ipv4.protocol) {
+            TYPE_INSPECTION: parse_int_shim;
+            default: accept;
+        }
+    }
+
+    state parse_int_shim {
+        packet.extract(hdr.int_shim);
+        transition parse_int_hdr;
+    }
+
+    state parse_int_hdr {
+        packet.extract(hdr.int_header);
+        transition parse_int_meta_1;
+    }
+
+    state parse_int_meta_1 {
+        packet.extract(hdr.int_meta);
+        transition parse_int_meta_2;
+    }
+
+    state parse_int_meta_2 {
+        packet.extract(hdr.int_meta_2);
+        transition select(hdr.int_shim.length) {
+            0xc: parse_int_meta_3;
+            default: accept;
+        }
+    }
+
+    state parse_int_meta_3 {
+        packet.extract(hdr.int_meta_3);
+        transition accept;
+    }
 }

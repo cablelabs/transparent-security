@@ -21,10 +21,9 @@ from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import Ether
 
 from trans_sec.analytics.oinc import SimpleAE
-from trans_sec.packet.inspect_layer import GatewayINTInspect
+from trans_sec.packet.inspect_layer import (
+    IntShim, IntMeta2, IntHeader, IntMeta3, IntMeta1)
 from trans_sec.utils.http_session import HttpSession
-
-# noinspection PyCompatibility
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
@@ -48,26 +47,33 @@ class SimpleAETests(unittest.TestCase):
         :return:
         """
         pkt = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
-               GatewayINTInspect() /
-               IP(dst='localhost', src='localhost') /
+               IP(dst='10.1.0.1', src='10.2.0.1', proto=0xfd) /
+               IntShim() /
+               IntHeader() /
+               IntMeta1() /
+               IntMeta2() /
                UDP(dport=1234, sport=1234) /
-               'hello')
-        self.ae.handle_packet(pkt)
+               'hello transparent-security')
+        self.ae.process_packet(pkt, 0xfd)
 
     def test_start_one_attack(self):
         """
         Tests to ensure that one attack has been triggered
         :return:
         """
-        pkt = Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff')
-        pkt = (pkt /
-               GatewayINTInspect() /
-               IP(dst='localhost', src='localhost') /
+        pkt = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
+               IP(dst='10.1.0.1', src='10.2.0.1', proto=0xfd) /
+               IntShim() /
+               IntHeader() /
+               IntMeta1() /
+               IntMeta2() /
+               IntMeta3() /
                UDP(dport=1234, sport=1234) /
-               'hello')
+               'hello transparent-security')
 
         for index in range(0, self.ae.packet_count + 1):
-            ret_val = self.ae.handle_packet(pkt)
+            logger.debug('Processing packet #%s', index)
+            ret_val = self.ae.process_packet(pkt, 0xfd)
             if index < self.ae.packet_count:
                 self.assertFalse(ret_val)
             else:
@@ -79,24 +85,36 @@ class SimpleAETests(unittest.TestCase):
         :return:
         """
         pkt1 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
-                GatewayINTInspect(srcAddr='ff:ff:ff:ff:ff:ff') /
-                IP(dst='localhost', src='localhost') /
+                IP(dst='10.1.0.1', src='10.2.0.1', proto=0xfd) /
+                IntShim() /
+                IntHeader() /
+                IntMeta1() /
+                IntMeta2() /
+                IntMeta3(orig_mac='ff:ff:ff:ff:ff:ff') /
                 UDP(dport=1234, sport=1234) /
-                'hello')
+                'hello transparent-security')
 
         pkt2 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
-                GatewayINTInspect(srcAddr='ff:ff:ff:ff:ff:aa') /
-                IP(dst='localhost', src='localhost') /
+                IP(dst='10.1.0.1', src='10.2.0.1', proto=0xfd) /
+                IntShim() /
+                IntHeader() /
+                IntMeta1() /
+                IntMeta2() /
+                IntMeta3(orig_mac='ff:ff:ff:ff:ff:aa') /
                 UDP(dport=1234, sport=1234) /
-                'hello')
+                'hello transparent-security')
 
-        for index in range(0, self.ae.packet_count + 1):
+        for index in range(0, self.ae.packet_count):
             logger.info('Iteration #%s', index)
-            ret_val1 = self.ae.handle_packet(pkt1)
-            ret_val2 = self.ae.handle_packet(pkt2)
+            ret_val1 = self.ae.process_packet(pkt1, 0xfd)
+            ret_val2 = self.ae.process_packet(pkt2, 0xfd)
+            logger.info('Checking index - [%s] - count - [%s]',
+                        index, self.ae.packet_count)
             if index < self.ae.packet_count:
+                logger.info('Expecting false - [%s]', ret_val1)
                 self.assertFalse(ret_val1)
                 self.assertFalse(ret_val2)
             else:
+                logger.info('Expecting true - [%s]', ret_val1)
                 self.assertTrue(ret_val1)
                 self.assertTrue(ret_val2)

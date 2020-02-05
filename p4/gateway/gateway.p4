@@ -20,27 +20,23 @@
 #include <tps_headers.p4>
 #include <tps_parser.p4>
 #include <tps_checksum.p4>
-#include <tps_ingress.p4>
 #include <tps_egress.p4>
 
 /*************************************************************************
-**************  I N G R E S S   P R O C E S S I N G   *******************
+**************  I N G R E S S   P R O C E S S I N G   ********************
 *************************************************************************/
 
 control TpsGwIngress(inout headers hdr,
-                  inout metadata meta,
-                  inout standard_metadata_t standard_metadata) {
-
-    debug_meta() debug_meta_ingress_start;
-    debug_meta() debug_meta_ingress_end;
+                     inout metadata meta,
+                     inout standard_metadata_t standard_metadata) {
 
     counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) forwardedPackets;
     counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) droppedPackets;
 
     action data_forward(macAddr_t dstAddr, egressSpec_t port, bit<32> l2ptr) {
         standard_metadata.egress_spec = port;
-        hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
-        hdr.ethernet.dstAddr = dstAddr;
+        hdr.ethernet.src_mac = hdr.ethernet.dst_mac;
+        hdr.ethernet.dst_mac = dstAddr;
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
         meta.fwd.l2ptr = l2ptr;
     }
@@ -57,20 +53,33 @@ control TpsGwIngress(inout headers hdr,
         default_action = NoAction();
     }
 
-    action data_inspect_packet(bit<32> device) {
-        hdr.gw_int.setValid();
-        hdr.gw_int.srcAddr = hdr.ethernet.srcAddr;
-        hdr.gw_int.deviceAddr = hdr.ipv4.srcAddr;
-        hdr.gw_int.dstAddr  = hdr.ipv4.dstAddr;
-        hdr.gw_int.dstPort = hdr.udp.dst_port;
-        hdr.gw_int.proto_id = TYPE_IPV4;
-        hdr.ethernet.etherType = TYPE_INSPECTION;
+    action data_inspect_packet(bit<32> device, bit<32> switch_id) {
+        hdr.int_shim.setValid();
+        hdr.int_header.setValid();
+        hdr.int_meta.setValid();
+
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen + 24;
+
+        hdr.int_shim.next_proto = hdr.ipv4.protocol;
+        hdr.ipv4.protocol = TYPE_INSPECTION;
+
+        hdr.int_shim.length = 6;
+        hdr.int_shim.type = 1;
+
+        hdr.int_header.meta_len = 3;
+        hdr.int_header.instructions = 0x80c0;
+        hdr.int_header.remaining_hop_cnt = 10; /* TODO - find a better means to determine this value */
+        hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt -1;
+
+        hdr.int_meta.switch_id = switch_id;
+        hdr.int_meta.orig_mac = hdr.ethernet.src_mac;
+
         forwardedPackets.count(device);
     }
 
     table data_inspection_t {
         key = {
-            hdr.ethernet.srcAddr: exact;
+            hdr.ethernet.src_mac: exact;
         }
         actions = {
             data_inspect_packet;
@@ -87,7 +96,7 @@ control TpsGwIngress(inout headers hdr,
 
     table data_drop_t {
         key = {
-            hdr.gw_int.srcAddr: exact;
+            hdr.ethernet.src_mac: exact;
             hdr.ipv4.srcAddr: exact;
             hdr.ipv4.dstAddr: exact;
             hdr.udp.dst_port: exact;
@@ -104,26 +113,6 @@ control TpsGwIngress(inout headers hdr,
         mark_to_drop(standard_metadata);;
     }
 
-    action control_forward(macAddr_t mac, egressSpec_t port) {
-        standard_metadata.egress_spec = port;
-        hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
-        hdr.ethernet.dstAddr = mac;
-        hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
-    }
-
-    table control_forward_t {
-        key = {
-            hdr.ipv4.dstAddr: lpm;
-        }
-        actions = {
-            control_forward;
-            control_drop;
-            NoAction;
-        }
-        size = 1024;
-        default_action = NoAction();
-    }
-
      apply {
         if (hdr.ipv4.isValid()) {
             if (hdr.udp.isValid()) {
@@ -133,20 +122,16 @@ control TpsGwIngress(inout headers hdr,
                     data_forward_t.apply();
                 }
             }
-            else {
-                control_forward_t.apply();
-            }
         }
-
     }
 }
 
 /*************************************************************************
-***********************  S W I T C H  *******************************
+***********************  S W I T C H  ************************************
 *************************************************************************/
 
 V1Switch(
-    TpsParser(),
+    TpsGwParser(),
     TpsVerifyChecksum(),
     TpsGwIngress(),
     TpsEgress(),

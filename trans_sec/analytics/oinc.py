@@ -13,15 +13,17 @@
 import abc
 import datetime
 import logging
+import threading
 import time
 
 from anytree import search, Node, RenderTree
 from scapy.all import bind_layers
 from scapy.all import sniff
-from scapy.layers.inet import IP
+from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import Ether
-import threading
-from trans_sec.packet.inspect_layer import GatewayINTInspect
+
+from trans_sec.packet.inspect_layer import (
+    IntHeader, IntMeta1, IntMeta2, IntShim, IntMeta3)
 
 logger = logging.getLogger('oinc')
 
@@ -44,19 +46,23 @@ class PacketAnalytics(object):
         self.count_map = dict()
         self.sniff_stop = threading.Event()
 
-    def start_sniffing(self, iface, proto_id, ether_type):
+    def start_sniffing(self, iface, ip_proto=0xfd):
         """
         Starts the sniffer thread
         :param iface: the interface to sniff
-        :param proto_id:
-        :param ether_type: the type of packets to process
-                           (i.e. 0x1212 for Ethernet)
+        :param ip_proto: the IP protocol to sniff (default TPS - 253)
         """
         logger.info("AE monitoring iface %s", iface)
-        bind_layers(Ether, GatewayINTInspect, type=ether_type)
-        bind_layers(GatewayINTInspect, IP, proto_id=proto_id)
+        bind_layers(Ether, IP)
+        bind_layers(IP, IntShim)
+        bind_layers(IntShim, IntHeader)
+        bind_layers(IntHeader, IntMeta1)
+        bind_layers(IntMeta1, IntMeta2)
+        bind_layers(IntMeta2, IntMeta3)
+        bind_layers(IntMeta3, UDP)
+        logger.debug("Completed bind_layers")
         sniff(iface=iface,
-              prn=lambda packet: self.handle_packet(packet, ether_type),
+              prn=lambda packet: self.handle_packet(packet, ip_proto),
               stop_filter=lambda p: self.sniff_stop.is_set())
 
     def stop_sniffing(self):
@@ -65,19 +71,14 @@ class PacketAnalytics(object):
         """
         self.sniff_stop.set()
 
-    def handle_packet(self, packet, ether_type=None):
+    def handle_packet(self, packet, ip_proto):
         """
         Determines whether or not to process this packet
         :param packet: the packet to process
-        :param ether_type: the type of packet to process
+        :param ip_proto: the IP protocol to filter
         :return T/F - True when an attack has been triggered
         """
-        if not ether_type or (ether_type and packet[Ether].type == ether_type):
-            return self.process_packet(packet)
-        else:
-            logger.debug('Could not process packet with ether type %s',
-                         ether_type)
-            return False
+        return self.process_packet(packet, ip_proto)
 
     def _send_attack(self, **attack_dict):
         """
@@ -89,10 +90,11 @@ class PacketAnalytics(object):
         self.sdn_interface.post('attack', attack_dict)
 
     @abc.abstractmethod
-    def process_packet(self, packet):
+    def process_packet(self, packet, ip_proto):
         """
         Processes a packet to determine if an attack is occurring
         :param packet: the packet to process
+        :param ip_proto: the IP protocol to filter
         :return: T/F - True when an attack has been triggered
         """
         return
@@ -102,19 +104,51 @@ def extract_int_data(packet):
     """
     Parses the required data from the packet
     :param packet: the packet to parse
-    :return:
+    :return: dict with choice header fields extracted
     """
-    out = dict(
-        srcMac=packet[Ether].src,
-        devMac=packet[GatewayINTInspect].srcAddr,
-        devAddr=packet[GatewayINTInspect].deviceAddr,
-        dstAddr=packet[GatewayINTInspect].dstAddr,
-        dstPort=packet[GatewayINTInspect].dstPort,
-        protocol=packet[GatewayINTInspect].proto_id,
-        packetLen=len(packet),
-    )
+    log_int_packet(packet)
+
+    try:
+        out = dict(
+            devMac=packet[IntMeta3].orig_mac,
+            devAddr=packet[IP].src,
+            # TODO/FIXME - Will need to grab the last one once we have a list
+            #  of IntMeta
+            switchId1=packet[IntMeta1].switch_id,
+            switchId2=packet[IntMeta2].switch_id,
+            switchId3=packet[IntMeta3].switch_id,
+            dstAddr=packet[IP].dst,
+            dstPort=packet[UDP].dport,
+            protocol=packet[IP].proto,
+            packetLen=len(packet),
+        )
+    except Exception as e:
+        logger.error('Error extracting header data - %s', e)
+        return None
     logger.debug('Extracted header data [%s]', out)
     return out
+
+
+def log_int_packet(packet):
+    try:
+        logger.debug('Packet length - [%s]', len(packet))
+        logger.debug('ETH dst_mac - [%s] src_mac - [%s] type - [%s]',
+                     packet[Ether].dst, packet[Ether].src, packet[Ether].type)
+        logger.debug('IP src - [%s] dst - [%s] proto - [%s]',
+                     packet[IP].src, packet[IP].dst, packet[IP].proto)
+        logger.debug('UDP sport - [%s] dport - [%s]',
+                     packet[UDP].sport, packet[UDP].dport)
+        logger.debug('IH remaining_hops - [%s]',
+                     packet[IntHeader].remaining_hop_cnt)
+        logger.debug('IS type - [%s] next_proto - [%s] length - [%s]',
+                     packet[IntShim].type, packet[IntShim].next_proto,
+                     packet[IntShim].length)
+        logger.debug('IM1 switch_id - [%s] orig_mac - [%s]',
+                     packet[IntMeta1].switch_id, packet[IntMeta1].orig_mac)
+        logger.debug('IM2 switch_id - [%s] orig_mac - [%s]',
+                     packet[IntMeta2].switch_id, packet[IntMeta2].orig_mac)
+    except Exception as e:
+        logger.error('Error parsing header - %s', e)
 
 
 class Oinc(PacketAnalytics):
@@ -126,7 +160,7 @@ class Oinc(PacketAnalytics):
                                              sample_interval)
         self.tree = Node('root')
 
-    def process_packet(self, packet):
+    def process_packet(self, packet, ip_proto):
         mac, src_ip, dst_ip, dst_port, packet_size = self.__parse_tree(packet)
 
         if mac:
@@ -234,15 +268,42 @@ class SimpleAE(PacketAnalytics):
         # Holds the last time an attack call was issued to the SDN controller
         self.attack_map = dict()
 
-    def process_packet(self, packet):
+    def process_packet(self, packet, ip_proto):
         """
-        Processes a packet to determine if an attack is occurring
+        Processes a packet to determine if an attack is occurring if the IP
+        protocol is as expected
         :param packet: the packet to process
+        :param ip_proto: the IP protocol to filter
         :return: T/F - True when an attack has been triggered
         """
         logger.debug('Packet data - [%s]', packet.summary())
-        int_data = extract_int_data(packet)
+        protocol = None
+        try:
+            protocol = packet[IP].proto
+        except Exception as e:
+            logger.debug('Unable to process packet - [%s] with error [%s]',
+                         packet.summary(), e)
+
+        if protocol == ip_proto:
+            int_data = extract_int_data(packet)
+
+            if int_data:
+                return self.__process(int_data)
+            else:
+                logger.warn('Unable to debug INT data')
+                return False
+        else:
+            logger.debug('Cannot process IP proto of - [%s]', protocol)
+            return False
+
+    def __process(self, int_data):
+        """
+        Processes INT data for analysis
+        :param int_data: the data to process
+        :return:
+        """
         attack_map_key = hash(str(int_data))
+        logger.debug('Attack map key - [%s]', attack_map_key)
         if not self.count_map.get(attack_map_key):
             self.count_map[attack_map_key] = list()
 
@@ -296,10 +357,11 @@ class IntLoggerAE(PacketAnalytics):
     """
     Logs only INT packets
     """
-    def process_packet(self, packet):
+    def process_packet(self, packet, ip_proto):
         """
         Logs the INT data within the packet
         :param packet: the INT packet
+        :param ip_proto: the IP protocol to process
         :return: False
         """
         logger.info('INT Packet data - [%s]', extract_int_data(packet))
@@ -310,20 +372,21 @@ class LoggerAE(PacketAnalytics):
     """
     Logging only
     """
-    def handle_packet(self, packet, ether_type=None):
+    def handle_packet(self, packet, ip_proto=None):
         """
         Logs every received packet's summary data
         :param packet: extracts data from here
-        :param ether_type: does nothing here
+        :param ip_proto: does nothing here
         :return: False
         """
         logger.info('Packet data - [%s]', packet.summary())
         return False
 
-    def process_packet(self, packet):
+    def process_packet(self, packet, ip_proto):
         """
         No need to implement
         :param packet: the packet that'll never come in
+        :param ip_proto: does nothing here
         :raises NotImplemented
         """
         raise NotImplemented

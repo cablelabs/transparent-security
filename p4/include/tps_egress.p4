@@ -16,7 +16,7 @@
 
 
 /*************************************************************************
-****************  E G R E S S   P R O C E S S I N G   *******************
+****************  E G R E S S   P R O C E S S I N G   ********************
 *************************************************************************/
 
 control TpsEgress(inout headers hdr,
@@ -29,14 +29,18 @@ control TpsEgress(inout headers hdr,
 }
 
 /*************************************************************************
-***********************  D E P A R S E R  *******************************
+***********************  D E P A R S E R  ********************************
 *************************************************************************/
 
 control TpsDeparser(packet_out packet, in headers hdr) {
     apply {
         packet.emit(hdr.ethernet);
-        packet.emit(hdr.gw_int);
         packet.emit(hdr.ipv4);
+        packet.emit(hdr.int_shim);
+        packet.emit(hdr.int_header);
+        packet.emit(hdr.int_meta);
+        packet.emit(hdr.int_meta_2);
+        packet.emit(hdr.int_meta_3);
         packet.emit(hdr.udp);
     }
 }

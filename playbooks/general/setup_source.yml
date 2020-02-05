@@ -46,9 +46,17 @@
           - "--exclude=*/.terraform*"
           - "--exclude=*.tfstate"
 
-    - name: install {{ dest_dir }} and dependencies into python runtime
+    - name: install {{ dest_dir }} dependencies into python runtime
+      become: yes
+      command: "pip install -r {{ dest_dir }}/requirements.txt"
+      retries: 3
+      delay: 5
+
+    - name: install {{ dest_dir }} into python runtime
       become: yes
       command: "pip install -e {{ dest_dir }}"
+      retries: 3
+      delay: 5
 
     - name: run python unit tests
       become: yes

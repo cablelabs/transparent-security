@@ -43,20 +43,20 @@
     local_srvc_script_tmplt_file: ../general/templates/ae_service.sh.j2
     monitor_intf: "{{ ae_monitor_intf }}"
 
-- import_playbook: ../general/start_service.yml
-  vars:
-    host_val: localhost
-    service_name: tps-core1-eth1-logger
-    srvc_desc: 'core1-eth1-logger'
-    srvc_type: 'LOGGING'
-    local_srvc_script_tmplt_file: ../general/templates/ae_service.sh.j2
-    monitor_intf: core1-eth1
-
-- import_playbook: ../general/start_service.yml
-  vars:
-    host_val: localhost
-    service_name: tps-core1-eth2-logger
-    srvc_desc: 'core1-eth2-logger'
-    srvc_type: 'LOGGING'
-    local_srvc_script_tmplt_file: ../general/templates/ae_service.sh.j2
-    monitor_intf: core1-eth2
+#- import_playbook: ../general/start_service.yml
+#  vars:
+#    host_val: localhost
+#    service_name: tps-core1-eth1-logger
+#    srvc_desc: 'core1-eth1-logger'
+#    srvc_type: 'LOGGING'
+#    local_srvc_script_tmplt_file: ../general/templates/ae_service.sh.j2
+#    monitor_intf: core1-eth1
+#
+#- import_playbook: ../general/start_service.yml
+#  vars:
+#    host_val: localhost
+#    service_name: tps-core1-eth2-logger
+#    srvc_desc: 'core1-eth2-logger'
+#    srvc_type: 'LOGGING'
+#    local_srvc_script_tmplt_file: ../general/templates/ae_service.sh.j2
+#    monitor_intf: core1-eth2

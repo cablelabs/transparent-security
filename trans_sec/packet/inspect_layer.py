@@ -14,16 +14,65 @@ from scapy.all import Packet
 from scapy import fields
 
 
-class GatewayINTInspect(Packet):
+class IntShim(Packet):
     """
-    This class represents the INT data being placed onto the packets to help
+    This class represents the INT shim being placed onto the packets to help
     generating and parsing
     """
-    name = "INSPECT"
     fields_desc = [
-        fields.MACField('srcAddr', 'ff:ff:ff:ff:ff:ff'),
-        fields.IPField('deviceAddr', '0.0.0.0'),
-        fields.IPField('dstAddr', '0.0.0.0'),
-        fields.ShortField('dstPort', 1234),
-        fields.ShortField('proto_id', 0x800),
+        fields.ByteField('type', 0),
+        fields.ByteField('reserved', 0),
+        fields.ByteField('next_proto', 0),
+        fields.ByteField('length', 0),
     ]
+
+
+class IntHeader(Packet):
+    """
+    This class represents the INT header data being placed onto the packets to
+    help generating and parsing
+    """
+    fields_desc = [
+        fields.BitField('ver', 0, 4),
+        fields.BitField('rep', 0, 2),
+        fields.BitField('c', 0, 1),
+        fields.BitField('e', 0, 1),
+        fields.BitField('m', 0, 1),
+        fields.BitField('res1', 0, 10),
+        fields.BitField('meta_len', 0, 5),
+        fields.ByteField('remaining_hop_cnt', 0),
+        fields.BitField('instr_bitmap', 0, 16),
+        fields.BitField('res2', 0, 16),
+    ]
+
+
+class IntMeta(Packet):
+    """
+    This class represents the INT metadata being placed onto the packets
+    """
+    fields_desc = [
+        fields.IntField('switch_id', 0),
+        fields.MACField('orig_mac', 0),
+        fields.BitField('reserved', 0, 16),
+    ]
+
+
+class IntMeta1(IntMeta):
+    """
+    This class represents the first INT metadata being placed onto the packets
+    """
+    name = "INT_META_1"
+
+
+class IntMeta2(IntMeta):
+    """
+    This class represents the second INT metadata being placed onto the packets
+    """
+    name = "INT_META_2"
+
+
+class IntMeta3(IntMeta):
+    """
+    This class represents the third INT metadata being placed onto the packets
+    """
+    name = "INT_META_3"

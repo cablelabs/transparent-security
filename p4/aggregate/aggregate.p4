@@ -20,27 +20,22 @@
 #include <tps_headers.p4>
 #include <tps_parser.p4>
 #include <tps_checksum.p4>
-#include <tps_ingress.p4>
 #include <tps_egress.p4>
 
 /*************************************************************************
-**************  I N G R E S S   P R O C E S S I N G   *******************
+**************  I N G R E S S   P R O C E S S I N G   ********************
 *************************************************************************/
 
 control TpsAggIngress(inout headers hdr,
-                  inout metadata meta,
-                  inout standard_metadata_t standard_metadata) {
-
-    debug_meta() debug_meta_ingress_start;
-    debug_meta() debug_meta_ingress_end;
+                      inout metadata meta,
+                      inout standard_metadata_t standard_metadata) {
 
     counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) forwardedPackets;
-    counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) droppedPackets;
 
     action data_forward(macAddr_t dstAddr, egressSpec_t port, bit<32> l2ptr) {
         standard_metadata.egress_spec = port;
-        hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
-        hdr.ethernet.dstAddr = dstAddr;
+        hdr.ethernet.src_mac = hdr.ethernet.dst_mac;
+        hdr.ethernet.dst_mac = dstAddr;
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
         meta.fwd.l2ptr = l2ptr;
     }
@@ -57,37 +52,27 @@ control TpsAggIngress(inout headers hdr,
         default_action = NoAction();
     }
 
-    action data_inspect_packet(bit<32> device) {
-        hdr.gw_int.setValid();
+    action data_inspect_packet(bit<32> device, bit<32> switch_id) {
+        hdr.int_meta.setValid();
+
+        hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt - 1;
+
+        /* TODO - Find a better means of increasing these sizes using the hdr.int_meta size value */
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen + 12;
+        hdr.int_shim.length = hdr.int_shim.length + 3;
+
+        hdr.int_meta.switch_id = switch_id;
+        hdr.int_meta.orig_mac = 0XFFFFFFFFFFFF;
+
         forwardedPackets.count(device);
     }
 
     table data_inspection_t {
         key = {
-            hdr.ethernet.srcAddr: exact;
+            hdr.ethernet.src_mac: exact;
         }
         actions = {
             data_inspect_packet;
-            NoAction;
-        }
-        size = 1024;
-        default_action = NoAction();
-    }
-
-    action data_drop(bit<32> device) {
-        mark_to_drop(standard_metadata);
-        droppedPackets.count(device);
-    }
-
-    table data_drop_t {
-        key = {
-            hdr.gw_int.srcAddr: exact;
-            hdr.ipv4.srcAddr: exact;
-            hdr.ipv4.dstAddr: exact;
-            hdr.udp.dst_port: exact;
-        }
-        actions = {
-            data_drop;
             NoAction;
         }
         size = 1024;
@@ -98,49 +83,22 @@ control TpsAggIngress(inout headers hdr,
         mark_to_drop(standard_metadata);;
     }
 
-    action control_forward(macAddr_t mac, egressSpec_t port) {
-        standard_metadata.egress_spec = port;
-        hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
-        hdr.ethernet.dstAddr = mac;
-        hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
-    }
-
-    table control_forward_t {
-        key = {
-            hdr.ipv4.dstAddr: lpm;
-        }
-        actions = {
-            control_forward;
-            control_drop;
-            NoAction;
-        }
-        size = 1024;
-        default_action = NoAction();
-    }
-
      apply {
         if (hdr.ipv4.isValid()) {
-            if (hdr.udp.isValid()) {
-                data_drop_t.apply();
-                if (standard_metadata.egress_spec != DROP_PORT) {
-                    data_inspection_t.apply();
-                    data_forward_t.apply();
-                }
-            }
-            else {
-                control_forward_t.apply();
+            if (standard_metadata.egress_spec != DROP_PORT) {
+                data_inspection_t.apply();
+                data_forward_t.apply();
             }
         }
-
     }
 }
 
 /*************************************************************************
-***********************  S W I T C H  *******************************
+***********************  S W I T C H  ************************************
 *************************************************************************/
 
 V1Switch(
-    TpsParser(),
+    TpsAggParser(),
     TpsVerifyChecksum(),
     TpsAggIngress(),
     TpsEgress(),

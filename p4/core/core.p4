@@ -25,29 +25,40 @@
 #define BMV2_V1MODEL_INSTANCE_TYPE_INGRESS_CLONE 1
 #define IS_I2E_CLONE(std_meta) (std_meta.instance_type == BMV2_V1MODEL_INSTANCE_TYPE_INGRESS_CLONE)
 #define IOAM_CLONE_SPEC 0x1000
-
 const bit<32> I2E_CLONE_SESSION_ID = 5;
 
 /*************************************************************************
-**************  I N G R E S S   P R O C E S S I N G   *******************
+**************  I N G R E S S   P R O C E S S I N G   ********************
 *************************************************************************/
 
 control TpsCoreIngress(inout headers hdr,
-                  inout metadata meta,
-                  inout standard_metadata_t standard_metadata) {
-
-
-    counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) droppedPackets;
+                       inout metadata meta,
+                       inout standard_metadata_t standard_metadata) {
 
     action data_forward(macAddr_t dstAddr, egressSpec_t port) {
-        hdr.gw_int.setInvalid();
+        /*
+        TODO/FIXME - data_inspection should be forwarding to port 3 but is
+            not so I added this line in
+        */
+        clone3(CloneType.I2E, I2E_CLONE_SESSION_ID, standard_metadata);
+
+        hdr.ipv4.protocol = hdr.int_shim.next_proto;
+        hdr.int_shim.setInvalid();
+        hdr.int_header.setInvalid();
+        hdr.int_meta.setInvalid();
+        hdr.int_meta_2.setInvalid();
+        hdr.int_meta_3.setInvalid();
+
+        /*
+        TODO - find a better means for resetting the totalLen value after
+           invalidating the INT headers which will be problematic when
+           implementing header stacks for holding switch_ids
+       */
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen - 48;
+
         standard_metadata.egress_spec = port;
-        hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
-        hdr.ethernet.dstAddr = dstAddr;
-        hdr.ipv4.srcAddr = hdr.gw_int.deviceAddr;
-        hdr.ipv4.dstAddr = hdr.gw_int.dstAddr;
-        hdr.udp.dst_port = hdr.gw_int.dstPort;
-        hdr.ethernet.etherType = TYPE_IPV4;
+        hdr.ethernet.src_mac = hdr.ethernet.dst_mac;
+        hdr.ethernet.dst_mac = dstAddr;
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
     }
 
@@ -63,110 +74,60 @@ control TpsCoreIngress(inout headers hdr,
         default_action = NoAction();
     }
 
-    action data_drop(bit<32> device) {
-        mark_to_drop(standard_metadata);
-        droppedPackets.count(device);
+    action data_inspect_packet(bit<32> switch_id, egressSpec_t egress_port) {
+        hdr.int_meta_3.setValid();
+
+        hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt - 1;
+
+        /* TODO - Find a better means of increasing these sizes using the hdr.int_meta size value */
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen + 12;
+        hdr.int_shim.length = hdr.int_shim.length + 3;
+
+        hdr.int_meta_3.switch_id = hdr.int_meta_2.switch_id;
+        hdr.int_meta_3.orig_mac = hdr.int_meta_2.orig_mac;
+        hdr.int_meta_2.switch_id = hdr.int_meta.switch_id;
+        hdr.int_meta_2.orig_mac = hdr.int_meta.orig_mac;
+        hdr.int_meta.switch_id = switch_id;
+        hdr.int_meta.orig_mac = 0xFFFFFFFFFFFF;
+
+        /* TODO - this action is not resulting with the INT packet being
+             egressed to the configured port (3 in this use case), therefore
+             I added clone3() to data_forward() to ensure the AE is receiving
+             the required packets */
+        standard_metadata.egress_spec = egress_port;
+
+        recirculate<standard_metadata_t>(standard_metadata);
     }
 
-    table data_drop_t {
+    table data_inspection_t {
         key = {
-            hdr.gw_int.srcAddr: exact;
-            hdr.ipv4.srcAddr: exact;
-            hdr.ipv4.dstAddr: exact;
-            hdr.udp.dst_port: exact;
+            hdr.ethernet.src_mac: exact;
         }
         actions = {
-            data_drop;
+            data_inspect_packet;
             NoAction;
         }
         size = 1024;
         default_action = NoAction();
-    }
-
-    action data_clone() {
-        clone3(CloneType.I2E, I2E_CLONE_SESSION_ID, standard_metadata);
-    }
-
-    table data_clone_t {
-        actions = {
-            data_clone;
-            NoAction;
-        }
-        default_action = data_clone;
-    }
-
-    action control_forward(macAddr_t mac, egressSpec_t port) {
-        standard_metadata.egress_spec = port;
-        hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
-        hdr.ethernet.dstAddr = mac;
-        hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
-    }
-
-    action control_drop() {
-        mark_to_drop(standard_metadata);
-    }
-
-    table control_forward_t {
-        key = {
-            hdr.ipv4.dstAddr: lpm;
-        }
-        actions = {
-            control_forward;
-            control_drop;
-            NoAction;
-        }
-        size = 1024;
-        default_action = NoAction();
-    }
-
-    table dbg_table {
-        key = {
-            standard_metadata.ingress_port : exact;
-            standard_metadata.egress_spec : exact;
-            standard_metadata.egress_port : exact;
-            standard_metadata.instance_type : exact;
-            standard_metadata.ingress_global_timestamp : exact;
-            standard_metadata.mcast_grp : exact;
-            standard_metadata.checksum_error : exact;
-            hdr.gw_int.srcAddr: exact;
-            hdr.gw_int.deviceAddr: exact;
-            hdr.gw_int.dstAddr: exact;
-            hdr.gw_int.dstPort: exact;
-            hdr.gw_int.proto_id: exact;
-            hdr.ipv4.srcAddr: exact;
-            hdr.ipv4.dstAddr: exact;
-            hdr.udp.dst_port: exact;
-            hdr.ethernet.dstAddr: exact;
-            hdr.ipv4.identification: exact;
-        }
-        actions = { NoAction; }
-        const default_action = NoAction();
     }
 
      apply {
         if (hdr.ipv4.isValid()) {
-            dbg_table.apply();
-            if (hdr.udp.isValid()) {
-                 data_drop_t.apply();
-                 if (standard_metadata.egress_spec != DROP_PORT) {
-                     data_clone_t.apply();
-                     data_forward_t.apply();
-                 }
-            }
-            else {
-                control_forward_t.apply();
+            if (standard_metadata.instance_type == 0) {
+                data_inspection_t.apply();
+            } else {
+                data_forward_t.apply();
             }
         }
-
     }
 }
 
 /*************************************************************************
-***********************  S W I T C H  *******************************
+***********************  S W I T C H  ************************************
 *************************************************************************/
 
 V1Switch(
-    TpsParser(),
+    TpsCoreParser(),
     TpsVerifyChecksum(),
     TpsCoreIngress(),
     TpsEgress(),

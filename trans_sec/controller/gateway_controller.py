@@ -57,19 +57,23 @@ class GatewayController(AbstractController):
                             ':' + str(device.get('ip_port')))
 
                 # Northbound Traffic Inspection
+                action_params = {
+                        'device': device['id'],
+                        'switch_id': sw_info['id']
+                }
                 table_entry = self.p4info_helper.build_table_entry(
                     table_name='{}.data_inspection_t'.format(self.p4_ingress),
                     match_fields={
-                        'hdr.ethernet.srcAddr': device['mac']
+                        'hdr.ethernet.src_mac': device['mac']
                     },
                     action_name='{}.data_inspect_packet'.format(
                         self.p4_ingress),
-                    action_params={
-                        'device': device['id']
-                    })
+                    action_params=action_params)
                 sw.write_table_entry(table_entry)
-                logger.info('Installed Northbound Packet Inspection '
-                            'from %s', device.get('ip'))
+                logger.info(
+                    'Installed Northbound Packet Inspection for device with'
+                    ' MAC - [%s] with action params - [%s]',
+                    device.get('mac'), action_params)
 
             # Northbound Routing
             table_entry = self.p4info_helper.build_table_entry(

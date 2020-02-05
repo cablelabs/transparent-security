@@ -44,8 +44,6 @@ def get_args():
                         default='../mininet-start/conf/topology_proposed.json')
     parser.add_argument('-p', '--platform', help='Switch Platform',
                         required=True, type=str, choices=['bmv2', 'tofino'])
-    parser.add_argument('-sc', '--scenario', help='Path to topology json',
-                        required=False, default='scenario2')
     parser.add_argument('-s', '--switch-config-dir', dest='switch_config_dir',
                         help='Direction with Switch configurations',
                         required=True)
@@ -86,7 +84,7 @@ def main():
         topo, eval(args.load_p4))
     sdn_controller = DdosSdnController(
         topo, args.platform, args.switch_config_dir, args.http_server_port,
-        args.scenario, args.log_dir, eval(args.load_p4))
+        args.log_dir, eval(args.load_p4))
     sdn_controller.start()
 
 
