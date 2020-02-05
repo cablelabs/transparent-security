@@ -42,7 +42,7 @@
     data_inspection_action: data_inspect_packet
     data_inspection_match_fields:
       - key: hdr.ethernet.src_mac
-        value: 1
+        value: "{{ sender.mac }}"
     data_inspection_action_params:
       - key: device
         value: "{{ sender.id }}"
