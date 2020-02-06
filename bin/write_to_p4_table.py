@@ -91,10 +91,20 @@ if __name__ == '__main__':
         logger.info('Writing table entry - [%s] for insert - [%s]',
                     entry_config, args.insert)
 
+        match_fields = dict()
+        if 'match_fields' in entry_config:
+            logger.info('Match fields obj - [%s]',
+                        entry_config['match_fields'])
+            for key, value in entry_config['match_fields'].items():
+                if isinstance(value, list):
+                    match_fields[key] = (value[0], value[1])
+                else:
+                    match_fields[key] = value
+
         if args.insert == 'True':
             table_entry = p4info_helper.build_table_entry(
                 table_name=entry_config['table_name'],
-                match_fields=entry_config.get('match_fields'),
+                match_fields=match_fields,
                 action_name=entry_config.get('action_name'),
                 action_params=entry_config.get('action_params'),
             )

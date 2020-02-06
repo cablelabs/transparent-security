@@ -13,22 +13,5 @@
 # Simple scenario where packets are sent through 3 devices and only the last
 # one will be demonstrating dropped packets
 ---
-# Sending 1 UDP packet
-- import_playbook: test_cases/send_receive.yml
-  vars:
-    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-    host2_ip: "{{ topo_dict['hosts']['host2'].ip }}"
-    aggregate_mac: "{{ topo_dict['switches']['aggregate'].mac }}"
-
-    receiver: host2
-    receiver_log_file: "{{ host_log_dir }}/receiver-host2-1.out"
-    sender: host1
-    sender_intf: "{{ host_sender_intf | default('host1-eth0') }}"
-    sender_log_filename: sender-host1.out
-    send_port: 4321
-    send_src_port: 5432
-    send_to_ip: "{{ host2_ip }}"
-    send_packet_count: 1
-    dst_switch_mac: "{{ aggregate_mac }}"
-    min_received_packet_count: 0
-    max_received_packet_count: 0
+# Data Forward scenarios for UDP
+- import_playbook: aggregate-data-forward.yml
