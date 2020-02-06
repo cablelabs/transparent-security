@@ -48,4 +48,3 @@
         value: "{{ sender.id }}"
       - key: switch_id
         value: "{{ switch.id }}"
-
