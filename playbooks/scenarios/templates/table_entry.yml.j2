@@ -16,16 +16,24 @@
 - table_name: {{ p4_ingress_name }}.{{ table_name }}
 {% if action_name or action_name != '' %}
   action_name: {{ p4_ingress_name }}.{{ action_name }}
-{%  endif %}
+{% endif %}
 {% if match_fields %}
   match_fields:
 {% for match_field in match_fields %}
+{% if match_field.value is string %}
     {{ match_field.key }}: {{ match_field.value }}
+{% endif %}
+{% if match_field.value is iterable %}
+    {{ match_field.key }}:
+{% for match_val in match_field.value %}
+      - {{ match_val }}
 {% endfor %}
-{%  endif %}
+{% endif %}
+{% endfor %}
+{% endif %}
 {% if action_params %}
   action_params:
 {% for action_param in action_params %}
     {{ action_param.key }}: {{ action_param.value }}
 {% endfor %}
-{%  endif %}
+{% endif %}
