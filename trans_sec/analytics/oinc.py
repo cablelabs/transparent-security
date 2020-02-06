@@ -117,7 +117,7 @@ def extract_int_data(packet):
     orig_mac = None
 
     if hops == 3:
-        orig_mac = packet[IntMeta3].switch_id
+        orig_mac = packet[IntMeta3].orig_mac
     if hops > 3:
         raise Exception('Cannot support hops > 3')
 
