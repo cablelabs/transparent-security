@@ -37,26 +37,16 @@
     p4_te_log_dir: "{{ host_log_dir }}"
     p4_te_log_file: di_basic_te-di-receiver-forward-create.log
 
-# Sending UDP packets expect all to be received
+# Sending UDP packets expect all to be received with one INT hop
 - import_playbook: ../test_cases/send_receive.yml
   vars:
-    receiver_log_filename: di_basic_receiver-2.out
-    sender_log_filename: di_basic_sender-2.out
+    receiver_log_filename: di_basic_receiver-1.out
+    sender_log_filename: di_basic_sender-1.out
     sender_intf: "{{ sender.name }}-eth0"
     send_port: "{{ range(2000, 10000) | random(seed='one') }}"
     send_src_port: "{{ range(2000, 10000) | random(seed='two') }}"
     send_packet_count: "{{ 100 | random(seed='three') }}"
-
-# Delete table entry to "{{ data_forward_table }}"
-- import_playbook: ../test_cases/write_to_p4_table.yml
-  vars:
-    te_conf_file: ~/di-forward-delete.yml
-    p4_ingress_classname: "{{ ingress_classname }}"
-    p4_table_name: "{{ data_forward_table }}"
-    p4_table_match_fields: "{{ data_forward_match_fields }}"
-    p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: data_inspection_basic_te-di-receiver-forward-revert.log
-    p4_te_insert: False
+    int_hops: 1
 
 # Delete table entry to "{{ data_inspection_table }}"
 - import_playbook: ../test_cases/write_to_p4_table.yml
@@ -65,6 +55,27 @@
     p4_ingress_classname: "{{ ingress_classname }}"
     p4_table_name: "{{ data_inspection_table }}"
     p4_table_match_fields: "{{ data_inspection_match_fields }}"
+    p4_te_log_dir: "{{ host_log_dir }}"
+    p4_te_log_file: data_inspection_basic_te-di-receiver-forward-revert.log
+    p4_te_insert: False
+
+# Sending UDP packet expect to be received without INT
+- import_playbook: ../test_cases/send_receive.yml
+  vars:
+    receiver_log_filename: di_basic_receiver-2.out
+    sender_log_filename: di_basic_sender-2.out
+    sender_intf: "{{ sender.name }}-eth0"
+    send_port: "{{ range(2000, 10000) | random(seed='two') }}"
+    send_src_port: "{{ range(2000, 10000) | random(seed='three') }}"
+    send_packet_count: "{{ 100 | random(seed='four') }}"
+
+# Delete table entry to "{{ data_forward_table }}"
+- import_playbook: ../test_cases/write_to_p4_table.yml
+  vars:
+    te_conf_file: ~/di-forward-delete.yml
+    p4_ingress_classname: "{{ ingress_classname }}"
+    p4_table_name: "{{ data_forward_table }}"
+    p4_table_match_fields: "{{ data_forward_match_fields }}"
     p4_te_log_dir: "{{ host_log_dir }}"
     p4_te_log_file: data_inspection_basic_te-di-receiver-forward-revert.log
     p4_te_insert: False

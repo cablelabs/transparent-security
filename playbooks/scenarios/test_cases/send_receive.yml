@@ -18,8 +18,9 @@
 - hosts: "{{ rec_host }}"
   gather_facts: no
   vars:
-    receive_timeout: "{{ receiver_timeout_seconds | default(999999) }}"
+    receive_timeout: "{{ receiver_timeout_seconds | default(60) }}"
     receiver_log_file: "{{ host_log_dir }}/{{ receiver_log_filename }}"
+    int_hops: "{{ expected_int_hops | default('0') }}"
   tasks:
     - name: Remove {{ receiver_log_file }} from {{ receiver.name }}
       file:
@@ -39,7 +40,7 @@
         mode: 0777
 
     - set_fact:
-        receive_cmd: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/receive_packets.py -i {{ receiver.name }}-eth0 -f {{ receiver_log_file }}"
+        receive_cmd: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/receive_packets.py -i {{ receiver.name }}-eth0 -f {{ receiver_log_file }} -d {{ receive_timeout }} -ih {{ int_hops }}"
 
     - debug:
         var: receive_cmd
