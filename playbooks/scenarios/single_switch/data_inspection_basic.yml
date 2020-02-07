@@ -46,7 +46,7 @@
     send_port: "{{ range(2000, 10000) | random(seed='one') }}"
     send_src_port: "{{ range(2000, 10000) | random(seed='two') }}"
     send_packet_count: "{{ 100 | random(seed='three') }}"
-    int_hops: 1
+    int_hops: "{{ data_inspection_int_hops }}"
 
 # Delete table entry to "{{ data_inspection_table }}"
 - import_playbook: ../test_cases/write_to_p4_table.yml
