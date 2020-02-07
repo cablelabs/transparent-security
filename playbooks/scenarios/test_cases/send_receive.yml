@@ -61,6 +61,8 @@
     loops: "{{ send_loops | default(1) }}"
     loop_delay: "{{ send_loop_delay | default(1) }}"
     sender_log_file: "{{ host_log_dir }}/{{ sender_log_filename }}"
+    int_hdr_df: "{{ send_int_data_filename | default('send_int_data.yml') }}"
+    switch_ids: "{{ int_switch_ids | default(None) }}"
   tasks:
     - name: Create sender log directory {{ host_log_dir }}
       file:
@@ -77,7 +79,22 @@
     - set_fact:
         send_cmd: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/send_packets.py -y {{ send_delay }} -i {{ interval }} -it {{ loops }} -itd {{ loop_delay }} -z {{ sender_intf }} -r {{ receiver.ip }} -sp {{ send_src_port }} -p {{ send_port }} -f {{ sender_log_file }} -c {{ send_packet_count }} -s {{ switch.mac }} -m '{{ send_msg }}'"
 
-    - name: Sending packets with command [{{ send_cmd }}]
+    - block:
+      - debug:
+          var: switch_ids
+
+      - name: Create INT config file for send_packets.py
+        template:
+          src: ../templates/send_int_hdr.yml.j2
+          dest: "{{ int_hdr_df }}"
+
+      - set_fact:
+          send_cmd: "{{ send_cmd }} -ih {{ int_hdr_df }}"
+      - debug:
+          var: send_cmd
+      when: switch_ids
+
+    - name: Sending packets with command {{ send_cmd }}
       shell: "{{ send_cmd }}"
       async: 180
 
