@@ -23,7 +23,8 @@
     send_port: "{{ range(2000, 10000) | random(seed='one') }}"
     send_src_port: "{{ range(2000, 10000) | random(seed='two') }}"
     send_packet_count: "{{ 100 | random(seed='three') }}"
-    switch_ids: "{{ data_forward_switch_ids | default(None) }}"
+    inspection_data: "{{ sr1_data_inspection_int | default(None) }}"
+    int_hops: "{{ sr1_rec_int_hops | default(0) }}"
     min_received_packet_count: 0
     max_received_packet_count: 0
 
@@ -48,7 +49,8 @@
     send_port: "{{ range(2000, 10000) | random(seed='one') }}"
     send_src_port: "{{ range(2000, 10000) | random(seed='two') }}"
     send_packet_count: "{{ 100 | random(seed='three') }}"
-    switch_ids: "{{ data_forward_switch_ids | default(None) }}"
+    inspection_data: "{{ sr2_data_inspection_int | default(None) }}"
+    int_hops: "{{ sr2_rec_int_hops | default(0) }}"
 
 # Delete table entry to "{{ data_forward_table }}"
 - import_playbook: ../test_cases/write_to_p4_table.yml
@@ -70,6 +72,7 @@
     send_port: "{{ range(2000, 10000) | random(seed='two') }}"
     send_src_port: "{{ range(2000, 10000) | random(seed='three') }}"
     send_packet_count: "{{ 100 | random(seed='four') }}"
-    switch_ids: "{{ data_forward_switch_ids | default(None) }}"
+    inspection_data: "{{ sr3_data_inspection_int | default(None) }}"
+    int_hops: "{{ sr3_rec_int_hops | default(0) }}"
     min_received_packet_count: 0
     max_received_packet_count: 0

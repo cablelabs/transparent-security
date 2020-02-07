@@ -15,3 +15,6 @@
 ---
 # Data Forward scenarios for UDP
 - import_playbook: aggregate-data-forward.yml
+
+# Data Inspection scenarios for UDP
+- import_playbook: aggregate-data-inspection.yml
