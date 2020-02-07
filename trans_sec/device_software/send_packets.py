@@ -157,13 +157,16 @@ def __create_packet(args, interface):
             ctr += 1
             if ctr == 1:
                 logger.info('Adding IntMeta1')
-                pkt = pkt / IntMeta1(switch_id=int_meta['switch_id'])
+                pkt = pkt / IntMeta1(switch_id=int_meta['switch_id'],
+                                     orig_mac=int_meta['orig_mac'])
             if ctr == 2:
                 logger.info('Adding IntMeta2')
-                pkt = pkt / IntMeta2(switch_id=int_meta['switch_id'])
+                pkt = pkt / IntMeta2(switch_id=int_meta['switch_id'],
+                                     orig_mac=int_meta['orig_mac'])
             if ctr == 3:
                 logger.info('Adding IntMeta3')
-                pkt = pkt / IntMeta3(switch_id=int_meta['switch_id'])
+                pkt = pkt / IntMeta3(switch_id=int_meta['switch_id'],
+                                     orig_mac=int_meta['orig_mac'])
     else:
         pkt = (Ether(src=src_mac, dst=args.switch_ethernet) /
                IP(dst=addr, src=args.source_addr))

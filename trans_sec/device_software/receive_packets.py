@@ -59,28 +59,37 @@ def __log_packet(packet, int_hops):
     if int_hops > 0 and ip_proto == 0xfd:
         logger.debug('INT Packet received')
 
+        mac1 = None
+        switch_id_1 = None
+        mac2 = None
+        switch_id_2 = None
+        mac3 = None
+        switch_id_3 = None
         if int_hops == 1:
-            orig_mac = packet[IntMeta1].orig_mac
-            switch_id = packet[IntMeta1].switch_id
+            mac1 = packet[IntMeta1].orig_mac
+            switch_id_1 = packet[IntMeta1].switch_id
         if int_hops == 2:
-            orig_mac = packet[IntMeta2].orig_mac
-            switch_id = packet[IntMeta2].switch_id
+            mac2 = packet[IntMeta2].orig_mac
+            switch_id_2 = packet[IntMeta2].switch_id
         if int_hops == 3:
-            orig_mac = packet[IntMeta3].orig_mac
-            switch_id = packet[IntMeta3].switch_id
+            mac3 = packet[IntMeta3].orig_mac
+            switch_id_3 = packet[IntMeta3].switch_id
+
         int_data = dict(
             eth_src_mac=packet[Ether].src,
             eth_dst_mac=packet[Ether].dst,
-            orig_mac=orig_mac,
-            switch_id=switch_id,
+            mac1=mac1,
+            switch_id_1=switch_id_1,
+            mac2=mac2,
+            switch_id_2=switch_id_2,
+            mac3=mac3,
+            switch_id_3=switch_id_3,
             src_ip=packet[IP].src,
             dst_ip=packet[IP].dst,
             src_port=packet[UDP].sport,
             dst_port=packet[UDP].dport,
             packetLen=len(packet),
-
         )
-        # int_data = oinc.extract_int_data(packet)
         logger.warn('INT Packet data - [%s]', int_data)
     elif int_hops < 1 and ip_proto != 0xfd:
         logger.debug('Non INT Packet received')

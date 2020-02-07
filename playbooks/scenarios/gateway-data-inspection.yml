@@ -48,4 +48,4 @@
         value: "{{ sender.id }}"
       - key: switch_id
         value: "{{ switch.id }}"
-    data_inspection_int_hops: 1
+    sr1_rec_int_hops: 1
