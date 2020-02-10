@@ -41,7 +41,7 @@ from byte strings:
 '''
 
 logger = logging.getLogger('convert')
-mac_pattern = re.compile('^([\da-fA-F]{2}:){5}([\da-fA-F]{2})$')
+mac_pattern = re.compile(r'^([\da-fA-F]{2}:){5}([\da-fA-F]{2})$')
 
 
 def matches_mac(mac_addr_string):
@@ -56,7 +56,7 @@ def decode_mac(encoded_mac_addr):
     return ':'.join(s.encode('hex') for s in encoded_mac_addr)
 
 
-ip_pattern = re.compile('^(\d{1,3}\.){3}(\d{1,3})$')
+ip_pattern = re.compile(r'^(\d{1,3}\.){3}(\d{1,3})$')
 
 
 def matches_ipv4(ip_addr_string):
