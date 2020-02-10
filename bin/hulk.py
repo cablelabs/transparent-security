@@ -135,7 +135,7 @@ def http_call(call_url):
     request.add_header('Accept-Charset', 'ISO-8859-1,utf-8;q=0.7,*;q=0.7')
     request.add_header('Referer',
                        random.choice(headers_referers) + build_block(
-                         random.randint(5, 10)))
+                           random.randint(5, 10)))
     request.add_header('Keep-Alive', random.randint(110, 120))
     request.add_header('Connection', 'keep-alive')
     request.add_header('Host', host)
@@ -195,7 +195,7 @@ else:
         url = sys.argv[1]
         if url.count("/") == 2:
             url = url + "/"
-        m = re.search('http\://([^/]*)/?.*', url)
+        m = re.search(r'http\://([^/]*)/?.*', url)
         host = m.group(1)
         for i in range(500):
             t = HTTPThread()
