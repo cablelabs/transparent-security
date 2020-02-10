@@ -79,7 +79,7 @@ def encode_num(number, bitwidth):
     bitwidth_bytes = bitwidth_to_bytes(bitwidth)
     num_str = '%x' % number
     if number >= 2 ** bitwidth:
-        raise Exception(
+        raise SyntaxError(
             "Number, %d, does not fit in %d bits" % (number, bitwidth))
     return ('0' * (bitwidth_bytes * 2 - len(num_str)) + num_str).decode('hex')
 
@@ -120,10 +120,10 @@ def encode(x, bitwidth):
         encoded_bytes = encode_num(x, bitwidth)
     else:
         if x:
-            raise Exception(
+            raise SyntaxError(
                 "Encoding objects of %r is not supported" % type(x))
         else:
-            raise Exception('Value to encode is None')
+            raise SyntaxError('Value to encode is None')
 
     logger.debug('Length of encoded bytes - [%s] - bitwidth_bytes - [%s]',
                  len(encoded_bytes), bitwidth_bytes)
