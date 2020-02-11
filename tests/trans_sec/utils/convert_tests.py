@@ -58,5 +58,5 @@ class ConvertTests(unittest.TestCase):
         try:
             convert.encode_num(num, 8)
             self.fail('Exception expected here')
-        except:
+        except SyntaxError:
             pass

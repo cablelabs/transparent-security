@@ -41,7 +41,7 @@ from byte strings:
 '''
 
 logger = logging.getLogger('convert')
-mac_pattern = re.compile('^([\da-fA-F]{2}:){5}([\da-fA-F]{2})$')
+mac_pattern = re.compile(r'^([\da-fA-F]{2}:){5}([\da-fA-F]{2})$')
 
 
 def matches_mac(mac_addr_string):
@@ -56,7 +56,7 @@ def decode_mac(encoded_mac_addr):
     return ':'.join(s.encode('hex') for s in encoded_mac_addr)
 
 
-ip_pattern = re.compile('^(\d{1,3}\.){3}(\d{1,3})$')
+ip_pattern = re.compile(r'^(\d{1,3}\.){3}(\d{1,3})$')
 
 
 def matches_ipv4(ip_addr_string):
@@ -79,7 +79,7 @@ def encode_num(number, bitwidth):
     bitwidth_bytes = bitwidth_to_bytes(bitwidth)
     num_str = '%x' % number
     if number >= 2 ** bitwidth:
-        raise Exception(
+        raise SyntaxError(
             "Number, %d, does not fit in %d bits" % (number, bitwidth))
     return ('0' * (bitwidth_bytes * 2 - len(num_str)) + num_str).decode('hex')
 
@@ -120,10 +120,10 @@ def encode(x, bitwidth):
         encoded_bytes = encode_num(x, bitwidth)
     else:
         if x:
-            raise Exception(
+            raise SyntaxError(
                 "Encoding objects of %r is not supported" % type(x))
         else:
-            raise Exception('Value to encode is None')
+            raise SyntaxError('Value to encode is None')
 
     logger.debug('Length of encoded bytes - [%s] - bitwidth_bytes - [%s]',
                  len(encoded_bytes), bitwidth_bytes)
