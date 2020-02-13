@@ -43,18 +43,12 @@ control TpsCoreIngress(inout headers hdr,
         clone3(CloneType.I2E, I2E_CLONE_SESSION_ID, standard_metadata);
 
         hdr.ipv4.protocol = hdr.int_shim.next_proto;
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen - ((bit<16>)hdr.int_shim.length * 4);
         hdr.int_shim.setInvalid();
         hdr.int_header.setInvalid();
         hdr.int_meta.setInvalid();
         hdr.int_meta_2.setInvalid();
         hdr.int_meta_3.setInvalid();
-
-        /*
-        TODO - find a better means for resetting the totalLen value after
-           invalidating the INT headers which will be problematic when
-           implementing header stacks for holding switch_ids
-       */
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen - 48;
 
         standard_metadata.egress_spec = port;
         hdr.ethernet.src_mac = hdr.ethernet.dst_mac;
@@ -77,11 +71,9 @@ control TpsCoreIngress(inout headers hdr,
     action data_inspect_packet(bit<32> switch_id, egressSpec_t egress_port) {
         hdr.int_meta_3.setValid();
 
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen + ((bit<16>)hdr.int_header.meta_len * 4);
+        hdr.int_shim.length = hdr.int_shim.length + (bit<8>)hdr.int_header.meta_len;
         hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt - 1;
-
-        /* TODO - Find a better means of increasing these sizes using the hdr.int_meta size value */
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen + 12;
-        hdr.int_shim.length = hdr.int_shim.length + 3;
 
         hdr.int_meta_3.switch_id = hdr.int_meta_2.switch_id;
         hdr.int_meta_3.orig_mac = hdr.int_meta_2.orig_mac;
