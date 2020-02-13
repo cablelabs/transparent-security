@@ -17,13 +17,17 @@
 - import_playbook: test_cases/send_receive.yml
   vars:
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
+    send_hostname: Camera1
+    rec_hostname: inet
     switch: "{{ topo_dict.switches.gateway1 }}"
-    send_host: Camera1
-    rec_host: inet
+    core_switch: "{{ topo_dict.switches.core1 }}"
+    send_host: "{{ send_hostname if run_mode and run_mode == 'remote' else 'localhost' }}"
+    rec_host: "{{ rec_hostname if run_mode and run_mode == 'remote' else 'localhost' }}"
+    sender_intf: "{{ '%s-eth0' % send_hostname if run_mode and run_mode == 'remote' else '%s-eth1' % switch.name }}"
+    receiver_intf: "{{ '%s-eth0' % rec_hostname if run_mode and run_mode == 'remote' else '%s-eth2' % core_switch.name }}"
     receiver: "{{ topo_dict.hosts.inet }}"
     receiver_log_filename: "udp-flood-receiver-{{ rec_host }}-1.out"
     sender_log_filename: "udp-flood-sender-{{ send_host }}-1.out"
-    sender_intf: "{{ send_host }}-eth0"
     send_port: "{{ range(2000, 10000) | random(seed='one') }}"
     send_src_port: "{{ range(2000, 10000) | random(seed='two') }}"
     send_packet_count: 25
@@ -32,13 +36,17 @@
 - import_playbook: test_cases/send_receive.yml
   vars:
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
+    send_hostname: Camera2
+    rec_hostname: inet
     switch: "{{ topo_dict.switches.gateway2 }}"
-    send_host: Camera2
-    rec_host: inet
+    core_switch: "{{ topo_dict.switches.core1 }}"
+    send_host: "{{ send_hostname if run_mode and run_mode == 'remote' else 'localhost' }}"
+    rec_host: "{{ rec_hostname if run_mode and run_mode == 'remote' else 'localhost' }}"
+    sender_intf: "{{ '%s-eth0' % send_hostname if run_mode and run_mode == 'remote' else '%s-eth1' % switch.name }}"
+    receiver_intf: "{{ '%s-eth0' % rec_hostname if run_mode and run_mode == 'remote' else '%s-eth2' % core_switch.name }}"
     receiver: "{{ topo_dict.hosts.inet }}"
     receiver_log_filename: "udp-flood-receiver-{{ rec_host }}-2.out"
     sender_log_filename: "udp-flood-sender-{{ send_host }}-2.out"
-    sender_intf: "{{ send_host }}-eth0"
     send_port: "{{ range(2000, 10000) | random(seed='two') }}"
     send_src_port: "{{ range(2000, 10000) | random(seed='three') }}"
     send_packet_count: 50
@@ -48,13 +56,17 @@
 - import_playbook: test_cases/send_receive.yml
   vars:
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
+    send_hostname: Camera3
+    rec_hostname: inet
     switch: "{{ topo_dict.switches.gateway3 }}"
-    send_host: Camera3
-    rec_host: inet
+    core_switch: "{{ topo_dict.switches.core1 }}"
+    send_host: "{{ send_hostname if run_mode and run_mode == 'remote' else 'localhost' }}"
+    rec_host: "{{ rec_hostname if run_mode and run_mode == 'remote' else 'localhost' }}"
+    sender_intf: "{{ '%s-eth0' % send_hostname if run_mode and run_mode == 'remote' else '%s-eth1' % switch.name }}"
+    receiver_intf: "{{ '%s-eth0' % rec_hostname if run_mode and run_mode == 'remote' else '%s-eth2' % core_switch.name }}"
     receiver: "{{ topo_dict.hosts.inet }}"
     receiver_log_filename: "udp-flood-receiver-{{ rec_host }}-3.out"
     sender_log_filename: "udp-flood-sender-{{ send_host }}-3.out"
-    sender_intf: "{{ send_host }}-eth0"
     send_port: "{{ range(2000, 10000) | random(seed='four') }}"
     send_src_port: "{{ range(2000, 10000) | random(seed='five') }}"
     send_packet_count: 150

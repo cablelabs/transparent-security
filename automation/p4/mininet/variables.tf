@@ -55,4 +55,5 @@ variable "remote_scenario_pb_dir" {default = "/home/ubuntu/transparent-security/
 
 # Scenario variables - Default to 6 switches running the udp-flood integration test
 variable "scenario_name" {default = "full"}
+variable "test_run_mode" {default = "remote"}
 variable "test_case" {default = "udp-flood"}
