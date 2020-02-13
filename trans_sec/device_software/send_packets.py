@@ -20,12 +20,16 @@ import time
 from logging import getLogger, basicConfig
 from time import sleep
 
+import yaml
 from scapy.all import get_if_list, get_if_hwaddr
 from scapy.layers.inet import IP, UDP, TCP
 from scapy.layers.l2 import Ether
 from scapy.sendrecv import sendp
 
 # Logger stuff
+from trans_sec.packet.inspect_layer import (
+    IntShim, IntHeader, IntMeta1, IntMeta2, IntMeta3)
+
 logger = getLogger('send_packets')
 
 FORMAT = '%(levelname)s %(asctime)-15s %(filename)s %(message)s'
@@ -57,7 +61,7 @@ def get_args():
     parser.add_argument(
         '-r', '--destination', help='Destination IPv4 address', required=True)
     parser.add_argument(
-        '-e', '--src-mac', help='Src MAC Address', required=False,
+        '-e', '--src-mac', help='Source MAC Address', required=False,
         default=None)
     parser.add_argument(
         '-sa', '--source-addr', help='Source IP Address', required=False,
@@ -82,12 +86,15 @@ def get_args():
         help='Switch Ethernet Interface. Defaults to ff:ff:ff:ff:ff:ff',
         required=False, default='ff:ff:ff:ff:ff:ff')
     parser.add_argument(
+        '-ih', '--int-hdr-file', required=False,
+        help='Switch Ethernet Interface. Defaults to ff:ff:ff:ff:ff:ff')
+    parser.add_argument(
         '-it', '--iterations',
         help='Number of iterations of packet groups to send',
         required=False, default=1, type=int)
     parser.add_argument(
         '-itd', '--iter-delay',
-        help='Seconds betweein iterations of packet groups to be sent',
+        help='Seconds between iterations of packet groups to be sent',
         required=False, default=1, type=int)
     parser.add_argument('-t', '--tcp', dest='tcp', required=False, type=bool,
                         default=False)
@@ -96,28 +103,17 @@ def get_args():
 
 
 def device_send(args):
-    addr = socket.gethostbyname(args.destination)
+    logger.info('Begin sending packets')
 
     interface = args.interface
     if not interface:
         interface = get_first_if()
+    logger.info('Sending packets to intf - [%s]', args.interface)
+
     logger.info('Delaying %d seconds' % args.delay)
     sleep(args.delay)
 
-    src_mac = args.src_mac
-    if not src_mac:
-        src_mac = get_if_hwaddr(interface)
-    logger.info('Device mac - [%s]')
-
-    pkt = Ether(src=src_mac, dst=args.switch_ethernet) / IP(
-        dst=addr, src=args.source_addr)
-    if args.tcp:
-        pkt = pkt / TCP(dport=args.port, sport=args.source_port) / args.msg
-    else:
-        pkt = pkt / UDP(dport=args.port, sport=args.source_port) / args.msg
-
-    pkt.show2()
-
+    pkt = __create_packet(args, interface)
     if args.continuous:
         logger.info('Sending a packet to %s every %s',
                     interface, args.interval)
@@ -136,9 +132,78 @@ def device_send(args):
     return
 
 
+def __create_packet(args, interface):
+    addr = socket.gethostbyname(args.destination)
+
+    src_mac = args.src_mac
+    if not src_mac:
+        src_mac = get_if_hwaddr(interface)
+    logger.info('Device mac - [%s]', src_mac)
+
+    if args.int_hdr_file:
+        int_data = __read_yaml_file(args.int_hdr_file)
+        logger.info('Int data to add to packet - [%s]', int_data)
+        ip_len = 60 + 12 * len(int_data['meta'])
+        pkt = (Ether(src=src_mac, dst=args.switch_ethernet) /
+               IP(dst=addr, src=args.source_addr, len=ip_len, proto=0xfd))
+
+        pkt = (
+            pkt / IntShim(length=int(int_data['shim']['length'])) / IntHeader()
+        )
+
+        ctr = 0
+        for int_meta in int_data['meta']:
+            logger.info('Adding switch_id - [%s] to INT data', int_meta)
+            ctr += 1
+            if ctr == 1:
+                logger.info('Adding IntMeta1')
+                pkt = pkt / IntMeta1(switch_id=int_meta['switch_id'],
+                                     orig_mac=int_meta['orig_mac'])
+            if ctr == 2:
+                logger.info('Adding IntMeta2')
+                pkt = pkt / IntMeta2(switch_id=int_meta['switch_id'],
+                                     orig_mac=int_meta['orig_mac'])
+            if ctr == 3:
+                logger.info('Adding IntMeta3')
+                pkt = pkt / IntMeta3(switch_id=int_meta['switch_id'],
+                                     orig_mac=int_meta['orig_mac'])
+    else:
+        pkt = (Ether(src=src_mac, dst=args.switch_ethernet) /
+               IP(dst=addr, src=args.source_addr))
+
+    logger.info('Packet to emit - [%s]', pkt.summary())
+    if args.tcp:
+        return pkt / TCP(dport=args.port, sport=args.source_port) / args.msg
+    else:
+        return pkt / UDP(dport=args.port, sport=args.source_port) / args.msg
+
+
+def __read_yaml_file(config_file_path):
+    """
+    Reads a yaml file and returns a dict representation of it
+    :return: a dict of the yaml file
+    """
+    logger.debug('Attempting to load configuration file - ' + config_file_path)
+    config_file = None
+    try:
+        with open(config_file_path, 'r') as config_file:
+            config = yaml.safe_load(config_file)
+            logger.info('Loaded configuration')
+        return config
+    finally:
+        if config_file:
+            logger.info('Closing configuration file')
+            config_file.close()
+
+
 if __name__ == '__main__':
     cmd_args = get_args()
     numeric_level = getattr(logging, cmd_args.loglevel.upper(), None)
-    basicConfig(format=FORMAT, level=numeric_level, filename=cmd_args.logfile)
+    if cmd_args.logfile:
+        basicConfig(format=FORMAT, level=numeric_level,
+                    filename=cmd_args.logfile)
+    else:
+        basicConfig(format=FORMAT, level=numeric_level)
+
     logger.info('Starting Send with args - [%s]', cmd_args)
     device_send(cmd_args)

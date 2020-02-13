@@ -57,6 +57,7 @@ sdn_dev_intf=${var.sdn_dev_intf}
 ae_dev_intf=${var.ae_dev_intf}
 clone_egress_port=${var.clone_egress_port}
 run_daemons=${var.run_daemons}
+scenario_name=${var.scenario_name}
 "\
 EOT
   }
@@ -82,7 +83,7 @@ resource "null_resource" "transparent-security-start-sim" {
   provisioner "remote-exec" {
     inline = [
       "sudo pip install ansible",
-      "${var.ANSIBLE_CMD} -i ${var.remote_inventory_file}  ${var.remote_pb_dir}/mininet/${var.setup_mininet}"
+      "${var.ANSIBLE_CMD} -i ${var.remote_inventory_file}  ${var.remote_pb_dir}/mininet/setup-${var.scenario_name}.yml"
     ]
   }
 

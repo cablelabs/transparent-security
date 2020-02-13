@@ -208,10 +208,13 @@ class P4InfoHelper(object):
     def build_table_entry(self, table_name, match_fields=None,
                           default_action=False, action_name=None,
                           action_params=None, priority=None):
-        logger.info('Building table entry to table - [%s] with params - [%s]',
-                    table_name, action_params)
+        logger.info(
+            'Building table entry to table [%s] with match_fields - [%s] '
+            'action - [%s] and params - [%s]',
+            table_name, match_fields, action_name, action_params)
         table_entry = p4runtime_pb2.TableEntry()
         table_entry.table_id = self.get_tables_id(table_name)
+        logger.debug('Table ID - [%s]', table_entry.table_id)
 
         if priority is not None:
             table_entry.priority = priority

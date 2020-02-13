@@ -363,7 +363,7 @@ Note - The transparent-security.ini refers to the inventory file on the remote m
 - To use the sample scenario provided by CableLabs, run the following command on the remote VM -
 ```bash
 export ANSIBLE_HOST_KEY_CHECKING=False
-ansible-playbook -u ubuntu -i transparent-security.ini transparent-security/playbooks/scenarios/simple.yml
+ansible-playbook -u ubuntu -i transparent-security.ini transparent-security/playbooks/scenarios/udp-flood.yml
 ```
 Note - Refer the Wiki page [Attack Scenario](https://github.com/cablelabs/transparent-security/wiki/2.-Attack-Scenario) for a 
 detailed explanation of the attack scenario.
@@ -453,7 +453,7 @@ Note - The transparent-security.ini refers to the inventory file on the remote m
 - To use the sample scenario provided by CableLabs, run the following command on the remote VM -
 ```bash
 export ANSIBLE_HOST_KEY_CHECKING=False
-ansible-playbook -u ubuntu -i transparent-security.ini transparent-security/playbooks/scenarios/simple.yml
+ansible-playbook -u ubuntu -i transparent-security.ini transparent-security/playbooks/scenarios/udp-flood.yml
 ```
 Note - Refer the Wiki page [Attack Scenario](https://github.com/cablelabs/transparent-security/wiki/2.-Attack-Scenario) for a 
 detailed explanation of the attack scenario.

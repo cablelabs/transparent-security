@@ -10,21 +10,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# Simple scenario where packets are sent through 3 devices and only the last
+# one will be demonstrating dropped packets
+---
+# Data Forward scenarios for UDP
+- import_playbook: aggregate-data-forward.yml
 
-resource "null_resource" "transparent-security-run-senario-tests" {
-  depends_on = [null_resource.transparent-security-start-sim]
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo pip install ansible",
-      "${var.ANSIBLE_CMD} -i ${var.remote_inventory_file} ${var.remote_scenario_pb_dir}/${var.test_case}.yml",
-    ]
-  }
-
-  connection {
-    host = aws_instance.transparent-security-mininet-integration.public_ip
-    type     = "ssh"
-    user     = var.sudo_user
-    private_key = file(var.private_key_file)
-  }
-}
+# Data Inspection scenarios for UDP
+- import_playbook: aggregate-data-inspection.yml

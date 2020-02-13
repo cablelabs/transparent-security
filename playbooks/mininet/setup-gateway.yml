@@ -10,21 +10,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-resource "null_resource" "transparent-security-run-senario-tests" {
-  depends_on = [null_resource.transparent-security-start-sim]
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo pip install ansible",
-      "${var.ANSIBLE_CMD} -i ${var.remote_inventory_file} ${var.remote_scenario_pb_dir}/${var.test_case}.yml",
-    ]
-  }
-
-  connection {
-    host = aws_instance.transparent-security-mininet-integration.public_ip
-    type     = "ssh"
-    user     = var.sudo_user
-    private_key = file(var.private_key_file)
-  }
-}
+---
+- import_playbook: start_mininet.yml
+  vars:
+    host_val: localhost
+    service_name: tps-mininet
+    srvc_desc: 'Mininet for gateway.p4'
+    local_srvc_script_tmplt_file: ../general/templates/mininet_service.sh.j2
+    srvc_start_pause_time: 20
+    port_to_wait: 50051
+    load_p4: True
+    p4_progs:
+      - gateway

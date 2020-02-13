@@ -11,20 +11,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-resource "null_resource" "transparent-security-run-senario-tests" {
-  depends_on = [null_resource.transparent-security-start-sim]
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo pip install ansible",
-      "${var.ANSIBLE_CMD} -i ${var.remote_inventory_file} ${var.remote_scenario_pb_dir}/${var.test_case}.yml",
-    ]
-  }
-
-  connection {
-    host = aws_instance.transparent-security-mininet-integration.public_ip
-    type     = "ssh"
-    user     = var.sudo_user
-    private_key = file(var.private_key_file)
-  }
-}
+# Jinja2 template for use as an input to insert_p4_table_entry.py
+---
+shim:
+  length: {{ (inspection_data|length) * 3 + 3 }}
+meta:
+{%  for int_data in inspection_data %}
+- switch_id: {{ int_data.switch_id }}
+  orig_mac: {{ int_data.orig_mac }}
+{%  endfor %}

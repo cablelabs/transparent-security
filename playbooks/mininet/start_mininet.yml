@@ -11,13 +11,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
+- import_playbook: generate_topology.yml
+  vars:
+    host_val: localhost
+    topology_template: "templates/topology_template-{{ scenario_name }}.yml.j2"
+
 - import_playbook: compile_p4.yml
   vars:
     host_val: localhost
-    p4_progs:
-      - core
-      - aggregate
-      - gateway
+    p4_progs: "{{ p4_progs }}"
+    share_dir: /usr/local
 
 - hosts: "{{ host_val | default('all') }}"
   gather_facts: no

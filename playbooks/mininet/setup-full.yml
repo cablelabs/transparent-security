@@ -11,10 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
-- import_playbook: generate_topology.yml
-  vars:
-    host_val: localhost
-
 - import_playbook: start_mininet.yml
   vars:
     host_val: localhost
@@ -23,6 +19,10 @@
     local_srvc_script_tmplt_file: ../general/templates/mininet_service.sh.j2
     srvc_start_pause_time: 20
     port_to_wait: 50051
+    p4_progs:
+      - core
+      - aggregate
+      - gateway
 
 - import_playbook: ../general/start_service.yml
   vars:
@@ -42,21 +42,3 @@
     srvc_type: 'SIMPLE'
     local_srvc_script_tmplt_file: ../general/templates/ae_service.sh.j2
     monitor_intf: "{{ ae_monitor_intf }}"
-
-#- import_playbook: ../general/start_service.yml
-#  vars:
-#    host_val: localhost
-#    service_name: tps-core1-eth1-logger
-#    srvc_desc: 'core1-eth1-logger'
-#    srvc_type: 'LOGGING'
-#    local_srvc_script_tmplt_file: ../general/templates/ae_service.sh.j2
-#    monitor_intf: core1-eth1
-#
-#- import_playbook: ../general/start_service.yml
-#  vars:
-#    host_val: localhost
-#    service_name: tps-core1-eth2-logger
-#    srvc_desc: 'core1-eth2-logger'
-#    srvc_type: 'LOGGING'
-#    local_srvc_script_tmplt_file: ../general/templates/ae_service.sh.j2
-#    monitor_intf: core1-eth2

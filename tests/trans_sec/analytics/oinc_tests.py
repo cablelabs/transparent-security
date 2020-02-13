@@ -48,10 +48,11 @@ class SimpleAETests(unittest.TestCase):
         """
         pkt = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
                IP(dst='10.1.0.1', src='10.2.0.1', proto=0xfd) /
-               IntShim() /
+               IntShim(length=12) /
                IntHeader() /
-               IntMeta1() /
-               IntMeta2() /
+               IntMeta1(switch_id=3) /
+               IntMeta2(switch_id=2) /
+               IntMeta3(switch_id=1) /
                UDP(dport=1234, sport=1234) /
                'hello transparent-security')
         self.ae.process_packet(pkt, 0xfd)
@@ -63,11 +64,11 @@ class SimpleAETests(unittest.TestCase):
         """
         pkt = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
                IP(dst='10.1.0.1', src='10.2.0.1', proto=0xfd) /
-               IntShim() /
+               IntShim(length=12) /
                IntHeader() /
-               IntMeta1() /
-               IntMeta2() /
-               IntMeta3() /
+               IntMeta1(switch_id=3) /
+               IntMeta2(switch_id=2) /
+               IntMeta3(switch_id=1) /
                UDP(dport=1234, sport=1234) /
                'hello transparent-security')
 
@@ -86,21 +87,20 @@ class SimpleAETests(unittest.TestCase):
         """
         pkt1 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
                 IP(dst='10.1.0.1', src='10.2.0.1', proto=0xfd) /
-                IntShim() /
-                IntHeader() /
-                IntMeta1() /
-                IntMeta2() /
-                IntMeta3(orig_mac='ff:ff:ff:ff:ff:ff') /
+                IntShim(length=12) /
+                IntMeta1(switch_id=3) /
+                IntMeta2(switch_id=2) /
+                IntMeta3(switch_id=1, orig_mac='ff:ff:ff:ff:ff:ff') /
                 UDP(dport=1234, sport=1234) /
                 'hello transparent-security')
 
         pkt2 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
                 IP(dst='10.1.0.1', src='10.2.0.1', proto=0xfd) /
-                IntShim() /
+                IntShim(length=12) /
                 IntHeader() /
-                IntMeta1() /
-                IntMeta2() /
-                IntMeta3(orig_mac='ff:ff:ff:ff:ff:aa') /
+                IntMeta1(switch_id=3) /
+                IntMeta2(switch_id=2) /
+                IntMeta3(switch_id=1, orig_mac='ff:ff:ff:ff:ff:ff') /
                 UDP(dport=1234, sport=1234) /
                 'hello transparent-security')
 

@@ -17,57 +17,48 @@
 - import_playbook: test_cases/send_receive.yml
   vars:
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-    inet_ip: "{{ topo_dict['hosts']['inet'].ip }}"
-    gateway1_mac: "{{ topo_dict['switches']['gateway1'].mac }}"
-
-    receiver: inet
-    receiver_log_file: "{{ host_log_dir }}/receiver-inet-1.out"
-    sender: Camera1
-    sender_intf: "{{ host_sender_intf | default('Camera1-eth0') }}"
-    sender_log_filename: sender-Camera1.out
-    send_port: 4321
-    send_src_port: 5432
-    send_to_ip: "{{ inet_ip }}"
+    switch: "{{ topo_dict.switches.gateway1 }}"
+    send_host: Camera1
+    rec_host: inet
+    receiver: "{{ topo_dict.hosts.inet }}"
+    receiver_log_filename: "udp-flood-receiver-{{ rec_host }}-1.out"
+    sender_log_filename: "udp-flood-sender-{{ send_host }}-1.out"
+    sender_intf: "{{ send_host }}-eth0"
+    send_port: "{{ range(2000, 10000) | random(seed='one') }}"
+    send_src_port: "{{ range(2000, 10000) | random(seed='two') }}"
     send_packet_count: 25
-    dst_switch_mac: "{{ gateway1_mac }}"
 
 # Sending 50 packets within a second 1x through gateway 2
 - import_playbook: test_cases/send_receive.yml
   vars:
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-    inet_ip: "{{ topo_dict['hosts']['inet'].ip }}"
-    gateway2_mac: "{{ topo_dict['switches']['gateway2'].mac }}"
-
-    receiver: inet
-    receiver_log_file: "{{ host_log_dir }}/receiver-inet-2.out"
-    sender: Camera2
-    sender_intf: "{{ host_sender_intf | default('Camera2-eth0') }}"
-    sender_log_filename: sender-Camera2.out
-    send_port: 4322
-    send_src_port: 5433
-    send_to_ip: "{{ inet_ip }}"
+    switch: "{{ topo_dict.switches.gateway2 }}"
+    send_host: Camera2
+    rec_host: inet
+    receiver: "{{ topo_dict.hosts.inet }}"
+    receiver_log_filename: "udp-flood-receiver-{{ rec_host }}-2.out"
+    sender_log_filename: "udp-flood-sender-{{ send_host }}-2.out"
+    sender_intf: "{{ send_host }}-eth0"
+    send_port: "{{ range(2000, 10000) | random(seed='two') }}"
+    send_src_port: "{{ range(2000, 10000) | random(seed='three') }}"
     send_packet_count: 50
-    dst_switch_mac: "{{ gateway2_mac }}"
 
 # Sending 150 packets within a second 2x through gateway 3.
 # The second set should be dropped else this will fail
 - import_playbook: test_cases/send_receive.yml
   vars:
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-    inet_ip: "{{ topo_dict['hosts']['inet'].ip }}"
-    gateway3_mac: "{{ topo_dict['switches']['gateway3'].mac }}"
-
-    receiver: inet
-    receiver_log_file: "{{ host_log_dir }}/receiver-inet-3.out"
+    switch: "{{ topo_dict.switches.gateway3 }}"
+    send_host: Camera3
+    rec_host: inet
+    receiver: "{{ topo_dict.hosts.inet }}"
+    receiver_log_filename: "udp-flood-receiver-{{ rec_host }}-3.out"
+    sender_log_filename: "udp-flood-sender-{{ send_host }}-3.out"
+    sender_intf: "{{ send_host }}-eth0"
+    send_port: "{{ range(2000, 10000) | random(seed='four') }}"
+    send_src_port: "{{ range(2000, 10000) | random(seed='five') }}"
+    send_packet_count: 150
     min_received_packet_count: 99
     max_received_packet_count: 150
-    sender: Camera3
-    sender_intf: "{{ host_sender_intf | default('Camera3-eth0') }}"
-    sender_log_filename: sender-Camera3.out
-    send_port: 4323
-    send_src_port: 5434
-    send_to_ip: "{{ inet_ip }}"
-    send_packet_count: 150
     send_loops: 2
     send_loop_delay: 30
-    dst_switch_mac: "{{ gateway3_mac }}"

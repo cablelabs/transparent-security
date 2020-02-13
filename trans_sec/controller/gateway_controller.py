@@ -19,7 +19,7 @@ logger = getLogger('gateway_controller')
 
 class GatewayController(AbstractController):
     """
-    Implementation of the controller for a switch running the aggregate.p4
+    Implementation of the controller for a switch running the gateway.p4
     program
     """
     def __init__(self, platform, p4_build_out, topo, log_dir, load_p4=True):
@@ -37,15 +37,15 @@ class GatewayController(AbstractController):
         :param south_facing_links: southbound links
         """
         if 0 < len(north_facing_links) < 2:
-            aggregate_link = north_facing_links[0]
-            aggregate = self.topo['switches'][aggregate_link['north_node']]
+            sw_link = north_facing_links[0]
+            north_switch = self.topo['switches'][sw_link['north_node']]
             logger.info('Gateway: ' + sw_info['name'] +
-                        ' connects northbound to Aggregate: ' +
-                        aggregate.get('name') +
+                        ' connects northbound to northbound switch: ' +
+                        north_switch.get('name') +
                         ' on physical port ' +
-                        str(aggregate_link.get('north_facing_port')) +
+                        str(sw_link.get('north_facing_port')) +
                         ' to physical port ' +
-                        str(aggregate_link.get('south_facing_port')))
+                        str(sw_link.get('south_facing_port')))
 
             for device_link in south_facing_links:
                 device = self.topo['hosts'].get(device_link['south_node'])
@@ -75,6 +75,10 @@ class GatewayController(AbstractController):
                     ' MAC - [%s] with action params - [%s]',
                     device.get('mac'), action_params)
 
+            # TODO/FIXME - Need to add logic to parse the topology to determine
+            #     how many ports are being used on this switch. The
+            #     action_params appear to be fine but the ingress_port number
+            #     should be dynamic
             # Northbound Routing
             table_entry = self.p4info_helper.build_table_entry(
                 table_name='{}.data_forward_t'.format(self.p4_ingress),
@@ -83,13 +87,13 @@ class GatewayController(AbstractController):
                 },
                 action_name='{}.data_forward'.format(self.p4_ingress),
                 action_params={
-                    'dstAddr': aggregate['mac'],
-                    'port': aggregate_link['north_facing_port'],
+                    'dstAddr': north_switch['mac'],
+                    'port': sw_link['north_facing_port'],
                     'l2ptr': 0
                 })
             sw.write_table_entry(table_entry)
             logger.info('Installed Northbound from port 1 to port %d',
-                        aggregate_link.get('north_facing_port'))
+                        sw_link.get('north_facing_port'))
             # Northbound Routing
             table_entry = self.p4info_helper.build_table_entry(
                 table_name='{}.data_forward_t'.format(self.p4_ingress),
@@ -98,13 +102,13 @@ class GatewayController(AbstractController):
                 },
                 action_name='{}.data_forward'.format(self.p4_ingress),
                 action_params={
-                    'dstAddr': aggregate['mac'],
-                    'port': aggregate_link['north_facing_port'],
+                    'dstAddr': north_switch['mac'],
+                    'port': sw_link['north_facing_port'],
                     'l2ptr': 0
                 })
             sw.write_table_entry(table_entry)
             logger.info('Installed Northbound from port 2 to port %d',
-                        aggregate_link.get('north_facing_port'))
+                        sw_link.get('north_facing_port'))
             # Northbound Routing
             table_entry = self.p4info_helper.build_table_entry(
                 table_name='{}.data_forward_t'.format(self.p4_ingress),
@@ -113,13 +117,13 @@ class GatewayController(AbstractController):
                 },
                 action_name='{}.data_forward'.format(self.p4_ingress),
                 action_params={
-                    'dstAddr': aggregate['mac'],
-                    'port': aggregate_link['north_facing_port'],
+                    'dstAddr': north_switch['mac'],
+                    'port': sw_link['north_facing_port'],
                     'l2ptr': 0
                 })
             sw.write_table_entry(table_entry)
             logger.info('Installed Northbound from port 3 to port %d',
-                        aggregate_link.get('north_facing_port'))
+                        sw_link.get('north_facing_port'))
         else:
             logger.error('Wrong number of nb switches on gateway')
             logger.error(sw_info.get('name'))
