@@ -19,7 +19,6 @@
   vars:
     receiver_log_filename: df_basic_receiver-1.out
     sender_log_filename: df_basic_sender-1.out
-    sender_intf: "{{ sender.name }}-eth0"
     send_port: "{{ range(2000, 10000) | random(seed='one') }}"
     send_src_port: "{{ range(2000, 10000) | random(seed='two') }}"
     send_packet_count: "{{ 100 | random(seed='three') }}"
@@ -45,7 +44,6 @@
   vars:
     receiver_log_filename: df_basic_receiver-2.out
     sender_log_filename: df_basic_sender-2.out
-    sender_intf: "{{ sender.name }}-eth0"
     send_port: "{{ range(2000, 10000) | random(seed='one') }}"
     send_src_port: "{{ range(2000, 10000) | random(seed='two') }}"
     send_packet_count: "{{ 100 | random(seed='three') }}"
@@ -68,7 +66,6 @@
   vars:
     receiver_log_filename: df_basic_receiver-3.out
     sender_log_filename: df_basic_sender-3.out
-    sender_intf: "{{ sender.name }}-eth0"
     send_port: "{{ range(2000, 10000) | random(seed='two') }}"
     send_src_port: "{{ range(2000, 10000) | random(seed='three') }}"
     send_packet_count: "{{ 100 | random(seed='four') }}"
