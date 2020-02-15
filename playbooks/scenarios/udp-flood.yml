@@ -62,3 +62,16 @@
     max_received_packet_count: 150
     send_loops: 2
     send_loop_delay: 30
+
+# Clear all gateway data_drop_t table entries.
+- import_playbook: test_cases/clear_p4_table_entries.yml
+  vars:
+    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
+    p4_switches:
+      - "{{ topo_dict.switches.gateway1 }}"
+      - "{{ topo_dict.switches.gateway2 }}"
+      - "{{ topo_dict.switches.gateway3 }}"
+    p4_ingress_classname: TpsGwIngress
+    p4_table_names:
+      - data_drop_t
+    p4_te_log_dir: "{{ host_log_dir }}"
