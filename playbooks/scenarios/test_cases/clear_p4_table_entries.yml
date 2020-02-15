@@ -1,0 +1,81 @@
+# Copyright (c) 2019 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# integration test case where one host creates a packet sniffer and another
+# sends packets. The validation routine counts the number received via the
+# receiver's log file
+---
+
+# Purges a P4 table of all of it's entries
+- hosts: "{{ host_val | default('localhost') }}"
+  gather_facts: no
+  vars:
+    ingress_classname: "{{ p4_ingress_classname }}"
+    table_names: "{{ p4_table_names }}"
+    switches: "{{ p4_switches }}"
+  tasks:
+    - name: Clone p4runtime-shell to {{ remote_scripts_dir }}/p4runtime-shell
+      become: yes
+      git:
+        repo: https://github.com/p4lang/p4runtime-shell
+        dest: "{{ remote_scripts_dir }}/p4runtime-shell"
+
+    - name: Copy p4runtime_shell python package to /usr/local/lib/python3.5/dist-packages
+      become: yes
+      copy:
+        src: "{{ remote_scripts_dir }}/p4runtime-shell/p4runtime_sh"
+        dest: /usr/local/lib/python3.5/dist-packages
+        remote_src: yes
+
+    - name: Copy /home/ubuntu/PI/proto/py_out/google python package to /usr/local/lib/python3.5/dist-packages
+      become: yes
+      copy:
+        src: "/home/ubuntu/PI/proto/py_out/google"
+        dest: /usr/local/lib/python3.5/dist-packages
+        remote_src: yes
+
+    - name: Copy /home/ubuntu/PI/proto/py_out/p4 python package to /usr/local/lib/python3.5/dist-packages
+      become: yes
+      copy:
+        src: "/home/ubuntu/PI/proto/py_out/p4"
+        dest: /usr/local/lib/python3.5/dist-packages
+        remote_src: yes
+
+    - name: install apt dependencies
+      become: yes
+      apt:
+        update_cache: yes
+        name:
+          - python3-pip
+      retries: 3
+      delay: 5
+
+    - name: Upgrade pip
+      command: sudo pip3 install --upgrade setuptools pip
+
+    - name: install pip3 grpcio and {{ trans_sec_dir }} dependencies
+      become: yes
+      pip:
+        name:
+          - grpcio==1.17
+          - ipython==7.0
+        executable: /usr/bin/pip3
+      retries: 3
+      delay: 5
+
+    - name: install p4runtime-shell dependencies into python3 runtime
+      command: "sudo pip3 install -r {{ remote_scripts_dir }}/p4runtime-shell/requirements.txt"
+
+    - include_tasks: clear_p4_table.yml
+      with_items: "{{ switches }}"
+      loop_control:
+        loop_var: switch
