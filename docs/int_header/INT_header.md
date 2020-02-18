@@ -15,7 +15,7 @@ The draft of the 2.0 INT header document which we are using is located at [INT.p
 
 The INT header is defined in two portions.  One is the Header for the INT metadata and the second is the actual metadata.  For both of these, we follow the INT specification with a domain specific extension for the MAC address of the source device.
 
-Please refer to the 2.0 draft or release version of the P4 Application for the metadata header format.  This document includes the definition of the domain specific extension and examples using a UDP header to encapsulate the packet.
+Please refer to the 2.0 draft or release version of the P4 Application for the metadata header format.  This document includes the definition of the domain specific extension and examples using a TCP/UDP header to encapsualte the packet.
 
 ## INT Header
 
@@ -200,19 +200,19 @@ If the DS metadata is set by a switch outside of the customer premises, this wil
 </tr>
 <tr height=21 style='height:16.0pt'>
   <td colspan=32 height=21 class=xl67 style='height:16.0pt'>Hop 2 Switch ID
-  <span style='mso-spacerun:yes'> </span></td>
+  <span style='mso-spacerun:yes'> </span></td>
  </tr>
  <tr height=21 style='height:16.0pt'>
   <td colspan=32 height=21 class=xl67 style='height:16.0pt'>Hop 1 Switch ID
-  <span style='mso-spacerun:yes'> </span></td>
+  <span style='mso-spacerun:yes'> </span></td>
  </tr>
  <tr height=21 style='height:16.0pt'>
   <td colspan=32 height=21 class=xl67 style='height:16.0pt'>Originating Device
-  MAC Most signifigant 4 octets<span style='mso-spacerun:yes'> </span></td>
+  MAC Most significant 4 octets<span style='mso-spacerun:yes'> </span></td>
  </tr>
  <tr height=21 style='height:16.0pt'>
   <td colspan=16 height=21 class=xl67 style='height:16.0pt'>Originating Device
-  MAC least signifigant 2 octets</td>
+  MAC least significant 2 octets</td>
   <td colspan=16 class=xl67>Reserved = <font color="red">0x0000</font></td>
  </tr>
 </table>
