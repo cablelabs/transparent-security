@@ -30,7 +30,6 @@
   vars:
     receiver_log_filename: data_drop_basic_receiver-1.out
     sender_log_filename: data_drop_basic_sender-1.out
-    sender_intf: "{{ sender.name }}-eth0"
     send_port: "{{ send_port }}"
     send_src_port: "{{ range(2000, 10000) | random(seed='two') }}"
     send_packet_count: "{{ 100 | random(seed='three') }}"
@@ -56,7 +55,6 @@
     receiver_intf: "{{ receiver.name }}-eth0"
     receiver_log_filename: data_drop_basic_receiver-2.out
     sender: "{{ sender.name }}"
-    sender_intf: "{{ sender.name }}-eth0"
     sender_log_filename: data_drop_basic_sender-2.out
     send_port: "{{ send_port }}"
     send_src_port: "{{ range(2000, 10000) | random(seed='three') }}"
@@ -84,7 +82,6 @@
     receiver_intf: "{{ receiver.name }}-eth0"
     receiver_log_filename: data_drop_basic_receiver-3.out
     sender: "{{ sender.name }}"
-    sender_intf: "{{ sender.name }}-eth0"
     sender_log_filename: data_drop_basic_sender-3.out
     send_port: "{{ send_port }}"
     send_src_port: "{{ range(2000, 10000) | random(seed='four') }}"
@@ -110,7 +107,6 @@
     receiver_intf: "{{ receiver.name }}-eth0"
     receiver_log_filename: data_drop_basic_receiver-4.out
     sender: "{{ sender.name }}"
-    sender_intf: "{{ sender.name }}-eth0"
     sender_log_filename: data_drop_basic_sender-4.out
     send_port: "{{ send_port }}"
     send_src_port: "{{ range(2000, 10000) | random(seed='five') }}"

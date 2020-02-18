@@ -19,11 +19,15 @@
   vars:
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch: "{{ topo_dict.switches.gateway }}"
-    send_host: host1
-    sender: "{{ topo_dict.hosts.host1 }}"
+    remote_send_host: host1
+    remote_rec_host: host2
+    send_host: "{{ remote_send_host if run_mode == 'remote' else None }}"
+    rec_host: "{{ remote_rec_host if run_mode == 'remote' else None }}"
+    sender: "{{ topo_dict.hosts[remote_send_host] }}"
+    sender_intf: "{{ '%s-eth0' % send_host if run_mode == 'remote' else '%s-eth1' % switch.name }}"
     send_sw_port: "{{ topo_dict.links[0].south_facing_port }}"
-    rec_host: host2
-    receiver: "{{ topo_dict.hosts.host2 }}"
+    receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
+    receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth2' % switch.name }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
     ingress_classname: TpsGwIngress
     data_forward_action: data_forward
