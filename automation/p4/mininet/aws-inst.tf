@@ -15,7 +15,12 @@
 resource "aws_instance" "transparent-security-mininet-integration" {
   ami = var.mininet_ami
   instance_type = var.instance_type
-  key_name = aws_key_pair.transparent-security-mini-pk.key_name
+  key_name = aws_key_pair.transparent-security-pk.key_name
+
+  tags = {
+    Name = "transparent-security-transparent-security-${var.scenario_name}-${var.build_id}"
+  }
+
   security_groups = [aws_security_group.transparent-security-img-sg.name]
   associate_public_ip_address = true
 
