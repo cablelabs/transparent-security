@@ -32,7 +32,6 @@ variable "ANSIBLE_CMD" {default = "export ANSIBLE_HOST_KEY_CHECKING=False; ansib
 variable "remote_scripts_dir" {default = "/etc/transparent-security"}
 variable "remote_pb_dir" {default = "/home/ubuntu/transparent-security/playbooks"}
 variable "remote_inventory_file" {default = "/home/ubuntu/transparent-security.ini"}
-variable "local_inventory_file" {default = "~/mininet_setup.ini"}
 variable "run_daemons" {default = "True"}
 variable "topo_file" {default = "mininet-sim-topology.yaml"}
 variable "dev_daemon_file" {default = "device-daemons.yml"}
