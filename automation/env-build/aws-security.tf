@@ -20,7 +20,7 @@ provider "aws" {
 
 # Note: Script will fail if another process is leveraging the same build_id
 resource "aws_security_group" "transparent-security-img-sg" {
-  name = "transparent-security-gateway-${var.build_id}"
+  name = "transparent-security-env-build-${var.build_id}"
 
   ingress {
     cidr_blocks = ["0.0.0.0/0"]

@@ -20,7 +20,7 @@ provider "aws" {
 
 # Note: Script will fail if another process is leveraging the same build_id
 resource "aws_security_group" "transparent-security-img-sg" {
-  name = "transparent-security-gateway-${var.build_id}"
+  name = "transparent-security-${var.scenario_name}-${var.build_id}"
   ingress {
     cidr_blocks = ["0.0.0.0/0"]
     from_port = 22
@@ -45,6 +45,6 @@ resource "aws_security_group" "transparent-security-img-sg" {
 }
 
 # AWS EC2 Instance Public Key
-resource "aws_key_pair" "transparent-security-mini-pk" {
+resource "aws_key_pair" "transparent-security-pk" {
   public_key = file(var.public_key_file)
 }
