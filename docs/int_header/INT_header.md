@@ -15,7 +15,7 @@ The draft of the 2.0 INT header document which we are using is located at [INT.p
 
 The INT header is defined in two portions.  One is the Header for the INT metadata and the second is the actual metadata.  For both of these, we follow the INT specification with a domain specific extension for the MAC address of the source device.
 
-Please refer to the 2.0 draft or release version of the P4 Application for the metadata header format.  This document includes the definition of the domain specific extension and examples using a TCP/UDP header to encapsualte the packet.
+Please refer to the 2.0 draft or release version of the P4 Application for the metadata header format.  This document includes the definition of the domain specific extension and examples using a UDP header to encapsulate the packet.
 
 ## INT Header
 
@@ -26,6 +26,37 @@ The hop-by-hop INT header will follow the header as described in section 4.7. IN
 * INT instructions are encoded as a bitmap in the 16 bit INT Instruction field.
 
   * bit0: 4 octet Switch ID which is unique across the network
+
+### Per-Hop INT Metadata record (4 bytes)
+
+The hop-by-hop metadata record will be updated at each hop on the network which supports the INT header.
+
+Each metadata record corresponds to a bit field in the instruction set and is 4 octets long.  bit0 is the only required bit that needs to be set for transparent security, but other bits can be set as indicated by the INT specification.
+
+* Bit0: Switch ID: Unique identifier for the switch (4 octets)
+
+On the customer's gateway, the gateway enters its ID as the switch ID.
+
+## Domain Specific Data
+
+Transparent Security takes advantage of the domain specific extension to add source-only information to the INT header.
+
+The Domain ID, DS Instruction bitmask and DS Flags size and location in the INT Metadata header are defined in the P4 INT specification.  The use of these fields is open to the definition by the use case.  This section of the document describes how these fields are used within Transparent Security.
+
+### Domain ID
+
+Domain ID for Transparent Security is 0x5453.  This is the ASCII values for TS.
+
+### DS Instruction bitmask
+
+* bit0: 8-byte source device ID
+* The remaining bits are reserved
+
+This source only information is an 8-byte source device ID.  This can be any device ID which is unique to the INT Domain.  This source ID can be the 6 byte MAC address of the source device followed by 2 bytes of 0x0000.
+
+### DS Flags
+
+The Domain Specific Flags are set as follows:
 
 * bit 0 The source-only data was set by the source device
 * bit 1 The source-only data was set by the gateway on the customer premises
@@ -169,11 +200,11 @@ If the DS metadata is set by a switch outside of the customer premises, this wil
 </tr>
 <tr height=21 style='height:16.0pt'>
   <td colspan=32 height=21 class=xl67 style='height:16.0pt'>Hop 2 Switch ID
-  <span style='mso-spacerun:yes'> </span></td>
+  <span style='mso-spacerun:yes'> </span></td>
  </tr>
  <tr height=21 style='height:16.0pt'>
   <td colspan=32 height=21 class=xl67 style='height:16.0pt'>Hop 1 Switch ID
-  <span style='mso-spacerun:yes'> </span></td>
+  <span style='mso-spacerun:yes'> </span></td>
  </tr>
  <tr height=21 style='height:16.0pt'>
   <td colspan=32 height=21 class=xl67 style='height:16.0pt'>Originating Device
