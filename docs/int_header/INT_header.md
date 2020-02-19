@@ -15,7 +15,7 @@ The draft of the 2.0 INT header document which we are using is located at [INT.p
 
 The INT header is defined in two portions.  One is the Header for the INT metadata and the second is the actual metadata.  For both of these, we follow the INT specification with a domain specific extension for the MAC address of the source device.
 
-Please refer to the 2.0 draft or release version of the P4 Application for the metadata header format.  This document includes the definition of the domain specific extension and examples using a TCP/UDP header to encapsualte the packet.
+Please refer to the 2.0 draft or release version of the P4 Application for the metadata header format.  This document includes the definition of the domain specific extension and examples using a UDP header to encapsulate the packet.
 
 ## INT Header
 
@@ -27,43 +27,55 @@ The hop-by-hop INT header will follow the header as described in section 4.7. IN
 
   * bit0: 4 octet Switch ID which is unique across the network
 
-### Per-Hop INT Metadata record (12 bytes)
+### Per-Hop INT Metadata record (4 bytes)
 
-This metadata will only contain one record and will not be updated on subsequent hops.
+The hop-by-hop metadata record will be updated at each hop on the network which supports the INT header.
 
-Each metadata record corresponds to a bit filed in the instruction set and is 4 octets long.  Only bit0 is required to be set for transparent secuirty, but other bits can be set as indicatied by the INT specifiction.
+Each metadata record corresponds to a bit field in the instruction set and is 4 octets long.  bit0 is the only required bit that needs to be set for transparent security, but other bits can be set as indicated by the INT specification.
 
 * Bit0: Switch ID: Unique identifier for the switch (4 octets)
 
-On the customer's gateway, the gateway enters its ID as the switch ID and it inserts the originating devices MAC address.
-
-If the INT header is created on a switch inside the head end.  This occurs when a header is not added at the customer premises.  Two entries are added, one for the gateway device.  In a DOCSIS network, this is the cable modem.
+On the customer's gateway, the gateway enters its ID as the switch ID.
 
 ## Domain Specific Data
 
-Transparent Secuirty takes advantage of the domain specific extension to add source-only infomraiton to the INT header.
+Transparent Security takes advantage of the domain specific extension to add source-only information to the INT header.
 
-For example a source device's MAC address is "a6:1a:f6:b1:64:7d" the device ID would be 0xA61AF6B1647dFF.
+The Domain ID, DS Instruction bitmask and DS Flags size and location in the INT Metadata header are defined in the P4 INT specification.  The use of these fields is open to the definition by the use case.  This section of the document describes how these fields are used within Transparent Security.
 
 ### Domain ID
 
-Domain ID is 0x5453
+Domain ID for Transparent Security is 0x5453.  This is the ASCII values for TS.
 
-### DS Instruction bit mask
+### DS Instruction bitmask
 
-* bit0: 8 byte source device ID
+* bit0: 8-byte source device ID
 * The remaining bits are reserved
 
-This source only information is a 8 byte source device ID.  This can be any device ID which is unique to the INT Domain.  This source ID can be the 6 byte MAC address of the source device followed by 2 bytes of 0x0000.
+This source only information is an 8-byte source device ID.  This can be any device ID which is unique to the INT Domain.  This source ID can be the 6 byte MAC address of the source device followed by 2 bytes of 0x0000.
 
 ### DS Flags
 
-The Domain Speecific Flags are set as follows:
+The Domain Specific Flags are set as follows:
 
 * bit 0 The source-only data was set by the source device
 * bit 1 The source-only data was set by the gateway on the customer premises
 * bit 2 The source-only data was set by a switch outside of the customer premises
-* The reaminng bits are reserved
+* The remaining bits are reserved
+
+Note: Only 1 of the first 3 bits can be set.  If more than 1 bit is set, then the DS flags are invalid.
+
+It is valid to not set any of the bits if the architecture is not sure where it sits on the network with relation to the source device.  This could occur if the originating device is behind a secondary gateway.
+
+### DS Metadata (8 bytes)
+
+The domain specific metadata will contain source-only data.  This record will be populated when the INT header is initially inserted into the packet header.
+
+This is a single 8-byte record with the source device ID.  This can be set on the source device or a gateway on the customer premises.
+
+For example a source device's MAC address is "a6:1a:f6:b1:64:7d" the device ID would be 0xA61AF6B1647d0000.
+
+It the DS metadata is set by a switch outside of the customer premises, this will likely identify the network device that forwarded the packet to the access network and not the actual device.
 
 ## Examples
 
@@ -188,15 +200,15 @@ The Domain Speecific Flags are set as follows:
 </tr>
 <tr height=21 style='height:16.0pt'>
   <td colspan=32 height=21 class=xl67 style='height:16.0pt'>Hop 2 Switch ID
-  <span style='mso-spacerun:yes'> </span></td>
+  <span style='mso-spacerun:yes'> </span></td>
  </tr>
  <tr height=21 style='height:16.0pt'>
   <td colspan=32 height=21 class=xl67 style='height:16.0pt'>Hop 1 Switch ID
-  <span style='mso-spacerun:yes'> </span></td>
+  <span style='mso-spacerun:yes'> </span></td>
  </tr>
  <tr height=21 style='height:16.0pt'>
   <td colspan=32 height=21 class=xl67 style='height:16.0pt'>Originating Device
-  MAC Most signifigant 4 octets<span style='mso-spacerun:yes'> </span></td>
+  MAC Most signifigant 4 octets<span style='mso-spacerun:yes'> </span></td>
  </tr>
  <tr height=21 style='height:16.0pt'>
   <td colspan=16 height=21 class=xl67 style='height:16.0pt'>Originating Device
