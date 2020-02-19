@@ -75,7 +75,7 @@ This is a single 8-byte record with the source device ID.  This can be set on th
 
 For example a source device's MAC address is "a6:1a:f6:b1:64:7d" the device ID would be 0xA61AF6B1647d0000.
 
-It the DS metadata is set by a switch outside of the customer premises, this will likely identify the network device that forwarded the packet to the access network and not the actual device.
+If the DS metadata is set by a switch outside of the customer premises, this will likely identify the network device that forwarded the packet to the access network and not the originating source device.  One example would be inserting the MAC address of a cable modem.
 
 ## Examples
 
