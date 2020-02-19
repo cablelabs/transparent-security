@@ -43,6 +43,19 @@ class IntHeader(Packet):
         fields.ByteField('remaining_hop_cnt', 0),
         fields.BitField('instr_bitmap', 0, 16),
         fields.BitField('res2', 0, 16),
+        fields.BitField('domain_id', 0, 16),
+        fields.BitField('ds_instruction', 0, 16),
+    ]
+
+
+class SourceMeta(Packet):
+    """
+    This class represents the INT metadata being placed onto the packets
+    """
+    fields_desc = [
+        fields.IntField('switch_id', 0),
+        fields.MACField('orig_mac', 0),
+        fields.BitField('reserved', 0, 16),
     ]
 
 
@@ -52,8 +65,6 @@ class IntMeta(Packet):
     """
     fields_desc = [
         fields.IntField('switch_id', 0),
-        fields.MACField('orig_mac', 0),
-        fields.BitField('reserved', 0, 16),
     ]
 
 
@@ -71,7 +82,7 @@ class IntMeta2(IntMeta):
     name = "INT_META_2"
 
 
-class IntMeta3(IntMeta):
+class IntMeta3(SourceMeta):
     """
     This class represents the third INT metadata being placed onto the packets
     """

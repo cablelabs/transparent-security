@@ -74,13 +74,7 @@ control TpsCoreIngress(inout headers hdr,
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + ((bit<16>)hdr.int_header.meta_len * 4);
         hdr.int_shim.length = hdr.int_shim.length + (bit<8>)hdr.int_header.meta_len;
         hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt - 1;
-
-        hdr.int_meta_3.switch_id = hdr.int_meta_2.switch_id;
-        hdr.int_meta_3.orig_mac = hdr.int_meta_2.orig_mac;
-        hdr.int_meta_2.switch_id = hdr.int_meta.switch_id;
-        hdr.int_meta_2.orig_mac = hdr.int_meta.orig_mac;
-        hdr.int_meta.switch_id = switch_id;
-        hdr.int_meta.orig_mac = 0xFFFFFFFFFFFF;
+        hdr.int_meta_3.switch_id = switch_id;
 
         /* TODO - this action is not resulting with the INT packet being
              egressed to the configured port (3 in this use case), therefore

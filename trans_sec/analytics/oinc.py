@@ -109,8 +109,10 @@ def extract_int_data(packet):
     log_int_packet(packet)
 
     int_shim_len = packet[IntShim].length
+    hop_metalen = packet[IntHeader].meta_len
     logger.info('Shim len - [%s]', int_shim_len)
-    hops = (int_shim_len - 3) / 3
+    # TODO - Find a better way to calculate the number of hops with Domain Specific metadata
+    hops = 1 + (int_shim_len - 4 - 3) / hop_metalen
 
     logger.info('Parsing INT header with [%s] hops', hops)
 
@@ -151,10 +153,8 @@ def log_int_packet(packet):
         logger.debug('IS type - [%s] next_proto - [%s] length - [%s]',
                      packet[IntShim].type, packet[IntShim].next_proto,
                      packet[IntShim].length)
-        logger.debug('IM1 switch_id - [%s] orig_mac - [%s]',
-                     packet[IntMeta1].switch_id, packet[IntMeta1].orig_mac)
-        logger.debug('IM2 switch_id - [%s] orig_mac - [%s]',
-                     packet[IntMeta2].switch_id, packet[IntMeta2].orig_mac)
+        logger.debug('IM switch_id - [%s] orig_mac - [%s]',
+                     packet[IntMeta3].switch_id, packet[IntMeta3].orig_mac)
     except Exception as e:
         logger.error('Error parsing header - %s', e)
 
@@ -355,7 +355,7 @@ class SimpleAE(PacketAnalytics):
                     'Not calling SDN as last attack notification for %s'
                     ' was only %s seconds ago',
                     attack_dict, time.time() - last_attack)
-                return False
+                return True
         else:
             logger.debug('No attack detected - count [%s]', count)
             return False

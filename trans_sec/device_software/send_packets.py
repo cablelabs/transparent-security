@@ -143,39 +143,38 @@ def __create_packet(args, interface):
     if args.int_hdr_file:
         int_data = __read_yaml_file(args.int_hdr_file)
         logger.info('Int data to add to packet - [%s]', int_data)
-        ip_len = 60 + 12 * len(int_data['meta'])
+        ip_len = 34 + ((int(int_data['shim']['length'])*4))
         pkt = (Ether(src=src_mac, dst=args.switch_ethernet) /
                IP(dst=addr, src=args.source_addr, len=ip_len, proto=0xfd))
 
         pkt = (
-            pkt / IntShim(length=int(int_data['shim']['length'])) / IntHeader()
+            pkt / IntShim(length=int(int_data['shim']['length']),next_proto=0x11)
         )
 
         ctr = 0
         for int_meta in int_data['meta']:
             logger.info('Adding switch_id - [%s] to INT data', int_meta)
             ctr += 1
-            if ctr == 1:
+            if ctr == 3:
                 logger.info('Adding IntMeta1')
-                pkt = pkt / IntMeta1(switch_id=int_meta['switch_id'],
-                                     orig_mac=int_meta['orig_mac'])
+                pkt = pkt / IntHeader(meta_len=1) / IntMeta1(switch_id=int_meta['switch_id'])
             if ctr == 2:
                 logger.info('Adding IntMeta2')
-                pkt = pkt / IntMeta2(switch_id=int_meta['switch_id'],
-                                     orig_mac=int_meta['orig_mac'])
-            if ctr == 3:
+                pkt = pkt / IntHeader(meta_len=1) / IntMeta2(switch_id=int_meta['switch_id'])
+            if ctr == 1:
                 logger.info('Adding IntMeta3')
-                pkt = pkt / IntMeta3(switch_id=int_meta['switch_id'],
-                                     orig_mac=int_meta['orig_mac'])
+                pkt = pkt / IntHeader(meta_len=3) / IntMeta3(switch_id=int_meta['switch_id'],
+                                                             orig_mac=int_meta['orig_mac'])
     else:
         pkt = (Ether(src=src_mac, dst=args.switch_ethernet) /
                IP(dst=addr, src=args.source_addr))
 
-    logger.info('Packet to emit - [%s]', pkt.summary())
     if args.tcp:
         return pkt / TCP(dport=args.port, sport=args.source_port) / args.msg
     else:
         return pkt / UDP(dport=args.port, sport=args.source_port) / args.msg
+
+    logger.info('Packet to emit - [%s]', pkt.summary())
 
 
 def __read_yaml_file(config_file_path):
