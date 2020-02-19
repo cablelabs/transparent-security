@@ -14,54 +14,46 @@
 # one will be demonstrating dropped packets
 ---
 
-# Basic Data Forward scenario for standard UDP Packets
-- import_playbook: single_switch/data_forward_basic.yml
+# Basic Data Drop scenario for UDP
+- import_playbook: ../single_switch/data_drop_basic.yml
   vars:
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-    switch: "{{ topo_dict.switches.core }}"
+    switch: "{{ topo_dict.switches.gateway }}"
     remote_send_host: host1
     remote_rec_host: host2
     send_host: "{{ remote_send_host if run_mode == 'remote' else None }}"
     rec_host: "{{ remote_rec_host if run_mode == 'remote' else None }}"
+    send_port: 4321
     sender: "{{ topo_dict.hosts[remote_send_host] }}"
     sender_intf: "{{ '%s-eth0' % send_host if run_mode == 'remote' else '%s-eth1' % switch.name }}"
     send_sw_port: "{{ topo_dict.links[0].south_facing_port }}"
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth2' % switch.name }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
-    ingress_classname: TpsCoreIngress
+    ingress_classname: TpsGwIngress
     data_forward_table: data_forward_t
     data_forward_action: data_forward
     data_forward_match_fields:
-      - key: hdr.ipv4.dstAddr
-        value:
-          - "{{ receiver.ip }}"
-          - 32
+      - key: standard_metadata.ingress_port
+        value: "{{ send_sw_port }}"
     data_forward_action_params:
       - key: dstAddr
         value: "{{ switch.mac }}"
       - key: port
         value: "{{ rec_sw_port }}"
-
-# Basic Data Forward scenario for INT UDP Packets
-#- import_playbook: single_switch/data_forward_basic.yml
-#  vars:
-#    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-#    switch: "{{ topo_dict.switches.core }}"
-#    send_host: host1
-#    sender: "{{ topo_dict.hosts.host1 }}"
-#    send_sw_port: "{{ topo_dict.links[0].south_facing_port }}"
-#    rec_host: host2
-#    receiver: "{{ topo_dict.hosts.host2 }}"
-#    rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
-#    ingress_classname: TpsCoreIngress
-#    data_forward_table: data_forward_t
-#    data_forward_action: data_forward
-#    data_forward_match_fields:
-#      - key: hdr.ipv4.dstAddr
-#        value: "({{ receiver.ip }}, 32)"
-#    data_forward_action_params:
-#      - key: dstAddr
-#        value: "{{ switch.mac }}"
-#      - key: port
-#        value: "{{ rec_sw_port }}"
+      - key: l2ptr
+        value: 0
+    data_drop_table: data_drop_t
+    data_drop_action: data_drop
+    data_drop_match_fields:
+      - key: hdr.ethernet.src_mac
+        value: "{{ sender.mac }}"
+      - key: hdr.ipv4.srcAddr
+        value: "{{ sender.ip }}"
+      - key: hdr.ipv4.dstAddr
+        value: "{{ receiver.ip }}"
+      - key: hdr.udp.dst_port
+        value: "{{ send_port }}"
+    data_drop_action_params:
+      - key: device
+        value: "{{ sender.id }}"

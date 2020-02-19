@@ -116,8 +116,8 @@ switches:
     type: aggregate
     mac: 00:00:00:02:04:00
     grpc: 127.0.0.1:50051
-  core1:
-    name: core1
+  core:
+    name: core
     id: 1
     runtime_p4info: {{ remote_scripts_dir }}/p4/core.p4info
     runtime_json: {{ remote_scripts_dir }}/p4/core.json
@@ -192,19 +192,19 @@ links:
     north_facing_port: 3
     latency: 0ms
     bandwidth: null
-  - north_node: core1
+  - north_node: core
     south_node: aggregate
     south_facing_port: 1
     north_facing_port: 4
     latency: 0ms
     bandwidth: null
   - north_node: inet
-    south_node: core1
+    south_node: core
     north_facing_port: 2
     latency: 0ms
     bandwidth: null
   - north_node: analytics_engine
-    south_node: core1
+    south_node: core
     north_facing_port: 3
     latency: 0ms
     bandwidth: null

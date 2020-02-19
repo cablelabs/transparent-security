@@ -23,6 +23,7 @@
       - core
       - aggregate
       - gateway
+    topology_template: "templates/topology_template-full.yml.j2"
 
 - import_playbook: ../general/start_service.yml
   vars:

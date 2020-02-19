@@ -31,13 +31,13 @@ hosts:
     mac: 00:00:00:00:02:02
     type: server
 switches:
-  core:
-    name: core
+  {{ p4_prog }}:
+    name: {{ p4_prog }}
     id: 0
-    runtime_p4info: {{ remote_scripts_dir }}/p4/core.p4info
-    runtime_json: {{ remote_scripts_dir }}/p4/core.json
+    runtime_p4info: {{ remote_scripts_dir }}/p4/{{ p4_prog }}.p4info
+    runtime_json: {{ remote_scripts_dir }}/p4/{{ p4_prog }}.json
     subnet: 10.1.1.0
-    type: core
+    type: {{ p4_prog }}
     mac: 00:00:00:01:01:00
     grpc: 127.0.0.1:50051
 external:
@@ -48,13 +48,13 @@ external:
     ip_port: 0
     mac: {{ switch_mac }}
 links:
-  - north_node: core
+  - north_node: {{ p4_prog }}
     south_node: host1
     south_facing_port: 1
     latency: 0ms
     bandwidth: null
   - north_node: host2
-    south_node: core
+    south_node: {{ p4_prog }}
     north_facing_port: 2
     latency: 0ms
     bandwidth: null

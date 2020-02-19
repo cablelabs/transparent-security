@@ -29,6 +29,10 @@ resource "null_resource" "transparent-security-host-ssh-setup" {
   }
 }
 
+locals {
+  local_ansible_inventory_file = "~/tps-mininet-setup-${var.scenario_name}-${var.build_id}.ini"
+}
+
 #Create a local inventory to store variables and public IP of remote machine
 resource "null_resource" "transparent-security-local-inventory" {
   depends_on = [null_resource.transparent-security-host-ssh-setup]
@@ -38,7 +42,7 @@ ${var.ANSIBLE_CMD} \
 ${var.LOCAL_INVENTORY} \
 --extra-vars "\
 public_ip=${aws_instance.transparent-security-mininet-integration.public_ip}
-local_inventory=${var.local_inventory_file}
+local_inventory=${local.local_ansible_inventory_file}
 remote_inventory_file=${var.remote_inventory_file}
 src_dir=${var.remote_tps_dir}
 remote_srvc_log_dir=${var.remote_srvc_log_dir}
@@ -70,7 +74,7 @@ resource "null_resource" "transparent-security-mininet-host-setup" {
   provisioner "local-exec" {
     command = <<EOT
 ${var.ANSIBLE_CMD} -u ${var.sudo_user} \
--i ${var.local_inventory_file} \
+-i ${local.local_ansible_inventory_file} \
 ${var.SETUP_MININET_HOST} \
 --key-file ${var.private_key_file} \
 EOT

@@ -32,7 +32,6 @@ variable "ANSIBLE_CMD" {default = "export ANSIBLE_HOST_KEY_CHECKING=False; ansib
 variable "remote_scripts_dir" {default = "/etc/transparent-security"}
 variable "remote_pb_dir" {default = "/home/ubuntu/transparent-security/playbooks"}
 variable "remote_inventory_file" {default = "/home/ubuntu/transparent-security.ini"}
-variable "local_inventory_file" {default = "~/mininet_setup.ini"}
 variable "run_daemons" {default = "True"}
 variable "topo_file" {default = "mininet-sim-topology.yaml"}
 variable "dev_daemon_file" {default = "device-daemons.yml"}
@@ -42,7 +41,7 @@ variable "ae_host" {default = "localhost"}
 variable "sdn_port" {default = "9998"}
 variable "sdn_dev_intf" {default = "lo"} # TODO - verify if this is correct???
 variable "ae_dev_intf" {default = "lo"} # TODO - verify if this is correct???
-variable "ae_monitor_intf" {default = "core1-eth3"}
+variable "ae_monitor_intf" {default = "core-eth3"}
 variable "service_log_level" {default = "INFO"}
 variable "remote_srvc_log_dir" {default = "/var/log/transparent-security"}
 variable "host_log_dir" {default = "/home/ubuntu/tps-logs"}
