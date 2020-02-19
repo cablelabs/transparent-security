@@ -15,7 +15,7 @@
 ---
 
 # Basic Data Forward scenario for UDP
-- import_playbook: single_switch/data_forward_basic.yml
+- import_playbook: ../single_switch/data_forward_basic.yml
   vars:
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch: "{{ topo_dict.switches.gateway }}"

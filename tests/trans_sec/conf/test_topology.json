@@ -119,8 +119,8 @@
       "mac": "00:90:fb:62:c5:69",
       "grpc": "10.197.1.13:50052"
     },
-    "Core1": {
-      "name": "Core1",
+    "Core": {
+      "name": "Core",
       "id": 1,
       "runtime_json": "../p4/core/p4src/core.json",
       "subnet": "10.197.1.0",
@@ -226,7 +226,7 @@
       "bandwidth": null
     },
     {
-      "north_node": "Core1",
+      "north_node": "Core",
       "south_node": "Aggregate",
       "south_facing_port": 32,
       "north_facing_port": 32,
@@ -235,7 +235,7 @@
     },
     {
       "north_node": "inet",
-      "south_node": "Core1",
+      "south_node": "Core",
       "north_facing_port": 1,
       "latency": "0ms",
       "bandwidth": null,
@@ -243,7 +243,7 @@
     },
     {
       "north_node": "analytics_engine",
-      "south_node": "Core1",
+      "south_node": "Core",
       "north_facing_port": 2,
       "latency": "0ms",
       "bandwidth": null,

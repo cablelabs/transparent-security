@@ -14,11 +14,11 @@
 # one will be demonstrating dropped packets
 ---
 # Sending 25 packets within a second 1x through gateway 1
-- import_playbook: test_cases/send_receive.yml
+- import_playbook: ../test_cases/send_receive.yml
   vars:
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch_name: gateway1
-    core_switch_name: core1
+    core_switch_name: core
     remote_send_host: Camera1
     remote_rec_host: inet
     switch: "{{ topo_dict.switches[switch_name] }}"
@@ -35,11 +35,11 @@
     send_packet_count: 25
 
 # Sending 50 packets within a second 1x through gateway 2
-- import_playbook: test_cases/send_receive.yml
+- import_playbook: ../test_cases/send_receive.yml
   vars:
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch_name: gateway2
-    core_switch_name: core1
+    core_switch_name: core
     remote_send_host: Camera2
     remote_rec_host: inet
     switch: "{{ topo_dict.switches[switch_name] }}"
@@ -57,11 +57,11 @@
 
 # Sending 150 packets within a second 2x through gateway 3.
 # The second set should be dropped else this will fail
-- import_playbook: test_cases/send_receive.yml
+- import_playbook: ../test_cases/send_receive.yml
   vars:
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch_name: gateway3
-    core_switch_name: core1
+    core_switch_name: core
     remote_send_host: Camera3
     remote_rec_host: inet
     switch: "{{ topo_dict.switches[switch_name] }}"
@@ -82,7 +82,7 @@
     send_loop_delay: 5
 
 # Clear all gateway data_drop_t table entries.
-- import_playbook: test_cases/clear_p4_table_entries.yml
+- import_playbook: ../test_cases/clear_p4_table_entries.yml
   vars:
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     p4_switches:

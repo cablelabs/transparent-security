@@ -22,3 +22,5 @@
     load_p4: True
     p4_progs:
       - aggregate
+    topology_template: "templates/topology_template-single_switch.yml.j2"
+    p4_prog: "{{ p4_progs[0] }}"
