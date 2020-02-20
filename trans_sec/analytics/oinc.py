@@ -127,7 +127,8 @@ def extract_int_data(packet):
 
     try:
         dport = packet[UDP].dport
-    except:
+    except Exception as e:
+        logger.debug('Must be a TCP packet')
         dport = packet[TCP].dport
     try:
         out = dict(
@@ -149,7 +150,8 @@ def log_int_packet(packet):
     try:
         sport = packet[UDP].sport
         dport = packet[UDP].dport
-    except:
+    except Exception as e:
+        logger.debug('Must be a TCP packet')
         sport = packet[TCP].sport
         dport = packet[TCP].dport
 
