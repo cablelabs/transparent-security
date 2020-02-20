@@ -65,6 +65,7 @@
     loop_delay: "{{ send_loop_delay | default(0) }}"
     sender_log_file: "{{ host_log_dir }}/{{ sender_log_filename }}"
     int_hdr_df: "{{ send_int_data_filename | default('send_int_data.yml') }}"
+    protocol: "{{ send_protocol | default('UDP') }}"
   tasks:
     - name: Create sender log directory {{ host_log_dir }}
       file:
@@ -78,8 +79,11 @@
         state: touch
         mode: 0777
 
+    - debug:
+        var: send_tcp
+
     - set_fact:
-        send_cmd: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/send_packets.py -y {{ send_delay }} -i {{ interval }} -it {{ loops }} -itd {{ loop_delay }} -z {{ sender_intf }} -sa {{ sender.ip }} -r {{ receiver.ip }} -sp {{ send_src_port }} -p {{ send_port }} -f {{ sender_log_file }} -c {{ send_packet_count }} -e {{ sender.mac }} -s {{ switch.mac }} -m '{{ send_msg }}'"
+        send_cmd: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/send_packets.py -y {{ send_delay }} -i {{ interval }} -it {{ loops }} -itd {{ loop_delay }} -z {{ sender_intf }} -sa {{ sender.ip }} -r {{ receiver.ip }} -sp {{ send_src_port }} -p {{ send_port }} -f {{ sender_log_file }} -c {{ send_packet_count }} -e {{ sender.mac }} -s {{ switch.mac }} -pr {{ send_protocol }} -m '{{ send_msg }}'"
 
     - debug:
         var: inspection_data

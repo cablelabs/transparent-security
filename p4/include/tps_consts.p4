@@ -16,6 +16,7 @@
 #define MAX_HOPS 9
 
 const bit<8> TYPE_INSPECTION = 0xfd;
+const bit<8> TYPE_TCP = 0x06;
 const bit<8> TYPE_UDP = 0x11;
 const bit<32> MAX_DEVICE_ID = 15;
 const bit<9> DROP_PORT = 511;

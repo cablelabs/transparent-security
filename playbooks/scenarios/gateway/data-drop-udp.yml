@@ -14,15 +14,17 @@
 # one will be demonstrating dropped packets
 ---
 
-# Basic Data Forward scenario for UDP
-- import_playbook: ../single_switch/data_forward_basic.yml
+# Basic Data Drop scenario for UDP
+- import_playbook: ../single_switch/data_drop_basic.yml
   vars:
+    send_protocol: UDP
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch: "{{ topo_dict.switches.gateway }}"
     remote_send_host: host1
     remote_rec_host: host2
     send_host: "{{ remote_send_host if run_mode == 'remote' else None }}"
     rec_host: "{{ remote_rec_host if run_mode == 'remote' else None }}"
+    send_port: 4321
     sender: "{{ topo_dict.hosts[remote_send_host] }}"
     sender_intf: "{{ '%s-eth0' % send_host if run_mode == 'remote' else '%s-eth1' % switch.name }}"
     send_sw_port: "{{ topo_dict.links[0].south_facing_port }}"
@@ -42,3 +44,17 @@
         value: "{{ rec_sw_port }}"
       - key: l2ptr
         value: 0
+    data_drop_table: data_drop_udp_t
+    data_drop_action: data_drop
+    data_drop_match_fields:
+      - key: hdr.ethernet.src_mac
+        value: "{{ sender.mac }}"
+      - key: hdr.ipv4.srcAddr
+        value: "{{ sender.ip }}"
+      - key: hdr.ipv4.dstAddr
+        value: "{{ receiver.ip }}"
+      - key: hdr.udp.dst_port
+        value: "{{ send_port }}"
+    data_drop_action_params:
+      - key: device
+        value: "{{ sender.id }}"

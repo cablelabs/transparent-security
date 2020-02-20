@@ -92,12 +92,27 @@ control TpsGwIngress(inout headers hdr,
         droppedPackets.count(device);
     }
 
-    table data_drop_t {
+    table data_drop_udp_t {
         key = {
             hdr.ethernet.src_mac: exact;
             hdr.ipv4.srcAddr: exact;
             hdr.ipv4.dstAddr: exact;
             hdr.udp.dst_port: exact;
+        }
+        actions = {
+            data_drop;
+            NoAction;
+        }
+        size = 1024;
+        default_action = NoAction();
+    }
+
+    table data_drop_tcp_t {
+        key = {
+            hdr.ethernet.src_mac: exact;
+            hdr.ipv4.srcAddr: exact;
+            hdr.ipv4.dstAddr: exact;
+            hdr.tcp.dst_port: exact;
         }
         actions = {
             data_drop;
@@ -114,11 +129,13 @@ control TpsGwIngress(inout headers hdr,
      apply {
         if (hdr.ipv4.isValid()) {
             if (hdr.udp.isValid()) {
-                data_drop_t.apply();
-                if (standard_metadata.egress_spec != DROP_PORT) {
-                    data_inspection_t.apply();
-                    data_forward_t.apply();
-                }
+                data_drop_udp_t.apply();
+            } else if (hdr.tcp.isValid()) {
+                data_drop_tcp_t.apply();
+            }
+            if (standard_metadata.egress_spec != DROP_PORT) {
+                data_inspection_t.apply();
+                data_forward_t.apply();
             }
         }
     }

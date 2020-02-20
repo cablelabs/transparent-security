@@ -37,12 +37,18 @@ parser TpsGwParser(packet_in packet,
         packet.extract(hdr.ipv4);
         transition select(hdr.ipv4.protocol) {
             TYPE_UDP: parse_udp;
+            TYPE_TCP: parse_tcp;
             default: accept;
         }
     }
 
     state parse_udp {
         packet.extract(hdr.udp);
+        transition accept;
+    }
+
+    state parse_tcp {
+        packet.extract(hdr.tcp);
         transition accept;
     }
 }
