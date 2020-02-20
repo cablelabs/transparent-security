@@ -19,7 +19,7 @@ import time
 from anytree import search, Node, RenderTree
 from scapy.all import bind_layers
 from scapy.all import sniff
-from scapy.layers.inet import IP, UDP
+from scapy.layers.inet import IP, UDP, TCP
 from scapy.layers.l2 import Ether
 
 from trans_sec.packet.inspect_layer import (
@@ -52,6 +52,7 @@ class PacketAnalytics(object):
         bind_layers(IntMeta1, IntMeta2)
         bind_layers(IntMeta2, SourceIntMeta)
         bind_layers(SourceIntMeta, UDP)
+        bind_layers(SourceIntMeta, TCP)
         logger.debug("Completed binding packet layers")
 
     def start_sniffing(self, iface, ip_proto=0xfd):
@@ -123,12 +124,17 @@ def extract_int_data(packet):
     if hops > 3:
         raise Exception('Cannot support hops > 3')
 
+    dport = None
+    try:
+        dport = packet[UDP].dport
+    except:
+        dport = packet[TCP].dport
     try:
         out = dict(
             devMac=orig_mac,
             devAddr=packet[IP].src,
             dstAddr=packet[IP].dst,
-            dstPort=packet[UDP].dport,
+            dstPort=dport,
             protocol=packet[IP].proto,
             packetLen=len(packet),
         )
@@ -140,14 +146,22 @@ def extract_int_data(packet):
 
 
 def log_int_packet(packet):
+    sport = None
+    dport = None
+    try:
+        sport = packet[UDP].sport
+        dport = packet[UDP].dport
+    except:
+        sport = packet[TCP].sport
+        dport = packet[TCP].dport
+
     try:
         logger.debug('Packet length - [%s]', len(packet))
         logger.debug('ETH dst_mac - [%s] src_mac - [%s] type - [%s]',
                      packet[Ether].dst, packet[Ether].src, packet[Ether].type)
         logger.debug('IP src - [%s] dst - [%s] proto - [%s]',
                      packet[IP].src, packet[IP].dst, packet[IP].proto)
-        logger.debug('UDP sport - [%s] dport - [%s]',
-                     packet[UDP].sport, packet[UDP].dport)
+        logger.debug('sport - [%s] dport - [%s]', sport, dport)
         logger.debug('IH remaining_hops - [%s]',
                      packet[IntHeader].remaining_hop_cnt)
         logger.debug('IS type - [%s] next_proto - [%s] length - [%s]',

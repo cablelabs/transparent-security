@@ -16,6 +16,7 @@
 # Sending 25 packets within a second 1x through gateway 1
 - import_playbook: ../test_cases/send_receive.yml
   vars:
+    send_protocol: UDP
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch_name: gateway1
     core_switch_name: core
@@ -37,6 +38,7 @@
 # Sending 50 packets within a second 1x through gateway 2
 - import_playbook: ../test_cases/send_receive.yml
   vars:
+    send_protocol: UDP
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch_name: gateway2
     core_switch_name: core
@@ -59,6 +61,7 @@
 # The second set should be dropped else this will fail
 - import_playbook: ../test_cases/send_receive.yml
   vars:
+    send_protocol: UDP
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch_name: gateway3
     core_switch_name: core
@@ -81,7 +84,7 @@
     send_loops: 2
     send_loop_delay: 5
 
-# Clear all gateway data_drop_t table entries.
+# Clear all gateway data_drop_udp_t table entries.
 - import_playbook: ../test_cases/clear_p4_table_entries.yml
   vars:
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
@@ -91,5 +94,6 @@
       - "{{ topo_dict.switches.gateway3 }}"
     p4_ingress_classname: TpsGwIngress
     p4_table_names:
-      - data_drop_t
+      - data_drop_udp_t
+      - data_drop_tcp_t
     p4_te_log_dir: "{{ host_log_dir }}"

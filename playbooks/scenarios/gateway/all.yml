@@ -14,10 +14,19 @@
 # one will be demonstrating dropped packets
 ---
 # Data Forward scenarios for UDP
-- import_playbook: data-forward.yml
+- import_playbook: data-forward-udp.yml
+
+# Data Forward scenarios for TCP
+- import_playbook: data-forward-tcp.yml
 
 # Data Drop scenarios for UDP
-- import_playbook: data-drop.yml
+- import_playbook: data-drop-udp.yml
+
+# Data Drop scenarios for TCP
+- import_playbook: data-drop-tcp.yml
 
 # Data Inspection scenarios for UDP
-- import_playbook: data-inspection.yml
+- import_playbook: data-inspection-udp.yml
+
+# Data Inspection scenarios for TCP
+- import_playbook: data-inspection-tcp.yml

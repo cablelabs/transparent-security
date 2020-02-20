@@ -174,33 +174,58 @@ class AbstractController(object):
                             north_facing_links=north_links,
                             south_facing_links=south_links)
 
-    def add_attacker(self, attack, host,
-                     drop_action_name='data_drop',
-                     drop_table_name='data_drop_t',
-                     src_mac_hdr_ref='hdr.ethernet.src_mac',
-                     src_addr_hdr_ref='hdr.ipv4.srcAddr',
-                     dst_addr_hdr_ref='hdr.ipv4.dstAddr',
-                     dst_port_hdr_ref='hdr.udp.dst_port'):
-
-        logger.info('Adding attacker [%s] from host [%s]', attack, host)
+    def add_attacker(self, attack, host):
         for switch in self.switches:
-            table_entry = self.p4info_helper.build_table_entry(
-                table_name='{}.{}'.format(self.p4_ingress, drop_table_name),
-                match_fields={
-                    src_mac_hdr_ref: (attack['src_mac']),
-                    src_addr_hdr_ref: (attack['src_ip']),
-                    dst_addr_hdr_ref: (attack['dst_ip']),
-                    dst_port_hdr_ref: (int(attack['dst_port']))
-                },
-                action_name='{}.{}'.format(self.p4_ingress, drop_action_name),
-                action_params={
-                    'device': host['id']
-                })
-            logger.debug('Writing table entry [%s]', table_entry)
-            switch.write_table_entry(table_entry)
+            self.__add_attacker_udp(switch, attack, host)
+            self.__add_attacker_tcp(switch, attack, host)
 
-            logger.info('%s Dropping Packets from %s',
-                        switch.name, attack.get('src_ip'))
+    def __add_attacker_udp(self, switch, attack, host):
+        logger.info('Adding UDP attacker [%s] from host [%s]', attack, host)
+        self.__insert_p4_table_entry(
+            switch=switch,
+            table_name='data_drop_udp_t',
+            action_name='data_drop',
+            match_fields={
+                'hdr.ethernet.src_mac': (attack['src_mac']),
+                'hdr.ipv4.srcAddr': (attack['src_ip']),
+                'hdr.ipv4.dstAddr': (attack['dst_ip']),
+                'hdr.udp.dst_port': (int(attack['dst_port']))
+            },
+            action_params={
+                'device': host['id']
+            }
+         )
+        logger.info('%s Dropping TCP Packets from %s',
+                    switch.name, attack.get('src_ip'))
+
+    def __add_attacker_tcp(self, switch, attack, host):
+        logger.info('Adding TCP attacker [%s] from host [%s]', attack, host)
+        self.__insert_p4_table_entry(
+            switch=switch,
+            table_name='data_drop_tcp_t',
+            action_name='data_drop',
+            match_fields={
+                'hdr.ethernet.src_mac': (attack['src_mac']),
+                'hdr.ipv4.srcAddr': (attack['src_ip']),
+                'hdr.ipv4.dstAddr': (attack['dst_ip']),
+                'hdr.tcp.dst_port': (int(attack['dst_port']))
+            },
+            action_params={
+                'device': host['id']
+            }
+         )
+        logger.info('%s Dropping TCP Packets from %s',
+                    switch.name, attack.get('src_ip'))
+
+    def __insert_p4_table_entry(self, switch, table_name, action_name,
+                                match_fields, action_params):
+        table_entry = self.p4info_helper.build_table_entry(
+            table_name='{}.{}'.format(self.p4_ingress, table_name),
+            match_fields=match_fields,
+            action_name='{}.{}'.format(self.p4_ingress, action_name),
+            action_params=action_params)
+        logger.debug('Writing table entry [%s]', table_entry)
+        switch.write_table_entry(table_entry)
 
     def __get_links(self, switch_name):
         """

@@ -58,6 +58,23 @@ header udp_t {
     bit<16> cksum;
 }
 
+/*************************
+TCP header definition
+**************************/
+header tcp_t {
+    bit<16> src_port;
+    bit<16> dst_port;
+    bit<32> seq_no;
+    bit<32> ack_no;
+    bit<4>  data_offset;
+    bit<3>  res;
+    bit<3>  ecn;
+    bit<6>  ctrl;
+    bit<16> window;
+    bit<16> checksum;
+    bit<16> urgentPtr;
+}
+
 /******************************************
 External Gateway INT Data header definition
 *******************************************/
@@ -111,4 +128,5 @@ struct headers {
     int_metadata_t int_meta_2;
     int_metadata_t int_meta_3;
     udp_t          udp;
+    tcp_t          tcp;
 }

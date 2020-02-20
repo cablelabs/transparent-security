@@ -36,7 +36,7 @@
     inspection_data: "{{ sr1_data_inspection_int | default(None) }}"
     int_hops: "{{ sr1_rec_int_hops | default(0) }}"
 
-# Add table entry to data_drop_t
+# Add table entry to {{ data_drop_table }}
 - import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
     te_conf_file: ~/dd-drop-create.yml
