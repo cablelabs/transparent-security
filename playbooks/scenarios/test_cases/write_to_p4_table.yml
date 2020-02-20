@@ -47,5 +47,7 @@
 
     - name: Adding requested table entry with command [{{ add_table_entry_cmd }}]
       shell: "{{ add_table_entry_cmd }}"
-      retries: 3
+      retries: 5
       delay: 5
+      register: result
+      until: result.rc == 0

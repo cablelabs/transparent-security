@@ -86,4 +86,4 @@ class SourceIntMeta(SourceMeta):
     """
     This class represents the third INT metadata being placed onto the packets
     """
-    name = "INT_META_3"
+    name = "Source_INT_Meta"
