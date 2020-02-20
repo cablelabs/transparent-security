@@ -112,7 +112,8 @@ def extract_int_data(packet):
     int_shim_len = packet[IntShim].length
     hop_metalen = packet[IntHeader].meta_len
     logger.info('Shim len - [%s]', int_shim_len)
-    # TODO - Find a better way to calculate the number of hops with Domain Specific metadata
+    # TODO - Find a better way to calculate the number of hops with
+    #  Domain Specific metadata
     hops = 1 + (int_shim_len - 4 - 3) / hop_metalen
 
     logger.info('Parsing INT header with [%s] hops', hops)
@@ -124,7 +125,6 @@ def extract_int_data(packet):
     if hops > 3:
         raise Exception('Cannot support hops > 3')
 
-    dport = None
     try:
         dport = packet[UDP].dport
     except:
@@ -146,8 +146,6 @@ def extract_int_data(packet):
 
 
 def log_int_packet(packet):
-    sport = None
-    dport = None
     try:
         sport = packet[UDP].sport
         dport = packet[UDP].dport
@@ -168,7 +166,8 @@ def log_int_packet(packet):
                      packet[IntShim].type, packet[IntShim].next_proto,
                      packet[IntShim].length)
         logger.debug('IM switch_id - [%s] orig_mac - [%s]',
-                     packet[SourceIntMeta].switch_id, packet[SourceIntMeta].orig_mac)
+                     packet[SourceIntMeta].switch_id,
+                     packet[SourceIntMeta].orig_mac)
     except Exception as e:
         logger.error('Error parsing header - %s', e)
 
