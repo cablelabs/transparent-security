@@ -20,9 +20,8 @@ from scapy.all import bind_layers, sniff
 from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import Ether
 
-from trans_sec.analytics import oinc
 from trans_sec.packet.inspect_layer import IntShim, IntHeader, IntMeta1, \
-    IntMeta2, IntMeta3
+    IntMeta2, SourceIntMeta
 
 logger = logging.getLogger('receive_packets')
 FORMAT = '%(levelname)s %(asctime)-15s %(filename)s %(message)s'
@@ -52,7 +51,7 @@ def get_args():
 def __log_packet(packet, int_hops):
     try:
         ip_proto = packet[IP].proto
-    except Exception as e:
+    except Exception:
         logger.warn('Unable to process packet - [%s]', packet.summary())
         return
 
@@ -61,31 +60,30 @@ def __log_packet(packet, int_hops):
 
         mac1 = None
         switch_id_1 = None
-        mac2 = None
         switch_id_2 = None
-        mac3 = None
         switch_id_3 = None
         if int_hops == 1:
-            mac1 = packet[IntMeta1].orig_mac
-            switch_id_1 = packet[IntMeta1].switch_id
+            mac1 = packet[SourceIntMeta].orig_mac
+            switch_id_1 = packet[SourceIntMeta].switch_id
         if int_hops == 2:
-            mac2 = packet[IntMeta2].orig_mac
+            mac1 = packet[SourceIntMeta].orig_mac
+            switch_id_1 = packet[SourceIntMeta].switch_id
             switch_id_2 = packet[IntMeta2].switch_id
         if int_hops == 3:
-            mac3 = packet[IntMeta3].orig_mac
-            switch_id_3 = packet[IntMeta3].switch_id
+            mac1 = packet[SourceIntMeta].orig_mac
+            switch_id_1 = packet[SourceIntMeta].switch_id
+            switch_id_2 = packet[IntMeta2].switch_id
+            switch_id_3 = packet[IntMeta1].switch_id
 
         int_data = dict(
             eth_src_mac=packet[Ether].src,
             eth_dst_mac=packet[Ether].dst,
-            mac1=mac1,
-            switch_id_1=switch_id_1,
-            mac2=mac2,
-            switch_id_2=switch_id_2,
-            mac3=mac3,
-            switch_id_3=switch_id_3,
             src_ip=packet[IP].src,
             dst_ip=packet[IP].dst,
+            mac1=mac1,
+            switch_id_1=switch_id_1,
+            switch_id_2=switch_id_2,
+            switch_id_3=switch_id_3,
             src_port=packet[UDP].sport,
             dst_port=packet[UDP].dport,
             packetLen=len(packet),
@@ -105,16 +103,18 @@ def device_sniff(iface, duration, int_hops):
         bind_layers(Ether, IP)
         bind_layers(IP, IntShim)
         bind_layers(IntShim, IntHeader)
-        bind_layers(IntHeader, IntMeta1)
         if int_hops == 1:
-            bind_layers(IntMeta1, UDP)
-        if int_hops >= 2:
-            bind_layers(IntMeta1, IntMeta2)
+            bind_layers(IntHeader, SourceIntMeta)
+            bind_layers(SourceIntMeta, UDP)
         if int_hops == 2:
-            bind_layers(IntMeta2, UDP)
+            bind_layers(IntHeader, IntMeta2)
+            bind_layers(IntMeta2, SourceIntMeta)
+            bind_layers(SourceIntMeta, UDP)
         if int_hops == 3:
-            bind_layers(IntMeta2, IntMeta3)
-            bind_layers(IntMeta3, UDP)
+            bind_layers(IntHeader, IntMeta1)
+            bind_layers(IntMeta1, IntMeta2)
+            bind_layers(IntMeta2, SourceIntMeta)
+            bind_layers(SourceIntMeta, UDP)
         if int_hops > 3:
             raise Exception('Cannot currently support more than 3 hops')
     else:

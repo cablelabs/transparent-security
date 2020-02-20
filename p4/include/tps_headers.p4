@@ -68,7 +68,7 @@ header int_ip_shim_t { /* 4 */
     bit<8>  next_proto;
 }
 
-header int_header_t { /* 8 */
+header int_header_t { /* 12 */
     bit<4>  ver;
     bit<2>  rep;
     bit<1>  c;
@@ -79,12 +79,18 @@ header int_header_t { /* 8 */
     bit<8>  remaining_hop_cnt;
     bit<16> instructions;
     bit<16> rsvd2;
+    bit<16> domain_id;
+    bit<16> ds_instruction;
 }
 
-header int_metadata_t { /* 12 */
+header source_metadata_t { /* 12 */
     bit<32>  switch_id;
     bit<48>  orig_mac;
     bit<16>  reserved;
+}
+
+header int_metadata_t { /* 4 */
+    bit<32>  switch_id;
 }
 
 struct fwd_meta_t {
@@ -101,7 +107,7 @@ struct headers {
     ipv4_t         ipv4;
     int_ip_shim_t  int_shim;
     int_header_t   int_header;
-    int_metadata_t int_meta;
+    source_metadata_t int_meta;
     int_metadata_t int_meta_2;
     int_metadata_t int_meta_3;
     udp_t          udp;

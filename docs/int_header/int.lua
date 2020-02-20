@@ -36,7 +36,7 @@ function tps_proto.dissector(buffer,pinfo,tree)
     shim_tree:add(buffer(3,1),"Next Protocol: " .. next_proto)
 
     -- INT Metadata Header
-    header_tree = subtree:add(buffer(4,8), "INT Metadata Header")
+    header_tree = subtree:add(buffer(4,12), "INT Metadata Header")
     tvbr = buffer(4,1)
     version = tvbr:bitfield(0,4)
     header_tree:add("Version: " .. version)
@@ -59,24 +59,35 @@ function tps_proto.dissector(buffer,pinfo,tree)
     header_tree:add(buffer(8,2),"Instruction Bitmap: " .. inst_bitmap)
     reserved = buffer(10,2):uint()
     header_tree:add(buffer(10,2),"Reserved: " .. reserved)
+    domain_id = buffer(12,2):uint()
+    header_tree:add(buffer(12,2),"Domain ID: " ..  domain_id)
+    ds_instruction = buffer(14,2):uint()
+    header_tree:add(buffer(14,2),"Domain-specific Instruction: " ..  ds_instruction)
 
     -- INT Metadata Stack
-    total_hops = ((length*4) - 12)/(metalen*4)
-    header_offset = 12
-    subtree = subtree:add(buffer(header_offset,metalen*total_hops*4),"Metadata Stack")
-    while (total_hops >= 1)
+    header_offset = 16
+    total_hops = 1 + ((length - 3 - 4)/metalen)
+    if total_hops > 1 then
+        stack_length = 12 + (total_hops-1)*4*metalen
+    else
+        stack_length = total_hops*4*metalen
+    end
+    subtree = subtree:add(buffer(header_offset,stack_length),"Metadata Stack")
+    while (total_hops >= 2)
     do
         metaTree = subtree:add(buffer(header_offset,(metalen)),"Hop " .. total_hops)
         switch_id = buffer(header_offset,4):uint()
         metaTree:add(buffer(header_offset,4),"Switch ID: " .. switch_id)
-        device_mac = octet_to_mac(buffer(header_offset+4,6))
-        metaTree:add(buffer(header_offset+4,6),"Originating Device MAC address: " .. device_mac)
         total_hops = total_hops - 1
         header_offset = header_offset + (metalen*4)
     end
-
+    metaTree = subtree:add(buffer(header_offset,(metalen)),"Hop " .. 1)
+    switch_id = buffer(header_offset,4):uint()
+    metaTree:add(buffer(header_offset,4),"Switch ID: " .. switch_id)
+    device_mac = octet_to_mac(buffer(header_offset+4,6))
+    metaTree:add(buffer(header_offset+4,6),"Originating Device MAC address: " .. device_mac)
     -- UDP
-    header_offset = header_offset + (metalen * total_hops)
+    header_offset = header_offset + 12
     if next_proto == 0x11 then
         Dissector.get("udp"):call(buffer:range(header_offset):tvb(), pinfo, tree)
     end

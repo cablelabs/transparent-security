@@ -115,24 +115,25 @@ parser TpsCoreParser(packet_in packet,
 
     state parse_int_hdr {
         packet.extract(hdr.int_header);
-        transition parse_int_meta_1;
-    }
-
-    state parse_int_meta_1 {
-        packet.extract(hdr.int_meta);
-        transition parse_int_meta_2;
-    }
-
-    state parse_int_meta_2 {
-        packet.extract(hdr.int_meta_2);
         transition select(hdr.int_shim.length) {
-            0xc: parse_int_meta_3;
+            0x9: parse_int_meta_3;
+            0x8: parse_int_meta_2;
             default: accept;
         }
     }
 
     state parse_int_meta_3 {
         packet.extract(hdr.int_meta_3);
+        transition parse_int_meta_2;
+    }
+
+    state parse_int_meta_2 {
+        packet.extract(hdr.int_meta_2);
+        transition parse_int_meta;
+    }
+
+    state parse_int_meta {
+        packet.extract(hdr.int_meta);
         transition accept;
     }
 }

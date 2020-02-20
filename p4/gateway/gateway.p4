@@ -58,13 +58,9 @@ control TpsGwIngress(inout headers hdr,
         hdr.int_header.setValid();
         hdr.int_meta.setValid();
 
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen + 24;
-
-        hdr.int_shim.next_proto = hdr.ipv4.protocol;
-        hdr.ipv4.protocol = TYPE_INSPECTION;
-
-        hdr.int_shim.length = 6;
         hdr.int_shim.type = 1;
+        hdr.int_shim.length = 7;
+        hdr.int_shim.next_proto = hdr.ipv4.protocol;
 
         hdr.int_header.meta_len = 3;
         hdr.int_header.instructions = 0x80c0;
@@ -74,6 +70,8 @@ control TpsGwIngress(inout headers hdr,
         hdr.int_meta.switch_id = switch_id;
         hdr.int_meta.orig_mac = hdr.ethernet.src_mac;
 
+        hdr.ipv4.protocol = TYPE_INSPECTION;
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen + ((bit<16>)hdr.int_shim.length * 4);
         forwardedPackets.count(device);
     }
 
