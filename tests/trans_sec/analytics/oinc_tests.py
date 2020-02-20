@@ -22,7 +22,7 @@ from scapy.layers.l2 import Ether
 
 from trans_sec.analytics.oinc import SimpleAE
 from trans_sec.packet.inspect_layer import (
-    IntShim, IntMeta2, IntHeader, IntMeta3, IntMeta1)
+    IntShim, IntMeta2, IntHeader, SourceIntMeta, IntMeta1)
 from trans_sec.utils.http_session import HttpSession
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -52,7 +52,7 @@ class SimpleAETests(unittest.TestCase):
                IntHeader(meta_len=1) /
                IntMeta1(switch_id=3) /
                IntMeta2(switch_id=2) /
-               IntMeta3(switch_id=1, orig_mac='ff:ff:ff:ff:ff:ff') /
+               SourceIntMeta(switch_id=1, orig_mac='ff:ff:ff:ff:ff:ff') /
                UDP(dport=1234, sport=1234) /
                'hello transparent-security')
         self.ae.process_packet(pkt, 0xfd)
@@ -68,7 +68,7 @@ class SimpleAETests(unittest.TestCase):
                IntHeader(meta_len=1) /
                IntMeta1(switch_id=3) /
                IntMeta2(switch_id=2) /
-               IntMeta3(switch_id=1, orig_mac='ff:ff:ff:ff:ff:ff') /
+               SourceIntMeta(switch_id=1, orig_mac='ff:ff:ff:ff:ff:ff') /
                UDP(dport=1234, sport=1234) /
                'hello transparent-security')
 
@@ -91,7 +91,7 @@ class SimpleAETests(unittest.TestCase):
                 IntHeader(meta_len=1) /
                 IntMeta1(switch_id=3) /
                 IntMeta2(switch_id=2) /
-                IntMeta3(switch_id=1, orig_mac='ff:ff:ff:ff:ff:ff') /
+                SourceIntMeta(switch_id=1, orig_mac='ff:ff:ff:ff:ff:ff') /
                 UDP(dport=1234, sport=1234) /
                 'hello transparent-security')
 
@@ -101,7 +101,7 @@ class SimpleAETests(unittest.TestCase):
                 IntHeader(meta_len=1) /
                 IntMeta1(switch_id=3) /
                 IntMeta2(switch_id=2) /
-                IntMeta3(switch_id=1, orig_mac='ff:ff:ff:ff:ff:ff') /
+                SourceIntMeta(switch_id=1, orig_mac='ff:ff:ff:ff:ff:ff') /
                 UDP(dport=1234, sport=1234) /
                 'hello transparent-security')
 
@@ -111,7 +111,7 @@ class SimpleAETests(unittest.TestCase):
             ret_val2 = self.ae.process_packet(pkt2, 0xfd)
             logger.info('Checking index - [%s] - count - [%s]',
                         index, self.ae.packet_count)
-            if index*2 < self.ae.packet_count:
+            if index * 2 < self.ae.packet_count:
                 logger.info('Expecting false - [%s]', ret_val1)
                 self.assertFalse(ret_val1)
                 self.assertFalse(ret_val2)

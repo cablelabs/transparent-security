@@ -82,7 +82,7 @@ class IntMeta2(IntMeta):
     name = "INT_META_2"
 
 
-class IntMeta3(SourceMeta):
+class SourceIntMeta(SourceMeta):
     """
     This class represents the third INT metadata being placed onto the packets
     """

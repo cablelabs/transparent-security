@@ -23,7 +23,7 @@ from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import Ether
 
 from trans_sec.packet.inspect_layer import (
-    IntHeader, IntMeta1, IntMeta2, IntShim, IntMeta3)
+    IntHeader, IntMeta1, IntMeta2, IntShim, SourceIntMeta)
 
 logger = logging.getLogger('oinc')
 
@@ -50,8 +50,8 @@ class PacketAnalytics(object):
         bind_layers(IntShim, IntHeader)
         bind_layers(IntHeader, IntMeta1)
         bind_layers(IntMeta1, IntMeta2)
-        bind_layers(IntMeta2, IntMeta3)
-        bind_layers(IntMeta3, UDP)
+        bind_layers(IntMeta2, SourceIntMeta)
+        bind_layers(SourceIntMeta, UDP)
         logger.debug("Completed binding packet layers")
 
     def start_sniffing(self, iface, ip_proto=0xfd):
@@ -119,7 +119,7 @@ def extract_int_data(packet):
     orig_mac = None
 
     if hops == 3:
-        orig_mac = packet[IntMeta3].orig_mac
+        orig_mac = packet[SourceIntMeta].orig_mac
     if hops > 3:
         raise Exception('Cannot support hops > 3')
 
@@ -154,7 +154,7 @@ def log_int_packet(packet):
                      packet[IntShim].type, packet[IntShim].next_proto,
                      packet[IntShim].length)
         logger.debug('IM switch_id - [%s] orig_mac - [%s]',
-                     packet[IntMeta3].switch_id, packet[IntMeta3].orig_mac)
+                     packet[SourceIntMeta].switch_id, packet[SourceIntMeta].orig_mac)
     except Exception as e:
         logger.error('Error parsing header - %s', e)
 

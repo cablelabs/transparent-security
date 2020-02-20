@@ -47,3 +47,5 @@
 
     - name: Adding requested table entry with command [{{ add_table_entry_cmd }}]
       shell: "{{ add_table_entry_cmd }}"
+      retries: 3
+      delay: 5
