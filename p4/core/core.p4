@@ -36,25 +36,12 @@ control TpsCoreIngress(inout headers hdr,
                        inout standard_metadata_t standard_metadata) {
 
     action data_forward(macAddr_t dstAddr, egressSpec_t port) {
-        /*
-        TODO/FIXME - data_inspection should be forwarding to port 3 but is
-            not so I added this line in
-        */
-        clone3(CloneType.I2E, I2E_CLONE_SESSION_ID, standard_metadata);
-
-        hdr.ipv4.protocol = hdr.int_shim.next_proto;
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen - ((bit<16>)hdr.int_shim.length * 4);
-        hdr.int_shim.setInvalid();
-        hdr.int_header.setInvalid();
-        hdr.int_meta.setInvalid();
-        hdr.int_meta_2.setInvalid();
-        hdr.int_meta_3.setInvalid();
-
         standard_metadata.egress_spec = port;
         hdr.ethernet.src_mac = hdr.ethernet.dst_mac;
         hdr.ethernet.dst_mac = dstAddr;
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
     }
+
 
     table data_forward_t {
         key = {
@@ -68,21 +55,17 @@ control TpsCoreIngress(inout headers hdr,
         default_action = NoAction();
     }
 
-    action data_inspect_packet(bit<32> switch_id, egressSpec_t egress_port) {
-        hdr.int_meta_3.setValid();
+    action data_inspect_packet() {
 
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen + ((bit<16>)hdr.int_header.meta_len * 4);
-        hdr.int_shim.length = hdr.int_shim.length + (bit<8>)hdr.int_header.meta_len;
-        hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt - 1;
-        hdr.int_meta_3.switch_id = switch_id;
+        clone3(CloneType.I2E, I2E_CLONE_SESSION_ID, standard_metadata);
 
-        /* TODO - this action is not resulting with the INT packet being
-             egressed to the configured port (3 in this use case), therefore
-             I added clone3() to data_forward() to ensure the AE is receiving
-             the required packets */
-        standard_metadata.egress_spec = egress_port;
+        hdr.ipv4.protocol = hdr.int_shim.next_proto;
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen - ((bit<16>)hdr.int_shim.length * 4);
+        hdr.int_shim.setInvalid();
+        hdr.int_header.setInvalid();
+        hdr.int_meta.setInvalid();
+        hdr.int_meta_2.setInvalid();
 
-        recirculate<standard_metadata_t>(standard_metadata);
     }
 
     table data_inspection_t {
@@ -99,11 +82,8 @@ control TpsCoreIngress(inout headers hdr,
 
      apply {
         if (hdr.ipv4.isValid()) {
-            if (standard_metadata.instance_type == 0) {
-                data_inspection_t.apply();
-            } else {
-                data_forward_t.apply();
-            }
+            data_inspection_t.apply();
+            data_forward_t.apply();
         }
     }
 }
@@ -116,7 +96,7 @@ V1Switch(
     TpsCoreParser(),
     TpsVerifyChecksum(),
     TpsCoreIngress(),
-    TpsEgress(),
+    TpsCoreEgress(),
     TpsComputeChecksum(),
     TpsDeparser()
 ) main;
