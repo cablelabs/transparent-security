@@ -65,6 +65,7 @@
     loop_delay: "{{ send_loop_delay | default(0) }}"
     sender_log_file: "{{ host_log_dir }}/{{ sender_log_filename }}"
     int_hdr_df: "{{ send_int_data_filename | default('send_int_data.yml') }}"
+    protocol: "{{ send_protocol | default('UDP') }}"
   tasks:
     - name: Create sender log directory {{ host_log_dir }}
       file:
@@ -79,7 +80,7 @@
         mode: 0777
 
     - set_fact:
-        send_cmd: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/send_packets.py -y {{ send_delay }} -i {{ interval }} -it {{ loops }} -itd {{ loop_delay }} -z {{ sender_intf }} -sa {{ sender.ip }} -r {{ receiver.ip }} -sp {{ send_src_port }} -p {{ send_port }} -f {{ sender_log_file }} -c {{ send_packet_count }} -e {{ sender.mac }} -s {{ switch.mac }} -m '{{ send_msg }}'"
+        send_cmd: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/send_packets.py -y {{ send_delay }} -i {{ interval }} -it {{ loops }} -itd {{ loop_delay }} -z {{ sender_intf }} -sa {{ sender.ip }} -r {{ receiver.ip }} -sp {{ send_src_port }} -p {{ send_port }} -f {{ sender_log_file }} -c {{ send_packet_count }} -e {{ sender.mac }} -s {{ switch.mac }} -pr {{ send_protocol }} -m '{{ send_msg }}'"
 
     - debug:
         var: inspection_data
@@ -108,16 +109,24 @@
     min_packet_count: "{{ min_received_packet_count | default(send_packet_count) | int }}"
     max_packet_count: "{{ max_received_packet_count | default(send_packet_count) | int }}"
     receiver_log_file: "{{ host_log_dir }}/{{ receiver_log_filename }}"
+    hops: "{{ int_hops | default(0) }}"
   tasks:
-    - set_fact:
-        grep_cmd: "grep {{ receiver.ip }} {{ receiver_log_file }} | grep {{ send_port }} | wc -l"
+    - name: Create log count command for non-INT packets
+      set_fact:
+        count_cmd: "grep {{ receiver.ip }} {{ receiver_log_file }} | grep '/ Raw' | grep {{ send_port }} | grep {{ send_src_port }} | wc -l"
+      when: hops|int == 0
 
-    - name: Parse file with command [{{ grep_cmd }}]
-      shell: "{{ grep_cmd }}"
-      register: grep_out
+    - name: Create log count command for INT packets
+      set_fact:
+        count_cmd: "grep {{ receiver.ip }} {{ receiver_log_file }} | grep 'INT Packet data' | grep {{ send_port }} | grep {{ send_src_port }} | wc -l"
+      when: hops|int > 0
+
+    - name: Parse file with the count command [{{ count_cmd }}]
+      shell: "{{ count_cmd }}"
+      register: count_out
 
     - set_fact:
-        packet_count: "{{ grep_out['stdout_lines'][0] | int }}"
+        packet_count: "{{ count_out['stdout_lines'][0] | int }}"
 
     - name: Validate max [{{ max_packet_count }}] NOT < actual [{{ packet_count }}] OR min [{{ min_packet_count }}] NOT > actual [{{ packet_count }}]
       fail:

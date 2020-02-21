@@ -30,7 +30,7 @@
         dest: "{{ table_entry_config }}"
         backup: yes
       vars:
-        p4_ingress_name: "{{ p4_ingress_classname }}"
+        p4_class: "{{ p4_classname }}"
         table_name: "{{ p4_table_name }}"
         match_fields: "{{ p4_table_match_fields }}"
         action_params: "{{ p4_table_action_params | default('') }}"

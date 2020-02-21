@@ -16,46 +16,43 @@
 # Add table entry to "{{ data_forward_table }}"
 - import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
-    te_conf_file: ~/dd-forward-create.yml
-    p4_ingress_classname: "{{ ingress_classname }}"
+    te_conf_file: "~/dd-forward-create-{{ send_protocol }}.yml"
+    p4_classname: "{{ ingress_classname }}"
     p4_table_name: "{{ data_forward_table }}"
     p4_action_name: "{{ data_forward_action }}"
     p4_table_match_fields: "{{ data_forward_match_fields }}"
     p4_table_action_params: "{{ data_forward_action_params }}"
     p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: data_drop_basic_te-df-receiver-forward-1.log
+    p4_te_log_file: "dd-forward-create-{{ send_protocol }}.log"
 
 # Sending UDP packets expect all to be received
 - import_playbook: ../test_cases/send_receive.yml
   vars:
-    receiver_log_filename: data_drop_basic_receiver-1.out
-    sender_log_filename: data_drop_basic_sender-1.out
+    receiver_log_filename: "dd_basic_receiver-{{ send_protocol }}-1.out"
+    sender_log_filename: "dd_basic_sender-{{ send_protocol }}-1.out"
     send_port: "{{ send_port }}"
     send_src_port: "{{ range(2000, 10000) | random(seed='two') }}"
     send_packet_count: "{{ 100 | random(seed='three') }}"
     inspection_data: "{{ sr1_data_inspection_int | default(None) }}"
     int_hops: "{{ sr1_rec_int_hops | default(0) }}"
 
-# Add table entry to data_drop_t
+# Add table entry to {{ data_drop_table }}
 - import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
-    te_conf_file: ~/dd-drop-create.yml
-    p4_ingress_classname: "{{ ingress_classname }}"
+    te_conf_file: "~/dd-drop-create-{{ send_protocol }}.yml"
+    p4_classname: "{{ ingress_classname }}"
     p4_table_name: "{{ data_drop_table }}"
     p4_action_name: "{{ data_drop_action }}"
     p4_table_match_fields: "{{ data_drop_match_fields }}"
     p4_table_action_params: "{{ data_drop_action_params }}"
     p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: data_drop_basic_te-drop-add.log
+    p4_te_log_file: "dd-drop-create-{{ send_protocol }}.log"
 
 # Sending UDP packets expect none to be received
 - import_playbook: ../test_cases/send_receive.yml
   vars:
-    receive_host: "{{ receiver.name }}"
-    receiver_intf: "{{ receiver.name }}-eth0"
-    receiver_log_filename: data_drop_basic_receiver-2.out
-    sender: "{{ sender.name }}"
-    sender_log_filename: data_drop_basic_sender-2.out
+    receiver_log_filename: "dd_basic_receiver-{{ send_protocol }}-2.out"
+    sender_log_filename: "dd_basic_sender-{{ send_protocol }}-2.out"
     send_port: "{{ send_port }}"
     send_src_port: "{{ range(2000, 10000) | random(seed='three') }}"
     send_packet_count: "{{ 100 | random(seed='four') }}"
@@ -67,22 +64,19 @@
 # Delete table entry to table {{ data_drop_table }}
 - import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
-    te_conf_file: ~/dd-drop-delete.yml
-    p4_ingress_classname: "{{ ingress_classname }}"
+    te_conf_file: "~/dd-drop-delete-{{ send_protocol }}.yml"
+    p4_classname: "{{ ingress_classname }}"
     p4_table_name: "{{ data_drop_table }}"
     p4_table_match_fields: "{{ data_drop_match_fields }}"
     p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: data_drop_basic_te-drop-del.log
+    p4_te_log_file: "dd-drop-delete-{{ send_protocol }}.log"
     p4_te_insert: False
 
 # Sending UDP packets expect all to be received
 - import_playbook: ../test_cases/send_receive.yml
   vars:
-    receive_host: "{{ receiver.name }}"
-    receiver_intf: "{{ receiver.name }}-eth0"
-    receiver_log_filename: data_drop_basic_receiver-3.out
-    sender: "{{ sender.name }}"
-    sender_log_filename: data_drop_basic_sender-3.out
+    receiver_log_filename: "dd_basic_receiver-{{ send_protocol }}-3.out"
+    sender_log_filename: "dd_basic_sender-{{ send_protocol }}-3.out"
     send_port: "{{ send_port }}"
     send_src_port: "{{ range(2000, 10000) | random(seed='four') }}"
     send_packet_count: "{{ 100 | random(seed='five') }}"
@@ -92,24 +86,21 @@
 # Delete table entry to "{{ data_forward_table }}"
 - import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
-    te_conf_file: ~/dd-forward-delete.yml
-    p4_ingress_classname: "{{ ingress_classname }}"
+    te_conf_file: "~/dd-forward-delete-{{ send_protocol }}.yml"
+    p4_classname: "{{ ingress_classname }}"
     p4_table_name: "{{ data_forward_table }}"
     p4_table_match_fields: "{{ data_forward_match_fields }}"
     p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: data_drop_basic_te-df-receiver-forward-revert.log
+    p4_te_log_file: "dd-forward-delete-{{ send_protocol }}.log"
     p4_te_insert: False
 
 # Sending UDP packets expect none to be received
 - import_playbook: ../test_cases/send_receive.yml
   vars:
-    receive_host: "{{ receiver.name }}"
-    receiver_intf: "{{ receiver.name }}-eth0"
-    receiver_log_filename: data_drop_basic_receiver-4.out
-    sender: "{{ sender.name }}"
-    sender_log_filename: data_drop_basic_sender-4.out
+    receiver_log_filename: "dd_basic_receiver-{{ send_protocol }}-4.out"
+    sender_log_filename: "dd_basic_sender-{{ send_protocol }}-4.out"
     send_port: "{{ send_port }}"
-    send_src_port: "{{ range(2000, 10000) | random(seed='five') }}"
+    send_src_port: "{{ range(2000, 10000) | random(seed='four') }}"
     send_packet_count: "{{ 100 | random(seed='five') }}"
     inspection_data: "{{ sr4_data_inspection_int | default(None) }}"
     int_hops: "{{ sr4_rec_int_hops | default(0) }}"

@@ -17,6 +17,7 @@
 # Basic Data Forward scenario for standard UDP Packets without a data_inspection table record to no INT data is added
 - import_playbook: ../single_switch/data_forward_basic.yml
   vars:
+    send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch: "{{ topo_dict.switches.aggregate }}"
     remote_send_host: host1
@@ -48,6 +49,7 @@
 # Basic Data Forward scenario for INT UDP Packets without a data-inspection table entry so the original simply passes through
 - import_playbook: ../single_switch/data_forward_basic.yml
   vars:
+    send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch: "{{ topo_dict.switches.aggregate }}"
     remote_send_host: host1

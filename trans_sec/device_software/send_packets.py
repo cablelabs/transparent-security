@@ -96,8 +96,10 @@ def get_args():
         '-itd', '--iter-delay',
         help='Seconds between iterations of packet groups to be sent',
         required=False, default=1, type=int)
-    parser.add_argument('-t', '--tcp', dest='tcp', required=False, type=bool,
-                        default=False)
+    parser.add_argument(
+        '-pr', '--protocol', dest='protocol', required=False, type=str,
+        default='UDP', choices=['TCP', 'UDP'],
+        help='The packet protocol to generate. [TCP|UDP - default]')
     args = parser.parse_args()
     return args
 
@@ -147,7 +149,8 @@ def __create_packet(args, interface):
         pkt = (Ether(src=src_mac, dst=args.switch_ethernet) /
                IP(dst=addr, src=args.source_addr, len=ip_len, proto=0xfd))
 
-        pkt = pkt / IntShim(length=int(int_data['shim']['length']), next_proto=0x11)
+        pkt = pkt / IntShim(length=int(int_data['shim']['length']),
+                            next_proto=0x11)
 
         ctr = 0
         for int_meta in int_data['meta']:
@@ -155,24 +158,31 @@ def __create_packet(args, interface):
             ctr += 1
             if ctr == 3:
                 logger.info('Adding IntMeta1')
-                pkt = pkt / IntHeader(meta_len=1) / IntMeta1(switch_id=int_meta['switch_id'])
+                pkt = pkt / IntHeader(meta_len=1) / IntMeta1(
+                    switch_id=int_meta['switch_id'])
             if ctr == 2:
                 logger.info('Adding IntMeta2')
-                pkt = pkt / IntHeader(meta_len=1) / IntMeta2(switch_id=int_meta['switch_id'])
+                pkt = pkt / IntHeader(meta_len=1) / IntMeta2(
+                    switch_id=int_meta['switch_id'])
             if ctr == 1:
                 logger.info('Adding Source INT Meta')
-                pkt = pkt / IntHeader(meta_len=3) / SourceIntMeta(switch_id=int_meta['switch_id'],
-                                                                  orig_mac=int_meta['orig_mac'])
+                pkt = pkt / IntHeader(meta_len=3) / SourceIntMeta(
+                    switch_id=int_meta['switch_id'],
+                    orig_mac=int_meta['orig_mac'])
     else:
         pkt = (Ether(src=src_mac, dst=args.switch_ethernet) /
                IP(dst=addr, src=args.source_addr))
 
     logger.info('Packet to emit - [%s]', pkt.summary())
 
-    if args.tcp:
-        return pkt / TCP(dport=args.port, sport=args.source_port) / args.msg
-    else:
-        return pkt / UDP(dport=args.port, sport=args.source_port) / args.msg
+    if args.protocol == 'TCP':
+        logger.info('Generating a TCP packet')
+        pkt = pkt / TCP(dport=args.port, sport=args.source_port, dataofs=5)
+    elif args.protocol == 'UDP':
+        logger.info('Generating a UDP packet')
+        pkt = pkt / UDP(dport=args.port, sport=args.source_port)
+
+    return pkt / args.msg
 
 
 def __read_yaml_file(config_file_path):
