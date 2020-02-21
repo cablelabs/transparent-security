@@ -15,3 +15,10 @@
 ---
 # Data Forward scenarios for UDP
 - import_playbook: data-forward.yml
+  vars:
+    scenario_send_protocol: UDP
+
+# Data Forward scenarios for TCP
+- import_playbook: data-forward.yml
+  vars:
+    scenario_send_protocol: TCP

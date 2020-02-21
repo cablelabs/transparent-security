@@ -44,7 +44,7 @@
         value: "{{ rec_sw_port }}"
       - key: l2ptr
         value: 0
-    data_drop_table: data_drop_udp_t
+    data_drop_table: "{{ 'data_drop_udp_t' if send_protocol == 'UDP' else 'data_drop_tcp_t' }}"
     data_drop_action: data_drop
     data_drop_match_fields:
       - key: hdr.ethernet.src_mac
@@ -53,7 +53,7 @@
         value: "{{ sender.ip }}"
       - key: hdr.ipv4.dstAddr
         value: "{{ receiver.ip }}"
-      - key: hdr.udp.dst_port
+      - key: "{{ 'hdr.udp.dst_port' if send_protocol == 'UDP' else 'hdr.tcp.dst_port' }}"
         value: "{{ send_port }}"
     data_drop_action_params:
       - key: device

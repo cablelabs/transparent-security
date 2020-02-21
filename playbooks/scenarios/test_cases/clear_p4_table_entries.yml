@@ -19,7 +19,7 @@
 - hosts: "{{ host_val | default('localhost') }}"
   gather_facts: no
   vars:
-    ingress_classname: "{{ p4_ingress_classname }}"
+    ingress_classname: "{{ p4_classname }}"
     table_names: "{{ p4_table_names }}"
     switches: "{{ p4_switches }}"
   tasks:
