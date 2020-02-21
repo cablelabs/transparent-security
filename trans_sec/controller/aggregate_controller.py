@@ -42,11 +42,11 @@ class AggregateController(AbstractController):
             inet = self.topo['hosts']['inet']
 
             table_entry = self.p4info_helper.build_table_entry(
-                table_name='{}.data_forward_t'.format(self.p4_processing),
+                table_name='{}.data_forward_t'.format(self.p4_ingress),
                 match_fields={
                     'hdr.ipv4.dstAddr': (inet['ip'], 32)
                 },
-                action_name='{}.data_forward'.format(self.p4_processing),
+                action_name='{}.data_forward'.format(self.p4_ingress),
                 action_params={
                     'dstAddr': north_node['mac'],
                     'port': north_link['north_facing_port'],
@@ -65,10 +65,10 @@ class AggregateController(AbstractController):
             'switch_id': sw_info['id']
         }
         table_entry = self.p4info_helper.build_table_entry(
-            table_name='{}.data_inspection_t'.format(self.p4_processing),
+            table_name='{}.data_inspection_t'.format(self.p4_ingress),
             match_fields={'hdr.ethernet.src_mac': device['mac']},
             action_name='{}.data_inspect_packet'.format(
-                self.p4_processing),
+                self.p4_ingress),
             action_params=action_params)
         sw.write_table_entry(table_entry)
         logger.info(

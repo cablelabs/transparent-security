@@ -33,6 +33,7 @@ class CoreController(AbstractController):
         super(self.__class__, self).__init__(
             platform, p4_build_out, topo, 'core', list(), log_dir, load_p4,
             'TpsCoreIngress')
+        self.p4_egress = 'TpsCoreEgress'
 
     def make_rules(self, sw, sw_info, north_facing_links, south_facing_links):
         super(self.__class__, self).make_rules(
@@ -56,8 +57,8 @@ class CoreController(AbstractController):
         for south_link in south_facing_links:
             south_node_name = south_link['south_node']
             south_node_mac = self.topo['switches'][south_node_name]['mac']
-            table_name = '{}.data_inspection_t'.format(self.p4_processing)
-            action_name = '{}.data_inspect_packet'.format(self.p4_processing)
+            table_name = '{}.data_inspection_t'.format(self.p4_ingress)
+            action_name = '{}.data_inspect_packet'.format(self.p4_ingress)
             match_fields = {'hdr.ethernet.src_mac': south_node_mac}
             logger.info(
                 'Insert params into table - [%s] for action [%s] ',
@@ -70,12 +71,11 @@ class CoreController(AbstractController):
                 action_name=action_name
                 )
             sw.write_table_entry(table_entry)
-            self.p4_processing = 'TpsCoreEgress'
             action_params = {
                 'switch_id': sw_info['id'],
             }
-            table_name = '{}.data_clone_t'.format(self.p4_processing)
-            action_name = '{}.data_clone'.format(self.p4_processing)
+            table_name = '{}.data_clone_t'.format(self.p4_egress)
+            action_name = '{}.data_clone'.format(self.p4_egress)
             logger.info(
                 'Insert params into table - [%s] for action [%s] ',
                 'with params [%s] fields [%s] key hdr.ethernet.src_mac [%s]',
@@ -96,16 +96,15 @@ class CoreController(AbstractController):
                 sw_info['name'], north_device['name'],
                 north_link.get('north_facing_port'),
                 north_device.get('ip'), str(north_device.get('ip_port')))
-            self.p4_processing = 'TpsCoreIngress'
             logger.info(
                 'Adding data_forward entry to forward packets to  port - [%s]',
                 north_link['north_facing_port'])
             table_entry = self.p4info_helper.build_table_entry(
-                table_name='{}.data_forward_t'.format(self.p4_processing),
+                table_name='{}.data_forward_t'.format(self.p4_ingress),
                 match_fields={
                     'hdr.ipv4.dstAddr': (north_device['ip'], 32),
                 },
-                action_name='{}.data_forward'.format(self.p4_processing),
+                action_name='{}.data_forward'.format(self.p4_ingress),
                 action_params={
                     'dstAddr': north_device['mac'],
                     'port': north_link['north_facing_port']
