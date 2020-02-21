@@ -16,7 +16,7 @@
 # Sending 25 packets within a second 1x through gateway 1
 - import_playbook: ../test_cases/send_receive.yml
   vars:
-    send_protocol: UDP
+    send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch_name: gateway1
     core_switch_name: core
@@ -29,8 +29,8 @@
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     sender_intf: "{{ '%s-eth0' % send_host if run_mode == 'remote' else '%s-eth1' % switch_name }}"
     receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth2' % core_switch_name }}"
-    receiver_log_filename: "udp-flood-receiver-{{ rec_host }}-1.out"
-    sender_log_filename: "udp-flood-sender-{{ send_host }}-1.out"
+    receiver_log_filename: "udp-flood-receiver-{{ rec_host }}-{{ send_protocol }}-1.out"
+    sender_log_filename: "udp-flood-sender-{{ send_host }}-{{ send_protocol }}-1.out"
     send_port: "{{ range(2000, 10000) | random(seed='one') }}"
     send_src_port: "{{ range(2000, 10000) | random(seed='two') }}"
     send_packet_count: 25
@@ -38,7 +38,7 @@
 # Sending 50 packets within a second 1x through gateway 2
 - import_playbook: ../test_cases/send_receive.yml
   vars:
-    send_protocol: UDP
+    send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch_name: gateway2
     core_switch_name: core
@@ -51,8 +51,8 @@
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     sender_intf: "{{ '%s-eth0' % send_host if run_mode == 'remote' else '%s-eth1' % switch_name }}"
     receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth2' % core_switch_name }}"
-    receiver_log_filename: "udp-flood-receiver-{{ rec_host }}-2.out"
-    sender_log_filename: "udp-flood-sender-{{ send_host }}-2.out"
+    receiver_log_filename: "udp-flood-receiver-{{ rec_host }}-{{ send_protocol }}-2.out"
+    sender_log_filename: "udp-flood-sender-{{ send_host }}-{{ send_protocol }}-2.out"
     send_port: "{{ range(2000, 10000) | random(seed='two') }}"
     send_src_port: "{{ range(2000, 10000) | random(seed='three') }}"
     send_packet_count: 50
@@ -61,7 +61,7 @@
 # The second set should be dropped else this will fail
 - import_playbook: ../test_cases/send_receive.yml
   vars:
-    send_protocol: UDP
+    send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch_name: gateway3
     core_switch_name: core
@@ -74,8 +74,8 @@
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     sender_intf: "{{ '%s-eth0' % send_host if run_mode == 'remote' else '%s-eth1' % switch_name }}"
     receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth2' % core_switch_name }}"
-    receiver_log_filename: "udp-flood-receiver-{{ rec_host }}-3.out"
-    sender_log_filename: "udp-flood-sender-{{ send_host }}-3.out"
+    receiver_log_filename: "udp-flood-receiver-{{ rec_host }}-{{ send_protocol }}-3.out"
+    sender_log_filename: "udp-flood-sender-{{ send_host }}-{{ send_protocol }}-3.out"
     send_port: "{{ range(2000, 10000) | random(seed='four') }}"
     send_src_port: "{{ range(2000, 10000) | random(seed='five') }}"
     send_packet_count: 150
