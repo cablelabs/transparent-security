@@ -19,7 +19,7 @@ logger = getLogger('abstract_controller')
 
 class AbstractController(object):
     def __init__(self, platform, p4_build_out, topo, switch_type, counters,
-                 log_dir, load_p4, p4_ingress):
+                 log_dir, load_p4, p4_processing):
         """
         Constructor
         :param platform: the platform on which the switches are running
@@ -40,7 +40,7 @@ class AbstractController(object):
         self.log_dir = log_dir
         self.load_p4 = load_p4
         self.switches = list()
-        self.p4_ingress = p4_ingress
+        self.p4_processing = p4_processing
 
         if self.platform == 'bmv2':
             p4info_txt = "{0}/{1}.{2}".format(
@@ -185,14 +185,14 @@ class AbstractController(object):
         logger.info('Adding attacker [%s] from host [%s]', attack, host)
         for switch in self.switches:
             table_entry = self.p4info_helper.build_table_entry(
-                table_name='{}.{}'.format(self.p4_ingress, drop_table_name),
+                table_name='{}.{}'.format(self.p4_processing, drop_table_name),
                 match_fields={
                     src_mac_hdr_ref: (attack['src_mac']),
                     src_addr_hdr_ref: (attack['src_ip']),
                     dst_addr_hdr_ref: (attack['dst_ip']),
                     dst_port_hdr_ref: (int(attack['dst_port']))
                 },
-                action_name='{}.{}'.format(self.p4_ingress, drop_action_name),
+                action_name='{}.{}'.format(self.p4_processing, drop_action_name),
                 action_params={
                     'device': host['id']
                 })

@@ -62,12 +62,12 @@ class GatewayController(AbstractController):
                         'switch_id': sw_info['id']
                 }
                 table_entry = self.p4info_helper.build_table_entry(
-                    table_name='{}.data_inspection_t'.format(self.p4_ingress),
+                    table_name='{}.data_inspection_t'.format(self.p4_processing),
                     match_fields={
                         'hdr.ethernet.src_mac': device['mac']
                     },
                     action_name='{}.data_inspect_packet'.format(
-                        self.p4_ingress),
+                        self.p4_processing),
                     action_params=action_params)
                 sw.write_table_entry(table_entry)
                 logger.info(
@@ -81,11 +81,11 @@ class GatewayController(AbstractController):
             #     should be dynamic
             # Northbound Routing
             table_entry = self.p4info_helper.build_table_entry(
-                table_name='{}.data_forward_t'.format(self.p4_ingress),
+                table_name='{}.data_forward_t'.format(self.p4_processing),
                 match_fields={
                     'standard_metadata.ingress_port': 1
                 },
-                action_name='{}.data_forward'.format(self.p4_ingress),
+                action_name='{}.data_forward'.format(self.p4_processing),
                 action_params={
                     'dstAddr': north_switch['mac'],
                     'port': sw_link['north_facing_port'],
@@ -96,11 +96,11 @@ class GatewayController(AbstractController):
                         sw_link.get('north_facing_port'))
             # Northbound Routing
             table_entry = self.p4info_helper.build_table_entry(
-                table_name='{}.data_forward_t'.format(self.p4_ingress),
+                table_name='{}.data_forward_t'.format(self.p4_processing),
                 match_fields={
                     'standard_metadata.ingress_port': 2
                 },
-                action_name='{}.data_forward'.format(self.p4_ingress),
+                action_name='{}.data_forward'.format(self.p4_processing),
                 action_params={
                     'dstAddr': north_switch['mac'],
                     'port': sw_link['north_facing_port'],
@@ -111,11 +111,11 @@ class GatewayController(AbstractController):
                         sw_link.get('north_facing_port'))
             # Northbound Routing
             table_entry = self.p4info_helper.build_table_entry(
-                table_name='{}.data_forward_t'.format(self.p4_ingress),
+                table_name='{}.data_forward_t'.format(self.p4_processing),
                 match_fields={
                     'standard_metadata.ingress_port': 3
                 },
-                action_name='{}.data_forward'.format(self.p4_ingress),
+                action_name='{}.data_forward'.format(self.p4_processing),
                 action_params={
                     'dstAddr': north_switch['mac'],
                     'port': sw_link['north_facing_port'],
