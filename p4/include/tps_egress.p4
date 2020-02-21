@@ -42,5 +42,6 @@ control TpsDeparser(packet_out packet, in headers hdr) {
         packet.emit(hdr.int_meta_2);
         packet.emit(hdr.int_meta);
         packet.emit(hdr.udp);
+        packet.emit(hdr.tcp);
     }
 }
