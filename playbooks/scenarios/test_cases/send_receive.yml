@@ -79,9 +79,6 @@
         state: touch
         mode: 0777
 
-    - debug:
-        var: send_tcp
-
     - set_fact:
         send_cmd: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/send_packets.py -y {{ send_delay }} -i {{ interval }} -it {{ loops }} -itd {{ loop_delay }} -z {{ sender_intf }} -sa {{ sender.ip }} -r {{ receiver.ip }} -sp {{ send_src_port }} -p {{ send_port }} -f {{ sender_log_file }} -c {{ send_packet_count }} -e {{ sender.mac }} -s {{ switch.mac }} -pr {{ send_protocol }} -m '{{ send_msg }}'"
 
