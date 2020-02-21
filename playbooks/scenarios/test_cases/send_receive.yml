@@ -113,7 +113,7 @@
   tasks:
     - name: Create log count command for non-INT packets
       set_fact:
-        grep_cmd: "grep {{ receiver.ip }} {{ receiver_log_file }} | grep '/ Raw' | grep {{ send_port }} | grep {{ send_src_port }} | wc -l"
+        count_cmd: "grep {{ receiver.ip }} {{ receiver_log_file }} | grep '/ Raw' | grep {{ send_port }} | grep {{ send_src_port }} | wc -l"
       when: hops|int == 0
 
     - name: Create log count command for INT packets
