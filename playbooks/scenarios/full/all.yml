@@ -14,4 +14,11 @@
 # one will be demonstrating dropped packets
 ---
 # UDP Flood Scenario
-- import_playbook: udp-flood.yml
+- import_playbook: packet-flood.yml
+  vars:
+    scenario_send_protocol: UDP
+
+# SYN Flood Scenario
+- import_playbook: packet-flood.yml
+  vars:
+    scenario_send_protocol: TCP
