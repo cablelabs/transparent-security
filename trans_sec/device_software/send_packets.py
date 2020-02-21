@@ -177,10 +177,12 @@ def __create_packet(args, interface):
 
     if args.protocol == 'TCP':
         logger.info('Generating a TCP packet')
-        return pkt / TCP(dport=args.port, sport=args.source_port) / args.msg
+        pkt = pkt / TCP(dport=args.port, sport=args.source_port, dataofs=5)
     elif args.protocol == 'UDP':
         logger.info('Generating a UDP packet')
-        return pkt / UDP(dport=args.port, sport=args.source_port) / args.msg
+        pkt = pkt / UDP(dport=args.port, sport=args.source_port)
+
+    return pkt / args.msg
 
 
 def __read_yaml_file(config_file_path):
