@@ -153,12 +153,8 @@ class AttackDaemon(AbstractDaemon):
             cmd += ' %s' % self.device_config.get('destination')
             cmd += ' %d' % duration
         else:
-            if attack_type == 'SYN Flood':
-                dev_prog = resource_filename(
-                    'trans_sec.device_software', 'syn_flood.py')
-            else:
-                dev_prog = resource_filename(
-                    'trans_sec.device_software', 'send_packets.py')
+            dev_prog = resource_filename(
+                'trans_sec.device_software', 'send_packets.py')
             cmd = 'python %s' % dev_prog
             cmd += ' --continuous=False'
             cmd += ' --interval=%f' % self.device_config.get('interval')
