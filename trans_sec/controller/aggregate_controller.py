@@ -41,8 +41,9 @@ class AggregateController(AbstractController):
 
             inet = self.topo['hosts']['inet']
 
+            # Add IPv4 entry
             table_entry = self.p4info_helper.build_table_entry(
-                table_name='{}.data_forward_t'.format(self.p4_ingress),
+                table_name='{}.data_forward_ipv4_t'.format(self.p4_ingress),
                 match_fields={
                     'hdr.ipv4.dstAddr': (inet['ip'], 32)
                 },
@@ -53,6 +54,21 @@ class AggregateController(AbstractController):
                     'l2ptr': 0
                 })
             sw.write_table_entry(table_entry)
+
+            # Add IPv6 entry
+            table_entry = self.p4info_helper.build_table_entry(
+                table_name='{}.data_forward_ipv6_t'.format(self.p4_ingress),
+                match_fields={
+                    'hdr.ipv6.dstAddr': (inet['ipv6'], 128)
+                },
+                action_name='{}.data_forward'.format(self.p4_ingress),
+                action_params={
+                    'dstAddr': north_node['mac'],
+                    'port': north_link['north_facing_port'],
+                    'l2ptr': 0
+                })
+            sw.write_table_entry(table_entry)
+
             logger.info('Installed Northbound from port %s to port %s',
                         north_link.get('north_facing_port'),
                         north_link.get('south_facing_port'))

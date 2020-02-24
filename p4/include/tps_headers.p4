@@ -49,6 +49,20 @@ header ipv4_t {
 }
 
 /*************************
+IPv6 header definition
+**************************/
+header ipv6_t {
+    bit<4>    version;
+    bit<8>    class;
+    bit<20>   flow_label;
+    bit<16>   payload_len;
+    bit<8>    next_hdr_proto;
+    bit<8>    hop_limit;
+    bit<128>  srcAddr;
+    bit<128>  dstAddr;
+}
+
+/*************************
 UDP header definition
 **************************/
 header udp_t {
@@ -122,6 +136,7 @@ struct metadata {
 struct headers {
     ethernet_t     ethernet;
     ipv4_t         ipv4;
+    ipv6_t         ipv6;
     int_ip_shim_t  int_shim;
     int_header_t   int_header;
     source_metadata_t int_meta;

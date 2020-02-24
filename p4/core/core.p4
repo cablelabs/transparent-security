@@ -43,9 +43,21 @@ control TpsCoreIngress(inout headers hdr,
     }
 
 
-    table data_forward_t {
+    table data_forward_ipv4_t {
         key = {
             hdr.ipv4.dstAddr: lpm;
+        }
+        actions = {
+            data_forward;
+            NoAction;
+        }
+        size = 1024;
+        default_action = NoAction();
+    }
+
+    table data_forward_ipv6_t {
+        key = {
+            hdr.ipv6.dstAddr: lpm;
         }
         actions = {
             data_forward;
@@ -60,6 +72,7 @@ control TpsCoreIngress(inout headers hdr,
         clone3(CloneType.I2E, I2E_CLONE_SESSION_ID, standard_metadata);
 
         hdr.ipv4.protocol = hdr.int_shim.next_proto;
+        hdr.ipv6.next_hdr_proto = hdr.int_shim.next_proto;
         hdr.ipv4.totalLen = hdr.ipv4.totalLen - ((bit<16>)hdr.int_shim.length * 4);
         hdr.int_shim.setInvalid();
         hdr.int_header.setInvalid();
@@ -81,9 +94,12 @@ control TpsCoreIngress(inout headers hdr,
     }
 
      apply {
+        data_inspection_t.apply();
         if (hdr.ipv4.isValid()) {
-            data_inspection_t.apply();
-            data_forward_t.apply();
+            data_forward_ipv4_t.apply();
+        }
+        if (hdr.ipv6.isValid()) {
+            data_forward_ipv6_t.apply();
         }
     }
 }

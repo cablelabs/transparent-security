@@ -20,6 +20,7 @@ from anytree import search, Node, RenderTree
 from scapy.all import bind_layers
 from scapy.all import sniff
 from scapy.layers.inet import IP, UDP, TCP
+from scapy.layers.inet6 import IPv6
 from scapy.layers.l2 import Ether
 
 from trans_sec.packet.inspect_layer import (
@@ -46,7 +47,9 @@ class PacketAnalytics(object):
         self.count_map = dict()
         self.sniff_stop = threading.Event()
         bind_layers(Ether, IP)
+        bind_layers(Ether, IPv6)
         bind_layers(IP, IntShim)
+        bind_layers(IPv6, IntShim)
         bind_layers(IntShim, IntHeader)
         bind_layers(IntHeader, IntMeta1)
         bind_layers(IntMeta1, IntMeta2)
@@ -131,12 +134,21 @@ def extract_int_data(packet):
         logger.debug('Must be a TCP packet')
         dport = packet[TCP].dport
     try:
+        try:
+            src_addr = packet[IP].src
+            dst_addr = packet[IP].dst
+            protocol = packet[IP].proto
+        except Exception as e:
+            src_addr = packet[IPv6].src
+            dst_addr = packet[IPv6].dst
+            protocol = packet[IPv6].nh
+
         out = dict(
             devMac=orig_mac,
-            devAddr=packet[IP].src,
-            dstAddr=packet[IP].dst,
+            devAddr=src_addr,
+            dstAddr=dst_addr,
             dstPort=dport,
-            protocol=packet[IP].proto,
+            protocol=protocol,
             packetLen=len(packet),
         )
     except Exception as e:
@@ -159,8 +171,17 @@ def log_int_packet(packet):
         logger.debug('Packet length - [%s]', len(packet))
         logger.debug('ETH dst_mac - [%s] src_mac - [%s] type - [%s]',
                      packet[Ether].dst, packet[Ether].src, packet[Ether].type)
+
+        try:
+            src_addr = packet[IP].src
+            dst_addr = packet[IP].dst
+            protocol = packet[IP].proto
+        except Exception as e:
+            src_addr = packet[IPv6].src
+            dst_addr = packet[IPv6].dst
+            protocol = packet[IPv6].nh
         logger.debug('IP src - [%s] dst - [%s] proto - [%s]',
-                     packet[IP].src, packet[IP].dst, packet[IP].proto)
+                     src_addr, dst_addr, protocol)
         logger.debug('sport - [%s] dport - [%s]', sport, dport)
         logger.debug('IH remaining_hops - [%s]',
                      packet[IntHeader].remaining_hop_cnt)
@@ -304,8 +325,11 @@ class SimpleAE(PacketAnalytics):
         try:
             protocol = packet[IP].proto
         except Exception as e:
-            logger.debug('Unable to process packet - [%s] with error [%s]',
-                         packet.summary(), e)
+            try:
+                protocol = packet[IPv6].nh
+            except Exception as e:
+                logger.debug('Unable to process packet - [%s] with error [%s]',
+                             packet.summary(), e)
 
         if protocol == ip_proto:
             int_data = extract_int_data(packet)

@@ -84,7 +84,7 @@
     send_loops: 2
     send_loop_delay: 5
 
-# Clear all gateway data_drop_udp_t & data_drop_tcp_t table entries.
+# Clear all gateway data_drop tables.
 - import_playbook: ../test_cases/clear_p4_table_entries.yml
   vars:
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
@@ -94,6 +94,8 @@
       - "{{ topo_dict.switches.gateway3 }}"
     p4_classname: TpsGwIngress
     p4_table_names:
-      - data_drop_udp_t
-      - data_drop_tcp_t
+      - data_drop_udp_ipv4_t
+      - data_drop_udp_ipv6_t
+      - data_drop_tcp_ipv4_t
+      - data_drop_tcp_ipv6_t
     p4_te_log_dir: "{{ host_log_dir }}"

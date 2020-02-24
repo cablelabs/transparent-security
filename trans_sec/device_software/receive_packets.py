@@ -18,6 +18,7 @@ import sys
 
 from scapy.all import bind_layers, sniff
 from scapy.layers.inet import IP, UDP
+from scapy.layers.inet6 import IPv6
 from scapy.layers.l2 import Ether
 
 from trans_sec.packet.inspect_layer import IntShim, IntHeader, IntMeta1, \
@@ -52,8 +53,11 @@ def __log_packet(packet, int_hops):
     try:
         ip_proto = packet[IP].proto
     except Exception:
-        logger.warn('Unable to process packet - [%s]', packet.summary())
-        return
+        try:
+            ip_proto = packet[IPv6].nh
+        except Exception as e:
+            logger.warn('Unable to process packet - [%s]', packet.summary())
+            return
 
     if int_hops > 0 and ip_proto == 0xfd:
         logger.debug('INT Packet received')
@@ -75,11 +79,18 @@ def __log_packet(packet, int_hops):
             switch_id_2 = packet[IntMeta2].switch_id
             switch_id_3 = packet[IntMeta1].switch_id
 
+        try:
+            src_ip = packet[IP].src
+            dst_ip = packet[IP].dst
+        except Exception as e:
+            src_ip = packet[IPv6].src
+            dst_ip = packet[IPv6].dst
+
         int_data = dict(
             eth_src_mac=packet[Ether].src,
             eth_dst_mac=packet[Ether].dst,
-            src_ip=packet[IP].src,
-            dst_ip=packet[IP].dst,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
             mac1=mac1,
             switch_id_1=switch_id_1,
             switch_id_2=switch_id_2,

@@ -18,6 +18,7 @@
 - import_playbook: ../single_switch/data_forward_basic.yml
   vars:
     send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
+    ip_ver: "{{ ip_version | default(4) }}"
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch: "{{ topo_dict.switches.core }}"
     remote_send_host: host1
@@ -31,10 +32,10 @@
     receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth2' % switch.name }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
     ingress_classname: TpsCoreIngress
-    data_forward_table: data_forward_t
+    data_forward_table: "{{ 'data_forward_ipv4_t' if ip_ver == '4' else 'data_forward_ipv6_t' }}"
     data_forward_action: data_forward
     data_forward_match_fields:
-      - key: hdr.ipv4.dstAddr
+      - key: "{{ 'hdr.ipv4.dstAddr' if ip_ver == '4' else 'hdr.ipv6.dstAddr' }}"
         value:
           - "{{ receiver.ip }}"
           - 32

@@ -20,9 +20,11 @@ import time
 from logging import getLogger, basicConfig
 from time import sleep
 
+import ipaddress
 import yaml
 from scapy.all import get_if_list, get_if_hwaddr
 from scapy.layers.inet import IP, UDP, TCP
+from scapy.layers.inet6 import IPv6
 from scapy.layers.l2 import Ether
 from scapy.sendrecv import sendp
 
@@ -135,19 +137,32 @@ def device_send(args):
 
 
 def __create_packet(args, interface):
-    addr = socket.gethostbyname(args.destination)
+    logger.info('Send to destination - [%s]', args.destination)
 
     src_mac = args.src_mac
     if not src_mac:
         src_mac = get_if_hwaddr(interface)
     logger.info('Device mac - [%s]', src_mac)
 
+    ip_ver = 4
+    ip_addr = ipaddress.ip_address(unicode(args.destination))
+    logger.info('Destination IP addr [%s] ([%s]) type - [%s]',
+                args.destination, args.destination, ip_addr.__class__)
+    if isinstance(ip_addr, ipaddress.IPv6Address):
+        ip_ver = 6
+    logger.info('IP version is - [%s]', ip_ver)
+
     if args.int_hdr_file:
         int_data = __read_yaml_file(args.int_hdr_file)
         logger.info('Int data to add to packet - [%s]', int_data)
         ip_len = 34 + (int(int_data['shim']['length'])*4)
-        pkt = (Ether(src=src_mac, dst=args.switch_ethernet) /
-               IP(dst=addr, src=args.source_addr, len=ip_len, proto=0xfd))
+        if ip_ver == 4:
+            ip_hdr = IP(dst=args.destination, src=args.source_addr, len=ip_len,
+                        proto=0xfd)
+        else:
+            ip_hdr = IPv6(dst=args.destination, src=args.source_addr, nh=0xfd)
+
+        pkt = (Ether(src=src_mac, dst=args.switch_ethernet) / ip_hdr)
 
         pkt = pkt / IntShim(length=int(int_data['shim']['length']),
                             next_proto=0x11)
@@ -170,8 +185,11 @@ def __create_packet(args, interface):
                     switch_id=int_meta['switch_id'],
                     orig_mac=int_meta['orig_mac'])
     else:
-        pkt = (Ether(src=src_mac, dst=args.switch_ethernet) /
-               IP(dst=addr, src=args.source_addr))
+        if ip_ver == 4:
+            ip_hdr = IP(dst=args.destination, src=args.source_addr)
+        else:
+            ip_hdr = IPv6(dst=args.destination, src=args.source_addr)
+        pkt = Ether(src=src_mac, dst=args.switch_ethernet) / ip_hdr
 
     logger.info('Packet to emit - [%s]', pkt.summary())
 

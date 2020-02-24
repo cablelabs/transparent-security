@@ -37,7 +37,6 @@ control TpsGwIngress(inout headers hdr,
         standard_metadata.egress_spec = port;
         hdr.ethernet.src_mac = hdr.ethernet.dst_mac;
         hdr.ethernet.dst_mac = dstAddr;
-        hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
         meta.fwd.l2ptr = l2ptr;
     }
 
@@ -60,7 +59,6 @@ control TpsGwIngress(inout headers hdr,
 
         hdr.int_shim.type = 1;
         hdr.int_shim.length = 7;
-        hdr.int_shim.next_proto = hdr.ipv4.protocol;
 
         hdr.int_header.meta_len = 3;
         hdr.int_header.instructions = 0x80c0;
@@ -92,12 +90,51 @@ control TpsGwIngress(inout headers hdr,
         droppedPackets.count(device);
     }
 
-    table data_drop_udp_t {
+    action no_drop_ipv4() {
+        hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
+        hdr.int_shim.next_proto = hdr.ipv4.protocol;
+    }
+
+    action no_drop_ipv6() {
+        hdr.int_shim.next_proto = hdr.ipv6.next_hdr_proto;
+    }
+
+    table data_drop_udp_ipv4_t {
         key = {
             hdr.ethernet.src_mac: exact;
             hdr.ipv4.srcAddr: exact;
             hdr.ipv4.dstAddr: exact;
             hdr.udp.dst_port: exact;
+        }
+        actions = {
+            data_drop;
+            no_drop_ipv4;
+        }
+        size = 1024;
+        default_action = no_drop_ipv4;
+    }
+
+    table data_drop_udp_ipv6_t {
+        key = {
+            hdr.ethernet.src_mac: exact;
+            hdr.ipv6.srcAddr: exact;
+            hdr.ipv6.dstAddr: exact;
+            hdr.udp.dst_port: exact;
+        }
+        actions = {
+            data_drop;
+            no_drop_ipv6;
+        }
+        size = 1024;
+        default_action = no_drop_ipv6;
+    }
+
+    table data_drop_tcp_ipv4_t {
+        key = {
+            hdr.ethernet.src_mac: exact;
+            hdr.ipv4.srcAddr: exact;
+            hdr.ipv4.dstAddr: exact;
+            hdr.tcp.dst_port: exact;
         }
         actions = {
             data_drop;
@@ -107,11 +144,11 @@ control TpsGwIngress(inout headers hdr,
         default_action = NoAction();
     }
 
-    table data_drop_tcp_t {
+    table data_drop_tcp_ipv6_t {
         key = {
             hdr.ethernet.src_mac: exact;
-            hdr.ipv4.srcAddr: exact;
-            hdr.ipv4.dstAddr: exact;
+            hdr.ipv6.srcAddr: exact;
+            hdr.ipv6.dstAddr: exact;
             hdr.tcp.dst_port: exact;
         }
         actions = {
@@ -129,9 +166,19 @@ control TpsGwIngress(inout headers hdr,
      apply {
         if (hdr.ipv4.isValid()) {
             if (hdr.udp.isValid()) {
-                data_drop_udp_t.apply();
+                if (hdr.ipv4.isValid()) {
+                    data_drop_udp_ipv4_t.apply();
+                }
+                if (hdr.ipv6.isValid()) {
+                    data_drop_udp_ipv6_t.apply();
+                }
             } else if (hdr.tcp.isValid()) {
-                data_drop_tcp_t.apply();
+                if (hdr.ipv4.isValid()) {
+                    data_drop_tcp_ipv4_t.apply();
+                }
+                if (hdr.ipv6.isValid()) {
+                    data_drop_tcp_ipv6_t.apply();
+                }
             }
             if (standard_metadata.egress_spec != DROP_PORT) {
                 data_inspection_t.apply();
