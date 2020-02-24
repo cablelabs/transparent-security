@@ -16,8 +16,8 @@
 #define MAX_HOPS 9
 
 const bit<8> TYPE_INSPECTION = 0xfd;
-const bit<16> TYPE_IPV4 = 0x86dd;
-const bit<16> TYPE_IPV6 = 0x8808;
+const bit<16> TYPE_IPV4 = 0x0800;
+const bit<16> TYPE_IPV6 = 0x86dd;
 const bit<8> TYPE_TCP = 0x06;
 const bit<8> TYPE_UDP = 0x11;
 const bit<32> MAX_DEVICE_ID = 15;

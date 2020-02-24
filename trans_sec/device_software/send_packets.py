@@ -15,7 +15,6 @@
 import argparse
 import logging
 import random
-import socket
 import time
 from logging import getLogger, basicConfig
 from time import sleep
@@ -157,12 +156,12 @@ def __create_packet(args, interface):
         logger.info('Int data to add to packet - [%s]', int_data)
         ip_len = 34 + (int(int_data['shim']['length'])*4)
         if ip_ver == 4:
-            ip_hdr = IP(dst=args.destination, src=args.source_addr, len=ip_len,
-                        proto=0xfd)
+            pkt = (Ether(src=src_mac, dst=args.switch_ethernet, type=0x0800) /
+                   IP(dst=args.destination, src=args.source_addr, len=ip_len,
+                      proto=0xfd))
         else:
-            ip_hdr = IPv6(dst=args.destination, src=args.source_addr, nh=0xfd)
-
-        pkt = (Ether(src=src_mac, dst=args.switch_ethernet) / ip_hdr)
+            pkt = (Ether(src=src_mac, dst=args.switch_ethernet, type=0x86dd) /
+                   IPv6(dst=args.destination, src=args.source_addr, nh=0xfd))
 
         pkt = pkt / IntShim(length=int(int_data['shim']['length']),
                             next_proto=0x11)

@@ -56,7 +56,7 @@ class GatewayController(AbstractController):
                             ' to IP ' + device.get('ip') +
                             ':' + str(device.get('ip_port')))
 
-                # Northbound Traffic Inspection
+                # Northbound Traffic Inspection for IPv4
                 action_params = {
                         'device': device['id'],
                         'switch_id': sw_info['id']
@@ -64,12 +64,30 @@ class GatewayController(AbstractController):
                 table_entry = self.p4info_helper.build_table_entry(
                     table_name='{}.data_inspection_t'.format(self.p4_ingress),
                     match_fields={
-                        'hdr.ethernet.src_mac': device['mac']
+                        'hdr.ethernet.src_mac': device['mac'],
+                        'hdr.ethernet.etherType': 0x0800
                     },
-                    action_name='{}.data_inspect_packet'.format(
+                    action_name='{}.data_inspect_packet_ipv4'.format(
                         self.p4_ingress),
                     action_params=action_params)
                 sw.write_table_entry(table_entry)
+
+                # Northbound Traffic Inspection for IPv6
+                action_params = {
+                        'device': device['id'],
+                        'switch_id': sw_info['id']
+                }
+                table_entry = self.p4info_helper.build_table_entry(
+                    table_name='{}.data_inspection_t'.format(self.p4_ingress),
+                    match_fields={
+                        'hdr.ethernet.src_mac': device['mac'],
+                        'hdr.ethernet.etherType': 0x86dd
+                    },
+                    action_name='{}.data_inspect_packet_ipv6'.format(
+                        self.p4_ingress),
+                    action_params=action_params)
+                sw.write_table_entry(table_entry)
+
                 logger.info(
                     'Installed Northbound Packet Inspection for device with'
                     ' MAC - [%s] with action params - [%s]',

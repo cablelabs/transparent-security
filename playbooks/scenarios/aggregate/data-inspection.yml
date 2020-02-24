@@ -18,7 +18,7 @@
 - import_playbook: ../single_switch/data_inspection_basic.yml
   vars:
     send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
-    ip_ver: "{{ ip_version | default(4) }}"
+    ip_version: "{{ scenario_send_ip_version | default(4) }}"
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch: "{{ topo_dict.switches.aggregate }}"
     remote_send_host: host1
@@ -33,9 +33,9 @@
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
     ingress_classname: TpsAggIngress
     data_forward_action: data_forward
-    data_forward_table: "{{ 'data_forward_ipv4_t' if ip_ver == '4' else 'data_forward_ipv6_t' }}"
+    data_forward_table: "{{ 'data_forward_ipv4_t' if ip_version == '4' else 'data_forward_ipv6_t' }}"
     data_forward_match_fields:
-      - key: "{{ 'hdr.ipv4.dstAddr' if ip_ver == '4' else 'hdr.ipv6.dstAddr' }}"
+      - key: "{{ 'hdr.ipv4.dstAddr' if ip_version == '4' else 'hdr.ipv6.dstAddr' }}"
         value:
           - "{{ receiver.ip }}"
           - 32

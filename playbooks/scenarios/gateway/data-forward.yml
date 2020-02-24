@@ -18,7 +18,7 @@
 - import_playbook: ../single_switch/data_forward_basic.yml
   vars:
     send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
-    ip_ver: "{{ ip_version | default(4) }}"
+    ip_version: "{{ scenario_send_ip_version | default(4) }}"
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch: "{{ topo_dict.switches.gateway }}"
     remote_send_host: host1
