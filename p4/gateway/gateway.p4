@@ -164,26 +164,24 @@ control TpsGwIngress(inout headers hdr,
     }
 
      apply {
-        if (hdr.ipv4.isValid()) {
-            if (hdr.udp.isValid()) {
-                if (hdr.ipv4.isValid()) {
-                    data_drop_udp_ipv4_t.apply();
-                }
-                if (hdr.ipv6.isValid()) {
-                    data_drop_udp_ipv6_t.apply();
-                }
-            } else if (hdr.tcp.isValid()) {
-                if (hdr.ipv4.isValid()) {
-                    data_drop_tcp_ipv4_t.apply();
-                }
-                if (hdr.ipv6.isValid()) {
-                    data_drop_tcp_ipv6_t.apply();
-                }
+        if (hdr.udp.isValid()) {
+            if (hdr.ipv4.isValid()) {
+                data_drop_udp_ipv4_t.apply();
             }
-            if (standard_metadata.egress_spec != DROP_PORT) {
-                data_inspection_t.apply();
-                data_forward_t.apply();
+            if (hdr.ipv6.isValid()) {
+                data_drop_udp_ipv6_t.apply();
             }
+        } else if (hdr.tcp.isValid()) {
+            if (hdr.ipv4.isValid()) {
+                data_drop_tcp_ipv4_t.apply();
+            }
+            if (hdr.ipv6.isValid()) {
+                data_drop_tcp_ipv6_t.apply();
+            }
+        }
+        if (standard_metadata.egress_spec != DROP_PORT) {
+            data_inspection_t.apply();
+            data_forward_t.apply();
         }
     }
 }
