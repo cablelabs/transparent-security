@@ -44,7 +44,7 @@
         mode: 0777
 
     - set_fact:
-        receive_cmd: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/receive_packets.py -i {{ receiver_intf }} -f {{ receiver_log_file }} -d {{ receive_timeout }} -ih {{ hops }}"
+        receive_cmd: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/receive_packets.py -i {{ receiver_intf }} -f {{ receiver_log_file }} -d {{ receive_timeout }} -ih {{ hops }} -v {{ ip_ver }}"
 
     - debug:
         var: receive_cmd
@@ -125,7 +125,7 @@
 
     - name: Create log count command for INT packets
       set_fact:
-        count_cmd: "grep {{ receiver_ip }} {{ receiver_log_file }} | grep 'INT Packet data' | grep {{ send_port }} | grep {{ send_src_port }} | wc -l"
+        count_cmd: "grep {{ receiver_ip | ipaddr }} {{ receiver_log_file }} | grep 'INT Packet data' | grep {{ send_port }} | grep {{ send_src_port }} | wc -l"
       when: hops|int > 0
 
     - name: Parse file with the count command [{{ count_cmd }}]
