@@ -53,8 +53,12 @@ def main():
 
     # Initialize logger
     numeric_level = getattr(logging, args.loglevel.upper(), None)
-    logging.basicConfig(format=FORMAT, level=numeric_level,
-                        filename=args.logfile)
+
+    if args.logfile:
+        logging.basicConfig(format=FORMAT, level=numeric_level,
+                            filename=args.logfile)
+    else:
+        logging.basicConfig(format=FORMAT, level=numeric_level)
 
     # Setup remote debugging
     if args.debug_host:
