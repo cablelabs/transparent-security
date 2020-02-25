@@ -11,7 +11,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # Unit tests for convert.py
+import logging
 import unittest
+
+import ipaddress
+
 from trans_sec.utils import convert
 
 
@@ -24,6 +28,7 @@ class ConvertTests(unittest.TestCase):
         """
         Tests convert.py
         """
+        logging.basicConfig(level=logging.DEBUG)
         mac = "aa:bb:cc:dd:ee:ff"
         enc_mac = convert.encode_mac(mac)
         self.assertEquals('\xaa\xbb\xcc\xdd\xee\xff', enc_mac)
@@ -47,6 +52,22 @@ class ConvertTests(unittest.TestCase):
         self.assertFalse(convert.matches_ipv4('10.0.0.1.5'))
         self.assertFalse(convert.matches_ipv4('1000.0.0.1'))
         self.assertFalse(convert.matches_ipv4('10001'))
+
+        ipv6 = '0000:0000:0000:0000:0000:0001:0001:0002'
+        enc_ipv6 = convert.encode_ipv6(ipv6)
+        self.assertTrue(convert.matches_ipv6(ipv6))
+        self.assertTrue(convert.encode(ipv6, 128), enc_ipv6)
+        dec_ipv6 = convert.decode_ipv6(enc_ipv6)
+        ipv6_addr = ipaddress.ip_address(unicode(ipv6))
+        self.assertEquals(str(ipv6_addr), dec_ipv6)
+
+        ipv6b = '0:0:0:0:0:1:1:2'
+        enc_ipv6b = convert.encode_ipv6(ipv6b)
+        self.assertTrue(convert.matches_ipv6(ipv6b))
+        self.assertTrue(convert.encode(ipv6b, 128), enc_ipv6b)
+        dec_ipv6b = convert.decode_ipv6(enc_ipv6b)
+        ipv6b_addr = ipaddress.ip_address(unicode(ipv6b))
+        self.assertEquals(str(ipv6b_addr), dec_ipv6b)
 
         self.assertEquals(convert.encode(mac, 6 * 8), enc_mac)
         self.assertEquals(convert.encode(ip, 4 * 8), enc_ip)
