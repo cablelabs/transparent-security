@@ -195,7 +195,7 @@ class DdosSdnController:
             values)
         if len(host) != 0:
             host = host[0]
-            logger.info('Adding attack to gateway')
+            logger.info('Adding attack to gateways')
             try:
                 self.controllers.get(GATEWAY_CTRL_KEY).add_attacker(
                     attack, host)
