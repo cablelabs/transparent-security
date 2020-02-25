@@ -108,3 +108,4 @@ venv.bak/
 *.tfstate*
 lock.json
 terraform-provider-*
+.vscode/settings.json
