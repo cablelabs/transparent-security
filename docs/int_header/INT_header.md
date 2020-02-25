@@ -9,7 +9,7 @@ These definitions contain modifications and required fields for Transparent Secu
 This header heavily leverages the P4 INT header.  The changes and subset that are required for
 Transparent Security noted in this document.
 
-The draft of the 2.0 INT header document which we are using is located at [INT.pdf](https://github.com/cablelabs/transparent-security/wiki/attachments/INT.pdf).
+The draft of the 2.0 INT header document which we are using is located at [INT.pdf](https://github.com/p4lang/p4-applications/blob/master/docs/INT_v2_0.pdf).
 
 ## Overview
 
