@@ -37,8 +37,8 @@
     data_forward_match_fields:
       - key: "{{ 'hdr.ipv4.dstAddr' if ip_version == '4' else 'hdr.ipv6.dstAddr' }}"
         value:
-          - "{{ receiver.ip }}"
-          - 32
+          - "{{ receiver.ip if ip_version == '4' else receiver.ipv6 }}"
+          - "{{ 32 if ip_version == '4' else 128 }}"
     data_forward_action_params:
       - key: dstAddr
         value: "{{ switch.mac }}"
