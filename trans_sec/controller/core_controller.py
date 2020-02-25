@@ -117,7 +117,7 @@ class CoreController(AbstractController):
             table_entry = self.p4info_helper.build_table_entry(
                 table_name='{}.data_forward_ipv6_t'.format(self.p4_ingress),
                 match_fields={
-                    'hdr.ipv6.dstAddr': (north_device['ip'], 32),
+                    'hdr.ipv6.dstAddr': (north_device['ipv6'], 128),
                 },
                 action_name='{}.data_forward'.format(self.p4_ingress),
                 action_params={

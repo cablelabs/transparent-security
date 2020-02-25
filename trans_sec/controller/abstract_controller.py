@@ -10,6 +10,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import re
 
 import ipaddress
 from ipaddress import IPv6Address
@@ -178,7 +179,9 @@ class AbstractController(object):
                             south_facing_links=south_links)
 
     def add_attacker(self, attack, host):
-        ip_addr = ipaddress.ip_address(attack['src_ip'])
+        logger.info('Adding an attack [%s] to host [%s] and switches [%s]',
+                    attack, host, self.switches)
+        ip_addr = ipaddress.ip_address(unicode(attack['src_ip']))
         if isinstance(ip_addr, IPv6Address):
             proto_key = 'ipv6'
         else:
@@ -188,16 +191,32 @@ class AbstractController(object):
         dst_addr_key = 'hdr.{}.dstAddr'.format(proto_key)
 
         for switch in self.switches:
+            logger.info('Adding the attack to switch - [%s]', switch)
             self.__add_attacker(
                 switch, attack, host, src_addr_key, dst_addr_key)
 
     def __add_attacker(self, switch, attack, host, src_addr_key, dst_addr_key):
-        self.__insert_attack_entry(
-            switch, attack, host, 'data_drop_udp_t', 'data_drop', src_addr_key,
-            dst_addr_key, 'hdr.udp.dst_port')
-        self.__insert_attack_entry(
-            switch, attack, host, 'data_drop_tcp_t', 'data_drop', src_addr_key,
-            dst_addr_key, 'hdr.tcp.dst_port')
+        ipv6_pattern = re.compile(r'^([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}$')
+        logger.info('Inserting Attack entry with src_addr_key - [%s]',
+                    src_addr_key)
+        if ipv6_pattern.match(src_addr_key) is not None:
+            # Insert into IPv6 data_drop UDP & TCP tables
+            logger.info('Inserting IPv6 Attack')
+            self.__insert_attack_entry(
+                switch, attack, host, 'data_drop_udp_ipv6_t', 'data_drop',
+                src_addr_key, dst_addr_key, 'hdr.udp.dst_port')
+            self.__insert_attack_entry(
+                switch, attack, host, 'data_drop_tcp_ipv6_t', 'data_drop',
+                src_addr_key, dst_addr_key, 'hdr.tcp.dst_port')
+        else:
+            # Insert into IPv4 data_drop UDP & TCP tables
+            logger.info('Inserting IPv4 Attack')
+            self.__insert_attack_entry(
+                switch, attack, host, 'data_drop_udp_ipv4_t', 'data_drop',
+                src_addr_key, dst_addr_key, 'hdr.udp.dst_port')
+            self.__insert_attack_entry(
+                switch, attack, host, 'data_drop_tcp_ipv4_t', 'data_drop',
+                src_addr_key, dst_addr_key, 'hdr.tcp.dst_port')
 
     def __insert_attack_entry(self, switch, attack, host, table_name,
                               action_name, src_addr_key, dst_addr_key,

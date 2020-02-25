@@ -17,6 +17,7 @@
 - import_playbook: ../test_cases/send_receive.yml
   vars:
     send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
+    ip_version: "{{ scenario_send_ip_version | default(4) }}"
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch_name: gateway1
     core_switch_name: core
@@ -39,6 +40,7 @@
 - import_playbook: ../test_cases/send_receive.yml
   vars:
     send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
+    ip_version: "{{ scenario_send_ip_version | default(4) }}"
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch_name: gateway2
     core_switch_name: core
@@ -62,6 +64,7 @@
 - import_playbook: ../test_cases/send_receive.yml
   vars:
     send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
+    ip_version: "{{ scenario_send_ip_version | default(4) }}"
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch_name: gateway3
     core_switch_name: core
