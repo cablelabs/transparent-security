@@ -49,7 +49,7 @@ class SimpleAETests(unittest.TestCase):
         """
         pkt = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
                IP(dst='10.1.0.1', src='10.2.0.1', proto=0xfd) /
-               IntShim(length=9) /
+               IntShim(length=9, next_proto=0x11) /
                IntHeader(meta_len=1) /
                IntMeta1(switch_id=3) /
                IntMeta2(switch_id=2) /
@@ -65,17 +65,19 @@ class SimpleAETests(unittest.TestCase):
               by the scapy sniffer thread
         :return:
         """
-        pkt = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
+        pkt = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff',
+                     type=0x86dd) /
                IPv6(dst='0000:0000:0000:0000:0000:0001:0000:0001',
                     src='0000:0000:0000:0000:0000:0002:0000:0001',
                     nh=0xfd) /
-               IntShim(length=9) /
+               IntShim(length=9, next_proto=0x11) /
                IntHeader(meta_len=1) /
                IntMeta1(switch_id=3) /
                IntMeta2(switch_id=2) /
                SourceIntMeta(switch_id=1, orig_mac='ff:ff:ff:ff:ff:ff') /
                UDP(dport=1234, sport=1234) /
                'hello transparent-security')
+        logger.info('Packet - [%s]', len(pkt))
         self.ae.process_packet(pkt, 0xfd)
 
     def test_process_single_ipv4_tcp_packet(self):
@@ -87,7 +89,7 @@ class SimpleAETests(unittest.TestCase):
         """
         pkt = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
                IP(dst='10.1.0.1', src='10.2.0.1', proto=0xfd) /
-               IntShim(length=9) /
+               IntShim(length=9, next_proto=0x06) /
                IntHeader(meta_len=1) /
                IntMeta1(switch_id=3) /
                IntMeta2(switch_id=2) /
@@ -103,11 +105,12 @@ class SimpleAETests(unittest.TestCase):
               by the scapy sniffer thread
         :return:
         """
-        pkt = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
+        pkt = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff',
+                     type=0x86dd) /
                IPv6(dst='0000:0000:0000:0000:0000:0001:0000:0001',
                     src='0000:0000:0000:0000:0000:0002:0000:0001',
                     nh=0xfd) /
-               IntShim(length=9) /
+               IntShim(length=9, next_proto=0x06) /
                IntHeader(meta_len=1) /
                IntMeta1(switch_id=3) /
                IntMeta2(switch_id=2) /
@@ -123,7 +126,7 @@ class SimpleAETests(unittest.TestCase):
         """
         pkt = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
                IP(dst='10.1.0.1', src='10.2.0.1', proto=0xfd) /
-               IntShim(length=9) /
+               IntShim(length=9, next_proto=0x11) /
                IntHeader(meta_len=1) /
                IntMeta1(switch_id=3) /
                IntMeta2(switch_id=2) /
@@ -144,11 +147,12 @@ class SimpleAETests(unittest.TestCase):
         Tests to ensure that one IPv6 UDP attack has been triggered
         :return:
         """
-        pkt = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
+        pkt = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff',
+                     type=0x86dd) /
                IPv6(dst='0000:0000:0000:0000:0000:0001:0000:0001',
                     src='0000:0000:0000:0000:0000:0002:0000:0001',
                     nh=0xfd) /
-               IntShim(length=9) /
+               IntShim(length=9, next_proto=0x11) /
                IntHeader(meta_len=1) /
                IntMeta1(switch_id=3) /
                IntMeta2(switch_id=2) /
@@ -171,7 +175,7 @@ class SimpleAETests(unittest.TestCase):
         """
         pkt = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
                IP(dst='10.1.0.1', src='10.2.0.1', proto=0xfd) /
-               IntShim(length=9) /
+               IntShim(length=9, next_proto=0x06) /
                IntHeader(meta_len=1) /
                IntMeta1(switch_id=3) /
                IntMeta2(switch_id=2) /
@@ -192,11 +196,12 @@ class SimpleAETests(unittest.TestCase):
         Tests to ensure that one IPv6 TCP attack has been triggered
         :return:
         """
-        pkt = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
+        pkt = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff',
+                     type=0x86dd) /
                IPv6(dst='0000:0000:0000:0000:0000:0001:0000:0001',
                     src='0000:0000:0000:0000:0000:0002:0000:0001',
                     nh=0xfd) /
-               IntShim(length=9) /
+               IntShim(length=9, next_proto=0x06) /
                IntHeader(meta_len=1) /
                IntMeta1(switch_id=3) /
                IntMeta2(switch_id=2) /
@@ -219,7 +224,7 @@ class SimpleAETests(unittest.TestCase):
         """
         pkt1 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
                 IP(dst='10.1.0.1', src='10.2.0.1', proto=0xfd) /
-                IntShim(length=9) /
+                IntShim(length=9, next_proto=0x11) /
                 IntHeader(meta_len=1) /
                 IntMeta1(switch_id=3) /
                 IntMeta2(switch_id=2) /
@@ -229,7 +234,7 @@ class SimpleAETests(unittest.TestCase):
 
         pkt2 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
                 IP(dst='10.1.0.1', src='10.2.0.1', proto=0xfd) /
-                IntShim(length=9) /
+                IntShim(length=9, next_proto=0x11) /
                 IntHeader(meta_len=1) /
                 IntMeta1(switch_id=3) /
                 IntMeta2(switch_id=2) /
@@ -257,11 +262,12 @@ class SimpleAETests(unittest.TestCase):
         Tests to ensure that two IPv6 UDP attacks have been triggered
         :return:
         """
-        pkt1 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
+        pkt1 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff',
+                      type=0x86dd) /
                 IPv6(dst='0000:0000:0000:0000:0000:0001:0000:0001',
                      src='0000:0000:0000:0000:0000:0002:0000:0001',
                      nh=0xfd) /
-                IntShim(length=9) /
+                IntShim(length=9, next_proto=0x11) /
                 IntHeader(meta_len=1) /
                 IntMeta1(switch_id=3) /
                 IntMeta2(switch_id=2) /
@@ -269,11 +275,12 @@ class SimpleAETests(unittest.TestCase):
                 UDP(dport=1234, sport=1234) /
                 'hello transparent-security')
 
-        pkt2 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
+        pkt2 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff',
+                      type=0x86dd) /
                 IPv6(dst='0000:0000:0000:0000:0000:0001:0000:0001',
                      src='0000:0000:0000:0000:0000:0002:0000:0001',
                      nh=0xfd) /
-                IntShim(length=9) /
+                IntShim(length=9, next_proto=0x11) /
                 IntHeader(meta_len=1) /
                 IntMeta1(switch_id=3) /
                 IntMeta2(switch_id=2) /
@@ -303,7 +310,7 @@ class SimpleAETests(unittest.TestCase):
         """
         pkt1 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
                 IP(dst='10.1.0.1', src='10.2.0.1', proto=0xfd) /
-                IntShim(length=9) /
+                IntShim(length=9, next_proto=0x06) /
                 IntHeader(meta_len=1) /
                 IntMeta1(switch_id=3) /
                 IntMeta2(switch_id=2) /
@@ -313,7 +320,7 @@ class SimpleAETests(unittest.TestCase):
 
         pkt2 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
                 IP(dst='10.1.0.1', src='10.2.0.1', proto=0xfd) /
-                IntShim(length=9) /
+                IntShim(length=9, next_proto=0x06) /
                 IntHeader(meta_len=1) /
                 IntMeta1(switch_id=3) /
                 IntMeta2(switch_id=2) /
@@ -341,11 +348,12 @@ class SimpleAETests(unittest.TestCase):
         Tests to ensure that two IPv6 UDP attacks have been triggered
         :return:
         """
-        pkt1 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
+        pkt1 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff',
+                      type=0x86dd) /
                 IPv6(dst='0000:0000:0000:0000:0000:0001:0000:0001',
                      src='0000:0000:0000:0000:0000:0002:0000:0001',
                      nh=0xfd) /
-                IntShim(length=9) /
+                IntShim(length=9, next_proto=0x06) /
                 IntHeader(meta_len=1) /
                 IntMeta1(switch_id=3) /
                 IntMeta2(switch_id=2) /
@@ -353,11 +361,12 @@ class SimpleAETests(unittest.TestCase):
                 TCP(dport=1234, sport=1234) /
                 'hello transparent-security')
 
-        pkt2 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff') /
+        pkt2 = (Ether(src=get_if_hwaddr('lo'), dst='ff:ff:ff:ff:ff:ff',
+                      type=0x86dd) /
                 IPv6(dst='0000:0000:0000:0000:0000:0001:0000:0001',
                      src='0000:0000:0000:0000:0000:0002:0000:0001',
                      nh=0xfd) /
-                IntShim(length=9) /
+                IntShim(length=9, next_proto=0x06) /
                 IntHeader(meta_len=1) /
                 IntMeta1(switch_id=3) /
                 IntMeta2(switch_id=2) /

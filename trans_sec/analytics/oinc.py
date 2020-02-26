@@ -46,16 +46,40 @@ class PacketAnalytics(object):
         self.sample_interval = sample_interval
         self.count_map = dict()
         self.sniff_stop = threading.Event()
-        bind_layers(Ether, IP)
-        bind_layers(Ether, IPv6)
-        bind_layers(IP, IntShim)
-        bind_layers(IPv6, IntShim)
-        bind_layers(IntShim, IntHeader)
+
+        logger.info('Binding layers')
+        bind_layers(Ether, IP, type=0x0800)
+        bind_layers(IP, IntShim, proto=0xfd)
+        bind_layers(IntShim, IntHeader, next_proto=0x11)
         bind_layers(IntHeader, IntMeta1)
         bind_layers(IntMeta1, IntMeta2)
         bind_layers(IntMeta2, SourceIntMeta)
         bind_layers(SourceIntMeta, UDP)
+
+        bind_layers(Ether, IPv6, type=0x86dd)
+        bind_layers(IPv6, IntShim, nh=0xfd)
+        bind_layers(IntShim, IntHeader, next_proto=0x11)
+        bind_layers(IntHeader, IntMeta1)
+        bind_layers(IntMeta1, IntMeta2)
+        bind_layers(IntMeta2, SourceIntMeta)
+        bind_layers(SourceIntMeta, UDP)
+
+        bind_layers(Ether, IP, type=0x0800)
+        bind_layers(IP, IntShim, proto=0xfd)
+        bind_layers(IntShim, IntHeader, next_proto=0x06)
+        bind_layers(IntHeader, IntMeta1)
+        bind_layers(IntMeta1, IntMeta2)
+        bind_layers(IntMeta2, SourceIntMeta)
         bind_layers(SourceIntMeta, TCP)
+
+        bind_layers(Ether, IPv6, type=0x86dd)
+        bind_layers(IPv6, IntShim, nh=0xfd)
+        bind_layers(IntShim, IntHeader, next_proto=0x06)
+        bind_layers(IntHeader, IntMeta1)
+        bind_layers(IntMeta1, IntMeta2)
+        bind_layers(IntMeta2, SourceIntMeta)
+        bind_layers(SourceIntMeta, TCP)
+
         logger.debug("Completed binding packet layers")
 
     def start_sniffing(self, iface, ip_proto=0xfd):
@@ -128,21 +152,22 @@ def extract_int_data(packet):
     if hops > 3:
         raise Exception('Cannot support hops > 3')
 
-    try:
-        dport = packet[UDP].dport
-    except Exception as e:
-        logger.debug('Must be a TCP packet')
-        dport = packet[TCP].dport
-    try:
-        try:
-            src_addr = packet[IP].src
-            dst_addr = packet[IP].dst
-            protocol = packet[IP].proto
-        except Exception as e:
-            src_addr = packet[IPv6].src
-            dst_addr = packet[IPv6].dst
-            protocol = packet[IPv6].nh
+    ether_type = packet[Ether].type
+    if ether_type == 0x0800:
+        src_addr = packet[IP].src
+        dst_addr = packet[IP].dst
+        protocol = packet[IP].proto
+    else:
+        src_addr = packet[IPv6].src
+        dst_addr = packet[IPv6].dst
+        protocol = packet[IPv6].nh
 
+    if packet[IntShim].next_proto == 0x11:
+        dport = packet[UDP].dport
+    else:
+        dport = packet[TCP].dport
+
+    try:
         out = dict(
             devMac=orig_mac,
             devAddr=src_addr,
@@ -159,11 +184,15 @@ def extract_int_data(packet):
 
 
 def log_int_packet(packet):
-    try:
+    logger.debug('Received INT packet of length - [%s] to log - [%s]',
+                 len(packet), packet.summary())
+    logger.debug('Shim length - [%s]', packet[IntShim].length)
+    logger.debug('INT Header meta_len - [%s]', packet[IntHeader].meta_len)
+
+    if packet[IntShim].next_proto == 0x11:
         sport = packet[UDP].sport
         dport = packet[UDP].dport
-    except Exception as e:
-        logger.debug('Must be a TCP packet')
+    else:
         sport = packet[TCP].sport
         dport = packet[TCP].dport
 
@@ -172,14 +201,17 @@ def log_int_packet(packet):
         logger.debug('ETH dst_mac - [%s] src_mac - [%s] type - [%s]',
                      packet[Ether].dst, packet[Ether].src, packet[Ether].type)
 
-        try:
+        if packet[Ether].type == 0x0800:
+            logger.info('Parsing IPv4 data')
             src_addr = packet[IP].src
             dst_addr = packet[IP].dst
             protocol = packet[IP].proto
-        except Exception as e:
+        else:
+            logger.info('Parsing IPv6 data')
             src_addr = packet[IPv6].src
             dst_addr = packet[IPv6].dst
             protocol = packet[IPv6].nh
+
         logger.debug('IP src - [%s] dst - [%s] proto - [%s]',
                      src_addr, dst_addr, protocol)
         logger.debug('sport - [%s] dport - [%s]', sport, dport)
@@ -321,15 +353,10 @@ class SimpleAE(PacketAnalytics):
         :return: T/F - True when an attack has been triggered
         """
         logger.debug('Packet data - [%s]', packet.summary())
-        protocol = None
-        try:
+        if packet[Ether].type == 0x0800:
             protocol = packet[IP].proto
-        except Exception as e:
-            try:
-                protocol = packet[IPv6].nh
-            except Exception as e:
-                logger.debug('Unable to process packet - [%s] with error [%s]',
-                             packet.summary(), e)
+        else:
+            protocol = packet[IPv6].nh
 
         if protocol == ip_proto:
             int_data = extract_int_data(packet)
