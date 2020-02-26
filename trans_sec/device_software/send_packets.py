@@ -166,23 +166,30 @@ def __create_packet(args, interface):
         pkt = pkt / IntShim(length=int(int_data['shim']['length']),
                             next_proto=0x11)
 
-        ctr = 0
-        for int_meta in int_data['meta']:
-            logger.info('Adding switch_id - [%s] to INT data', int_meta)
-            ctr += 1
-            if ctr == 3:
-                logger.info('Adding IntMeta1')
-                pkt = pkt / IntHeader(meta_len=1) / IntMeta1(
-                    switch_id=int_meta['switch_id'])
-            if ctr == 2:
-                logger.info('Adding IntMeta2')
-                pkt = pkt / IntHeader(meta_len=1) / IntMeta2(
-                    switch_id=int_meta['switch_id'])
-            if ctr == 1:
-                logger.info('Adding Source INT Meta')
-                pkt = pkt / IntHeader(meta_len=3) / SourceIntMeta(
-                    switch_id=int_meta['switch_id'],
-                    orig_mac=int_meta['orig_mac'])
+        int_hops = len(int_data['meta'])
+        if int_hops > 0:
+            meta_len = 1
+            if int_hops == 1:
+                meta_len = 3
+            pkt = pkt / IntHeader(meta_len=meta_len)
+            ctr = 0
+            for int_meta in int_data['meta']:
+                logger.info('Adding int_meta - [%s] to INT data', int_meta)
+
+                if ctr == 0 and not int_meta.get('orig_mac'):
+                    logger.info('Adding IntMeta1')
+                    pkt = pkt / IntMeta1(switch_id=int_meta['switch_id'])
+                elif ctr > 0 and not int_meta.get('orig_mac'):
+                    logger.info('Adding IntMeta2')
+                    pkt = pkt / IntMeta2(switch_id=int_meta['switch_id'])
+                elif int_meta.get('orig_mac'):
+                    orig_mac = int_meta.get('orig_mac')
+                    logger.info('Adding Source INT Meta with orig_mac - [%s]',
+                                orig_mac)
+                    pkt = pkt / SourceIntMeta(
+                        switch_id=int_meta['switch_id'],
+                        orig_mac=orig_mac)
+                ctr += 1
     else:
         if ip_ver == 4:
             ip_hdr = IP(dst=args.destination, src=args.source_addr)

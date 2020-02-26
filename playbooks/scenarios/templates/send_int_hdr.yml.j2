@@ -18,5 +18,7 @@ shim:
 meta:
 {%  for int_data in inspection_data %}
 - switch_id: {{ int_data.switch_id }}
+{% if 'orig_mac' in int_data %}
   orig_mac: {{ int_data.orig_mac }}
+{% endif %}
 {%  endfor %}
