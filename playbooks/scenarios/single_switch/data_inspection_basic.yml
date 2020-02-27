@@ -23,7 +23,7 @@
     p4_table_match_fields: "{{ data_forward_match_fields }}"
     p4_table_action_params: "{{ data_forward_action_params }}"
     p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: "di-forward-create-{{ send_protocol}}.log"
+    p4_te_log_file: "di-forward-create-{{ send_protocol }}.log"
 
 # Add table entry to "{{ data_inspection_table }}"
 - import_playbook: ../test_cases/write_to_p4_table.yml
@@ -35,7 +35,7 @@
     p4_table_match_fields: "{{ data_inspection_match_fields }}"
     p4_table_action_params: "{{ data_inspection_action_params }}"
     p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: "di-inspection-create-{{ send_protocol}}.log"
+    p4_te_log_file: "di-inspection-create-{{ send_protocol }}.log"
 
 # Sending UDP packets expect all to be received with one INT hop
 - import_playbook: ../test_cases/send_receive.yml
@@ -56,7 +56,7 @@
     p4_table_name: "{{ data_inspection_table }}"
     p4_table_match_fields: "{{ data_inspection_match_fields }}"
     p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: "di-inspection-delete-{{ send_protocol}}.log"
+    p4_te_log_file: "di-inspection-delete-{{ send_protocol }}.log"
     p4_te_insert: False
 
 # Sending UDP packet expect to be received without INT
@@ -78,7 +78,7 @@
     p4_table_name: "{{ data_forward_table }}"
     p4_table_match_fields: "{{ data_forward_match_fields }}"
     p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: "di-forward-delete-{{ send_protocol}}.log"
+    p4_te_log_file: "di-forward-delete-{{ send_protocol }}.log"
     p4_te_insert: False
 
 # Sending UDP packet expect none to be received
