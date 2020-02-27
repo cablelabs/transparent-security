@@ -18,6 +18,7 @@ import sys
 
 from scapy.all import bind_layers, sniff
 from scapy.layers.inet import IP, UDP
+from scapy.layers.inet6 import IPv6
 from scapy.layers.l2 import Ether
 
 from trans_sec.packet.inspect_layer import IntShim, IntHeader, IntMeta1, \
@@ -36,6 +37,9 @@ def get_args():
         '-f', '--logfile', help='File to log to defaults to console',
         required=False, dest='log_file')
     parser.add_argument(
+        '-v', '--ip-ver', help='The IP version to parse (4|6) default 4',
+        required=False, default=4, dest='ip_ver', choices=[4, 6], type=int)
+    parser.add_argument(
         '-ih', '--int-hops', help='Number of expected INT hops, no INT when 0',
         required=False, default=0, dest='int_hops', type=int)
     parser.add_argument(
@@ -48,9 +52,17 @@ def get_args():
     return parser.parse_args()
 
 
-def __log_packet(packet, int_hops):
+def __log_packet(packet, int_hops, ip_ver):
     try:
-        ip_proto = packet[IP].proto
+        if ip_ver == 4:
+            logger.info('Parsing IPv4 proto (nh)')
+            ip_proto = packet[IP].proto
+        else:
+            logger.info('Logging IPv6 nh (proto)')
+            ip_proto = packet[IPv6].nh
+
+        if int_hops > 0 and ip_proto == 0xfd:
+            logger.debug('INT Packet received')
     except Exception:
         logger.warn('Unable to process packet - [%s]', packet.summary())
         return
@@ -75,11 +87,18 @@ def __log_packet(packet, int_hops):
             switch_id_2 = packet[IntMeta2].switch_id
             switch_id_3 = packet[IntMeta1].switch_id
 
+        try:
+            src_ip = packet[IP].src
+            dst_ip = packet[IP].dst
+        except Exception:
+            src_ip = packet[IPv6].src
+            dst_ip = packet[IPv6].dst
+
         int_data = dict(
             eth_src_mac=packet[Ether].src,
             eth_dst_mac=packet[Ether].dst,
-            src_ip=packet[IP].src,
-            dst_ip=packet[IP].dst,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
             mac1=mac1,
             switch_id_1=switch_id_1,
             switch_id_2=switch_id_2,
@@ -96,12 +115,17 @@ def __log_packet(packet, int_hops):
         logger.debug('Nothing to log here')
 
 
-def device_sniff(iface, duration, int_hops):
+def device_sniff(iface, duration, int_hops, ip_ver):
     if int_hops > 0:
         logger.info('Binding layers for INT with hops - [%s]', int_hops)
 
-        bind_layers(Ether, IP)
-        bind_layers(IP, IntShim)
+        if ip_ver == 4:
+            bind_layers(Ether, IP)
+            bind_layers(IP, IntShim)
+        else:
+            bind_layers(Ether, IPv6)
+            bind_layers(IPv6, IntShim)
+
         bind_layers(IntShim, IntHeader)
         if int_hops == 1:
             bind_layers(IntHeader, SourceIntMeta)
@@ -119,31 +143,37 @@ def device_sniff(iface, duration, int_hops):
             raise Exception('Cannot currently support more than 3 hops')
     else:
         logger.info('Binding layers for UDP')
-        bind_layers(Ether, IP)
-        bind_layers(IP, UDP)
+        if ip_ver == 4:
+            bind_layers(Ether, IP)
+            bind_layers(IP, UDP)
+        else:
+            bind_layers(Ether, IPv6)
+            bind_layers(IPv6, UDP)
 
     logger.info("Sniffing for packets on iface - [%s]", iface)
     sys.stdout.flush()
 
     if duration > 0:
         logger.info('Running sniffer for [%s] seconds', duration)
-        sniff(iface=iface, prn=lambda packet: __log_packet(packet, int_hops),
+        sniff(iface=iface,
+              prn=lambda packet: __log_packet(packet, int_hops, ip_ver),
               timeout=duration)
     else:
         logger.info('Running sniffer indefinitely')
-        sniff(iface=iface, prn=lambda packet: __log_packet(packet, int_hops))
+        sniff(iface=iface,
+              prn=lambda packet: __log_packet(packet, int_hops, ip_ver))
 
 
 if __name__ == '__main__':
-    cmd_args = get_args()
+    args = get_args()
 
-    numeric_level = getattr(logging, cmd_args.log_level, None)
-    if cmd_args.log_file:
+    numeric_level = getattr(logging, args.log_level, None)
+    if args.log_file:
         logging.basicConfig(format=FORMAT, level=numeric_level,
-                            filename=cmd_args.log_file)
+                            filename=args.log_file)
     else:
         logging.basicConfig(format=FORMAT, level=numeric_level)
 
     logger.info('Logger initialized')
 
-    device_sniff(cmd_args.iface, cmd_args.duration, cmd_args.int_hops)
+    device_sniff(args.iface, args.duration, args.int_hops, args.ip_ver)

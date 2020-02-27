@@ -19,8 +19,9 @@
   gather_facts: no
   vars:
     receive_timeout: "{{ receiver_timeout_seconds | default(60) }}"
-    receiver_log_file: "{{ host_log_dir }}/{{ receiver_log_filename }}"
+    receiver_log_file: "{{ host_log_dir }}/ip-{{ ip_ver }}-{{ receiver_log_filename }}"
     hops: "{{ int_hops | default(0) }}"
+    ip_ver: "{{ ip_version | default('4') }}"
   tasks:
     - debug:
         msg: "Expected INT hops to receive {{ hops }}"
@@ -43,7 +44,7 @@
         mode: 0777
 
     - set_fact:
-        receive_cmd: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/receive_packets.py -i {{ receiver_intf }} -f {{ receiver_log_file }} -d {{ receive_timeout }} -ih {{ hops }}"
+        receive_cmd: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/receive_packets.py -i {{ receiver_intf }} -f {{ receiver_log_file }} -d {{ receive_timeout }} -ih {{ hops }} -v {{ ip_ver }}"
 
     - debug:
         var: receive_cmd
@@ -63,9 +64,12 @@
     interval: "{{ send_interval | default(0.005) }}"
     loops: "{{ send_loops | default(1) }}"
     loop_delay: "{{ send_loop_delay | default(0) }}"
-    sender_log_file: "{{ host_log_dir }}/{{ sender_log_filename }}"
+    sender_log_file: "{{ host_log_dir }}/ip-{{ ip_ver }}-{{ sender_log_filename }}"
     int_hdr_df: "{{ send_int_data_filename | default('send_int_data.yml') }}"
     protocol: "{{ send_protocol | default('UDP') }}"
+    ip_ver: "{{ ip_version | default('4') }}"
+    sender_ip: "{{ sender.ip if ip_ver == '4' else sender.ipv6 }}"
+    receiver_ip: "{{ receiver.ip if ip_ver == '4' else receiver.ipv6 }}"
   tasks:
     - name: Create sender log directory {{ host_log_dir }}
       file:
@@ -80,7 +84,7 @@
         mode: 0777
 
     - set_fact:
-        send_cmd: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/send_packets.py -y {{ send_delay }} -i {{ interval }} -it {{ loops }} -itd {{ loop_delay }} -z {{ sender_intf }} -sa {{ sender.ip }} -r {{ receiver.ip }} -sp {{ send_src_port }} -p {{ send_port }} -f {{ sender_log_file }} -c {{ send_packet_count }} -e {{ sender.mac }} -s {{ switch.mac }} -pr {{ send_protocol }} -m '{{ send_msg }}'"
+        send_cmd: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/send_packets.py -y {{ send_delay }} -i {{ interval }} -it {{ loops }} -itd {{ loop_delay }} -z {{ sender_intf }} -sa {{ sender_ip }} -r {{ receiver_ip }} -sp {{ send_src_port }} -p {{ send_port }} -f {{ sender_log_file }} -c {{ send_packet_count }} -e {{ sender.mac }} -s {{ switch.mac }} -pr {{ send_protocol }} -m '{{ send_msg }}'"
 
     - debug:
         var: inspection_data
@@ -98,7 +102,7 @@
           var: send_cmd
       when: inspection_data is defined and inspection_data != ""
 
-    - name: Sending packets with command {{ send_cmd }}
+    - name: Sending packets with command {{ send_cmd }} to {{ receiver_ip }}
       shell: "{{ send_cmd }}"
       async: 180
 
@@ -108,17 +112,20 @@
   vars:
     min_packet_count: "{{ min_received_packet_count | default(send_packet_count) | int }}"
     max_packet_count: "{{ max_received_packet_count | default(send_packet_count) | int }}"
-    receiver_log_file: "{{ host_log_dir }}/{{ receiver_log_filename }}"
     hops: "{{ int_hops | default(0) }}"
+    ip_ver: "{{ ip_version | default('4') }}"
+    receiver_log_file: "{{ host_log_dir }}/ip-{{ ip_ver }}-{{ receiver_log_filename }}"
+    sender_ip: "{{ sender.ip if ip_ver == '4' else sender.ipv6 }}"
+    receiver_ip: "{{ receiver.ip if ip_ver == '4' else receiver.ipv6 }}"
   tasks:
     - name: Create log count command for non-INT packets
       set_fact:
-        count_cmd: "grep {{ receiver.ip }} {{ receiver_log_file }} | grep '/ Raw' | grep {{ send_port }} | grep {{ send_src_port }} | wc -l"
+        count_cmd: "grep {{ receiver_ip | ipaddr }} {{ receiver_log_file }} | grep '/ Raw' | grep {{ send_port }} | grep {{ send_src_port }} | wc -l"
       when: hops|int == 0
 
     - name: Create log count command for INT packets
       set_fact:
-        count_cmd: "grep {{ receiver.ip }} {{ receiver_log_file }} | grep 'INT Packet data' | grep {{ send_port }} | grep {{ send_src_port }} | wc -l"
+        count_cmd: "grep {{ receiver_ip | ipaddr }} {{ receiver_log_file }} | grep 'INT Packet data' | grep {{ send_port }} | grep {{ send_src_port }} | wc -l"
       when: hops|int > 0
 
     - name: Parse file with the count command [{{ count_cmd }}]

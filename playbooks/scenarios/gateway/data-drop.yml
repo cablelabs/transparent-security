@@ -14,10 +14,11 @@
 # one will be demonstrating dropped packets
 ---
 
-# Basic Data Drop scenario for UDP
+# Basic Data Drop scenario
 - import_playbook: ../single_switch/data_drop_basic.yml
   vars:
     send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
+    ip_version: "{{ scenario_send_ip_version | default(4) }}"
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch: "{{ topo_dict.switches.gateway }}"
     remote_send_host: host1
@@ -44,15 +45,15 @@
         value: "{{ rec_sw_port }}"
       - key: l2ptr
         value: 0
-    data_drop_table: "{{ 'data_drop_udp_t' if send_protocol == 'UDP' else 'data_drop_tcp_t' }}"
+    data_drop_table: "{{ 'data_drop_udp_ipv%s_t' % ip_version if send_protocol == 'UDP' else 'data_drop_tcp_ipv%s_t' % ip_version }}"
     data_drop_action: data_drop
     data_drop_match_fields:
       - key: hdr.ethernet.src_mac
         value: "{{ sender.mac }}"
-      - key: hdr.ipv4.srcAddr
-        value: "{{ sender.ip }}"
-      - key: hdr.ipv4.dstAddr
-        value: "{{ receiver.ip }}"
+      - key: "{{ 'hdr.ipv%s.srcAddr' % ip_version }}"
+        value: "{{ sender.ip  if ip_version == '4' else sender.ipv6 }}"
+      - key: "{{ 'hdr.ipv%s.dstAddr' % ip_version }}"
+        value: "{{ receiver.ip if ip_version == '4' else receiver.ipv6 }}"
       - key: "{{ 'hdr.udp.dst_port' if send_protocol == 'UDP' else 'hdr.tcp.dst_port' }}"
         value: "{{ send_port }}"
     data_drop_action_params:

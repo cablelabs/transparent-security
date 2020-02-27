@@ -15,14 +15,15 @@
 import argparse
 import logging
 import random
-import socket
 import time
 from logging import getLogger, basicConfig
 from time import sleep
 
+import ipaddress
 import yaml
 from scapy.all import get_if_list, get_if_hwaddr
 from scapy.layers.inet import IP, UDP, TCP
+from scapy.layers.inet6 import IPv6
 from scapy.layers.l2 import Ether
 from scapy.sendrecv import sendp
 
@@ -135,43 +136,66 @@ def device_send(args):
 
 
 def __create_packet(args, interface):
-    addr = socket.gethostbyname(args.destination)
+    logger.info('Send to destination - [%s]', args.destination)
 
     src_mac = args.src_mac
     if not src_mac:
         src_mac = get_if_hwaddr(interface)
     logger.info('Device mac - [%s]', src_mac)
 
+    ip_ver = 4
+    ip_addr = ipaddress.ip_address(unicode(args.destination))
+    logger.info('Destination IP addr [%s] ([%s]) type - [%s]',
+                args.destination, args.destination, ip_addr.__class__)
+    if isinstance(ip_addr, ipaddress.IPv6Address):
+        ip_ver = 6
+    logger.info('IP version is - [%s]', ip_ver)
+
     if args.int_hdr_file:
         int_data = __read_yaml_file(args.int_hdr_file)
         logger.info('Int data to add to packet - [%s]', int_data)
         ip_len = 34 + (int(int_data['shim']['length'])*4)
-        pkt = (Ether(src=src_mac, dst=args.switch_ethernet) /
-               IP(dst=addr, src=args.source_addr, len=ip_len, proto=0xfd))
+        if ip_ver == 4:
+            pkt = (Ether(src=src_mac, dst=args.switch_ethernet, type=0x0800) /
+                   IP(dst=args.destination, src=args.source_addr, len=ip_len,
+                      proto=0xfd))
+        else:
+            pkt = (Ether(src=src_mac, dst=args.switch_ethernet, type=0x86dd) /
+                   IPv6(dst=args.destination, src=args.source_addr, nh=0xfd))
 
         pkt = pkt / IntShim(length=int(int_data['shim']['length']),
                             next_proto=0x11)
 
-        ctr = 0
-        for int_meta in int_data['meta']:
-            logger.info('Adding switch_id - [%s] to INT data', int_meta)
-            ctr += 1
-            if ctr == 3:
-                logger.info('Adding IntMeta1')
-                pkt = pkt / IntHeader(meta_len=1) / IntMeta1(
-                    switch_id=int_meta['switch_id'])
-            if ctr == 2:
-                logger.info('Adding IntMeta2')
-                pkt = pkt / IntHeader(meta_len=1) / IntMeta2(
-                    switch_id=int_meta['switch_id'])
-            if ctr == 1:
-                logger.info('Adding Source INT Meta')
-                pkt = pkt / IntHeader(meta_len=3) / SourceIntMeta(
-                    switch_id=int_meta['switch_id'],
-                    orig_mac=int_meta['orig_mac'])
+        int_hops = len(int_data['meta'])
+        if int_hops > 0:
+            meta_len = 1
+            if int_hops == 1:
+                meta_len = 3
+            pkt = pkt / IntHeader(meta_len=meta_len)
+            ctr = 0
+            for int_meta in int_data['meta']:
+                logger.info('Adding int_meta - [%s] to INT data', int_meta)
+
+                if ctr == 0 and not int_meta.get('orig_mac'):
+                    logger.info('Adding IntMeta1')
+                    pkt = pkt / IntMeta1(switch_id=int_meta['switch_id'])
+                elif ctr > 0 and not int_meta.get('orig_mac'):
+                    logger.info('Adding IntMeta2')
+                    pkt = pkt / IntMeta2(switch_id=int_meta['switch_id'])
+                elif int_meta.get('orig_mac'):
+                    orig_mac = int_meta.get('orig_mac')
+                    logger.info('Adding Source INT Meta with orig_mac - [%s]',
+                                orig_mac)
+                    pkt = pkt / SourceIntMeta(
+                        switch_id=int_meta['switch_id'],
+                        orig_mac=orig_mac)
+                ctr += 1
     else:
-        pkt = (Ether(src=src_mac, dst=args.switch_ethernet) /
-               IP(dst=addr, src=args.source_addr))
+        if ip_ver == 4:
+            ip_hdr = IP(dst=args.destination, src=args.source_addr)
+        else:
+            ip_hdr = IPv6(dst=args.destination, src=args.source_addr)
+        pkt = Ether(src=src_mac, dst=args.switch_ethernet) / ip_hdr
 
     logger.info('Packet to emit - [%s]', pkt.summary())
 

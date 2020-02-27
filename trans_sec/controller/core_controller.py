@@ -99,8 +99,10 @@ class CoreController(AbstractController):
             logger.info(
                 'Adding data_forward entry to forward packets to  port - [%s]',
                 north_link['north_facing_port'])
+
+            # Add entry for forwarding IPv4 packets
             table_entry = self.p4info_helper.build_table_entry(
-                table_name='{}.data_forward_t'.format(self.p4_ingress),
+                table_name='{}.data_forward_ipv4_t'.format(self.p4_ingress),
                 match_fields={
                     'hdr.ipv4.dstAddr': (north_device['ip'], 32),
                 },
@@ -110,6 +112,20 @@ class CoreController(AbstractController):
                     'port': north_link['north_facing_port']
                 })
             sw.write_table_entry(table_entry)
+
+            # Add entry for forwarding IPv6 packets
+            table_entry = self.p4info_helper.build_table_entry(
+                table_name='{}.data_forward_ipv6_t'.format(self.p4_ingress),
+                match_fields={
+                    'hdr.ipv6.dstAddr': (north_device['ipv6'], 128),
+                },
+                action_name='{}.data_forward'.format(self.p4_ingress),
+                action_params={
+                    'dstAddr': north_device['mac'],
+                    'port': north_link['north_facing_port']
+                })
+            sw.write_table_entry(table_entry)
+
             logger.info(
                 'Installed Host %s ipv4 cloning rule on %s',
                 north_device.get('ip'), sw.name)

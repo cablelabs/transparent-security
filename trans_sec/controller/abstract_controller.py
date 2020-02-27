@@ -10,6 +10,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import re
+
+import ipaddress
+from ipaddress import IPv6Address
 from logging import getLogger
 
 from trans_sec.p4runtime_lib import bmv2, helper, tofino
@@ -175,40 +179,58 @@ class AbstractController(object):
                             south_facing_links=south_links)
 
     def add_attacker(self, attack, host):
-        for switch in self.switches:
-            self.__add_attacker_udp(switch, attack, host)
-            self.__add_attacker_tcp(switch, attack, host)
+        logger.info('Adding an attack [%s] to host [%s] and switches [%s]',
+                    attack, host, self.switches)
+        ip_addr = ipaddress.ip_address(unicode(attack['src_ip']))
+        if isinstance(ip_addr, IPv6Address):
+            proto_key = 'ipv6'
+        else:
+            proto_key = 'ipv4'
 
-    def __add_attacker_udp(self, switch, attack, host):
+        src_addr_key = 'hdr.{}.srcAddr'.format(proto_key)
+        dst_addr_key = 'hdr.{}.dstAddr'.format(proto_key)
+
+        for switch in self.switches:
+            logger.info('Adding the attack to switch - [%s]', switch)
+            self.__add_attacker(
+                switch, attack, host, src_addr_key, dst_addr_key)
+
+    def __add_attacker(self, switch, attack, host, src_addr_key, dst_addr_key):
+        ipv6_pattern = re.compile(r'^([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}$')
+        logger.info('Inserting Attack entry with src_addr_key - [%s]',
+                    src_addr_key)
+        if ipv6_pattern.match(src_addr_key) is not None:
+            # Insert into IPv6 data_drop UDP & TCP tables
+            logger.info('Inserting IPv6 Attack')
+            self.__insert_attack_entry(
+                switch, attack, host, 'data_drop_udp_ipv6_t', 'data_drop',
+                src_addr_key, dst_addr_key, 'hdr.udp.dst_port')
+            self.__insert_attack_entry(
+                switch, attack, host, 'data_drop_tcp_ipv6_t', 'data_drop',
+                src_addr_key, dst_addr_key, 'hdr.tcp.dst_port')
+        else:
+            # Insert into IPv4 data_drop UDP & TCP tables
+            logger.info('Inserting IPv4 Attack')
+            self.__insert_attack_entry(
+                switch, attack, host, 'data_drop_udp_ipv4_t', 'data_drop',
+                src_addr_key, dst_addr_key, 'hdr.udp.dst_port')
+            self.__insert_attack_entry(
+                switch, attack, host, 'data_drop_tcp_ipv4_t', 'data_drop',
+                src_addr_key, dst_addr_key, 'hdr.tcp.dst_port')
+
+    def __insert_attack_entry(self, switch, attack, host, table_name,
+                              action_name, src_addr_key, dst_addr_key,
+                              dst_port_key):
         logger.info('Adding UDP attacker [%s] from host [%s]', attack, host)
         self.__insert_p4_table_entry(
             switch=switch,
-            table_name='data_drop_udp_t',
-            action_name='data_drop',
+            table_name=table_name,
+            action_name=action_name,
             match_fields={
                 'hdr.ethernet.src_mac': (attack['src_mac']),
-                'hdr.ipv4.srcAddr': (attack['src_ip']),
-                'hdr.ipv4.dstAddr': (attack['dst_ip']),
-                'hdr.udp.dst_port': (int(attack['dst_port']))
-            },
-            action_params={
-                'device': host['id']
-            }
-         )
-        logger.info('%s Dropping TCP Packets from %s',
-                    switch.name, attack.get('src_ip'))
-
-    def __add_attacker_tcp(self, switch, attack, host):
-        logger.info('Adding TCP attacker [%s] from host [%s]', attack, host)
-        self.__insert_p4_table_entry(
-            switch=switch,
-            table_name='data_drop_tcp_t',
-            action_name='data_drop',
-            match_fields={
-                'hdr.ethernet.src_mac': (attack['src_mac']),
-                'hdr.ipv4.srcAddr': (attack['src_ip']),
-                'hdr.ipv4.dstAddr': (attack['dst_ip']),
-                'hdr.tcp.dst_port': (int(attack['dst_port']))
+                src_addr_key: (attack['src_ip']),
+                dst_addr_key: (attack['dst_ip']),
+                dst_port_key: (int(attack['dst_port']))
             },
             action_params={
                 'device': host['id']

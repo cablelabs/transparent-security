@@ -30,12 +30,25 @@ parser TpsGwParser(packet_in packet,
 
     state parse_ethernet {
         packet.extract(hdr.ethernet);
-        transition parse_ipv4;
+        transition select(hdr.ethernet.etherType) {
+            TYPE_IPV4: parse_ipv4;
+            TYPE_IPV6: parse_ipv6;
+            default: accept;
+        }
     }
 
     state parse_ipv4 {
         packet.extract(hdr.ipv4);
         transition select(hdr.ipv4.protocol) {
+            TYPE_UDP: parse_udp;
+            TYPE_TCP: parse_tcp;
+            default: accept;
+        }
+    }
+
+    state parse_ipv6 {
+        packet.extract(hdr.ipv6);
+        transition select(hdr.ipv6.next_hdr_proto) {
             TYPE_UDP: parse_udp;
             TYPE_TCP: parse_tcp;
             default: accept;
@@ -66,14 +79,24 @@ parser TpsAggParser(packet_in packet,
 
     state parse_ethernet {
         packet.extract(hdr.ethernet);
-        transition select(hdr.ethernet.src_mac) {
-            default:  parse_ipv4;
+        transition select(hdr.ethernet.etherType) {
+            TYPE_IPV4: parse_ipv4;
+            TYPE_IPV6: parse_ipv6;
+            default: accept;
         }
     }
 
     state parse_ipv4 {
         packet.extract(hdr.ipv4);
         transition select(hdr.ipv4.protocol) {
+            TYPE_INSPECTION: parse_int_shim;
+            default: accept;
+        }
+    }
+
+    state parse_ipv6 {
+        packet.extract(hdr.ipv6);
+        transition select(hdr.ipv6.next_hdr_proto) {
             TYPE_INSPECTION: parse_int_shim;
             default: accept;
         }
@@ -103,12 +126,24 @@ parser TpsCoreParser(packet_in packet,
 
     state parse_ethernet {
         packet.extract(hdr.ethernet);
-        transition parse_ipv4;
+        transition select(hdr.ethernet.etherType) {
+            TYPE_IPV4: parse_ipv4;
+            TYPE_IPV6: parse_ipv6;
+            default: accept;
+        }
     }
 
     state parse_ipv4 {
         packet.extract(hdr.ipv4);
         transition select(hdr.ipv4.protocol) {
+            TYPE_INSPECTION: parse_int_shim;
+            default: accept;
+        }
+    }
+
+    state parse_ipv6 {
+        packet.extract(hdr.ipv6);
+        transition select(hdr.ipv6.next_hdr_proto) {
             TYPE_INSPECTION: parse_int_shim;
             default: accept;
         }

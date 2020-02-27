@@ -40,9 +40,21 @@ control TpsAggIngress(inout headers hdr,
         meta.fwd.l2ptr = l2ptr;
     }
 
-    table data_forward_t {
+    table data_forward_ipv4_t {
         key = {
             hdr.ipv4.dstAddr: lpm;
+        }
+        actions = {
+            data_forward;
+            NoAction;
+        }
+        size = 1024;
+        default_action = NoAction();
+    }
+
+    table data_forward_ipv6_t {
+        key = {
+            hdr.ipv6.dstAddr: lpm;
         }
         actions = {
             data_forward;
@@ -80,10 +92,13 @@ control TpsAggIngress(inout headers hdr,
     }
 
      apply {
-        if (hdr.ipv4.isValid()) {
-            if (standard_metadata.egress_spec != DROP_PORT) {
-                data_inspection_t.apply();
-                data_forward_t.apply();
+        if (standard_metadata.egress_spec != DROP_PORT) {
+            data_inspection_t.apply();
+            if (hdr.ipv4.isValid()) {
+                data_forward_ipv4_t.apply();
+            }
+            if (hdr.ipv6.isValid()) {
+                data_forward_ipv6_t.apply();
             }
         }
     }

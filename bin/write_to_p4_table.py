@@ -102,6 +102,9 @@ if __name__ == '__main__':
                     match_fields[key] = value
 
         if args.insert == 'True':
+            logger.info(
+                'Entry configuration for table entry - [%s] and match fields '
+                '- [%s]', entry_config)
             table_entry = p4info_helper.build_table_entry(
                 table_name=entry_config['table_name'],
                 match_fields=match_fields,

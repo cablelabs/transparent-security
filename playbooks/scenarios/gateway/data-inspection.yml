@@ -18,6 +18,7 @@
 - import_playbook: ../single_switch/data_inspection_basic.yml
   vars:
     send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
+    ip_version: "{{ scenario_send_ip_version | default(4) }}"
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch: "{{ topo_dict.switches.gateway }}"
     remote_send_host: host1
@@ -44,10 +45,12 @@
       - key: l2ptr
         value: 0
     data_inspection_table: data_inspection_t
-    data_inspection_action: data_inspect_packet
+    data_inspection_action: "{{ 'data_inspect_packet_ipv4' if ip_version == '4' else 'data_inspect_packet_ipv6' }}"
     data_inspection_match_fields:
       - key: hdr.ethernet.src_mac
         value: "{{ sender.mac }}"
+      - key: hdr.ethernet.etherType
+        value: "{{ '0x0800' if ip_version == '4' else '0x86dd' }}"
     data_inspection_action_params:
       - key: device
         value: "{{ sender.id }}"

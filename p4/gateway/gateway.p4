@@ -37,7 +37,6 @@ control TpsGwIngress(inout headers hdr,
         standard_metadata.egress_spec = port;
         hdr.ethernet.src_mac = hdr.ethernet.dst_mac;
         hdr.ethernet.dst_mac = dstAddr;
-        hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
         meta.fwd.l2ptr = l2ptr;
     }
 
@@ -53,14 +52,15 @@ control TpsGwIngress(inout headers hdr,
         default_action = NoAction();
     }
 
-    action data_inspect_packet(bit<32> device, bit<32> switch_id) {
+    action data_inspect_packet_ipv4(bit<32> device, bit<32> switch_id) {
         hdr.int_shim.setValid();
         hdr.int_header.setValid();
         hdr.int_meta.setValid();
 
+        hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
+        hdr.int_shim.next_proto = hdr.ipv4.protocol;
         hdr.int_shim.type = 1;
         hdr.int_shim.length = 7;
-        hdr.int_shim.next_proto = hdr.ipv4.protocol;
 
         hdr.int_header.meta_len = 3;
         hdr.int_header.instructions = 0x80c0;
@@ -75,12 +75,35 @@ control TpsGwIngress(inout headers hdr,
         forwardedPackets.count(device);
     }
 
+    action data_inspect_packet_ipv6(bit<32> device, bit<32> switch_id) {
+        hdr.int_shim.setValid();
+        hdr.int_header.setValid();
+        hdr.int_meta.setValid();
+
+        hdr.int_shim.next_proto = hdr.ipv6.next_hdr_proto;
+        hdr.int_shim.type = 1;
+        hdr.int_shim.length = 7;
+
+        hdr.int_header.meta_len = 3;
+        hdr.int_header.instructions = 0x80c0;
+        hdr.int_header.remaining_hop_cnt = 10; /* TODO - find a better means to determine this value */
+        hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt -1;
+
+        hdr.int_meta.switch_id = switch_id;
+        hdr.int_meta.orig_mac = hdr.ethernet.src_mac;
+
+        hdr.ipv6.next_hdr_proto = TYPE_INSPECTION;
+        forwardedPackets.count(device);
+    }
+
     table data_inspection_t {
         key = {
             hdr.ethernet.src_mac: exact;
+            hdr.ethernet.etherType: exact;
         }
         actions = {
-            data_inspect_packet;
+            data_inspect_packet_ipv4;
+            data_inspect_packet_ipv6;
             NoAction;
         }
         size = 1024;
@@ -92,7 +115,7 @@ control TpsGwIngress(inout headers hdr,
         droppedPackets.count(device);
     }
 
-    table data_drop_udp_t {
+    table data_drop_udp_ipv4_t {
         key = {
             hdr.ethernet.src_mac: exact;
             hdr.ipv4.srcAddr: exact;
@@ -107,11 +130,41 @@ control TpsGwIngress(inout headers hdr,
         default_action = NoAction();
     }
 
-    table data_drop_tcp_t {
+    table data_drop_udp_ipv6_t {
+        key = {
+            hdr.ethernet.src_mac: exact;
+            hdr.ipv6.srcAddr: exact;
+            hdr.ipv6.dstAddr: exact;
+            hdr.udp.dst_port: exact;
+        }
+        actions = {
+            data_drop;
+            NoAction;
+        }
+        size = 1024;
+        default_action = NoAction();
+    }
+
+    table data_drop_tcp_ipv4_t {
         key = {
             hdr.ethernet.src_mac: exact;
             hdr.ipv4.srcAddr: exact;
             hdr.ipv4.dstAddr: exact;
+            hdr.tcp.dst_port: exact;
+        }
+        actions = {
+            data_drop;
+            NoAction;
+        }
+        size = 1024;
+        default_action = NoAction();
+    }
+
+    table data_drop_tcp_ipv6_t {
+        key = {
+            hdr.ethernet.src_mac: exact;
+            hdr.ipv6.srcAddr: exact;
+            hdr.ipv6.dstAddr: exact;
             hdr.tcp.dst_port: exact;
         }
         actions = {
@@ -127,16 +180,24 @@ control TpsGwIngress(inout headers hdr,
     }
 
      apply {
-        if (hdr.ipv4.isValid()) {
-            if (hdr.udp.isValid()) {
-                data_drop_udp_t.apply();
-            } else if (hdr.tcp.isValid()) {
-                data_drop_tcp_t.apply();
+        if (hdr.udp.isValid()) {
+            if (hdr.ipv4.isValid()) {
+                data_drop_udp_ipv4_t.apply();
             }
-            if (standard_metadata.egress_spec != DROP_PORT) {
-                data_inspection_t.apply();
-                data_forward_t.apply();
+            if (hdr.ipv6.isValid()) {
+                data_drop_udp_ipv6_t.apply();
             }
+        } else if (hdr.tcp.isValid()) {
+            if (hdr.ipv4.isValid()) {
+                data_drop_tcp_ipv4_t.apply();
+            }
+            if (hdr.ipv6.isValid()) {
+                data_drop_tcp_ipv6_t.apply();
+            }
+        }
+        if (standard_metadata.egress_spec != DROP_PORT) {
+            data_inspection_t.apply();
+            data_forward_t.apply();
         }
     }
 }

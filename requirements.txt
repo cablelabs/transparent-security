@@ -12,4 +12,6 @@ gevent==1.1.0
 python-dateutil
 flask
 flask_restful
+ipaddress
+netaddr
 mock==3.0.5

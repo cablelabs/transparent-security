@@ -37,7 +37,7 @@ def get_args():
     parser.add_argument('-f', '--logfile',
                         help='File to log to defaults to console',
                         required=False, default=None)
-    parser.add_argument('-ld', '--log-dir', type=str, required=False,
+    parser.add_argument('-ld', '--log-dir', type=str, required=True,
                         default=default_logs)
     parser.add_argument('-t', '--topo', help='Path to topology json',
                         required=False,
@@ -69,8 +69,12 @@ def main():
         pydevd.settrace(host=args.debug_host, port=int(args.debug_port),
                         stdoutToServer=True, stderrToServer=True)
     numeric_level = getattr(logging, args.loglevel.upper(), None)
-    logging.basicConfig(format=FORMAT, level=numeric_level,
-                        filename=args.logfile)
+
+    if args.logfile:
+        logging.basicConfig(format=FORMAT, level=numeric_level,
+                            filename=args.logfile)
+    else:
+        logging.basicConfig(format=FORMAT, level=numeric_level)
 
     topo_file = args.topo
     with open(topo_file, 'r') as f:

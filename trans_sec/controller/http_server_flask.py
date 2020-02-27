@@ -62,6 +62,8 @@ class Attack(Resource):
         parser.add_argument('packet_size', type=str)
         parser.add_argument('attack_type', type=str)
         args = parser.parse_args()
+
+        logger.info('Attack args - [%s]', args)
         self.sdn_controller.add_attacker(args)
         return json.dumps({"success": True}), 201
 

@@ -17,6 +17,7 @@
 - import_playbook: ../test_cases/send_receive.yml
   vars:
     send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
+    ip_version: "{{ scenario_send_ip_version | default(4) }}"
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch_name: gateway1
     core_switch_name: core
@@ -39,6 +40,7 @@
 - import_playbook: ../test_cases/send_receive.yml
   vars:
     send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
+    ip_version: "{{ scenario_send_ip_version | default(4) }}"
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch_name: gateway2
     core_switch_name: core
@@ -62,6 +64,7 @@
 - import_playbook: ../test_cases/send_receive.yml
   vars:
     send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
+    ip_version: "{{ scenario_send_ip_version | default(4) }}"
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch_name: gateway3
     core_switch_name: core
@@ -84,7 +87,7 @@
     send_loops: 2
     send_loop_delay: 5
 
-# Clear all gateway data_drop_udp_t & data_drop_tcp_t table entries.
+# Clear all gateway data_drop tables.
 - import_playbook: ../test_cases/clear_p4_table_entries.yml
   vars:
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
@@ -94,6 +97,8 @@
       - "{{ topo_dict.switches.gateway3 }}"
     p4_classname: TpsGwIngress
     p4_table_names:
-      - data_drop_udp_t
-      - data_drop_tcp_t
+      - data_drop_udp_ipv4_t
+      - data_drop_udp_ipv6_t
+      - data_drop_tcp_ipv4_t
+      - data_drop_tcp_ipv6_t
     p4_te_log_dir: "{{ host_log_dir }}"

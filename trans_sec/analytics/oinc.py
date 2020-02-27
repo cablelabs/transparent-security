@@ -20,6 +20,7 @@ from anytree import search, Node, RenderTree
 from scapy.all import bind_layers
 from scapy.all import sniff
 from scapy.layers.inet import IP, UDP, TCP
+from scapy.layers.inet6 import IPv6
 from scapy.layers.l2 import Ether
 
 from trans_sec.packet.inspect_layer import (
@@ -45,14 +46,40 @@ class PacketAnalytics(object):
         self.sample_interval = sample_interval
         self.count_map = dict()
         self.sniff_stop = threading.Event()
-        bind_layers(Ether, IP)
-        bind_layers(IP, IntShim)
-        bind_layers(IntShim, IntHeader)
+
+        logger.info('Binding layers')
+        bind_layers(Ether, IP, type=0x0800)
+        bind_layers(IP, IntShim, proto=0xfd)
+        bind_layers(IntShim, IntHeader, next_proto=0x11)
         bind_layers(IntHeader, IntMeta1)
         bind_layers(IntMeta1, IntMeta2)
         bind_layers(IntMeta2, SourceIntMeta)
         bind_layers(SourceIntMeta, UDP)
+
+        bind_layers(Ether, IPv6, type=0x86dd)
+        bind_layers(IPv6, IntShim, nh=0xfd)
+        bind_layers(IntShim, IntHeader, next_proto=0x11)
+        bind_layers(IntHeader, IntMeta1)
+        bind_layers(IntMeta1, IntMeta2)
+        bind_layers(IntMeta2, SourceIntMeta)
+        bind_layers(SourceIntMeta, UDP)
+
+        bind_layers(Ether, IP, type=0x0800)
+        bind_layers(IP, IntShim, proto=0xfd)
+        bind_layers(IntShim, IntHeader, next_proto=0x06)
+        bind_layers(IntHeader, IntMeta1)
+        bind_layers(IntMeta1, IntMeta2)
+        bind_layers(IntMeta2, SourceIntMeta)
         bind_layers(SourceIntMeta, TCP)
+
+        bind_layers(Ether, IPv6, type=0x86dd)
+        bind_layers(IPv6, IntShim, nh=0xfd)
+        bind_layers(IntShim, IntHeader, next_proto=0x06)
+        bind_layers(IntHeader, IntMeta1)
+        bind_layers(IntMeta1, IntMeta2)
+        bind_layers(IntMeta2, SourceIntMeta)
+        bind_layers(SourceIntMeta, TCP)
+
         logger.debug("Completed binding packet layers")
 
     def start_sniffing(self, iface, ip_proto=0xfd):
@@ -125,18 +152,31 @@ def extract_int_data(packet):
     if hops > 3:
         raise Exception('Cannot support hops > 3')
 
+    ether_type = packet[Ether].type
+    if ether_type == 0x0800:
+        src_addr = packet[IP].src
+        dst_addr = packet[IP].dst
+        protocol = packet[IP].proto
+    else:
+        src_addr = packet[IPv6].src
+        dst_addr = packet[IPv6].dst
+        protocol = packet[IPv6].nh
+
+    # TODO - Try to replace try with if statement and except with else which
+    #   currently is not working
+    # if packet[IntShim].next_proto == 0x11
     try:
         dport = packet[UDP].dport
-    except Exception as e:
-        logger.debug('Must be a TCP packet')
+    except Exception:
         dport = packet[TCP].dport
+
     try:
         out = dict(
             devMac=orig_mac,
-            devAddr=packet[IP].src,
-            dstAddr=packet[IP].dst,
+            devAddr=src_addr,
+            dstAddr=dst_addr,
             dstPort=dport,
-            protocol=packet[IP].proto,
+            protocol=protocol,
             packetLen=len(packet),
         )
     except Exception as e:
@@ -147,11 +187,18 @@ def extract_int_data(packet):
 
 
 def log_int_packet(packet):
+    logger.debug('Received INT packet of length - [%s] to log - [%s]',
+                 len(packet), packet.summary())
+    logger.debug('Shim length - [%s]', packet[IntShim].length)
+    logger.debug('INT Header meta_len - [%s]', packet[IntHeader].meta_len)
+
+    # TODO - Try to replace try with if statement and except with else which
+    #   currently is not working
+    # if packet[IntShim].next_proto == 0x11
     try:
         sport = packet[UDP].sport
         dport = packet[UDP].dport
-    except Exception as e:
-        logger.debug('Must be a TCP packet')
+    except Exception:
         sport = packet[TCP].sport
         dport = packet[TCP].dport
 
@@ -159,8 +206,20 @@ def log_int_packet(packet):
         logger.debug('Packet length - [%s]', len(packet))
         logger.debug('ETH dst_mac - [%s] src_mac - [%s] type - [%s]',
                      packet[Ether].dst, packet[Ether].src, packet[Ether].type)
+
+        if packet[Ether].type == 0x0800:
+            logger.info('Parsing IPv4 data')
+            src_addr = packet[IP].src
+            dst_addr = packet[IP].dst
+            protocol = packet[IP].proto
+        else:
+            logger.info('Parsing IPv6 data')
+            src_addr = packet[IPv6].src
+            dst_addr = packet[IPv6].dst
+            protocol = packet[IPv6].nh
+
         logger.debug('IP src - [%s] dst - [%s] proto - [%s]',
-                     packet[IP].src, packet[IP].dst, packet[IP].proto)
+                     src_addr, dst_addr, protocol)
         logger.debug('sport - [%s] dport - [%s]', sport, dport)
         logger.debug('IH remaining_hops - [%s]',
                      packet[IntHeader].remaining_hop_cnt)
@@ -300,12 +359,10 @@ class SimpleAE(PacketAnalytics):
         :return: T/F - True when an attack has been triggered
         """
         logger.debug('Packet data - [%s]', packet.summary())
-        protocol = None
-        try:
+        if packet[Ether].type == 0x0800:
             protocol = packet[IP].proto
-        except Exception as e:
-            logger.debug('Unable to process packet - [%s] with error [%s]',
-                         packet.summary(), e)
+        else:
+            protocol = packet[IPv6].nh
 
         if protocol == ip_proto:
             int_data = extract_int_data(packet)
