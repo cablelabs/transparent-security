@@ -36,6 +36,17 @@ control TpsCoreIngress(inout headers hdr,
                        inout standard_metadata_t standard_metadata) {
 
     action data_forward(macAddr_t dstAddr, egressSpec_t port) {
+
+        clone3(CloneType.I2E, I2E_CLONE_SESSION_ID, standard_metadata);
+
+        hdr.ipv4.protocol = hdr.int_shim.next_proto;
+        hdr.ipv6.next_hdr_proto = hdr.int_shim.next_proto;
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen - ((bit<16>)hdr.int_shim.length * 4);
+        hdr.int_shim.setInvalid();
+        hdr.int_header.setInvalid();
+        hdr.int_meta.setInvalid();
+        hdr.int_meta_2.setInvalid();
+
         standard_metadata.egress_spec = port;
         hdr.ethernet.src_mac = hdr.ethernet.dst_mac;
         hdr.ethernet.dst_mac = dstAddr;
@@ -67,56 +78,7 @@ control TpsCoreIngress(inout headers hdr,
         default_action = NoAction();
     }
 
-    action data_inspect_packet(bit<32> switch_id) {
-
-        hdr.int_meta_3.setValid();
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen + ((bit<16>)hdr.int_header.meta_len * 4);
-        hdr.int_shim.length = hdr.int_shim.length + (bit<8>)hdr.int_header.meta_len;
-        hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt - 1;
-        hdr.int_meta_3.switch_id = switch_id;
-        recirculate<standard_metadata_t>(standard_metadata);
-    }
-
-    table data_inspection_t {
-        key = {
-            hdr.ethernet.src_mac: exact;
-        }
-        actions = {
-            data_inspect_packet;
-            NoAction;
-        }
-        size = 1024;
-        default_action = NoAction();
-    }
-
-    action data_clone() {
-
-        clone3(CloneType.I2E, I2E_CLONE_SESSION_ID, standard_metadata);
-
-        hdr.ipv4.protocol = hdr.int_shim.next_proto;
-        hdr.ipv6.next_hdr_proto = hdr.int_shim.next_proto;
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen - ((bit<16>)hdr.int_shim.length * 4);
-        hdr.int_shim.setInvalid();
-        hdr.int_header.setInvalid();
-        hdr.int_meta.setInvalid();
-        hdr.int_meta_2.setInvalid();
-        hdr.int_meta_3.setInvalid();
-    }
-
-    table data_clone_t {
-        actions = {
-            data_clone;
-            NoAction;
-        }
-        size = 1024;
-        default_action = NoAction;
-    }
-
      apply {
-        data_inspection_t.apply();
-        if (standard_metadata.instance_type != 0) {
-            data_clone_t.apply();
-        }
         if (hdr.ipv4.isValid()) {
             data_forward_ipv4_t.apply();
         }
@@ -134,7 +96,7 @@ V1Switch(
     TpsCoreParser(),
     TpsVerifyChecksum(),
     TpsCoreIngress(),
-    TpsEgress(),
+    TpsCoreEgress(),
     TpsComputeChecksum(),
     TpsDeparser()
 ) main;
