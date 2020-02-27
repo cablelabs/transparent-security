@@ -15,7 +15,11 @@
 # receiver's log file
 ---
 - name: Clearing table
-  shell: "/usr/bin/python3 {{ remote_tps_dir }}/bin/clear_p4_table.py -a {{ switch.grpc }} -d {{ switch.id }} -n {{ ingress_classname }}.{{ table_name }}"
+  command: |
+    /usr/bin/python3 {{ remote_tps_dir }}/bin/clear_p4_table.py -a {{ switch.grpc }} \
+    -d {{ switch.id }} -n {{ ingress_classname }}.{{ table_name }}
   with_items: "{{ table_names }}"
+  register: cmd_out
+  changed_when: cmd_out is not failed
   loop_control:
     loop_var: table_name

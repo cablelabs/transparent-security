@@ -28,6 +28,7 @@
       git:
         repo: https://github.com/p4lang/p4runtime-shell
         dest: "{{ remote_scripts_dir }}/p4runtime-shell"
+        version: master
 
     - name: Copy p4runtime_shell python package to /usr/local/lib/python3.5/dist-packages
       become: yes
@@ -59,21 +60,22 @@
       retries: 3
       delay: 5
 
-    - name: Upgrade pip
-      command: sudo pip3 install --upgrade setuptools pip
-
-    - name: install pip3 grpcio and {{ trans_sec_dir }} dependencies
+    - name: upgrade pip3, grpcio, & ipython
       become: yes
       pip:
         name:
+          - pip
           - grpcio==1.17
           - ipython==7.0
-        executable: /usr/bin/pip3
+        executable: pip3
+        state: latest
       retries: 3
       delay: 5
 
     - name: install p4runtime-shell dependencies into python3 runtime
       command: "sudo pip3 install -r {{ remote_scripts_dir }}/p4runtime-shell/requirements.txt"
+      register: cmd_out
+      changed_when: cmd_out is not failed
 
     - include_tasks: clear_p4_table.yml
       with_items: "{{ switches }}"

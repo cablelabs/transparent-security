@@ -42,6 +42,8 @@
       command: ./install_deps.sh
       args:
         chdir: ~/behavioral-model
+      register: cmd_out
+      changed_when: cmd_out is not failed
       async: 600
 
 - import_playbook: p4runtime.yml
@@ -53,16 +55,22 @@
       command: ./autogen.sh
       args:
         chdir: ~/behavioral-model
+      register: cmd_out
+      changed_when: cmd_out is not failed
 
     - name: configure behavioral-model
       command: ./configure --enable-debugger --with-pi
       args:
         chdir: ~/behavioral-model
+      register: cmd_out
+      changed_when: cmd_out is not failed
 
     - name: make behavioral-model
       command: make -j4
       args:
         chdir: ~/behavioral-model
+      register: cmd_out
+      changed_when: cmd_out is not failed
       async: 1200
 
       ignore_errors: yes
@@ -71,33 +79,47 @@
       command: sudo make install
       args:
         chdir: ~/behavioral-model
+      register: cmd_out
+      changed_when: cmd_out is not failed
 
     - name: ldconfig behavioral-model
       command: sudo ldconfig
       args:
         chdir: ~/behavioral-model
+      register: cmd_out
+      changed_when: cmd_out is not failed
 
     - name: autogen behavioral-model target simple_switch_grpc
       command: ./autogen.sh
       args:
         chdir: ~/behavioral-model/targets/simple_switch_grpc
+      register: cmd_out
+      changed_when: cmd_out is not failed
 
     - name: configure behavioral-model target simple_switch_grpc
       command: ./configure --with-pi
       args:
         chdir: ~/behavioral-model/targets/simple_switch_grpc
+      register: cmd_out
+      changed_when: cmd_out is not failed
 
     - name: make behavioral-model target simple_switch_grpc
       command: make -j4
       args:
         chdir: ~/behavioral-model/targets/simple_switch_grpc
+      register: cmd_out
+      changed_when: cmd_out is not failed
 
     - name: install behavioral-model simple_switch_grpc
       command: sudo make install
       args:
         chdir: ~/behavioral-model/targets/simple_switch_grpc
+      register: cmd_out
+      changed_when: cmd_out is not failed
 
     - name: ldconfig behavioral-model target simple_switch_grpc
       command: sudo ldconfig
       args:
         chdir: ~/behavioral-model/targets/simple_switch_grpc
+      register: cmd_out
+      changed_when: cmd_out is not failed

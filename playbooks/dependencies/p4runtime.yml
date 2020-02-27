@@ -39,34 +39,40 @@
         repo: https://github.com/p4lang/PI
         dest: ~/PI
         version: "{{ pi_version }}"
+        recursive: yes
         force: yes
-
-    - name: get PI submodules
-      command: git submodule update --init --recursive
-      args:
-        chdir: ~/PI
 
     - name: autogen PI
       command: ./autogen.sh
       args:
         chdir: ~/PI
+      register: cmd_out
+      changed_when: cmd_out is not failed
 
     - name: configure PI
       command: ./configure --with-proto
       args:
         chdir: ~/PI
+      register: cmd_out
+      changed_when: cmd_out is not failed
 
     - name: make PI
       command: make -j4
       args:
         chdir: ~/PI
+      register: cmd_out
+      changed_when: cmd_out is not failed
 
     - name: install PI
       command: sudo make install
       args:
         chdir: ~/PI
+      register: cmd_out
+      changed_when: cmd_out is not failed
 
     - name: ldconfig PI
       command: sudo ldconfig
       args:
         chdir: ~/PI
+      register: cmd_out
+      changed_when: cmd_out is not failed

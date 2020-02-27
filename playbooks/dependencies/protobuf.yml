@@ -44,38 +44,47 @@
         repo: https://github.com/protocolbuffers/protobuf
         dest: ~/protobuf
         version: "{{ protobuf_version }}"
-
-    - name: get protobuf submodules
-      command: git submodule update --init --recursive
-      args:
-        chdir: ~/protobuf
+        recursive: yes
+        force: yes
 
     - name: autogen protobuf
       command: ./autogen.sh
       args:
         chdir: ~/protobuf
+      register: cmd_out
+      changed_when: cmd_out is not failed
 
     - name: configure protobuf
       command: ./configure --prefix=/usr
       args:
         chdir: ~/protobuf
+      register: cmd_out
+      changed_when: cmd_out is not failed
 
     - name: make protobuf
       command: make -j4
       args:
         chdir: ~/protobuf
+      register: cmd_out
+      changed_when: cmd_out is not failed
 
     - name: make install protobuf
       command: sudo make install
       args:
         chdir: ~/protobuf
+      register: cmd_out
+      changed_when: cmd_out is not failed
 
     - name: ldconfig protobuf
       command: sudo ldconfig
       args:
         chdir: ~/protobuf
+      register: cmd_out
+      changed_when: cmd_out is not failed
 
     - name: install python built dependencies
       command: sudo python setup.py install
       args:
         chdir: ~/protobuf/python
+      register: cmd_out
+      changed_when: cmd_out is not failed

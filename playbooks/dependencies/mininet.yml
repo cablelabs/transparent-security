@@ -39,6 +39,9 @@
       git:
         repo: https://github.com/mininet/mininet
         dest: ~/mininet
+        version: master
 
     - name: install mininet
       command: ~/mininet/util/install.sh -nwv
+      register: cmd_out
+      changed_when: cmd_out is not failed

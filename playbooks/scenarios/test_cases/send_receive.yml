@@ -15,7 +15,7 @@
 # receiver's log file
 ---
 # Create packet sniffer
-- hosts: "{{ 'localhost' if not rec_host or rec_host=='' else rec_host }}"
+- hosts: "{{ 'localhost' if not rec_host or rec_host|length == 0 else rec_host }}"
   gather_facts: no
   vars:
     receive_timeout: "{{ receiver_timeout_seconds | default(60) }}"
@@ -43,19 +43,27 @@
         state: touch
         mode: 0777
 
-    - set_fact:
-        receive_cmd: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/receive_packets.py -i {{ receiver_intf }} -f {{ receiver_log_file }} -d {{ receive_timeout }} -ih {{ hops }} -v {{ ip_ver }}"
+    - name: Create receive packets command
+      set_fact:
+        receive_cmd: >
+          /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/receive_packets.py
+          -i {{ receiver_intf }} -f {{ receiver_log_file }} -d {{ receive_timeout }} -ih {{ hops }} -v {{ ip_ver }}
 
     - debug:
         var: receive_cmd
 
-    - name: Receive and log packets from "{{ receiver.name }}" logged at {{ receiver_log_file }} with async timeout {{ receive_timeout }} for potentially {{ send_packet_count }} packets
-      shell: "{{ receive_cmd }}"
+    - name: |
+        Receive and log packets from "{{ receiver.name }}" logged at {{ receiver_log_file }}
+        with async timeout {{ receive_timeout }} for potentially {{ send_packet_count }} packets
+      become: yes
+      command: "{{ receive_cmd }}"
+      register: cmd_out
+      changed_when: cmd_out is not failed
       async: "{{ receive_timeout }}"
       poll: 0
 
 # Generate packets from the sender
-- hosts: "{{ 'localhost' if not send_host or send_host=='' else send_host }}"
+- hosts: "{{ 'localhost' if not send_host or send_host|length == 0 else send_host }}"
   gather_facts: no
   vars:
     send_packet_count: "{{ send_packet_count | default(1) }}"
@@ -70,6 +78,7 @@
     ip_ver: "{{ ip_version | default('4') }}"
     sender_ip: "{{ sender.ip if ip_ver == '4' else sender.ipv6 }}"
     receiver_ip: "{{ receiver.ip if ip_ver == '4' else receiver.ipv6 }}"
+    int_hdr_tmplt: ../templates/send_int_hdr.yml.j2
   tasks:
     - name: Create sender log directory {{ host_log_dir }}
       file:
@@ -83,8 +92,15 @@
         state: touch
         mode: 0777
 
-    - set_fact:
-        send_cmd: "sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/send_packets.py -y {{ send_delay }} -i {{ interval }} -it {{ loops }} -itd {{ loop_delay }} -z {{ sender_intf }} -sa {{ sender_ip }} -r {{ receiver_ip }} -sp {{ send_src_port }} -p {{ send_port }} -f {{ sender_log_file }} -c {{ send_packet_count }} -e {{ sender.mac }} -s {{ switch.mac }} -pr {{ send_protocol }} -m '{{ send_msg }}'"
+    - name: Create send command
+      become: yes
+      set_fact:
+        send_cmd: >
+          /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/send_packets.py
+          -y {{ send_delay }} -i {{ interval }} -it {{ loops }} -itd {{ loop_delay }}
+          -z {{ sender_intf }} -sa {{ sender_ip }} -r {{ receiver_ip }} -sp {{ send_src_port }}
+          -p {{ send_port }} -f {{ sender_log_file }} -c {{ send_packet_count }} -e {{ sender.mac }}
+          -s {{ switch.mac }} -pr {{ send_protocol }} -m '{{ send_msg }}'
 
     - debug:
         var: inspection_data
@@ -93,17 +109,21 @@
       block:
       - name: Create INT config file to {{ int_hdr_df }} for send_packets.py
         template:
-          src: ../templates/send_int_hdr.yml.j2
+          src: "{{ int_hdr_tmplt }}"
           dest: "{{ int_hdr_df }}"
 
-      - set_fact:
+      - name: Create send command
+        set_fact:
           send_cmd: "{{ send_cmd }} -ih {{ int_hdr_df }}"
       - debug:
           var: send_cmd
-      when: inspection_data is defined and inspection_data != ""
+      when: inspection_data is defined and inspection_data|length != 0
 
-    - name: Sending packets with command {{ send_cmd }} to {{ receiver_ip }}
-      shell: "{{ send_cmd }}"
+    - name: Sending packets with command {{ send_cmd }}
+      become: yes
+      command: "{{ send_cmd }}"
+      register: cmd_out
+      changed_when: cmd_out is not failed
       async: 180
 
 # Validate sent packets were received
@@ -120,19 +140,31 @@
   tasks:
     - name: Create log count command for non-INT packets
       set_fact:
-        count_cmd: "grep {{ receiver_ip | ipaddr }} {{ receiver_log_file }} | grep '/ Raw' | grep {{ send_port }} | grep {{ send_src_port }} | wc -l"
+        count_cmd: >
+          grep {{ receiver_ip | ipaddr }} {{ receiver_log_file }}
+          | grep '/ Raw'
+          | grep {{ send_port }}
+          | grep {{ send_src_port }}
+          | wc -l
       when: hops|int == 0
 
     - name: Create log count command for INT packets
       set_fact:
-        count_cmd: "grep {{ receiver_ip | ipaddr }} {{ receiver_log_file }} | grep 'INT Packet data' | grep {{ send_port }} | grep {{ send_src_port }} | wc -l"
+        count_cmd: >
+          grep {{ receiver_ip | ipaddr }} {{ receiver_log_file }}
+          | grep 'INT Packet data'
+          | grep {{ send_port }}
+          | grep {{ send_src_port }}
+          | wc -l
       when: hops|int > 0
 
     - name: Parse file with the count command [{{ count_cmd }}]
       shell: "{{ count_cmd }}"
       register: count_out
+      changed_when: count_out is not failed
 
-    - set_fact:
+    - name: Retrieving the packet count
+      set_fact:
         packet_count: "{{ count_out['stdout_lines'][0] | int }}"
 
     - name: Validate max [{{ max_packet_count }}] NOT < actual [{{ packet_count }}] OR min [{{ min_packet_count }}] NOT > actual [{{ packet_count }}]

@@ -49,12 +49,16 @@
     - name: install {{ dest_dir }} dependencies into python runtime
       become: yes
       command: "pip install -r {{ dest_dir }}/requirements.txt"
+      register: cmd_out
+      changed_when: cmd_out is not failed
       retries: 3
       delay: 5
 
     - name: install {{ dest_dir }} into python runtime
       become: yes
       command: "pip install -e {{ dest_dir }}"
+      register: cmd_out
+      changed_when: cmd_out is not failed
       retries: 3
       delay: 5
 
@@ -67,5 +71,7 @@
 
     - name: Copy TPS P4 includes from {{ dest_dir }}/p4/include/* to {{ share_dir }}/share/p4c/p4include/
       become: yes
-      shell: "cp {{ dest_dir }}/p4/include/* {{ share_dir }}/share/p4c/p4include/"
-      when: share_dir != ''
+      shell: "cp {{ dest_dir }}/p4/include/*.p4 {{ share_dir }}/share/p4c/p4include/"
+      register: cmd_out
+      changed_when: cmd_out is not failed
+      when: share_dir|length > 0
