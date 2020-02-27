@@ -60,8 +60,8 @@ class CoreController(AbstractController):
             action_params = {
                 'switch_id': sw_info['id'],
             }
-            table_name = '{}.data_inspection_t'.format(self.p4_ingress)
-            action_name = '{}.data_inspect_packet'.format(self.p4_ingress)
+            table_name = '{}.data_inspection_t'.format(self.p4_egress)
+            action_name = '{}.data_inspect_packet'.format(self.p4_egress)
             match_fields = {'hdr.ethernet.src_mac': south_node_mac}
             logger.info(
                 'Insert params into table - [%s] for action [%s] ',
@@ -73,17 +73,6 @@ class CoreController(AbstractController):
                 match_fields=match_fields,
                 action_name=action_name,
                 action_params=action_params)
-            sw.write_table_entry(table_entry)
-            table_name = '{}.data_clone_t'.format(self.p4_ingress)
-            action_name = '{}.data_clone'.format(self.p4_ingress)
-            logger.info(
-                'Insert params into table - [%s] for action [%s] ',
-                'with params [%s] fields [%s] key hdr.ethernet.src_mac [%s]',
-                table_name, action_name, south_node_mac)
-            table_entry = self.p4info_helper.build_table_entry(
-                table_name=table_name,
-                action_name=action_name,
-            )
             sw.write_table_entry(table_entry)
 
     def make_north_rules(self, sw, sw_info, north_link):

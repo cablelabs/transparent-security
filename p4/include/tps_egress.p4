@@ -29,6 +29,40 @@ control TpsEgress(inout headers hdr,
 }
 
 /*************************************************************************
+****************  C O R E   E G R E S S   P R O C E S S I N G   ********************
+*************************************************************************/
+
+control TpsCoreEgress(inout headers hdr,
+                 inout metadata meta,
+                 inout standard_metadata_t standard_metadata) {
+
+    action data_inspect_packet(bit<32> switch_id) {
+
+        hdr.int_meta_3.setValid();
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen + ((bit<16>)hdr.int_header.meta_len * 4);
+        hdr.int_shim.length = hdr.int_shim.length + (bit<8>)hdr.int_header.meta_len;
+        hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt - 1;
+        hdr.int_meta_3.switch_id = switch_id;
+
+    }
+
+    table data_inspection_t {
+        key = {
+            hdr.ethernet.src_mac: exact;
+        }
+        actions = {
+            data_inspect_packet;
+            NoAction;
+        }
+        size = 1024;
+        default_action = NoAction();
+    }
+
+    apply {
+        data_inspection_t.apply();
+     }
+}
+/*************************************************************************
 ***********************  D E P A R S E R  ********************************
 *************************************************************************/
 
