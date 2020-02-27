@@ -162,9 +162,12 @@ def extract_int_data(packet):
         dst_addr = packet[IPv6].dst
         protocol = packet[IPv6].nh
 
-    if packet[IntShim].next_proto == 0x11:
+    # TODO - Try to replace try with if statement and except with else which
+    #   currently is not working
+    # if packet[IntShim].next_proto == 0x11
+    try:
         dport = packet[UDP].dport
-    else:
+    except Exception:
         dport = packet[TCP].dport
 
     try:
@@ -189,10 +192,13 @@ def log_int_packet(packet):
     logger.debug('Shim length - [%s]', packet[IntShim].length)
     logger.debug('INT Header meta_len - [%s]', packet[IntHeader].meta_len)
 
-    if packet[IntShim].next_proto == 0x11:
+    # TODO - Try to replace try with if statement and except with else which
+    #   currently is not working
+    # if packet[IntShim].next_proto == 0x11
+    try:
         sport = packet[UDP].sport
         dport = packet[UDP].dport
-    else:
+    except Exception:
         sport = packet[TCP].sport
         dport = packet[TCP].dport
 
