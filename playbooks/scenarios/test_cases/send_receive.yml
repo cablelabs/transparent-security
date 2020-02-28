@@ -159,7 +159,7 @@
       when: hops|int > 0
 
     - name: Parse file with the count command [{{ count_cmd }}]
-      shell: "{{ count_cmd }}"
+      shell: "set -e; {{ count_cmd }}"
       register: count_out
       changed_when: count_out is not failed
 
