@@ -23,7 +23,10 @@
     clone: True
   tasks:
     - set_fact:
-        add_clone_entry_cmd: "/usr/bin/python {{ remote_tps_dir }}/bin/write_to_clone.py -a {{ switch.grpc }} -d {{ switch.id }} -p {{ switch.runtime_p4info }} -l {{ log_dir }} -lf {{ log_file }} -c {{ True }} -ce {{ switch.clone_egress }}"
+        add_clone_entry_cmd: >
+          /usr/bin/python {{ remote_tps_dir }}/bin/write_to_clone.py
+          -a {{ switch.grpc }} -d {{ switch.id }} -p {{ switch.runtime_p4info }} -l {{ log_dir }}
+          -lf {{ log_file }} -c {{ True }} -ce {{ switch.clone_egress }}
 
     - name: Create log directory {{ log_dir }}
       file:
@@ -32,8 +35,6 @@
         mode: 0777
 
     - name: Build clone entry with command [{{ add_clone_entry_cmd }}]
-      shell: "{{ add_clone_entry_cmd }}"
-      retries: 5
-      delay: 5
-      register: result
-      until: result.rc == 0
+      command: "{{ add_clone_entry_cmd }}"
+      register: cmd_out
+      changed_when: cmd_out is not failed
