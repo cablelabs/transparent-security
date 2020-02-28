@@ -17,7 +17,7 @@
 - import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
     te_conf_file: "~/di-forward-create-{{ send_protocol }}.yml"
-    p4_classname: "{{ ingress_classname }}"
+    p4_classname: "{{ data_forward_classname | default(ingress_classname) }}"
     p4_table_name: "{{ data_forward_table }}"
     p4_action_name: "{{ data_forward_action }}"
     p4_table_match_fields: "{{ data_forward_match_fields }}"
@@ -29,7 +29,7 @@
 - import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
     te_conf_file: "~/di-inspect-create-{{ send_protocol }}.yml"
-    p4_classname: "{{ ingress_classname }}"
+    p4_classname: "{{ data_inspection_classname | default(ingress_classname) }}"
     p4_table_name: "{{ data_inspection_table }}"
     p4_action_name: "{{ data_inspection_action }}"
     p4_table_match_fields: "{{ data_inspection_match_fields }}"
@@ -52,7 +52,7 @@
 - import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
     te_conf_file: "~/di-inspect-delete-{{ send_protocol }}.yml"
-    p4_classname: "{{ ingress_classname }}"
+    p4_classname: "{{ data_inspection_classname | default(ingress_classname) }}"
     p4_table_name: "{{ data_inspection_table }}"
     p4_table_match_fields: "{{ data_inspection_match_fields }}"
     p4_te_log_dir: "{{ host_log_dir }}"
@@ -74,7 +74,7 @@
 - import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
     te_conf_file: "~/di-forward-delete-{{ send_protocol }}.yml"
-    p4_classname: "{{ ingress_classname }}"
+    p4_classname: "{{ data_forward_classname | default(ingress_classname) }}"
     p4_table_name: "{{ data_forward_table }}"
     p4_table_match_fields: "{{ data_forward_match_fields }}"
     p4_te_log_dir: "{{ host_log_dir }}"

@@ -14,7 +14,7 @@
 # Jinja2 template for use as an input to insert_p4_table_entry.py
 ---
 shim:
-  length: {{ (inspection_data|length) * 3 + 4 }}
+  length: {{ 4 + 3 + (inspection_data|length) - 1 }}
 meta:
 {%  for int_data in inspection_data %}
 - switch_id: {{ int_data.switch_id }}
