@@ -38,13 +38,14 @@ switches:
     id: 0
     runtime_p4info: {{ remote_scripts_dir }}/p4/{{ p4_prog }}.p4info
     runtime_json: {{ remote_scripts_dir }}/p4/{{ p4_prog }}.json
+    clone_egress: {{ clone_egress_port }}
     subnet: 10.1.1.0
     type: {{ p4_prog }}
     mac: 00:00:00:01:01:00
     grpc: 127.0.0.1:50051
 external:
-  analytics_engine:
-    name: ae
+  clone:
+    name: clone
     id: {{ ae_dev_intf }}
     ip: {{ ae_ip }}
     ip_port: 0
@@ -60,3 +61,9 @@ links:
     north_facing_port: 2
     latency: 0ms
     bandwidth: null
+  - north_node: clone
+    south_node: {{ p4_prog }}
+    north_facing_port: 3
+    latency: 0ms
+    bandwidth: null
+    l2ptr: 53261
