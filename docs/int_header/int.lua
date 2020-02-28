@@ -90,6 +90,8 @@ function tps_proto.dissector(buffer,pinfo,tree)
     header_offset = header_offset + 12
     if next_proto == 0x11 then
         Dissector.get("udp"):call(buffer:range(header_offset):tvb(), pinfo, tree)
+    elseif next_proto == 0x06 then
+        Dissector.get("tcp"):call(buffer:range(header_offset):tvb(), pinfo, tree)
     end
 end
 ip_table = DissectorTable.get("ip.proto")

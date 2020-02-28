@@ -163,8 +163,12 @@ def __create_packet(args, interface):
             pkt = (Ether(src=src_mac, dst=args.switch_ethernet, type=0x86dd) /
                    IPv6(dst=args.destination, src=args.source_addr, nh=0xfd))
 
-        pkt = pkt / IntShim(length=int(int_data['shim']['length']),
-                            next_proto=0x11)
+        if args.protocol == 'UDP':
+            pkt = pkt / IntShim(length=int(int_data['shim']['length']),
+                                next_proto=0x11)
+        elif args.protocol == 'TCP':
+            pkt = pkt / IntShim(length=int(int_data['shim']['length']),
+                                next_proto=0x06)
 
         int_hops = len(int_data['meta'])
         if int_hops > 0:
@@ -201,7 +205,7 @@ def __create_packet(args, interface):
 
     if args.protocol == 'TCP':
         logger.info('Generating a TCP packet')
-        pkt = pkt / TCP(dport=args.port, sport=args.source_port, dataofs=5)
+        pkt = pkt / TCP(dport=args.port, sport=args.source_port)
     elif args.protocol == 'UDP':
         logger.info('Generating a UDP packet')
         pkt = pkt / UDP(dport=args.port, sport=args.source_port)

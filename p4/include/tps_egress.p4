@@ -60,7 +60,7 @@ control TpsCoreEgress(inout headers hdr,
 
     apply {
         data_inspection_t.apply();
-     }
+    }
 }
 /*************************************************************************
 ***********************  D E P A R S E R  ********************************
