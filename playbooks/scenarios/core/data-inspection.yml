@@ -15,7 +15,7 @@
 ---
 - import_playbook: ../test_cases/write_clone_entry.yml
 
-# Basic Data Inspection scenario for UDP - sending INT packet with one hop expect to result in INT headers with 2 hops
+# Basic Data Inspection scenario for UDP on clone port - sending INT packet with two hops expect to result in INT headers with 3 hops
 - import_playbook: ../single_switch/data_inspection_basic.yml
   vars:
     send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
@@ -67,7 +67,7 @@
     sr3_data_inspection_int: "{{ sr1_data_inspection_int }}"
     sr3_rec_int_hops: "{{ sr2_rec_int_hops }}"
 
-# Basic Data Inspection scenario for UDP - sending INT packet with one hop expect to result in INT headers with 2 hops
+# Basic Data Inspection scenario for UDP on egress port - sending INT packet with two hop expect to result in INT headers with zero hops
 - import_playbook: ../single_switch/data_inspection_basic.yml
   vars:
     send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
