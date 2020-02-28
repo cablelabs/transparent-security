@@ -1,4 +1,6 @@
-# transparent-security CI
+# transparent-security automation
+
+The scripts outlined here have been designed to be executed within a CI server
 
 ## Table of Contents
 

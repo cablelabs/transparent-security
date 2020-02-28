@@ -32,9 +32,12 @@
       git:
         repo: https://github.com/p4lang/p4runtime-shell
         dest: "{{ remote_scripts_dir }}/p4runtime-shell"
+        version: master
 
     - name: Build p4runtime-shell Docker container from {{ remote_scripts_dir }}/p4runtime-shell
       become: yes
       command: docker build -t p4lang/p4runtime-sh .
       args:
         chdir: "{{ remote_scripts_dir }}/p4runtime-shell"
+      register: cmd_out
+      changed_when: cmd_out is not failed

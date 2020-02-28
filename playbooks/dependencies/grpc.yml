@@ -44,25 +44,26 @@
         version: "{{ grpc_version }}"
         force: yes
 
-    - name: get grpc submodules
-      command: git submodule update --init --recursive
-      args:
-        chdir: ~/grpc
-
     - name: build grpc
       command: make -j4
       args:
         chdir: ~/grpc
+      register: cmd_out
+      changed_when: cmd_out is not failed
 
     - name: configure grpc
       command: sudo make install
       args:
         chdir: ~/grpc
+      register: cmd_out
+      changed_when: cmd_out is not failed
 
     - name: ldconfig grpc
       command: sudo ldconfig
       args:
         chdir: ~/grpc
+      register: cmd_out
+      changed_when: cmd_out is not failed
 
     - name: install grpcio
       become: yes

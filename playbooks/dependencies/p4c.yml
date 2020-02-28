@@ -45,11 +45,6 @@
           - pkg-config
           - tcpdump
           - doxygen
-#          - python-scapy
-#          - python-ipaddr
-#          - python-ply
-#          - graphviz
-#          - texlive-full
 
     - name: pip install
       become: yes
@@ -64,13 +59,7 @@
         repo: https://github.com/p4lang/p4c
         dest: ~/p4c
         recursive: yes
-        track_submodules: yes
         version: "{{ p4c_version }}"
-
-    - name: get p4c submodules
-      command: git submodule update --init --recursive
-      args:
-        chdir: ~/p4c
 
     - name: Create p4c build directory
       file:
@@ -81,13 +70,19 @@
       command: cmake .. -DCMAKE_BUILD_TYPE=DEBUG -DENABLE_EBPF=OFF -DENABLE_BMV2=ON
       args:
         chdir: ~/p4c/build
+      register: cmd_out
+      changed_when: cmd_out is not failed
 
     - name: make -j4
       command: make -j4
       args:
         chdir: ~/p4c/build
+      register: cmd_out
+      changed_when: cmd_out is not failed
 
     - name: install p4c
       command: sudo make install
       args:
         chdir: ~/p4c/build
+      register: cmd_out
+      changed_when: cmd_out is not failed
