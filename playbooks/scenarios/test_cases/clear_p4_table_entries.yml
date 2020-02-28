@@ -68,7 +68,6 @@
           - grpcio==1.17
           - ipython==7.0
         executable: pip3
-        state: latest
       retries: 3
       delay: 5
 
