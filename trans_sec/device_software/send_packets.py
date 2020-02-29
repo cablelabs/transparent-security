@@ -196,9 +196,19 @@ def __create_packet(args, interface):
                 ctr += 1
     else:
         if ip_ver == 4:
-            ip_hdr = IP(dst=args.destination, src=args.source_addr)
+            if args.protocol == 'TCP':
+                ip_hdr = IP(dst=args.destination, src=args.source_addr,
+                            proto=0x06)
+            elif args.protocol == 'UDP':
+                ip_hdr = IP(dst=args.destination, src=args.source_addr,
+                            proto=0x11)
         else:
-            ip_hdr = IPv6(dst=args.destination, src=args.source_addr)
+            if args.protocol == 'TCP':
+                ip_hdr = IPv6(dst=args.destination, src=args.source_addr,
+                              nh=0x06)
+            elif args.protocol == 'UDP':
+                ip_hdr = IPv6(dst=args.destination, src=args.source_addr,
+                              nh=0x11)
         pkt = Ether(src=src_mac, dst=args.switch_ethernet) / ip_hdr
 
     logger.info('Packet to emit - [%s]', pkt.summary())
