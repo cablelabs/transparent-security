@@ -16,8 +16,6 @@ import argparse
 import logging
 import sys
 
-import yaml
-
 from trans_sec.p4runtime_lib.bmv2 import Bmv2SwitchConnection
 from trans_sec.p4runtime_lib.helper import P4InfoHelper
 
@@ -42,24 +40,6 @@ def get_args():
     parser.add_argument('-ce', '--clone-egress', type=int, required=False,
                         default=0, help='Clone egress port')
     return parser.parse_args()
-
-
-def read_yaml_file(config_file_path):
-    """
-    Reads a yaml file and returns a dict representation of it
-    :return: a dict of the yaml file
-    """
-    logger.debug('Attempting to load configuration file - ' + config_file_path)
-    config_file = None
-    try:
-        with open(config_file_path, 'r') as config_file:
-            config = yaml.safe_load(config_file)
-            logger.info('Loaded configuration')
-        return config
-    finally:
-        if config_file:
-            logger.info('Closing configuration file')
-            config_file.close()
 
 
 if __name__ == '__main__':

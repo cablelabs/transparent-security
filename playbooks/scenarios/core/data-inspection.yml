@@ -14,6 +14,8 @@
 # one will be demonstrating dropped packets
 ---
 - import_playbook: ../test_cases/write_clone_entry.yml
+  vars:
+    clone_entry: True
 
 # Basic Data Inspection scenario for UDP on clone port - sending INT packet with two hops expect to result in INT headers with 3 hops
 - import_playbook: ../single_switch/data_inspection_basic.yml
@@ -119,4 +121,6 @@
     sr3_data_inspection_int: "{{ sr1_data_inspection_int }}"
     sr3_rec_int_hops: "{{ sr2_rec_int_hops }}"
 
-- import_playbook: ../test_cases/clear_clone_entry.yml
+- import_playbook: ../test_cases/write_clone_entry.yml
+  vars:
+    clone_entry: False

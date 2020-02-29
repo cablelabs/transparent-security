@@ -14,6 +14,8 @@
 # one will be demonstrating dropped packets
 ---
 - import_playbook: ../test_cases/write_clone_entry.yml
+  vars:
+    clone_entry: True
 
 # Basic Data Forward scenario for standard UDP Packets on egress port core-eth2
 - import_playbook: ../single_switch/data_forward_basic.yml
@@ -155,4 +157,6 @@
         orig_mac: "{{ sender.mac }}"
     sr1_rec_int_hops: 2
 
-- import_playbook: ../test_cases/clear_clone_entry.yml
+- import_playbook: ../test_cases/write_clone_entry.yml
+  vars:
+    clone_entry: False
