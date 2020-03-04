@@ -75,7 +75,7 @@
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch: "{{ topo_dict.switches.core }}"
     remote_send_host: host1
-    remote_rec_host: clone
+    remote_rec_host: host2
     send_host: "{{ remote_send_host if run_mode == 'remote' else None }}"
     rec_host: "{{ remote_rec_host if run_mode == 'remote' else None }}"
     sender: "{{ topo_dict.hosts[remote_send_host] }}"
