@@ -32,8 +32,8 @@
     receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth2' % core_switch_name }}"
     receiver_log_filename: "udp-flood-receiver-{{ rec_host }}-{{ send_protocol }}-1.out"
     sender_log_filename: "udp-flood-sender-{{ send_host }}-{{ send_protocol }}-1.out"
-    send_port: "{{ range(2000, 10000) | random(seed='one') }}"
-    send_src_port: "{{ range(2000, 10000) | random(seed='two') }}"
+    send_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 1) }}"
+    send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 2) }}"
     send_packet_count: 25
 
 # Sending 50 packets within a second 1x through gateway 2
@@ -55,8 +55,8 @@
     receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth2' % core_switch_name }}"
     receiver_log_filename: "udp-flood-receiver-{{ rec_host }}-{{ send_protocol }}-2.out"
     sender_log_filename: "udp-flood-sender-{{ send_host }}-{{ send_protocol }}-2.out"
-    send_port: "{{ range(2000, 10000) | random(seed='two') }}"
-    send_src_port: "{{ range(2000, 10000) | random(seed='three') }}"
+    send_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 3) }}"
+    send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 4) }}"
     send_packet_count: 50
 
 # Sending 150 packets within a second 2x through gateway 3.
@@ -79,8 +79,8 @@
     receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth2' % core_switch_name }}"
     receiver_log_filename: "udp-flood-receiver-{{ rec_host }}-{{ send_protocol }}-3.out"
     sender_log_filename: "udp-flood-sender-{{ send_host }}-{{ send_protocol }}-3.out"
-    send_port: "{{ range(2000, 10000) | random(seed='four') }}"
-    send_src_port: "{{ range(2000, 10000) | random(seed='five') }}"
+    send_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 5) }}"
+    send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 6) }}"
     send_packet_count: 150
     min_received_packet_count: 99
     max_received_packet_count: 150

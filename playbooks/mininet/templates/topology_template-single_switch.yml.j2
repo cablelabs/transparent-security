@@ -32,6 +32,15 @@ hosts:
     ip_port: any
     mac: 00:00:00:00:02:02
     type: server
+  clone:
+    name: clone
+    id: 3
+    switch_ip: 10.2.5.254
+    ip: 10.2.5.6
+    ipv6: 0000:0000:0000:0000:0000:0002:0002:0002
+    ip_port: any
+    mac: 00:00:00:00:02:03
+    type: server
 switches:
   {{ p4_prog }}:
     name: {{ p4_prog }}
@@ -43,13 +52,6 @@ switches:
     type: {{ p4_prog }}
     mac: 00:00:00:01:01:00
     grpc: 127.0.0.1:50051
-external:
-  clone:
-    name: clone
-    id: {{ ae_dev_intf }}
-    ip: {{ ae_ip }}
-    ip_port: 0
-    mac: {{ switch_mac }}
 links:
   - north_node: {{ p4_prog }}
     south_node: host1
@@ -66,4 +68,3 @@ links:
     north_facing_port: 3
     latency: 0ms
     bandwidth: null
-    l2ptr: 53261

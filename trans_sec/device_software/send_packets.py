@@ -153,8 +153,10 @@ def __create_packet(args, interface):
 
     if args.int_hdr_file:
         int_data = __read_yaml_file(args.int_hdr_file)
+        int_hops = len(int_data['meta'])
+        shim_len = 4 + 3 + int_hops - 1
         logger.info('Int data to add to packet - [%s]', int_data)
-        ip_len = 34 + (int(int_data['shim']['length'])*4)
+        ip_len = 34 + (shim_len * 4)
         if ip_ver == 4:
             pkt = (Ether(src=src_mac, dst=args.switch_ethernet, type=0x0800) /
                    IP(dst=args.destination, src=args.source_addr, len=ip_len,
@@ -164,13 +166,10 @@ def __create_packet(args, interface):
                    IPv6(dst=args.destination, src=args.source_addr, nh=0xfd))
 
         if args.protocol == 'UDP':
-            pkt = pkt / IntShim(length=int(int_data['shim']['length']),
-                                next_proto=0x11)
+            pkt = pkt / IntShim(length=shim_len, next_proto=0x11)
         elif args.protocol == 'TCP':
-            pkt = pkt / IntShim(length=int(int_data['shim']['length']),
-                                next_proto=0x06)
+            pkt = pkt / IntShim(length=shim_len, next_proto=0x06)
 
-        int_hops = len(int_data['meta'])
         if int_hops > 0:
             meta_len = 1
             if int_hops == 1:
@@ -195,6 +194,7 @@ def __create_packet(args, interface):
                         orig_mac=orig_mac)
                 ctr += 1
     else:
+        ip_hdr = None
         if ip_ver == 4:
             if args.protocol == 'TCP':
                 ip_hdr = IP(dst=args.destination, src=args.source_addr,
@@ -209,7 +209,14 @@ def __create_packet(args, interface):
             elif args.protocol == 'UDP':
                 ip_hdr = IPv6(dst=args.destination, src=args.source_addr,
                               nh=0x11)
-        pkt = Ether(src=src_mac, dst=args.switch_ethernet) / ip_hdr
+
+        if ip_ver == 4:
+            pkt = Ether(src=src_mac, dst=args.switch_ethernet, type=0x0800)
+        else:
+            pkt = Ether(src=src_mac, dst=args.switch_ethernet, type=0x86dd)
+
+        if ip_hdr:
+            pkt = pkt / ip_hdr
 
     logger.info('Packet to emit - [%s]', pkt.summary())
 

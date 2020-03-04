@@ -32,7 +32,7 @@
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth2' % switch.name }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
-    ingress_classname: TpsGwIngress
+    data_forward_classname: TpsGwIngress
     data_forward_table: data_forward_t
     data_forward_action: data_forward
     data_forward_match_fields:
@@ -45,6 +45,7 @@
         value: "{{ rec_sw_port }}"
       - key: l2ptr
         value: 0
+    data_drop_classname: TpsGwIngress
     data_drop_table: "{{ 'data_drop_udp_ipv%s_t' % ip_version if send_protocol == 'UDP' else 'data_drop_tcp_ipv%s_t' % ip_version }}"
     data_drop_action: data_drop
     data_drop_match_fields:
