@@ -32,7 +32,7 @@
     sender: "{{ topo_dict.hosts[remote_send_host] }}"
     sender_intf: "{{ '%s-eth0' % send_host if run_mode == 'remote' else '%s-eth1' % switch.name }}"
     send_sw_port: "{{ topo_dict.links[0].south_facing_port }}"
-    receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
+    receiver: "{{ topo_dict.hosts.host2 }}"
     receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth3' % switch.name }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
     data_forward_classname: TpsCoreIngress
