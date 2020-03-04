@@ -17,7 +17,7 @@
 - import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
     te_conf_file: "~/dd-forward-create-{{ send_protocol }}.yml"
-    p4_classname: "{{ ingress_classname }}"
+    p4_classname: "{{ data_forward_classname }}"
     p4_table_name: "{{ data_forward_table }}"
     p4_action_name: "{{ data_forward_action }}"
     p4_table_match_fields: "{{ data_forward_match_fields }}"
@@ -31,8 +31,8 @@
     receiver_log_filename: "dd_basic_receiver-{{ send_protocol }}-1.out"
     sender_log_filename: "dd_basic_sender-{{ send_protocol }}-1.out"
     send_port: "{{ send_port }}"
-    send_src_port: "{{ range(2000, 10000) | random(seed='two') }}"
-    send_packet_count: "{{ 100 | random(seed='three') }}"
+    send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 1) }}"
+    send_packet_count: "{{ '%s' % 100 | random(seed=now|int + 2) }}"
     inspection_data: "{{ sr1_data_inspection_int | default(None) }}"
     int_hops: "{{ sr1_rec_int_hops | default(0) }}"
 
@@ -40,7 +40,7 @@
 - import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
     te_conf_file: "~/dd-drop-create-{{ send_protocol }}.yml"
-    p4_classname: "{{ ingress_classname }}"
+    p4_classname: "{{ data_forward_classname }}"
     p4_table_name: "{{ data_drop_table }}"
     p4_action_name: "{{ data_drop_action }}"
     p4_table_match_fields: "{{ data_drop_match_fields }}"
@@ -54,8 +54,8 @@
     receiver_log_filename: "dd_basic_receiver-{{ send_protocol }}-2.out"
     sender_log_filename: "dd_basic_sender-{{ send_protocol }}-2.out"
     send_port: "{{ send_port }}"
-    send_src_port: "{{ range(2000, 10000) | random(seed='three') }}"
-    send_packet_count: "{{ 100 | random(seed='four') }}"
+    send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 3) }}"
+    send_packet_count: "{{ '%s' % 100 | random(seed=now|int + 4) }}"
     inspection_data: "{{ sr2_data_inspection_int | default(None) }}"
     int_hops: "{{ sr2_rec_int_hops | default(0) }}"
     min_received_packet_count: 0
@@ -65,7 +65,7 @@
 - import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
     te_conf_file: "~/dd-drop-delete-{{ send_protocol }}.yml"
-    p4_classname: "{{ ingress_classname }}"
+    p4_classname: "{{ data_drop_classname }}"
     p4_table_name: "{{ data_drop_table }}"
     p4_table_match_fields: "{{ data_drop_match_fields }}"
     p4_te_log_dir: "{{ host_log_dir }}"
@@ -78,8 +78,8 @@
     receiver_log_filename: "dd_basic_receiver-{{ send_protocol }}-3.out"
     sender_log_filename: "dd_basic_sender-{{ send_protocol }}-3.out"
     send_port: "{{ send_port }}"
-    send_src_port: "{{ range(2000, 10000) | random(seed='four') }}"
-    send_packet_count: "{{ 100 | random(seed='five') }}"
+    send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 5) }}"
+    send_packet_count: "{{ '%s' % 100 | random(seed=now|int + 6) }}"
     inspection_data: "{{ sr3_data_inspection_int | default(None) }}"
     int_hops: "{{ sr3_rec_int_hops | default(0) }}"
 
@@ -87,22 +87,9 @@
 - import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
     te_conf_file: "~/dd-forward-delete-{{ send_protocol }}.yml"
-    p4_classname: "{{ ingress_classname }}"
+    p4_classname: "{{ data_drop_classname }}"
     p4_table_name: "{{ data_forward_table }}"
     p4_table_match_fields: "{{ data_forward_match_fields }}"
     p4_te_log_dir: "{{ host_log_dir }}"
     p4_te_log_file: "dd-forward-delete-{{ send_protocol }}.log"
     p4_te_insert: False
-
-# Sending UDP packets expect none to be received
-- import_playbook: ../test_cases/send_receive.yml
-  vars:
-    receiver_log_filename: "dd_basic_receiver-{{ send_protocol }}-4.out"
-    sender_log_filename: "dd_basic_sender-{{ send_protocol }}-4.out"
-    send_port: "{{ send_port }}"
-    send_src_port: "{{ range(2000, 10000) | random(seed='four') }}"
-    send_packet_count: "{{ 100 | random(seed='five') }}"
-    inspection_data: "{{ sr4_data_inspection_int | default(None) }}"
-    int_hops: "{{ sr4_rec_int_hops | default(0) }}"
-    min_received_packet_count: 0
-    max_received_packet_count: 0

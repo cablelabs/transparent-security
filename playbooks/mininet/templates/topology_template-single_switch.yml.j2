@@ -32,23 +32,26 @@ hosts:
     ip_port: any
     mac: 00:00:00:00:02:02
     type: server
+  clone:
+    name: clone
+    id: 3
+    switch_ip: 10.2.5.254
+    ip: 10.2.5.6
+    ipv6: 0000:0000:0000:0000:0000:0002:0002:0002
+    ip_port: any
+    mac: 00:00:00:00:02:03
+    type: server
 switches:
   {{ p4_prog }}:
     name: {{ p4_prog }}
     id: 0
     runtime_p4info: {{ remote_scripts_dir }}/p4/{{ p4_prog }}.p4info
     runtime_json: {{ remote_scripts_dir }}/p4/{{ p4_prog }}.json
+    clone_egress: {{ clone_egress_port }}
     subnet: 10.1.1.0
     type: {{ p4_prog }}
     mac: 00:00:00:01:01:00
     grpc: 127.0.0.1:50051
-external:
-  analytics_engine:
-    name: ae
-    id: {{ ae_dev_intf }}
-    ip: {{ ae_ip }}
-    ip_port: 0
-    mac: {{ switch_mac }}
 links:
   - north_node: {{ p4_prog }}
     south_node: host1
@@ -58,5 +61,10 @@ links:
   - north_node: host2
     south_node: {{ p4_prog }}
     north_facing_port: 2
+    latency: 0ms
+    bandwidth: null
+  - north_node: clone
+    south_node: {{ p4_prog }}
+    north_facing_port: 3
     latency: 0ms
     bandwidth: null

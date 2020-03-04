@@ -31,7 +31,7 @@
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth2' % switch.name }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
-    ingress_classname: TpsGwIngress
+    data_forward_classname: TpsGwIngress
     data_forward_table: data_forward_t
     data_forward_action: data_forward
     data_forward_match_fields:

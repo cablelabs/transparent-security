@@ -158,6 +158,25 @@ class SwitchConnection(object):
             logging.error('Error requesting [%s] clone - [%s]', request, e)
             raise e
 
+    def delete_clone_entries(self, pre_entry):
+        logger.info('Packet info for deleting the clone entry - %s',
+                    pre_entry)
+        request = p4runtime_pb2.WriteRequest()
+        request.device_id = self.device_id
+        request.election_id.low = 1
+        update = request.updates.add()
+        update.type = p4runtime_pb2.Update.DELETE
+        update.entity.packet_replication_engine_entry.CopyFrom(pre_entry)
+
+        try:
+            logger.debug(
+                'Request for deleting a clone entry on the device %s - [%s]',
+                self.device_id, request)
+            self.client_stub.Write(request)
+        except Exception as e:
+            logging.error('Error requesting [%s] clone - [%s]', request, e)
+            raise e
+
     def read_counters(self, counter_id=None, index=None):
         logger.info('Read counter with ID - [%s] and index - [%s]',
                     counter_id, index)

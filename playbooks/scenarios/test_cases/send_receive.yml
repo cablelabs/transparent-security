@@ -19,23 +19,23 @@
   gather_facts: no
   vars:
     receive_timeout: "{{ receiver_timeout_seconds | default(60) }}"
-    receiver_log_file: "{{ host_log_dir }}/ip-{{ ip_ver }}-{{ receiver_log_filename }}"
     hops: "{{ int_hops | default(0) }}"
     ip_ver: "{{ ip_version | default('4') }}"
+    receiver_log_file: "{{ host_log_dir }}/ip-{{ ip_ver }}-ih-{{ hops }}-{{ receiver_log_filename }}"
   tasks:
     - debug:
         msg: "Expected INT hops to receive {{ hops }}"
-
-    - name: Remove {{ receiver_log_file }} from {{ receiver.name }}
-      file:
-        path: "{{ receiver_log_file }}"
-        state: absent
 
     - name: Create receiver log directory {{ host_log_dir }}
       file:
         path: "{{ host_log_dir }}"
         state: directory
         mode: 0777
+
+    - name: Delete {{ receiver_log_file }}
+      file:
+        path: "{{ receiver_log_file }}"
+        state: absent
 
     - name: Create receiver log file {{ receiver_log_file }}
       file:
@@ -71,7 +71,8 @@
     interval: "{{ send_interval | default(0.005) }}"
     loops: "{{ send_loops | default(1) }}"
     loop_delay: "{{ send_loop_delay | default(0) }}"
-    sender_log_file: "{{ host_log_dir }}/ip-{{ ip_ver }}-{{ sender_log_filename }}"
+    hops: "{{ int_hops | default(0) }}"
+    sender_log_file: "{{ host_log_dir }}/ip-{{ ip_ver }}-ih-{{ hops }}-{{ sender_log_filename }}"
     int_hdr_df: "{{ send_int_data_filename | default('send_int_data.yml') }}"
     protocol: "{{ send_protocol | default('UDP') }}"
     ip_ver: "{{ ip_version | default('4') }}"
@@ -131,7 +132,7 @@
     max_packet_count: "{{ max_received_packet_count | default(send_packet_count) | int }}"
     hops: "{{ int_hops | default(0) }}"
     ip_ver: "{{ ip_version | default('4') }}"
-    receiver_log_file: "{{ host_log_dir }}/ip-{{ ip_ver }}-{{ receiver_log_filename }}"
+    receiver_log_file: "{{ host_log_dir }}/ip-{{ ip_ver }}-ih-{{ hops }}-{{ receiver_log_filename }}"
     sender_ip: "{{ sender.ip if ip_ver == '4' else sender.ipv6 }}"
     receiver_ip: "{{ receiver.ip if ip_ver == '4' else receiver.ipv6 }}"
   tasks:
@@ -139,7 +140,7 @@
       set_fact:
         count_cmd: >
           grep {{ receiver_ip | ipaddr }} {{ receiver_log_file }}
-          | grep '/ Raw'
+          | grep 'WARNING'
           | grep {{ send_port }}
           | grep {{ send_src_port }}
           | wc -l
@@ -149,6 +150,7 @@
       set_fact:
         count_cmd: >
           grep {{ receiver_ip | ipaddr }} {{ receiver_log_file }}
+          | grep 'WARNING'
           | grep 'INT Packet data'
           | grep {{ send_port }}
           | grep {{ send_src_port }}

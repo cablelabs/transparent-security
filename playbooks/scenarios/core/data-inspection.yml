@@ -13,27 +13,31 @@
 # Simple scenario where packets are sent through 3 devices and only the last
 # one will be demonstrating dropped packets
 ---
+# Enable cloning
+- import_playbook: ../test_cases/write_clone_entry.yml
+  vars:
+    clone_entry: True
 
-# Basic Data Forward scenario for standard UDP Packets without a data_inspection table record to no INT data is added
-- import_playbook: ../single_switch/data_forward_basic.yml
+# Basic Data Inspection scenario for packets on clone port - sending INT packet with two hops expect to result in INT headers with 3 hops
+- import_playbook: ../single_switch/data_inspection_basic.yml
   vars:
     send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
     ip_version: "{{ scenario_send_ip_version | default(4) }}"
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-    switch: "{{ topo_dict.switches.aggregate }}"
+    switch: "{{ topo_dict.switches.core }}"
     remote_send_host: host1
-    remote_rec_host: host2
+    remote_rec_host: clone
     send_host: "{{ remote_send_host if run_mode == 'remote' else None }}"
     rec_host: "{{ remote_rec_host if run_mode == 'remote' else None }}"
-    sender: "{{ topo_dict.hosts.host1 }}"
+    sender: "{{ topo_dict.hosts[remote_send_host] }}"
     sender_intf: "{{ '%s-eth0' % send_host if run_mode == 'remote' else '%s-eth1' % switch.name }}"
     send_sw_port: "{{ topo_dict.links[0].south_facing_port }}"
     receiver: "{{ topo_dict.hosts.host2 }}"
-    receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth2' % switch.name }}"
+    receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth3' % switch.name }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
-    data_forward_classname: TpsAggIngress
-    data_forward_table: "{{ 'data_forward_ipv4_t' if ip_version == '4' else 'data_forward_ipv6_t' }}"
+    data_forward_classname: TpsCoreIngress
     data_forward_action: data_forward
+    data_forward_table: "{{ 'data_forward_ipv4_t' if ip_version == '4' else 'data_forward_ipv6_t' }}"
     data_forward_match_fields:
       - key: "{{ 'hdr.ipv4.dstAddr' if ip_version == '4' else 'hdr.ipv6.dstAddr' }}"
         value:
@@ -44,16 +48,32 @@
         value: "{{ switch.mac }}"
       - key: port
         value: "{{ rec_sw_port }}"
-      - key: l2ptr
-        value: 0
+    data_inspection_classname: TpsCoreEgress
+    data_inspection_table: data_inspection_t
+    data_inspection_action: data_inspect_packet
+    data_inspection_match_fields:
+      - key: hdr.ethernet.src_mac
+        value: "{{ sender.mac }}"
+    data_inspection_action_params:
+      - key: switch_id
+        value: "{{ switch.id }}"
+    # For sending INT packets on the #1 of 3 send/receive iteration
+    sr1_data_inspection_int:
+      - switch_id: 1002
+      - switch_id: 1001
+        orig_mac: "{{ sender.mac }}"
+    sr1_rec_int_hops: 3
+    # For sending INT packets on the #2 of 3 send/receive iteration
+    sr2_data_inspection_int: "{{ sr1_data_inspection_int }}"
+    sr2_rec_int_hops: "{{ sr1_data_inspection_int|length }}"
 
-# Basic Data Forward scenario for INT UDP Packets without a data-inspection table entry so the original simply passes through
-- import_playbook: ../single_switch/data_forward_basic.yml
+# Basic Data Inspection scenario for packets on egress port - sending INT packet with two hops expect to result standard packet
+- import_playbook: ../single_switch/data_inspection_basic.yml
   vars:
     send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
     ip_version: "{{ scenario_send_ip_version | default(4) }}"
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-    switch: "{{ topo_dict.switches.aggregate }}"
+    switch: "{{ topo_dict.switches.core }}"
     remote_send_host: host1
     remote_rec_host: host2
     send_host: "{{ remote_send_host if run_mode == 'remote' else None }}"
@@ -64,9 +84,9 @@
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth2' % switch.name }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
-    data_forward_classname: TpsAggIngress
-    data_forward_table: "{{ 'data_forward_ipv4_t' if ip_version == '4' else 'data_forward_ipv6_t' }}"
+    data_forward_classname: TpsCoreIngress
     data_forward_action: data_forward
+    data_forward_table: "{{ 'data_forward_ipv4_t' if ip_version == '4' else 'data_forward_ipv6_t' }}"
     data_forward_match_fields:
       - key: "{{ 'hdr.ipv4.dstAddr' if ip_version == '4' else 'hdr.ipv6.dstAddr' }}"
         value:
@@ -77,10 +97,26 @@
         value: "{{ switch.mac }}"
       - key: port
         value: "{{ rec_sw_port }}"
-      - key: l2ptr
-        value: 0
+    data_inspection_classname: TpsCoreEgress
+    data_inspection_table: data_inspection_t
+    data_inspection_action: data_inspect_packet
+    data_inspection_match_fields:
+      - key: hdr.ethernet.src_mac
+        value: "{{ sender.mac }}"
+    data_inspection_action_params:
+      - key: switch_id
+        value: "{{ switch.id }}"
     # For sending INT packets on the #1 of 3 send/receive iteration
-    sr_data_inspection_int:
+    sr1_data_inspection_int:
+      - switch_id: 1002
       - switch_id: 1001
         orig_mac: "{{ sender.mac }}"
-    sr_rec_int_hops: 1
+    sr1_rec_int_hops: 0
+    # For sending INT packets on the #2 of 3 send/receive iteration
+    sr2_data_inspection_int: "{{ sr1_data_inspection_int }}"
+    sr2_rec_int_hops: "{{ sr1_rec_int_hops }}"
+
+# Disable cloning
+- import_playbook: ../test_cases/write_clone_entry.yml
+  vars:
+    clone_entry: False

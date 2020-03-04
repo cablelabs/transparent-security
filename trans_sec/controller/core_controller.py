@@ -57,32 +57,20 @@ class CoreController(AbstractController):
         for south_link in south_facing_links:
             south_node_name = south_link['south_node']
             south_node_mac = self.topo['switches'][south_node_name]['mac']
-            table_name = '{}.data_inspection_t'.format(self.p4_ingress)
-            action_name = '{}.data_inspect_packet'.format(self.p4_ingress)
+            action_params = {
+                'switch_id': sw_info['id'],
+            }
+            table_name = '{}.data_inspection_t'.format(self.p4_egress)
+            action_name = '{}.data_inspect_packet'.format(self.p4_egress)
             match_fields = {'hdr.ethernet.src_mac': south_node_mac}
             logger.info(
                 'Insert params into table - [%s] for action [%s] ',
                 'with params [%s] fields [%s] key hdr.ethernet.src_mac [%s]',
-                table_name, action_name, match_fields,
+                table_name, action_name, action_params, match_fields,
                 south_node_mac)
             table_entry = self.p4info_helper.build_table_entry(
                 table_name=table_name,
                 match_fields=match_fields,
-                action_name=action_name
-                )
-            sw.write_table_entry(table_entry)
-            action_params = {
-                'switch_id': sw_info['id'],
-            }
-            table_name = '{}.data_clone_t'.format(self.p4_egress)
-            action_name = '{}.data_clone'.format(self.p4_egress)
-            logger.info(
-                'Insert params into table - [%s] for action [%s] ',
-                'with params [%s] fields [%s] key hdr.ethernet.src_mac [%s]',
-                table_name, action_name, action_params,
-                south_node_mac)
-            table_entry = self.p4info_helper.build_table_entry(
-                table_name=table_name,
                 action_name=action_name,
                 action_params=action_params)
             sw.write_table_entry(table_entry)

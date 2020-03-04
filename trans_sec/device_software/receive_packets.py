@@ -17,7 +17,7 @@ import logging
 import sys
 
 from scapy.all import bind_layers, sniff
-from scapy.layers.inet import IP, UDP
+from scapy.layers.inet import IP, UDP, TCP
 from scapy.layers.inet6 import IPv6
 from scapy.layers.l2 import Ether
 
@@ -53,19 +53,15 @@ def get_args():
 
 
 def __log_packet(packet, int_hops, ip_ver):
-    try:
-        if ip_ver == 4:
-            logger.info('Parsing IPv4 proto (nh)')
-            ip_proto = packet[IP].proto
-        else:
-            logger.info('Logging IPv6 nh (proto)')
-            ip_proto = packet[IPv6].nh
-
-        if int_hops > 0 and ip_proto == 0xfd:
-            logger.debug('INT Packet received')
-    except Exception:
-        logger.warn('Unable to process packet - [%s]', packet.summary())
-        return
+    logger.info('Expected INT Hops - [%s] on packet - [%s]',
+                int_hops, packet.summary())
+    if ip_ver == 4:
+        logger.info('Parsing IPv4 proto')
+        ip_proto = packet[IP].proto
+        logger.info('IPv4 proto - [%s]', ip_proto)
+    else:
+        logger.info('Logging IPv6 proto')
+        ip_proto = packet[IPv6].nh
 
     if int_hops > 0 and ip_proto == 0xfd:
         logger.debug('INT Packet received')
@@ -87,12 +83,26 @@ def __log_packet(packet, int_hops, ip_ver):
             switch_id_2 = packet[IntMeta2].switch_id
             switch_id_3 = packet[IntMeta1].switch_id
 
-        try:
+        logger.info('Ether type - [%s]', packet[Ether].type)
+        if packet[Ether].type == 0x0800:
             src_ip = packet[IP].src
             dst_ip = packet[IP].dst
-        except Exception:
+        else:
             src_ip = packet[IPv6].src
             dst_ip = packet[IPv6].dst
+
+        # TODO - Determine why having problems recognizing TCP layer at least
+        #  can find same as UDP
+        logger.info('Processing packet - [%s]', packet.summary())
+        try:
+            src_port = packet[UDP].sport
+            dst_port = packet[UDP].dport
+        except Exception:
+            logger.info('Parsing TCP packet')
+            src_port = packet[TCP].sport
+            dst_port = packet[TCP].dport
+
+        logger.info('src port - [%s], dst_port - [%s]', src_port, dst_port)
 
         int_data = dict(
             eth_src_mac=packet[Ether].src,
@@ -103,14 +113,41 @@ def __log_packet(packet, int_hops, ip_ver):
             switch_id_1=switch_id_1,
             switch_id_2=switch_id_2,
             switch_id_3=switch_id_3,
-            src_port=packet[UDP].sport,
-            dst_port=packet[UDP].dport,
+            src_port=src_port,
+            dst_port=dst_port,
             packetLen=len(packet),
         )
         logger.warn('INT Packet data - [%s]', int_data)
     elif int_hops < 1 and ip_proto != 0xfd:
-        logger.debug('Non INT Packet received')
-        logger.warn('Packet data - [%s]', packet.summary())
+        logger.info('Non INT Packet received - [%s]', packet.summary())
+
+        if packet[Ether].type == 0x0800:
+            logger.info('Parsing IPv4 packet')
+            src_ip = packet[IP].src
+            dst_ip = packet[IP].dst
+        else:
+            logger.info('Parsing IPv6 packet')
+            src_ip = packet[IPv6].src
+            dst_ip = packet[IPv6].dst
+
+        try:
+            src_port = packet[UDP].sport
+            dst_port = packet[UDP].dport
+        except Exception:
+            src_port = packet[TCP].sport
+            dst_port = packet[TCP].dport
+
+        int_data = dict(
+            eth_src_mac=packet[Ether].src,
+            eth_dst_mac=packet[Ether].dst,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            packetLen=len(packet),
+        )
+
+        logger.warn('Packet data - [%s]', int_data)
     else:
         logger.debug('Nothing to log here')
 
@@ -129,26 +166,29 @@ def device_sniff(iface, duration, int_hops, ip_ver):
         bind_layers(IntShim, IntHeader)
         if int_hops == 1:
             bind_layers(IntHeader, SourceIntMeta)
-            bind_layers(SourceIntMeta, UDP)
         if int_hops == 2:
             bind_layers(IntHeader, IntMeta2)
             bind_layers(IntMeta2, SourceIntMeta)
-            bind_layers(SourceIntMeta, UDP)
         if int_hops == 3:
             bind_layers(IntHeader, IntMeta1)
             bind_layers(IntMeta1, IntMeta2)
             bind_layers(IntMeta2, SourceIntMeta)
-            bind_layers(SourceIntMeta, UDP)
+
+        bind_layers(SourceIntMeta, UDP)
+        bind_layers(SourceIntMeta, TCP)
+
         if int_hops > 3:
             raise Exception('Cannot currently support more than 3 hops')
     else:
-        logger.info('Binding layers for UDP')
+        logger.info('Binding layers for IP')
         if ip_ver == 4:
             bind_layers(Ether, IP)
             bind_layers(IP, UDP)
+            bind_layers(IP, TCP)
         else:
             bind_layers(Ether, IPv6)
             bind_layers(IPv6, UDP)
+            bind_layers(IPv6, TCP)
 
     logger.info("Sniffing for packets on iface - [%s]", iface)
     sys.stdout.flush()

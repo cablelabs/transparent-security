@@ -36,3 +36,27 @@
   vars:
     scenario_send_protocol: TCP
     scenario_send_ip_version: 6
+
+# Data Inspection scenarios for UDP and IPv4
+- import_playbook: data-inspection.yml
+  vars:
+    scenario_send_protocol: UDP
+    scenario_send_ip_version: 4
+
+# Data Inspection scenarios for UDP and IPv6
+- import_playbook: data-inspection.yml
+  vars:
+    scenario_send_protocol: UDP
+    scenario_send_ip_version: 6
+
+# Data Inspection scenarios for TCP and IPv4
+- import_playbook: data-inspection.yml
+  vars:
+    scenario_send_protocol: TCP
+    scenario_send_ip_version: 4
+
+# Data Inspection scenarios for TCP and IPv6
+- import_playbook: data-inspection.yml
+  vars:
+    scenario_send_protocol: TCP
+    scenario_send_ip_version: 6

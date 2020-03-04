@@ -14,24 +14,11 @@
 # one will be demonstrating dropped packets
 ---
 
-# Sending UDP packets expect none to be received
-- import_playbook: ../test_cases/send_receive.yml
-  vars:
-    receiver_log_filename: "df_basic_receiver-{{ send_protocol }}-1.out"
-    sender_log_filename: "df_basic_sender-{{ send_protocol }}-1.out"
-    send_port: "{{ range(2000, 10000) | random(seed='one') }}"
-    send_src_port: "{{ range(2000, 10000) | random(seed='two') }}"
-    send_packet_count: "{{ 100 | random(seed='three') }}"
-    inspection_data: "{{ sr1_data_inspection_int | default(None) }}"
-    int_hops: "{{ sr1_rec_int_hops | default(0) }}"
-    min_received_packet_count: 0
-    max_received_packet_count: 0
-
 # Add table entry to "{{ data_forward_table }}"
 - import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
     te_conf_file: ~/te-df-receiver-forward-1.yml
-    p4_classname: "{{ ingress_classname }}"
+    p4_classname: "{{ data_forward_classname }}"
     p4_table_name: "{{ data_forward_table }}"
     p4_action_name: "{{ data_forward_action }}"
     p4_table_match_fields: "{{ data_forward_match_fields }}"
@@ -42,34 +29,22 @@
 # Sending UDP packets expect all to be received
 - import_playbook: ../test_cases/send_receive.yml
   vars:
-    receiver_log_filename: "df_basic_receiver-{{ send_protocol }}-2.out"
-    sender_log_filename: "df_basic_sender-{{ send_protocol }}-2.out"
-    send_port: "{{ range(2000, 10000) | random(seed='one') }}"
-    send_src_port: "{{ range(2000, 10000) | random(seed='two') }}"
-    send_packet_count: "{{ 100 | random(seed='three') }}"
-    inspection_data: "{{ sr2_data_inspection_int | default(None) }}"
-    int_hops: "{{ sr2_rec_int_hops | default(0) }}"
+    receiver_log_filename: "df_basic_receiver-{{ send_protocol }}.out"
+    sender_log_filename: "df_basic_sender-{{ send_protocol }}.out"
+    send_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 4) }}"
+    send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 5) }}"
+    send_packet_count: "{{ '%s' % 100 | random(seed=now|int + 6) }}"
+    inspection_data: "{{ sr_data_inspection_int | default(None) }}"
+    int_hops: "{{ sr_rec_int_hops | default(0) }}"
 
 # Delete table entry to "{{ data_forward_table }}"
 - import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
     te_conf_file: ~/te-df-receiver-forward-delete-1.yml
-    p4_classname: "{{ ingress_classname }}"
+    p4_classname: "{{ data_forward_classname }}"
     p4_table_name: "{{ data_forward_table }}"
     p4_table_match_fields: "{{ data_forward_match_fields }}"
     p4_te_log_dir: "{{ host_log_dir }}"
     p4_te_log_file: data_forward_basic_te-df-receiver-forward-revert.log
     p4_te_insert: False
 
-# Sending 1 UDP packet expect 0 to be received
-- import_playbook: ../test_cases/send_receive.yml
-  vars:
-    receiver_log_filename: "df_basic_receiver-{{ send_protocol }}-3.out"
-    sender_log_filename: "df_basic_sender-{{ send_protocol }}-3.out"
-    send_port: "{{ range(2000, 10000) | random(seed='two') }}"
-    send_src_port: "{{ range(2000, 10000) | random(seed='three') }}"
-    send_packet_count: "{{ 100 | random(seed='four') }}"
-    inspection_data: "{{ sr3_data_inspection_int | default(None) }}"
-    int_hops: "{{ sr3_rec_int_hops | default(0) }}"
-    min_received_packet_count: 0
-    max_received_packet_count: 0
