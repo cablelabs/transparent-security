@@ -99,7 +99,7 @@ control TpsCoreEgress(inout headers hdr,
     action data_inspect_packet(bit<32> switch_id) {
         hdr.int_meta_3.setValid();
         hdr.int_shim.length = hdr.int_shim.length + 1;
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen + ((bit<16>)hdr.int_shim.length * 4);
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen + 4;
         hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt - 1;
         hdr.int_meta_3.switch_id = switch_id;
     }

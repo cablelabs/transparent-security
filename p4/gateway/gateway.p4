@@ -57,7 +57,6 @@ control TpsGwIngress(inout headers hdr,
         hdr.int_header.setValid();
         hdr.int_meta.setValid();
 
-        hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
         hdr.int_shim.next_proto = hdr.ipv4.protocol;
         hdr.int_shim.type = 1;
         hdr.int_shim.length = 7;
@@ -70,12 +69,15 @@ control TpsGwIngress(inout headers hdr,
         hdr.int_meta.switch_id = switch_id;
         hdr.int_meta.orig_mac = hdr.ethernet.src_mac;
 
+        hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
         hdr.ipv4.protocol = TYPE_INSPECTION;
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + ((bit<16>)hdr.int_shim.length * 4);
+
         forwardedPackets.count(device);
     }
 
     action data_inspect_packet_ipv6(bit<32> device, bit<32> switch_id) {
+        hdr.udp_int.setValid();
         hdr.int_shim.setValid();
         hdr.int_header.setValid();
         hdr.int_meta.setValid();
@@ -85,7 +87,7 @@ control TpsGwIngress(inout headers hdr,
         hdr.int_shim.length = 7;
 
         hdr.int_header.meta_len = 3;
-        hdr.int_header.instructions = 0x80c0;
+        hdr.int_header.ds_flags_2 = 1;
         hdr.int_header.remaining_hop_cnt = 10; /* TODO - find a better means to determine this value */
         hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt -1;
 
@@ -108,6 +110,35 @@ control TpsGwIngress(inout headers hdr,
         }
         size = 1024;
         default_action = NoAction();
+    }
+
+    action insert_udp_int_for_udp() {
+        hdr.udp_int.setValid();
+        hdr.udp_int.src_port = hdr.udp.src_port;
+        hdr.udp_int.dst_port = hdr.udp.dst_port;
+        hdr.udp_int.len = hdr.udp.len;
+    }
+
+    table insert_udp_int_for_udp_t {
+        actions = {
+            insert_udp_int_for_udp;
+        }
+        size = 1024;
+        default_action = insert_udp_int_for_udp();
+    }
+
+    action insert_udp_int_for_tcp() {
+        hdr.udp_int.setValid();
+        hdr.udp_int.src_port = hdr.tcp.src_port;
+        hdr.udp_int.dst_port = hdr.tcp.dst_port;
+    }
+
+    table insert_udp_int_for_tcp_t {
+        actions = {
+            insert_udp_int_for_tcp;
+        }
+        size = 1024;
+        default_action = insert_udp_int_for_tcp();
     }
 
     action data_drop(bit<32> device) {
@@ -195,8 +226,17 @@ control TpsGwIngress(inout headers hdr,
                 data_drop_tcp_ipv6_t.apply();
             }
         }
+
         if (standard_metadata.egress_spec != DROP_PORT) {
             data_inspection_t.apply();
+
+            if (hdr.udp.isValid()) {
+                insert_udp_int_for_udp_t.apply();
+            }
+            if (hdr.tcp.isValid()) {
+                insert_udp_int_for_tcp_t.apply();
+            }
+
             data_forward_t.apply();
         }
     }

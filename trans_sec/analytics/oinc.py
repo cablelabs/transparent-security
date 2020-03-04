@@ -19,12 +19,12 @@ import time
 from anytree import search, Node, RenderTree
 from scapy.all import bind_layers
 from scapy.all import sniff
-from scapy.layers.inet import IP, UDP, TCP
+from scapy.layers.inet import IP
 from scapy.layers.inet6 import IPv6
 from scapy.layers.l2 import Ether
 
 from trans_sec.packet.inspect_layer import (
-    IntHeader, IntMeta1, IntMeta2, IntShim, SourceIntMeta)
+    IntHeader, IntMeta1, IntMeta2, IntShim, SourceIntMeta, UdpInt)
 
 logger = logging.getLogger('oinc')
 
@@ -49,36 +49,10 @@ class PacketAnalytics(object):
 
         logger.info('Binding layers')
         bind_layers(Ether, IP, type=0x0800)
-        bind_layers(IP, IntShim, proto=0xfd)
-        bind_layers(IntShim, IntHeader, next_proto=0x11)
-        bind_layers(IntHeader, IntMeta1)
-        bind_layers(IntMeta1, IntMeta2)
-        bind_layers(IntMeta2, SourceIntMeta)
-        bind_layers(SourceIntMeta, UDP)
+        bind_layers(IP, UdpInt)
 
         bind_layers(Ether, IPv6, type=0x86dd)
-        bind_layers(IPv6, IntShim, nh=0xfd)
-        bind_layers(IntShim, IntHeader, next_proto=0x11)
-        bind_layers(IntHeader, IntMeta1)
-        bind_layers(IntMeta1, IntMeta2)
-        bind_layers(IntMeta2, SourceIntMeta)
-        bind_layers(SourceIntMeta, UDP)
-
-        bind_layers(Ether, IP, type=0x0800)
-        bind_layers(IP, IntShim, proto=0xfd)
-        bind_layers(IntShim, IntHeader, next_proto=0x06)
-        bind_layers(IntHeader, IntMeta1)
-        bind_layers(IntMeta1, IntMeta2)
-        bind_layers(IntMeta2, SourceIntMeta)
-        bind_layers(SourceIntMeta, TCP)
-
-        bind_layers(Ether, IPv6, type=0x86dd)
-        bind_layers(IPv6, IntShim, nh=0xfd)
-        bind_layers(IntShim, IntHeader, next_proto=0x06)
-        bind_layers(IntHeader, IntMeta1)
-        bind_layers(IntMeta1, IntMeta2)
-        bind_layers(IntMeta2, SourceIntMeta)
-        bind_layers(SourceIntMeta, TCP)
+        bind_layers(IPv6, UdpInt)
 
         logger.debug("Completed binding packet layers")
 
@@ -136,47 +110,27 @@ def extract_int_data(packet):
     """
     log_int_packet(packet)
 
-    int_shim_len = packet[IntShim].length
-    hop_metalen = packet[IntHeader].meta_len
-    logger.info('Shim len - [%s]', int_shim_len)
-    # TODO - Find a better way to calculate the number of hops with
-    #  Domain Specific metadata
-    hops = 1 + (int_shim_len - 4 - 3) / hop_metalen
-
-    logger.info('Parsing INT header with [%s] hops', hops)
-
-    orig_mac = None
-
-    if hops == 3:
-        orig_mac = packet[SourceIntMeta].orig_mac
-    if hops > 3:
-        raise Exception('Cannot support hops > 3')
-
-    ether_type = packet[Ether].type
-    if ether_type == 0x0800:
-        src_addr = packet[IP].src
-        dst_addr = packet[IP].dst
-        protocol = packet[IP].proto
+    ether_pkt = packet[Ether]
+    if ether_pkt.type == 0x0800:
+        ip_pkt = packet[IP]
     else:
-        src_addr = packet[IPv6].src
-        dst_addr = packet[IPv6].dst
-        protocol = packet[IPv6].nh
+        ip_pkt = packet[IPv6]
 
-    # TODO - Try to replace try with if statement and except with else which
-    #   currently is not working
-    # if packet[IntShim].next_proto == 0x11
-    try:
-        dport = packet[UDP].dport
-    except Exception:
-        dport = packet[TCP].dport
+    udp_int_pkt = packet[UdpInt]
+    int_shim_pkt = IntShim(_pkt=udp_int_pkt.payload)
+    int_hdr_pkt = IntHeader(_pkt=int_shim_pkt.payload)
+    int_meta_1 = IntMeta1(_pkt=int_hdr_pkt.payload)
+    int_meta_2 = IntMeta2(_pkt=int_meta_1.payload)
+    source_int_pkt = SourceIntMeta(_pkt=int_meta_2.payload)
+    orig_mac = source_int_pkt.orig_mac
 
     try:
         out = dict(
             devMac=orig_mac,
-            devAddr=src_addr,
-            dstAddr=dst_addr,
-            dstPort=dport,
-            protocol=protocol,
+            devAddr=ip_pkt.src,
+            dstAddr=ip_pkt.dst,
+            dstPort=udp_int_pkt.dport,
+            protocol=int_shim_pkt.next_proto,
             packetLen=len(packet),
         )
     except Exception as e:
@@ -189,18 +143,9 @@ def extract_int_data(packet):
 def log_int_packet(packet):
     logger.debug('Received INT packet of length - [%s] to log - [%s]',
                  len(packet), packet.summary())
-    logger.debug('Shim length - [%s]', packet[IntShim].length)
-    logger.debug('INT Header meta_len - [%s]', packet[IntHeader].meta_len)
 
-    # TODO - Try to replace try with if statement and except with else which
-    #   currently is not working
-    # if packet[IntShim].next_proto == 0x11
-    try:
-        sport = packet[UDP].sport
-        dport = packet[UDP].dport
-    except Exception:
-        sport = packet[TCP].sport
-        dport = packet[TCP].dport
+    sport = packet[UdpInt].sport
+    dport = packet[UdpInt].dport
 
     try:
         logger.debug('Packet length - [%s]', len(packet))
@@ -221,14 +166,6 @@ def log_int_packet(packet):
         logger.debug('IP src - [%s] dst - [%s] proto - [%s]',
                      src_addr, dst_addr, protocol)
         logger.debug('sport - [%s] dport - [%s]', sport, dport)
-        logger.debug('IH remaining_hops - [%s]',
-                     packet[IntHeader].remaining_hop_cnt)
-        logger.debug('IS type - [%s] next_proto - [%s] length - [%s]',
-                     packet[IntShim].type, packet[IntShim].next_proto,
-                     packet[IntShim].length)
-        logger.debug('IM switch_id - [%s] orig_mac - [%s]',
-                     packet[SourceIntMeta].switch_id,
-                     packet[SourceIntMeta].orig_mac)
     except Exception as e:
         logger.error('Error parsing header - %s', e)
 

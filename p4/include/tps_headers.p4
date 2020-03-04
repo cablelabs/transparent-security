@@ -92,26 +92,30 @@ header tcp_t {
 /******************************************
 External Gateway INT Data header definition
 *******************************************/
-header int_ip_shim_t { /* 4 */
-    bit<8>  type;
-    bit<8>  reserved;
+header int_udp_shim_t { /* 4 */
+    bit<4>  type;
+    bit<2>  npt;
+    bit<2>  reserved;
     bit<8>  length;
     bit<8>  next_proto;
 }
 
 header int_header_t { /* 12 */
     bit<4>  ver;
-    bit<2>  rep;
-    bit<1>  c;
+    bit<2>  res;
+    bit<1>  d;
     bit<1>  e;
     bit<1>  m;
-    bit<10> rsvd1;
+    bit<10> reserved;
     bit<5>  meta_len;
     bit<8>  remaining_hop_cnt;
-    bit<16> instructions;
-    bit<16> rsvd2;
+    bit<16> instr_bitmap;
     bit<16> domain_id;
-    bit<16> ds_instruction;
+    bit<16> instructions;
+    bit<1>  ds_flags_1;
+    bit<1>  ds_flags_2;
+    bit<1>  ds_flags_3;
+    bit<13> ds_flags_13;
 }
 
 header source_metadata_t { /* 12 */
@@ -134,14 +138,15 @@ struct metadata {
 }
 
 struct headers {
-    ethernet_t     ethernet;
-    ipv4_t         ipv4;
-    ipv6_t         ipv6;
-    int_ip_shim_t  int_shim;
-    int_header_t   int_header;
+    ethernet_t        ethernet;
+    ipv4_t            ipv4;
+    ipv6_t            ipv6;
+    udp_t             udp_int;
+    int_udp_shim_t    int_shim;
+    int_header_t      int_header;
+    int_metadata_t    int_meta_3;
+    int_metadata_t    int_meta_2;
     source_metadata_t int_meta;
-    int_metadata_t int_meta_2;
-    int_metadata_t int_meta_3;
-    udp_t          udp;
-    tcp_t          tcp;
+    udp_t             udp;
+    tcp_t             tcp;
 }

@@ -29,7 +29,7 @@ from scapy.sendrecv import sendp
 
 # Logger stuff
 from trans_sec.packet.inspect_layer import (
-    IntShim, IntHeader, IntMeta1, IntMeta2, SourceIntMeta)
+    IntShim, IntHeader, IntMeta1, IntMeta2, SourceIntMeta, UdpInt)
 
 logger = getLogger('send_packets')
 
@@ -165,6 +165,10 @@ def __create_packet(args, interface):
             pkt = (Ether(src=src_mac, dst=args.switch_ethernet, type=0x86dd) /
                    IPv6(dst=args.destination, src=args.source_addr, nh=0xfd))
 
+        # Add UDP INT header
+        pkt = pkt / UdpInt(dport=args.port, sport=args.source_port)
+
+        # Create INT Shim header
         if args.protocol == 'UDP':
             pkt = pkt / IntShim(length=shim_len, next_proto=0x11)
         elif args.protocol == 'TCP':
