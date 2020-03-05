@@ -28,6 +28,7 @@ from scapy.layers.l2 import Ether
 from scapy.sendrecv import sendp
 
 # Logger stuff
+from trans_sec.analytics import oinc
 from trans_sec.packet.inspect_layer import (
     IntShim, IntHeader, IntMeta1, IntMeta2, SourceIntMeta, UdpInt)
 
@@ -158,21 +159,24 @@ def __create_packet(args, interface):
         logger.info('Int data to add to packet - [%s]', int_data)
         ip_len = 34 + (shim_len * 4)
         if ip_ver == 4:
-            pkt = (Ether(src=src_mac, dst=args.switch_ethernet, type=0x0800) /
+            pkt = (Ether(src=src_mac, dst=args.switch_ethernet,
+                         type=oinc.IPV4_TYPE) /
                    IP(dst=args.destination, src=args.source_addr, len=ip_len,
-                      proto=0xfd))
+                      proto=oinc.INT_PROTO))
         else:
-            pkt = (Ether(src=src_mac, dst=args.switch_ethernet, type=0x86dd) /
-                   IPv6(dst=args.destination, src=args.source_addr, nh=0xfd))
+            pkt = (Ether(src=src_mac, dst=args.switch_ethernet,
+                         type=oinc.IPV6_TYPE) /
+                   IPv6(dst=args.destination, src=args.source_addr,
+                        nh=oinc.INT_PROTO))
 
         # Add UDP INT header
         pkt = pkt / UdpInt(dport=args.port, sport=args.source_port)
 
         # Create INT Shim header
         if args.protocol == 'UDP':
-            pkt = pkt / IntShim(length=shim_len, next_proto=0x11)
+            pkt = pkt / IntShim(length=shim_len, next_proto=oinc.UDP_PROTO)
         elif args.protocol == 'TCP':
-            pkt = pkt / IntShim(length=shim_len, next_proto=0x06)
+            pkt = pkt / IntShim(length=shim_len, next_proto=oinc.TCP_PROTO)
 
         if int_hops > 0:
             meta_len = 1
@@ -202,22 +206,24 @@ def __create_packet(args, interface):
         if ip_ver == 4:
             if args.protocol == 'TCP':
                 ip_hdr = IP(dst=args.destination, src=args.source_addr,
-                            proto=0x06)
+                            proto=oinc.TCP_PROTO)
             elif args.protocol == 'UDP':
                 ip_hdr = IP(dst=args.destination, src=args.source_addr,
-                            proto=0x11)
+                            proto=oinc.UDP_PROTO)
         else:
             if args.protocol == 'TCP':
                 ip_hdr = IPv6(dst=args.destination, src=args.source_addr,
-                              nh=0x06)
+                              nh=oinc.TCP_PROTO)
             elif args.protocol == 'UDP':
                 ip_hdr = IPv6(dst=args.destination, src=args.source_addr,
-                              nh=0x11)
+                              nh=oinc.UDP_PROTO)
 
         if ip_ver == 4:
-            pkt = Ether(src=src_mac, dst=args.switch_ethernet, type=0x0800)
+            pkt = Ether(src=src_mac, dst=args.switch_ethernet,
+                        type=oinc.IPV4_TYPE)
         else:
-            pkt = Ether(src=src_mac, dst=args.switch_ethernet, type=0x86dd)
+            pkt = Ether(src=src_mac, dst=args.switch_ethernet,
+                        type=oinc.IPV6_TYPE)
 
         if ip_hdr:
             pkt = pkt / ip_hdr

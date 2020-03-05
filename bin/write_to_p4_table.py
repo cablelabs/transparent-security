@@ -97,21 +97,27 @@ if __name__ == '__main__':
                         entry_config['match_fields'])
             for key, value in entry_config['match_fields'].items():
                 if isinstance(value, list):
+                    logger.debug('Match fields list - [%s]', value)
                     match_fields[key] = (value[0], value[1])
                 else:
+                    logger.debug('Match fields list - [%s]', value)
                     match_fields[key] = value
 
         if args.insert == 'True':
             logger.info(
                 'Entry configuration for table entry - [%s] and match fields '
-                '- [%s]', entry_config)
+                '- [%s]', entry_config, match_fields)
             table_entry = p4info_helper.build_table_entry(
                 table_name=entry_config['table_name'],
                 match_fields=match_fields,
                 action_name=entry_config.get('action_name'),
                 action_params=entry_config.get('action_params'),
             )
-            logger.info('Inserting table entry')
+            logger.debug(
+                'Writing table entry to table [%s], with action name - [%s], '
+                'match fields - [%s], action_params - [%s]',
+                entry_config['table_name'], entry_config.get('action_name'),
+                match_fields, entry_config.get('action_params'))
             switch.write_table_entry(table_entry)
         else:
             table_entry = p4info_helper.build_table_entry(

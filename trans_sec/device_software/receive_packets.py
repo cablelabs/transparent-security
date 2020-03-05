@@ -20,6 +20,7 @@ from scapy.layers.inet import IP, UDP, TCP
 from scapy.layers.inet6 import IPv6
 from scapy.layers.l2 import Ether
 
+from trans_sec.analytics import oinc
 from trans_sec.packet.inspect_layer import (
     IntShim, IntHeader, IntMeta1, IntMeta2, SourceIntMeta, UdpInt)
 
@@ -62,7 +63,7 @@ def __log_packet(packet, int_hops, ip_ver):
         logger.info('Logging IPv6 proto')
         ip_proto = packet[IPv6].nh
 
-    if int_hops > 0 and ip_proto == 0xfd:
+    if int_hops > 0 and ip_proto == oinc.INT_PROTO:
         logger.debug('INT Packet received')
 
         mac1 = None
@@ -89,7 +90,7 @@ def __log_packet(packet, int_hops, ip_ver):
             switch_id_3 = int_meta_1.switch_id
 
         logger.info('Ether type - [%s]', packet[Ether].type)
-        if packet[Ether].type == 0x0800:
+        if packet[Ether].type == oinc.IPV4_TYPE:
             src_ip = packet[IP].src
             dst_ip = packet[IP].dst
         else:
@@ -115,10 +116,10 @@ def __log_packet(packet, int_hops, ip_ver):
             packetLen=len(packet),
         )
         logger.warn('INT Packet data - [%s]', int_data)
-    elif int_hops < 1 and ip_proto != 0xfd:
+    elif int_hops < 1 and ip_proto != oinc.INT_PROTO:
         logger.info('Non INT Packet received - [%s]', packet.summary())
 
-        if packet[Ether].type == 0x0800:
+        if packet[Ether].type == oinc.IPV4_TYPE:
             logger.info('Parsing IPv4 packet')
             src_ip = packet[IP].src
             dst_ip = packet[IP].dst

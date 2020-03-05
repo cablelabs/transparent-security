@@ -203,7 +203,7 @@ class DdosSdnController:
             except Exception as e:
                 logger.error(
                     'Error adding attacker to host - [%s] with error - [%s])',
-                    host, e)
+                    host['name'], e)
         else:
             logger.error('No Device Matches MAC [%s]', attack.get('src_mac'))
 
