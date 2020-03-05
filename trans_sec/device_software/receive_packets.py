@@ -55,13 +55,21 @@ def get_args():
 def __log_packet(packet, int_hops, ip_ver):
     logger.info('Expected INT Hops - [%s] on packet - [%s]',
                 int_hops, packet.summary())
+
+    ip_proto = None
+
     if ip_ver == 4:
-        logger.info('Parsing IPv4 proto')
-        ip_proto = packet[IP].proto
-        logger.info('IPv4 proto - [%s]', ip_proto)
+        try:
+            ip_proto = packet[IP].proto
+        except Exception:
+            logger.debug('Cannot log, not an IPv4 packet - %s',
+                         packet.summary())
     else:
-        logger.info('Logging IPv6 proto')
-        ip_proto = packet[IPv6].nh
+        try:
+            ip_proto = packet[IPv6].nh
+        except Exception:
+            logger.debug('Cannot log, not an IPv6 packet - %s',
+                         packet.summary())
 
     if int_hops > 0 and ip_proto == oinc.INT_PROTO:
         logger.debug('INT Packet received')
