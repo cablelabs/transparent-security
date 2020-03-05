@@ -10,10 +10,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import re
-
 import ipaddress
-from ipaddress import IPv6Address
 from logging import getLogger
 
 from trans_sec.p4runtime_lib import bmv2, helper, tofino
@@ -182,9 +179,13 @@ class AbstractController(object):
         logger.info('Adding an attack [%s] to host [%s] and switches [%s]',
                     attack, host, self.switches)
         ip_addr = ipaddress.ip_address(unicode(attack['src_ip']))
-        if isinstance(ip_addr, IPv6Address):
+        logger.info('Attack ip addr - [%s]', ip_addr)
+        logger.debug('Attack ip addr class - [%s]', ip_addr.__class__)
+        if ip_addr.version == 6:
+            logger.debug('Attack is IPv6')
             proto_key = 'ipv6'
         else:
+            logger.debug('Attack is IPv4')
             proto_key = 'ipv4'
 
         src_addr_key = 'hdr.{}.srcAddr'.format(proto_key)
@@ -196,41 +197,36 @@ class AbstractController(object):
                 switch, attack, host, src_addr_key, dst_addr_key)
 
     def __add_attacker(self, switch, attack, host, src_addr_key, dst_addr_key):
-        ipv6_pattern = re.compile(r'^([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}$')
-        logger.info('Inserting Attack entry with src_addr_key - [%s]',
-                    src_addr_key)
-        if ipv6_pattern.match(src_addr_key) is not None:
-            # Insert into IPv6 data_drop UDP & TCP tables
-            logger.info('Inserting IPv6 Attack')
-            self.__insert_attack_entry(
-                switch, attack, host, 'data_drop_udp_ipv6_t', 'data_drop',
-                src_addr_key, dst_addr_key, 'hdr.udp.dst_port')
-            self.__insert_attack_entry(
-                switch, attack, host, 'data_drop_tcp_ipv6_t', 'data_drop',
-                src_addr_key, dst_addr_key, 'hdr.tcp.dst_port')
-        else:
-            # Insert into IPv4 data_drop UDP & TCP tables
-            logger.info('Inserting IPv4 Attack')
-            self.__insert_attack_entry(
-                switch, attack, host, 'data_drop_udp_ipv4_t', 'data_drop',
-                src_addr_key, dst_addr_key, 'hdr.udp.dst_port')
-            self.__insert_attack_entry(
-                switch, attack, host, 'data_drop_tcp_ipv4_t', 'data_drop',
-                src_addr_key, dst_addr_key, 'hdr.tcp.dst_port')
+        logger.info('Attack requested - [%s]', attack)
+        ip_addr = ipaddress.ip_address(unicode(attack['src_ip']))
+        logger.info('Attack from ip_addr - [%s]', ip_addr)
+        logger.info('Inserting IPv%s Attack', ip_addr.version)
+        self.__insert_attack_entry(
+            switch, attack, host,
+            'data_drop_udp_ipv{}_t'.format(ip_addr.version),
+            'data_drop', src_addr_key, dst_addr_key, 'hdr.udp.dst_port')
+        self.__insert_attack_entry(
+            switch, attack, host,
+            'data_drop_tcp_ipv{}_t'.format(ip_addr.version),
+            'data_drop', src_addr_key, dst_addr_key, 'hdr.tcp.dst_port')
 
     def __insert_attack_entry(self, switch, attack, host, table_name,
                               action_name, src_addr_key, dst_addr_key,
                               dst_port_key):
-        logger.info('Adding UDP attacker [%s] from host [%s]', attack, host)
+        logger.info('Adding attack [%s] from host [%s]', attack, host['name'])
+        src_ip = ipaddress.ip_address(unicode(attack['src_ip']))
+        dst_ip = ipaddress.ip_address(unicode(attack['dst_ip']))
+        logger.info('Attack src_ip - [%s], dst_ip - [%s]', src_ip, dst_ip)
+
         self.__insert_p4_table_entry(
             switch=switch,
             table_name=table_name,
             action_name=action_name,
             match_fields={
-                'hdr.ethernet.src_mac': (attack['src_mac']),
-                src_addr_key: (attack['src_ip']),
-                dst_addr_key: (attack['dst_ip']),
-                dst_port_key: (int(attack['dst_port']))
+                'hdr.ethernet.src_mac': attack['src_mac'],
+                src_addr_key: str(src_ip.exploded),
+                dst_addr_key: str(dst_ip.exploded),
+                dst_port_key: int(attack['dst_port']),
             },
             action_params={
                 'device': host['id']
@@ -241,12 +237,20 @@ class AbstractController(object):
 
     def __insert_p4_table_entry(self, switch, table_name, action_name,
                                 match_fields, action_params):
+
+        logger.info(
+            'Adding to table - [%s], with fields - [%s], and params - [%s]',
+            table_name, match_fields, action_params)
+
         table_entry = self.p4info_helper.build_table_entry(
             table_name='{}.{}'.format(self.p4_ingress, table_name),
             match_fields=match_fields,
             action_name='{}.{}'.format(self.p4_ingress, action_name),
             action_params=action_params)
-        logger.debug('Writing table entry [%s]', table_entry)
+        logger.debug(
+            'Writing table entry to table [%s], with action name - [%s], '
+            'match fields - [%s], action_params - [%s]',
+            table_name, action_name, match_fields, action_params)
         switch.write_table_entry(table_entry)
 
     def __get_links(self, switch_name):

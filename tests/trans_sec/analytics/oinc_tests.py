@@ -33,13 +33,6 @@ logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 logger = logging.getLogger('oinc_tests')
 
-udp_proto = 0x11
-tcp_proto = 0x06
-int_proto = 0xfd
-
-ipv4_type = 0x0800
-ipv6_type = 0x86dd
-
 
 class SimpleAETests(unittest.TestCase):
     """
@@ -66,9 +59,9 @@ class SimpleAETests(unittest.TestCase):
         Tests to ensure that an IPv4 UDP single packet will be parsed properly
         """
         pkt = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac) /
-               IP(dst=self.dst_ipv4, src=self.src_ipv4, proto=int_proto) /
+               IP(dst=self.dst_ipv4, src=self.src_ipv4, proto=oinc.INT_PROTO) /
                UdpInt(dport=self.dport, sport=self.sport) /
-               IntShim(length=9, next_proto=udp_proto) /
+               IntShim(length=9, next_proto=oinc.UDP_PROTO) /
                IntHeader(meta_len=1) /
                IntMeta1(switch_id=3) /
                IntMeta2(switch_id=2) /
@@ -80,7 +73,7 @@ class SimpleAETests(unittest.TestCase):
         self.assertEqual(self.src_ipv4, int_data['devAddr'])
         self.assertEqual(self.dst_ipv4, int_data['dstAddr'])
         self.assertEqual(self.dport, int_data['dstPort'])
-        self.assertEqual(udp_proto, int_data['protocol'])
+        self.assertEqual(oinc.UDP_PROTO, int_data['protocol'])
         self.assertEqual(len(pkt), int_data['packetLen'])
 
     def test_extract_ipv4_tcp_packet(self):
@@ -88,9 +81,9 @@ class SimpleAETests(unittest.TestCase):
         Tests to ensure that an IPv4 UDP single packet will be parsed properly
         """
         pkt = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac) /
-               IP(dst=self.dst_ipv4, src=self.src_ipv4, proto=int_proto) /
+               IP(dst=self.dst_ipv4, src=self.src_ipv4, proto=oinc.INT_PROTO) /
                UdpInt(dport=self.dport, sport=self.sport) /
-               IntShim(length=9, next_proto=tcp_proto) /
+               IntShim(length=9, next_proto=oinc.TCP_PROTO) /
                IntHeader(meta_len=1) /
                IntMeta1(switch_id=3) /
                IntMeta2(switch_id=2) /
@@ -102,7 +95,7 @@ class SimpleAETests(unittest.TestCase):
         self.assertEqual(self.src_ipv4, int_data['devAddr'])
         self.assertEqual(self.dst_ipv4, int_data['dstAddr'])
         self.assertEqual(self.dport, int_data['dstPort'])
-        self.assertEqual(tcp_proto, int_data['protocol'])
+        self.assertEqual(oinc.TCP_PROTO, int_data['protocol'])
         self.assertEqual(len(pkt), int_data['packetLen'])
 
     def test_extract_ipv6_udp_packet(self):
@@ -110,12 +103,12 @@ class SimpleAETests(unittest.TestCase):
         Tests to ensure that an IPv6 UDP single packet will be parsed properly
         """
         pkt = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac,
-                     type=ipv6_type) /
+                     type=oinc.IPV6_TYPE) /
                IPv6(dst=self.dst_ipv6,
                     src=self.src_ipv6,
-                    nh=int_proto) /
+                    nh=oinc.INT_PROTO) /
                UdpInt(dport=self.dport, sport=self.sport) /
-               IntShim(length=9, next_proto=udp_proto) /
+               IntShim(length=9, next_proto=oinc.UDP_PROTO) /
                IntHeader(meta_len=1) /
                IntMeta1(switch_id=3) /
                IntMeta2(switch_id=2) /
@@ -126,10 +119,10 @@ class SimpleAETests(unittest.TestCase):
 
         int_data = oinc.extract_int_data(pkt)
         self.assertEqual(self.orig_mac, int_data['devMac'])
-        self.assertEqual(self.src_ipv6, int_data['devAddr'])
-        self.assertEqual(self.dst_ipv6, int_data['dstAddr'])
+        self.assertEqual(str(self.src_ipv6), int_data['devAddr'])
+        self.assertEqual(str(self.dst_ipv6), int_data['dstAddr'])
         self.assertEqual(self.dport, int_data['dstPort'])
-        self.assertEqual(udp_proto, int_data['protocol'])
+        self.assertEqual(oinc.UDP_PROTO, int_data['protocol'])
         self.assertEqual(len(pkt), int_data['packetLen'])
 
     def test_extract_ipv6_tcp_packet(self):
@@ -137,12 +130,12 @@ class SimpleAETests(unittest.TestCase):
         Tests to ensure that an IPv6 TCP single packet will be parsed properly
         """
         pkt = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac,
-                     type=ipv6_type) /
+                     type=oinc.IPV6_TYPE) /
                IPv6(dst=self.dst_ipv6,
                     src=self.src_ipv6,
-                    nh=int_proto) /
+                    nh=oinc.INT_PROTO) /
                UdpInt(dport=self.dport, sport=self.sport) /
-               IntShim(length=9, next_proto=tcp_proto) /
+               IntShim(length=9, next_proto=oinc.TCP_PROTO) /
                IntHeader(meta_len=1) /
                IntMeta1(switch_id=3) /
                IntMeta2(switch_id=2) /
@@ -153,10 +146,10 @@ class SimpleAETests(unittest.TestCase):
 
         int_data = oinc.extract_int_data(pkt)
         self.assertEqual(self.orig_mac, int_data['devMac'])
-        self.assertEqual(self.src_ipv6, int_data['devAddr'])
-        self.assertEqual(self.dst_ipv6, int_data['dstAddr'])
+        self.assertEqual(str(self.src_ipv6), int_data['devAddr'])
+        self.assertEqual(str(self.dst_ipv6), int_data['dstAddr'])
         self.assertEqual(self.dport, int_data['dstPort'])
-        self.assertEqual(tcp_proto, int_data['protocol'])
+        self.assertEqual(oinc.TCP_PROTO, int_data['protocol'])
         self.assertEqual(len(pkt), int_data['packetLen'])
 
     def test_process_single_ipv4_udp_packet(self):
@@ -167,16 +160,16 @@ class SimpleAETests(unittest.TestCase):
         :return:
         """
         pkt = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac) /
-               IP(dst=self.dst_ipv4, src=self.src_ipv4, proto=int_proto) /
+               IP(dst=self.dst_ipv4, src=self.src_ipv4, proto=oinc.INT_PROTO) /
                UdpInt(dport=self.dport, sport=self.sport) /
-               IntShim(length=9, next_proto=udp_proto) /
+               IntShim(length=9, next_proto=oinc.UDP_PROTO) /
                IntHeader(meta_len=1) /
                IntMeta1(switch_id=3) /
                IntMeta2(switch_id=2) /
                SourceIntMeta(switch_id=1, orig_mac=self.orig_mac) /
                UDP(dport=self.dport, sport=self.sport) /
                'hello transparent-security')
-        self.ae.process_packet(pkt, int_proto)
+        self.ae.process_packet(pkt, oinc.INT_PROTO)
 
     def test_process_single_ipv6_udp_packet(self):
         """
@@ -186,12 +179,12 @@ class SimpleAETests(unittest.TestCase):
         :return:
         """
         pkt = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac,
-                     type=ipv6_type) /
+                     type=oinc.IPV6_TYPE) /
                IPv6(dst=self.dst_ipv6,
                     src=self.src_ipv6,
-                    nh=int_proto) /
+                    nh=oinc.INT_PROTO) /
                UdpInt(dport=self.dport, sport=self.sport) /
-               IntShim(length=9, next_proto=udp_proto) /
+               IntShim(length=9, next_proto=oinc.UDP_PROTO) /
                IntHeader(meta_len=1) /
                IntMeta1(switch_id=3) /
                IntMeta2(switch_id=2) /
@@ -199,7 +192,7 @@ class SimpleAETests(unittest.TestCase):
                UDP(dport=self.dport, sport=self.sport) /
                'hello transparent-security')
         logger.info('Packet - [%s]', len(pkt))
-        self.ae.process_packet(pkt, int_proto)
+        self.ae.process_packet(pkt, oinc.INT_PROTO)
 
     def test_process_single_ipv4_tcp_packet(self):
         """
@@ -209,16 +202,16 @@ class SimpleAETests(unittest.TestCase):
         :return:
         """
         pkt = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac) /
-               IP(dst=self.dst_ipv4, src=self.src_ipv4, proto=int_proto) /
+               IP(dst=self.dst_ipv4, src=self.src_ipv4, proto=oinc.INT_PROTO) /
                UdpInt(dport=self.dport, sport=self.sport) /
-               IntShim(length=9, next_proto=tcp_proto) /
+               IntShim(length=9, next_proto=oinc.TCP_PROTO) /
                IntHeader(meta_len=1) /
                IntMeta1(switch_id=3) /
                IntMeta2(switch_id=2) /
                SourceIntMeta(switch_id=1, orig_mac=self.orig_mac) /
                TCP(dport=self.dport, sport=self.dport) /
                'hello transparent-security')
-        self.ae.process_packet(pkt, int_proto)
+        self.ae.process_packet(pkt, oinc.INT_PROTO)
 
     def test_process_single_ipv6_tcp_packet(self):
         """
@@ -228,19 +221,19 @@ class SimpleAETests(unittest.TestCase):
         :return:
         """
         pkt = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac,
-                     type=ipv6_type) /
+                     type=oinc.IPV6_TYPE) /
                IPv6(dst=self.dst_ipv6,
                     src=self.src_ipv6,
-                    nh=int_proto) /
+                    nh=oinc.INT_PROTO) /
                UdpInt(dport=self.dport, sport=self.sport) /
-               IntShim(length=9, next_proto=tcp_proto) /
+               IntShim(length=9, next_proto=oinc.TCP_PROTO) /
                IntHeader(meta_len=1) /
                IntMeta1(switch_id=3) /
                IntMeta2(switch_id=2) /
                SourceIntMeta(switch_id=1, orig_mac=self.orig_mac) /
                TCP(dport=self.dport, sport=self.sport) /
                'hello transparent-security')
-        self.ae.process_packet(pkt, int_proto)
+        self.ae.process_packet(pkt, oinc.INT_PROTO)
 
     def test_start_one_ipv4_udp_attack(self):
         """
@@ -248,9 +241,9 @@ class SimpleAETests(unittest.TestCase):
         :return:
         """
         pkt = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac) /
-               IP(dst=self.dst_ipv4, src=self.src_ipv4, proto=int_proto) /
+               IP(dst=self.dst_ipv4, src=self.src_ipv4, proto=oinc.INT_PROTO) /
                UdpInt(dport=self.dport, sport=self.sport) /
-               IntShim(length=9, next_proto=udp_proto) /
+               IntShim(length=9, next_proto=oinc.UDP_PROTO) /
                IntHeader(meta_len=1) /
                IntMeta1(switch_id=3) /
                IntMeta2(switch_id=2) /
@@ -260,7 +253,7 @@ class SimpleAETests(unittest.TestCase):
 
         for index in range(0, self.ae.packet_count + 1):
             logger.debug('Processing packet #%s', index)
-            ret_val = self.ae.process_packet(pkt, int_proto)
+            ret_val = self.ae.process_packet(pkt, oinc.INT_PROTO)
             if index < self.ae.packet_count:
                 self.assertFalse(ret_val)
             else:
@@ -272,12 +265,12 @@ class SimpleAETests(unittest.TestCase):
         :return:
         """
         pkt = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac,
-                     type=ipv6_type) /
+                     type=oinc.IPV6_TYPE) /
                IPv6(dst=self.dst_ipv6,
                     src=self.src_ipv6,
-                    nh=int_proto) /
+                    nh=oinc.INT_PROTO) /
                UdpInt(dport=self.dport, sport=self.sport) /
-               IntShim(length=9, next_proto=udp_proto) /
+               IntShim(length=9, next_proto=oinc.UDP_PROTO) /
                IntHeader(meta_len=1) /
                IntMeta1(switch_id=3) /
                IntMeta2(switch_id=2) /
@@ -287,7 +280,7 @@ class SimpleAETests(unittest.TestCase):
 
         for index in range(0, self.ae.packet_count + 1):
             logger.debug('Processing packet #%s', index)
-            ret_val = self.ae.process_packet(pkt, int_proto)
+            ret_val = self.ae.process_packet(pkt, oinc.INT_PROTO)
             if index < self.ae.packet_count:
                 self.assertFalse(ret_val)
             else:
@@ -299,9 +292,9 @@ class SimpleAETests(unittest.TestCase):
         :return:
         """
         pkt = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac) /
-               IP(dst=self.dst_ipv4, src=self.src_ipv4, proto=int_proto) /
+               IP(dst=self.dst_ipv4, src=self.src_ipv4, proto=oinc.INT_PROTO) /
                UdpInt(dport=self.dport, sport=self.sport) /
-               IntShim(length=9, next_proto=tcp_proto) /
+               IntShim(length=9, next_proto=oinc.TCP_PROTO) /
                IntHeader(meta_len=1) /
                IntMeta1(switch_id=3) /
                IntMeta2(switch_id=2) /
@@ -311,7 +304,7 @@ class SimpleAETests(unittest.TestCase):
 
         for index in range(0, self.ae.packet_count + 1):
             logger.debug('Processing packet #%s', index)
-            ret_val = self.ae.process_packet(pkt, int_proto)
+            ret_val = self.ae.process_packet(pkt, oinc.INT_PROTO)
             if index < self.ae.packet_count:
                 self.assertFalse(ret_val)
             else:
@@ -323,12 +316,12 @@ class SimpleAETests(unittest.TestCase):
         :return:
         """
         pkt = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac,
-                     type=ipv6_type) /
+                     type=oinc.IPV6_TYPE) /
                IPv6(dst=self.dst_ipv6,
                     src=self.src_ipv6,
-                    nh=int_proto) /
+                    nh=oinc.INT_PROTO) /
                UdpInt(dport=self.dport, sport=self.sport) /
-               IntShim(length=9, next_proto=tcp_proto) /
+               IntShim(length=9, next_proto=oinc.TCP_PROTO) /
                IntHeader(meta_len=1) /
                IntMeta1(switch_id=3) /
                IntMeta2(switch_id=2) /
@@ -338,7 +331,7 @@ class SimpleAETests(unittest.TestCase):
 
         for index in range(0, self.ae.packet_count + 1):
             logger.debug('Processing packet #%s', index)
-            ret_val = self.ae.process_packet(pkt, int_proto)
+            ret_val = self.ae.process_packet(pkt, oinc.INT_PROTO)
             if index < self.ae.packet_count:
                 self.assertFalse(ret_val)
             else:
@@ -350,9 +343,10 @@ class SimpleAETests(unittest.TestCase):
         :return:
         """
         pkt1 = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac) /
-                IP(dst=self.dst_ipv4, src=self.src_ipv4, proto=int_proto) /
+                IP(dst=self.dst_ipv4, src=self.src_ipv4,
+                   proto=oinc.INT_PROTO) /
                 UdpInt(dport=self.dport, sport=self.sport) /
-                IntShim(length=9, next_proto=udp_proto) /
+                IntShim(length=9, next_proto=oinc.UDP_PROTO) /
                 IntHeader(meta_len=1) /
                 IntMeta1(switch_id=3) /
                 IntMeta2(switch_id=2) /
@@ -361,9 +355,10 @@ class SimpleAETests(unittest.TestCase):
                 'hello transparent-security')
 
         pkt2 = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac) /
-                IP(dst=self.dst_ipv4, src=self.src_ipv4, proto=int_proto) /
+                IP(dst=self.dst_ipv4, src=self.src_ipv4,
+                   proto=oinc.INT_PROTO) /
                 UdpInt(dport=self.dport, sport=self.sport) /
-                IntShim(length=9, next_proto=udp_proto) /
+                IntShim(length=9, next_proto=oinc.UDP_PROTO) /
                 IntHeader(meta_len=1) /
                 IntMeta1(switch_id=3) /
                 IntMeta2(switch_id=2) /
@@ -373,8 +368,8 @@ class SimpleAETests(unittest.TestCase):
 
         for index in range(0, self.ae.packet_count):
             logger.info('Iteration #%s', index)
-            ret_val1 = self.ae.process_packet(pkt1, int_proto)
-            ret_val2 = self.ae.process_packet(pkt2, int_proto)
+            ret_val1 = self.ae.process_packet(pkt1, oinc.INT_PROTO)
+            ret_val2 = self.ae.process_packet(pkt2, oinc.INT_PROTO)
             logger.info('Checking index - [%s] - count - [%s]',
                         index, self.ae.packet_count)
             if index * 2 < self.ae.packet_count:
@@ -392,12 +387,12 @@ class SimpleAETests(unittest.TestCase):
         :return:
         """
         pkt1 = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac,
-                      type=ipv6_type) /
+                      type=oinc.IPV6_TYPE) /
                 IPv6(dst=self.dst_ipv6,
                      src=self.src_ipv6,
-                     nh=int_proto) /
+                     nh=oinc.INT_PROTO) /
                 UdpInt(dport=self.dport, sport=self.sport) /
-                IntShim(length=9, next_proto=udp_proto) /
+                IntShim(length=9, next_proto=oinc.UDP_PROTO) /
                 IntHeader(meta_len=1) /
                 IntMeta1(switch_id=3) /
                 IntMeta2(switch_id=2) /
@@ -406,12 +401,12 @@ class SimpleAETests(unittest.TestCase):
                 'hello transparent-security')
 
         pkt2 = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac,
-                      type=ipv6_type) /
+                      type=oinc.IPV6_TYPE) /
                 IPv6(dst=self.dst_ipv6,
                      src=self.src_ipv6,
-                     nh=int_proto) /
+                     nh=oinc.INT_PROTO) /
                 UdpInt(dport=self.dport, sport=self.sport) /
-                IntShim(length=9, next_proto=udp_proto) /
+                IntShim(length=9, next_proto=oinc.UDP_PROTO) /
                 IntHeader(meta_len=1) /
                 IntMeta1(switch_id=3) /
                 IntMeta2(switch_id=2) /
@@ -421,8 +416,8 @@ class SimpleAETests(unittest.TestCase):
 
         for index in range(0, self.ae.packet_count):
             logger.info('Iteration #%s', index)
-            ret_val1 = self.ae.process_packet(pkt1, int_proto)
-            ret_val2 = self.ae.process_packet(pkt2, int_proto)
+            ret_val1 = self.ae.process_packet(pkt1, oinc.INT_PROTO)
+            ret_val2 = self.ae.process_packet(pkt2, oinc.INT_PROTO)
             logger.info('Checking index - [%s] - count - [%s]',
                         index, self.ae.packet_count)
             if index * 2 < self.ae.packet_count:
@@ -440,9 +435,10 @@ class SimpleAETests(unittest.TestCase):
         :return:
         """
         pkt1 = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac) /
-                IP(dst=self.dst_ipv4, src=self.src_ipv4, proto=int_proto) /
+                IP(dst=self.dst_ipv4, src=self.src_ipv4,
+                   proto=oinc.INT_PROTO) /
                 UdpInt(dport=self.dport, sport=self.sport) /
-                IntShim(length=9, next_proto=tcp_proto) /
+                IntShim(length=9, next_proto=oinc.TCP_PROTO) /
                 IntHeader(meta_len=1) /
                 IntMeta1(switch_id=3) /
                 IntMeta2(switch_id=2) /
@@ -451,9 +447,10 @@ class SimpleAETests(unittest.TestCase):
                 'hello transparent-security')
 
         pkt2 = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac) /
-                IP(dst=self.dst_ipv4, src=self.src_ipv4, proto=int_proto) /
+                IP(dst=self.dst_ipv4, src=self.src_ipv4,
+                   proto=oinc.INT_PROTO) /
                 UdpInt(dport=self.dport, sport=self.sport) /
-                IntShim(length=9, next_proto=tcp_proto) /
+                IntShim(length=9, next_proto=oinc.TCP_PROTO) /
                 IntHeader(meta_len=1) /
                 IntMeta1(switch_id=3) /
                 IntMeta2(switch_id=2) /
@@ -463,8 +460,8 @@ class SimpleAETests(unittest.TestCase):
 
         for index in range(0, self.ae.packet_count):
             logger.info('Iteration #%s', index)
-            ret_val1 = self.ae.process_packet(pkt1, int_proto)
-            ret_val2 = self.ae.process_packet(pkt2, int_proto)
+            ret_val1 = self.ae.process_packet(pkt1, oinc.INT_PROTO)
+            ret_val2 = self.ae.process_packet(pkt2, oinc.INT_PROTO)
             logger.info('Checking index - [%s] - count - [%s]',
                         index, self.ae.packet_count)
             if index * 2 < self.ae.packet_count:
@@ -482,12 +479,12 @@ class SimpleAETests(unittest.TestCase):
         :return:
         """
         pkt1 = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac,
-                      type=ipv6_type) /
+                      type=oinc.IPV6_TYPE) /
                 IPv6(dst=self.dst_ipv6,
                      src=self.src_ipv6,
-                     nh=int_proto) /
+                     nh=oinc.INT_PROTO) /
                 UdpInt(dport=self.dport, sport=self.sport) /
-                IntShim(length=9, next_proto=tcp_proto) /
+                IntShim(length=9, next_proto=oinc.TCP_PROTO) /
                 IntHeader(meta_len=1) /
                 IntMeta1(switch_id=3) /
                 IntMeta2(switch_id=2) /
@@ -496,12 +493,12 @@ class SimpleAETests(unittest.TestCase):
                 'hello transparent-security')
 
         pkt2 = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac,
-                      type=ipv6_type) /
+                      type=oinc.IPV6_TYPE) /
                 IPv6(dst=self.dst_ipv6,
                      src=self.src_ipv6,
-                     nh=int_proto) /
+                     nh=oinc.INT_PROTO) /
                 UdpInt(dport=self.dport, sport=self.sport) /
-                IntShim(length=9, next_proto=tcp_proto) /
+                IntShim(length=9, next_proto=oinc.TCP_PROTO) /
                 IntHeader(meta_len=1) /
                 IntMeta1(switch_id=3) /
                 IntMeta2(switch_id=2) /
@@ -511,8 +508,8 @@ class SimpleAETests(unittest.TestCase):
 
         for index in range(0, self.ae.packet_count):
             logger.info('Iteration #%s', index)
-            ret_val1 = self.ae.process_packet(pkt1, int_proto)
-            ret_val2 = self.ae.process_packet(pkt2, int_proto)
+            ret_val1 = self.ae.process_packet(pkt1, oinc.INT_PROTO)
+            ret_val2 = self.ae.process_packet(pkt2, oinc.INT_PROTO)
             logger.info('Checking index - [%s] - count - [%s]',
                         index, self.ae.packet_count)
             if index * 2 < self.ae.packet_count:

@@ -28,6 +28,13 @@ from trans_sec.packet.inspect_layer import (
 
 logger = logging.getLogger('oinc')
 
+UDP_PROTO = 0x11
+TCP_PROTO = 0x06
+INT_PROTO = 0xfd
+
+IPV4_TYPE = 0x0800
+IPV6_TYPE = 0x86dd
+
 
 class PacketAnalytics(object):
     """
@@ -48,15 +55,12 @@ class PacketAnalytics(object):
         self.sniff_stop = threading.Event()
 
         logger.info('Binding layers')
-        bind_layers(Ether, IP, type=0x0800)
-        bind_layers(IP, UdpInt)
-
-        bind_layers(Ether, IPv6, type=0x86dd)
-        bind_layers(IPv6, UdpInt)
+        bind_layers(Ether, IP, type=IPV4_TYPE)
+        bind_layers(Ether, IPv6, type=IPV6_TYPE)
 
         logger.debug("Completed binding packet layers")
 
-    def start_sniffing(self, iface, ip_proto=0xfd):
+    def start_sniffing(self, iface, ip_proto=INT_PROTO):
         """
         Starts the sniffer thread
         :param iface: the interface to sniff
@@ -108,15 +112,13 @@ def extract_int_data(packet):
     :param packet: the packet to parse
     :return: dict with choice header fields extracted
     """
-    log_int_packet(packet)
-
     ether_pkt = packet[Ether]
-    if ether_pkt.type == 0x0800:
-        ip_pkt = packet[IP]
+    if ether_pkt.type == IPV4_TYPE:
+        ip_pkt = IP(_pkt=ether_pkt.payload)
     else:
-        ip_pkt = packet[IPv6]
+        ip_pkt = IPv6(_pkt=ether_pkt.payload)
 
-    udp_int_pkt = packet[UdpInt]
+    udp_int_pkt = UdpInt(_pkt=ip_pkt.payload)
     int_shim_pkt = IntShim(_pkt=udp_int_pkt.payload)
     int_hdr_pkt = IntHeader(_pkt=int_shim_pkt.payload)
     int_meta_1 = IntMeta1(_pkt=int_hdr_pkt.payload)
@@ -138,36 +140,6 @@ def extract_int_data(packet):
         return None
     logger.debug('Extracted header data [%s]', out)
     return out
-
-
-def log_int_packet(packet):
-    logger.debug('Received INT packet of length - [%s] to log - [%s]',
-                 len(packet), packet.summary())
-
-    sport = packet[UdpInt].sport
-    dport = packet[UdpInt].dport
-
-    try:
-        logger.debug('Packet length - [%s]', len(packet))
-        logger.debug('ETH dst_mac - [%s] src_mac - [%s] type - [%s]',
-                     packet[Ether].dst, packet[Ether].src, packet[Ether].type)
-
-        if packet[Ether].type == 0x0800:
-            logger.info('Parsing IPv4 data')
-            src_addr = packet[IP].src
-            dst_addr = packet[IP].dst
-            protocol = packet[IP].proto
-        else:
-            logger.info('Parsing IPv6 data')
-            src_addr = packet[IPv6].src
-            dst_addr = packet[IPv6].dst
-            protocol = packet[IPv6].nh
-
-        logger.debug('IP src - [%s] dst - [%s] proto - [%s]',
-                     src_addr, dst_addr, protocol)
-        logger.debug('sport - [%s] dport - [%s]', sport, dport)
-    except Exception as e:
-        logger.error('Error parsing header - %s', e)
 
 
 class Oinc(PacketAnalytics):
@@ -296,7 +268,7 @@ class SimpleAE(PacketAnalytics):
         :return: T/F - True when an attack has been triggered
         """
         logger.debug('Packet data - [%s]', packet.summary())
-        if packet[Ether].type == 0x0800:
+        if packet[Ether].type == IPV4_TYPE:
             protocol = packet[IP].proto
         else:
             protocol = packet[IPv6].nh
