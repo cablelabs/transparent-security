@@ -23,7 +23,7 @@
     p4_table_match_fields: "{{ data_forward_match_fields }}"
     p4_table_action_params: "{{ data_forward_action_params }}"
     p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: "dd-forward-create-{{ send_protocol }}.log"
+    p4_te_log_file: "dd-forward-create-{{ send_protocol }}-ip-{{ ip_version }}.log"
 
 # Sending UDP packets expect all to be received
 - import_playbook: ../test_cases/send_receive.yml
@@ -46,7 +46,7 @@
     p4_table_match_fields: "{{ data_drop_match_fields }}"
     p4_table_action_params: "{{ data_drop_action_params }}"
     p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: "dd-drop-create-{{ send_protocol }}.log"
+    p4_te_log_file: "dd-drop-create-{{ send_protocol }}-ip-{{ ip_version }}.log"
 
 # Sending UDP packets expect none to be received
 - import_playbook: ../test_cases/send_receive.yml
@@ -69,7 +69,7 @@
     p4_table_name: "{{ data_drop_table }}"
     p4_table_match_fields: "{{ data_drop_match_fields }}"
     p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: "dd-drop-delete-{{ send_protocol }}.log"
+    p4_te_log_file: "dd-drop-delete-{{ send_protocol }}-ip-{{ ip_version }}.log"
     p4_te_insert: False
 
 # Sending UDP packets expect all to be received
@@ -91,5 +91,5 @@
     p4_table_name: "{{ data_forward_table }}"
     p4_table_match_fields: "{{ data_forward_match_fields }}"
     p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: "dd-forward-delete-{{ send_protocol }}.log"
+    p4_te_log_file: "dd-forward-delete-{{ send_protocol }}-ip-{{ ip_version }}.log"
     p4_te_insert: False
