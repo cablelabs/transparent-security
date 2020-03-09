@@ -39,9 +39,12 @@ control TpsCoreIngress(inout headers hdr,
 
         clone3(CloneType.I2E, I2E_CLONE_SESSION_ID, standard_metadata);
 
+        /* TODO/FIXME - these should not be set here */
         hdr.ipv4.protocol = hdr.int_shim.next_proto;
         hdr.ipv6.next_hdr_proto = hdr.int_shim.next_proto;
         hdr.ipv4.totalLen = hdr.ipv4.totalLen - ((bit<16>)hdr.int_shim.length * 4);
+        hdr.ipv6.payload_len = hdr.ipv6.payload_len + - ((bit<16>)hdr.int_shim.length * 4);
+
         hdr.udp_int.setInvalid();
         hdr.int_shim.setInvalid();
         hdr.int_header.setInvalid();
@@ -102,6 +105,7 @@ control TpsCoreEgress(inout headers hdr,
         hdr.int_meta_3.setValid();
         hdr.int_shim.length = hdr.int_shim.length + 1;
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + 4;
+        hdr.udp_int.len = hdr.udp_int.len + 4;
         hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt - 1;
         hdr.int_meta_3.switch_id = switch_id;
     }
