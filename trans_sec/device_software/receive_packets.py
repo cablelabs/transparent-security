@@ -76,59 +76,55 @@ def __log_packet(packet, int_hops, ip_ver):
     if int_hops > 0 and ip_proto == oinc.INT_PROTO:
         logger.debug('INT Packet received')
 
-        mac1 = None
-        switch_id_1 = None
         switch_id_2 = None
         switch_id_3 = None
         if int_hops == 1:
             source_int_meta = SourceIntMeta(_pkt=packet[IntHeader].payload)
             mac1 = source_int_meta.orig_mac
             switch_id_1 = source_int_meta.switch_id
-        if int_hops == 2:
+        elif int_hops == 2:
             int_meta_2 = IntMeta2(_pkt=packet[IntHeader].payload)
             source_int_meta = SourceIntMeta(_pkt=int_meta_2.payload)
             mac1 = source_int_meta.orig_mac
             switch_id_1 = source_int_meta.switch_id
             switch_id_2 = int_meta_2.switch_id
-        if int_hops == 3:
+        elif int_hops == 3:
             int_meta_1 = IntMeta1(_pkt=packet[IntHeader].payload)
-            int_meta_2 = IntMeta2(_pkt=packet[IntHeader].payload)
+            int_meta_2 = IntMeta2(int_meta_1.payload)
             source_int_meta = SourceIntMeta(_pkt=int_meta_2.payload)
             mac1 = source_int_meta.orig_mac
             switch_id_1 = source_int_meta.switch_id
             switch_id_2 = int_meta_2.switch_id
             switch_id_3 = int_meta_1.switch_id
+        else:
+            raise Exception('No support for hops > 3')
 
         logger.info('Ether type - [%s]', packet[Ether].type)
         if packet[Ether].type == oinc.IPV4_TYPE:
-            src_ip = packet[IP].src
-            dst_ip = packet[IP].dst
+            logger.info('IPv4 Packet')
+            ip_pkt = packet[IP]
         else:
-            src_ip = packet[IPv6].src
-            dst_ip = packet[IPv6].dst
+            logger.info('IPv6 Packet')
+            ip_pkt = packet[IPv6]
 
         if packet[IntShim].next_proto == oinc.UDP_PROTO:
-            udp_packet = UDP(_pkt=source_int_meta.payload)
-            src_port = udp_packet.sport
-            dst_port = udp_packet.dport
+            logger.info('UDP Packet')
+            tcp_udp_packet = UDP(_pkt=source_int_meta.payload)
         else:
-            tcp_packet = TCP(_pkt=source_int_meta.payload)
-            src_port = tcp_packet.sport
-            dst_port = tcp_packet.dport
-
-        logger.info('src port - [%s], dst_port - [%s]', src_port, dst_port)
+            logger.info('TCP Packet')
+            tcp_udp_packet = TCP(_pkt=source_int_meta.payload)
 
         int_data = dict(
             eth_src_mac=packet[Ether].src,
             eth_dst_mac=packet[Ether].dst,
-            src_ip=src_ip,
-            dst_ip=dst_ip,
+            src_ip=ip_pkt.src,
+            dst_ip=ip_pkt.dst,
             mac1=mac1,
             switch_id_1=switch_id_1,
             switch_id_2=switch_id_2,
             switch_id_3=switch_id_3,
-            src_port=src_port,
-            dst_port=dst_port,
+            src_port=tcp_udp_packet.sport,
+            dst_port=tcp_udp_packet.dport,
             packetLen=len(packet),
         )
         logger.warn('INT Packet data - [%s]', int_data)

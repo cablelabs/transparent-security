@@ -19,7 +19,7 @@ import time
 from anytree import search, Node, RenderTree
 from scapy.all import bind_layers
 from scapy.all import sniff
-from scapy.layers.inet import IP
+from scapy.layers.inet import IP, UDP, TCP
 from scapy.layers.inet6 import IPv6
 from scapy.layers.l2 import Ether
 
@@ -124,6 +124,12 @@ def extract_int_data(packet):
     int_meta_1 = IntMeta1(_pkt=int_hdr_pkt.payload)
     int_meta_2 = IntMeta2(_pkt=int_meta_1.payload)
     source_int_pkt = SourceIntMeta(_pkt=int_meta_2.payload)
+
+    if int_shim_pkt.next_proto == UDP_PROTO:
+        tcp_udp_pkt = UDP(_pkt=source_int_pkt.payload)
+    else:
+        tcp_udp_pkt = TCP(_pkt=source_int_pkt.payload)
+
     orig_mac = source_int_pkt.orig_mac
 
     try:
@@ -131,7 +137,7 @@ def extract_int_data(packet):
             devMac=orig_mac,
             devAddr=ip_pkt.src,
             dstAddr=ip_pkt.dst,
-            dstPort=udp_int_pkt.dport,
+            dstPort=tcp_udp_pkt.dport,
             protocol=int_shim_pkt.next_proto,
             packetLen=len(packet),
         )
