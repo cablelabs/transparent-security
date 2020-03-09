@@ -43,5 +43,13 @@ control TpsComputeChecksum(inout headers  hdr, inout metadata meta) {
               hdr.ipv4.dstAddr },
             hdr.ipv4.hdrChecksum,
             HashAlgorithm.csum16);
+
+	update_checksum(
+	    hdr.udp_int.isValid(),
+            { hdr.udp_int.src_port,
+	      hdr.udp_int.dst_port,
+              hdr.udp_int.len },
+            hdr.udp_int.cksum,
+            HashAlgorithm.csum16);
     }
 }

@@ -42,10 +42,12 @@ control TpsCoreIngress(inout headers hdr,
         hdr.ipv4.protocol = hdr.int_shim.next_proto;
         hdr.ipv6.next_hdr_proto = hdr.int_shim.next_proto;
         hdr.ipv4.totalLen = hdr.ipv4.totalLen - ((bit<16>)hdr.int_shim.length * 4);
+        hdr.udp_int.setInvalid();
         hdr.int_shim.setInvalid();
         hdr.int_header.setInvalid();
         hdr.int_meta.setInvalid();
         hdr.int_meta_2.setInvalid();
+        hdr.int_meta_3.setInvalid();
 
         standard_metadata.egress_spec = port;
         hdr.ethernet.src_mac = hdr.ethernet.dst_mac;

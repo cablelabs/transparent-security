@@ -63,6 +63,7 @@ control TpsGwIngress(inout headers hdr,
 
         hdr.int_header.meta_len = 3;
         hdr.int_header.instructions = 0x80c0;
+        hdr.int_header.ds_flags_2 = 1;
         hdr.int_header.remaining_hop_cnt = 10; /* TODO - find a better means to determine this value */
         hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt -1;
 
@@ -87,6 +88,7 @@ control TpsGwIngress(inout headers hdr,
         hdr.int_shim.length = 7;
 
         hdr.int_header.meta_len = 3;
+        hdr.int_header.instructions = 0x80c0;
         hdr.int_header.ds_flags_2 = 1;
         hdr.int_header.remaining_hop_cnt = 10; /* TODO - find a better means to determine this value */
         hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt -1;
