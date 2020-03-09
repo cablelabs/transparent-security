@@ -53,6 +53,7 @@ control TpsGwIngress(inout headers hdr,
     }
 
     action data_inspect_packet_ipv4(bit<32> device, bit<32> switch_id) {
+        hdr.udp_int.setValid();
         hdr.int_shim.setValid();
         hdr.int_header.setValid();
         hdr.int_meta.setValid();
@@ -97,6 +98,8 @@ control TpsGwIngress(inout headers hdr,
         hdr.int_meta.orig_mac = hdr.ethernet.src_mac;
 
         hdr.ipv6.next_hdr_proto = TYPE_INSPECTION;
+        hdr.ipv6.payload_len = hdr.ipv6.payload_len + ((bit<16>)hdr.int_shim.length * 4);
+
         forwardedPackets.count(device);
     }
 
@@ -115,10 +118,8 @@ control TpsGwIngress(inout headers hdr,
     }
 
     action insert_udp_int_for_udp() {
-        hdr.udp_int.setValid();
-        hdr.udp_int.src_port = hdr.udp.src_port;
-        hdr.udp_int.dst_port = hdr.udp.dst_port;
-        hdr.udp_int.len = hdr.udp.len;
+        hdr.udp_int.dst_port = TPS_UDP_PORT;
+        hdr.udp_int.len = hdr.udp.len + ((bit<16>)hdr.int_shim.length * 4);
     }
 
     table insert_udp_int_for_udp_t {
@@ -130,9 +131,10 @@ control TpsGwIngress(inout headers hdr,
     }
 
     action insert_udp_int_for_tcp() {
-        hdr.udp_int.setValid();
-        hdr.udp_int.src_port = hdr.tcp.src_port;
-        hdr.udp_int.dst_port = hdr.tcp.dst_port;
+        hdr.udp_int.dst_port = TPS_UDP_PORT;
+        /*
+        hdr.udp_int.len = ??? + ((bit<16>)hdr.int_shim.length * 4);
+        */
     }
 
     table insert_udp_int_for_tcp_t {
@@ -232,11 +234,13 @@ control TpsGwIngress(inout headers hdr,
         if (standard_metadata.egress_spec != DROP_PORT) {
             data_inspection_t.apply();
 
-            if (hdr.udp.isValid()) {
-                insert_udp_int_for_udp_t.apply();
-            }
-            if (hdr.tcp.isValid()) {
-                insert_udp_int_for_tcp_t.apply();
+            if (hdr.int_shim.isValid()) {
+                if (hdr.udp.isValid()) {
+                    insert_udp_int_for_udp_t.apply();
+                }
+                if (hdr.tcp.isValid()) {
+                    insert_udp_int_for_tcp_t.apply();
+                }
             }
 
             data_forward_t.apply();

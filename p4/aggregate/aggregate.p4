@@ -72,6 +72,8 @@ control TpsAggIngress(inout headers hdr,
         hdr.int_meta_2.switch_id = switch_id;
 
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + 4;
+        hdr.udp_int.len = hdr.udp_int.len + 4;
+        hdr.ipv6.payload_len = hdr.ipv6.payload_len + 4;
         forwardedPackets.count(device);
     }
 
