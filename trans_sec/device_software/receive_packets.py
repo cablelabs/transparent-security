@@ -48,7 +48,7 @@ def get_args():
     parser.add_argument(
         '-l', '--loglevel',
         help='Log Level <DEBUG|INFO|WARNING|ERROR> defaults to INFO',
-        required=False, default='INFO', dest='log_level')
+        required=False, default='DEBUG', dest='log_level')
     return parser.parse_args()
 
 
@@ -58,6 +58,7 @@ def __log_packet(packet, int_hops, ip_ver):
 
     ip_proto = None
 
+    logger.info('Parsing IP version - [%s]', ip_ver)
     if ip_ver == 4:
         try:
             ip_proto = packet[IP].proto
@@ -71,6 +72,7 @@ def __log_packet(packet, int_hops, ip_ver):
             logger.debug('Cannot log, not an IPv6 packet - %s',
                          packet.summary())
 
+    logger.info('IP Protocol - [%s]', ip_proto)
     if int_hops > 0 and ip_proto == oinc.INT_PROTO:
         logger.debug('INT Packet received')
 
@@ -105,8 +107,14 @@ def __log_packet(packet, int_hops, ip_ver):
             src_ip = packet[IPv6].src
             dst_ip = packet[IPv6].dst
 
-        src_port = packet[UdpInt].sport
-        dst_port = packet[UdpInt].dport
+        if packet[IntShim].next_proto == oinc.UDP_PROTO:
+            udp_packet = UDP(_pkt=source_int_meta.payload)
+            src_port = udp_packet.sport
+            dst_port = udp_packet.dport
+        else:
+            tcp_packet = TCP(_pkt=source_int_meta.payload)
+            src_port = tcp_packet.sport
+            dst_port = tcp_packet.dport
 
         logger.info('src port - [%s], dst_port - [%s]', src_port, dst_port)
 
@@ -129,32 +137,28 @@ def __log_packet(packet, int_hops, ip_ver):
 
         if packet[Ether].type == oinc.IPV4_TYPE:
             logger.info('Parsing IPv4 packet')
-            src_ip = packet[IP].src
-            dst_ip = packet[IP].dst
+            ip_pkt = packet[IP]
+            proto = packet[IP].proto
         else:
             logger.info('Parsing IPv6 packet')
-            src_ip = packet[IPv6].src
-            dst_ip = packet[IPv6].dst
+            ip_pkt = packet[IPv6]
+            proto = packet[IPv6].nh
 
-        try:
-            src_port = packet[UDP].sport
-            dst_port = packet[UDP].dport
-        except Exception:
-            try:
-                src_port = packet[TCP].sport
-                dst_port = packet[TCP].dport
-            except Exception:
-                logger.debug(
-                    'Unsupported packet received - [%s]', packet.summary())
-                return
+        logger.info('Protocol to parse - [%s]', proto)
+        if proto == oinc.UDP_PROTO:
+            logger.info('Parsing UDP Packet')
+            tcp_udp_pkt = UDP(_pkt=ip_pkt.payload)
+        else:
+            logger.info('Parsing TCP Packet')
+            tcp_udp_pkt = TCP(_pkt=ip_pkt.payload)
 
         int_data = dict(
             eth_src_mac=packet[Ether].src,
             eth_dst_mac=packet[Ether].dst,
-            src_ip=src_ip,
-            dst_ip=dst_ip,
-            src_port=src_port,
-            dst_port=dst_port,
+            src_ip=ip_pkt.src,
+            dst_ip=ip_pkt.dst,
+            src_port=tcp_udp_pkt.sport,
+            dst_port=tcp_udp_pkt.dport,
             packetLen=len(packet),
         )
 
