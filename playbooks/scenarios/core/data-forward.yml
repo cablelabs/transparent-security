@@ -115,14 +115,11 @@
         value: "{{ switch.mac }}"
       - key: port
         value: "{{ rec_sw_port }}"
-    sr1_data_inspection_int:
+    sr_data_inspection_int:
       - switch_id: 1002
       - switch_id: 1001
         orig_mac: "{{ sender.mac }}"
-    sr1_rec_int_hops: 2
-    # For sending INT packets on the #2 of 3 send/receive iteration
-    sr2_data_inspection_int: "{{ sr1_data_inspection_int }}"
-    sr2_rec_int_hops: "{{ sr1_rec_int_hops }}"
+    sr_rec_int_hops: 2
 
 # Write clone entry to ensure cloning is working with INT packets
 - import_playbook: ../test_cases/write_clone_entry.yml

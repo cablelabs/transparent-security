@@ -17,34 +17,36 @@
 # Add table entry to "{{ data_forward_table }}"
 - import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
-    te_conf_file: ~/te-df-receiver-forward-1.yml
+    int_hops: "{{ sr_rec_int_hops | default(0) }}"
+    te_conf_file: "df-write-data-forward-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
     p4_classname: "{{ data_forward_classname }}"
     p4_table_name: "{{ data_forward_table }}"
     p4_action_name: "{{ data_forward_action }}"
     p4_table_match_fields: "{{ data_forward_match_fields }}"
     p4_table_action_params: "{{ data_forward_action_params }}"
     p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: data_forward_basic_te-df-receiver-forward-1.log
+    p4_te_log_file: "df-write-data-forward-{{ send_protocol }}-ip-{{ ip_version }}.log"
 
 # Sending UDP packets expect all to be received
 - import_playbook: ../test_cases/send_receive.yml
   vars:
-    receiver_log_filename: "df_basic_receiver-{{ send_protocol }}.out"
+    int_hops: "{{ sr_rec_int_hops | default(0) }}"
+    receiver_log_filename: "df_basic_receiver-{{ send_protocol }}-ih-{{ int_hops }}.out"
     sender_log_filename: "df_basic_sender-{{ send_protocol }}.out"
     send_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 4) }}"
     send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 5) }}"
     send_packet_count: "{{ '%s' % 100 | random(seed=now|int + 6) }}"
     inspection_data: "{{ sr_data_inspection_int | default(None) }}"
-    int_hops: "{{ sr_rec_int_hops | default(0) }}"
 
 # Delete table entry to "{{ data_forward_table }}"
 - import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
-    te_conf_file: ~/te-df-receiver-forward-delete-1.yml
+    int_hops: "{{ sr_rec_int_hops | default(0) }}"
+    te_conf_file: "df-delete-data-forward-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
     p4_classname: "{{ data_forward_classname }}"
     p4_table_name: "{{ data_forward_table }}"
     p4_table_match_fields: "{{ data_forward_match_fields }}"
     p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: data_forward_basic_te-df-receiver-forward-revert.log
+    p4_te_log_file: "df-delete-data-forward-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
     p4_te_insert: False
 

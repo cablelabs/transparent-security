@@ -28,8 +28,8 @@
 # Sending UDP packets expect all to be received
 - import_playbook: ../test_cases/send_receive.yml
   vars:
-    receiver_log_filename: "dd_basic_receiver-{{ send_protocol }}-1.out"
-    sender_log_filename: "dd_basic_sender-{{ send_protocol }}-1.out"
+    receiver_log_filename: "dd_basic_receiver-{{ send_protocol }}-ip-{{ ip_version }}-1.out"
+    sender_log_filename: "dd_basic_sender-{{ send_protocol }}-ip-{{ ip_version }}-1.out"
     send_port: "{{ send_port }}"
     send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 1) }}"
     send_packet_count: "{{ '%s' % 100 | random(seed=now|int + 2) }}"
@@ -39,7 +39,7 @@
 # Add table entry to {{ data_drop_table }}
 - import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
-    te_conf_file: "~/dd-drop-create-{{ send_protocol }}.yml"
+    te_conf_file: "~/dd-drop-create-{{ send_protocol }}-ip-{{ ip_version }}.yml"
     p4_classname: "{{ data_forward_classname }}"
     p4_table_name: "{{ data_drop_table }}"
     p4_action_name: "{{ data_drop_action }}"
@@ -51,8 +51,8 @@
 # Sending UDP packets expect none to be received
 - import_playbook: ../test_cases/send_receive.yml
   vars:
-    receiver_log_filename: "dd_basic_receiver-{{ send_protocol }}-2.out"
-    sender_log_filename: "dd_basic_sender-{{ send_protocol }}-2.out"
+    receiver_log_filename: "dd_basic_receiver-{{ send_protocol }}-ip-{{ ip_version }}-2.out"
+    sender_log_filename: "dd_basic_sender-{{ send_protocol }}-ip-{{ ip_version }}-2.out"
     send_port: "{{ send_port }}"
     send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 3) }}"
     send_packet_count: "{{ '%s' % 100 | random(seed=now|int + 4) }}"
@@ -64,7 +64,7 @@
 # Delete table entry to table {{ data_drop_table }}
 - import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
-    te_conf_file: "~/dd-drop-delete-{{ send_protocol }}.yml"
+    te_conf_file: "~/dd-drop-delete-{{ send_protocol }}-ip-{{ ip_version }}.yml"
     p4_classname: "{{ data_drop_classname }}"
     p4_table_name: "{{ data_drop_table }}"
     p4_table_match_fields: "{{ data_drop_match_fields }}"
@@ -75,8 +75,8 @@
 # Sending UDP packets expect all to be received
 - import_playbook: ../test_cases/send_receive.yml
   vars:
-    receiver_log_filename: "dd_basic_receiver-{{ send_protocol }}-3.out"
-    sender_log_filename: "dd_basic_sender-{{ send_protocol }}-3.out"
+    receiver_log_filename: "dd_basic_receiver-{{ send_protocol }}-ip-{{ ip_version }}-3.out"
+    sender_log_filename: "dd_basic_sender-{{ send_protocol }}-ip-{{ ip_version }}-3.out"
     send_port: "{{ send_port }}"
     send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 5) }}"
     send_packet_count: "{{ '%s' % 100 | random(seed=now|int + 6) }}"
