@@ -119,7 +119,7 @@
       - switch_id: 1002
       - switch_id: 1001
         orig_mac: "{{ sender.mac }}"
-    sr_rec_int_hops: 2
+    sr_rec_int_hops: 0
 
 # Write clone entry to ensure cloning is working with INT packets
 - import_playbook: ../test_cases/write_clone_entry.yml

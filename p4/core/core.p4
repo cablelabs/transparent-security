@@ -35,29 +35,39 @@ control TpsCoreIngress(inout headers hdr,
                        inout metadata meta,
                        inout standard_metadata_t standard_metadata) {
 
+    action data_inspect_packet(bit<32> switch_id) {
+        hdr.int_meta_3.setValid();
+        hdr.int_shim.length = hdr.int_shim.length + 1;
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen + 4;
+        hdr.udp_int.len = hdr.udp_int.len + 4;
+        hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt - 1;
+        hdr.int_meta_3.switch_id = switch_id;
+        recirculate<standard_metadata_t>(standard_metadata);
+    }
+
+    action recirc() {
+        recirculate<standard_metadata_t>(standard_metadata);
+    }
+
+    table data_inspection_t {
+        key = {
+            hdr.ethernet.src_mac: exact;
+        }
+        actions = {
+            data_inspect_packet;
+            recirc;
+        }
+        size = 1024;
+        default_action = recirc();
+    }
+
     action data_forward(macAddr_t dstAddr, egressSpec_t port) {
-
         clone3(CloneType.I2E, I2E_CLONE_SESSION_ID, standard_metadata);
-
-        /* TODO/FIXME - these should not be set here */
-        hdr.ipv4.protocol = hdr.int_shim.next_proto;
-        hdr.ipv6.next_hdr_proto = hdr.int_shim.next_proto;
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen - ((bit<16>)hdr.int_shim.length * 4);
-        hdr.ipv6.payload_len = hdr.ipv6.payload_len + - ((bit<16>)hdr.int_shim.length * 4);
-
-        hdr.udp_int.setInvalid();
-        hdr.int_shim.setInvalid();
-        hdr.int_header.setInvalid();
-        hdr.int_meta.setInvalid();
-        hdr.int_meta_2.setInvalid();
-        hdr.int_meta_3.setInvalid();
-
         standard_metadata.egress_spec = port;
         hdr.ethernet.src_mac = hdr.ethernet.dst_mac;
         hdr.ethernet.dst_mac = dstAddr;
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
     }
-
 
     table data_forward_ipv4_t {
         key = {
@@ -83,49 +93,45 @@ control TpsCoreIngress(inout headers hdr,
         default_action = NoAction();
     }
 
-     apply {
-        if (hdr.ipv4.isValid()) {
-            data_forward_ipv4_t.apply();
-        }
-        if (hdr.ipv6.isValid()) {
-            data_forward_ipv6_t.apply();
-        }
-    }
-}
+    action clear_int() {
+        hdr.ipv4.protocol = hdr.int_shim.next_proto;
+        hdr.ipv6.next_hdr_proto = hdr.int_shim.next_proto;
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen - ((bit<16>)hdr.int_shim.length * 4);
+        hdr.ipv6.payload_len = hdr.ipv6.payload_len - ((bit<16>)hdr.int_shim.length * 4);
 
-/*************************************************************************
-****************  C O R E   E G R E S S   P R O C E S S I N G   ********************
-*************************************************************************/
-
-control TpsCoreEgress(inout headers hdr,
-                 inout metadata meta,
-                 inout standard_metadata_t standard_metadata) {
-
-    action data_inspect_packet(bit<32> switch_id) {
-        hdr.int_meta_3.setValid();
-        hdr.int_shim.length = hdr.int_shim.length + 1;
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen + 4;
-        hdr.udp_int.len = hdr.udp_int.len + 4;
-        hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt - 1;
-        hdr.int_meta_3.switch_id = switch_id;
+        hdr.udp_int.setInvalid();
+        hdr.int_shim.setInvalid();
+        hdr.int_header.setInvalid();
+        hdr.int_meta.setInvalid();
+        hdr.int_meta_2.setInvalid();
+        hdr.int_meta_3.setInvalid();
     }
 
-    table data_inspection_t {
-        key = {
-            hdr.ethernet.src_mac: exact;
-        }
+    table clear_int_t {
         actions = {
-            data_inspect_packet;
-            NoAction;
+            clear_int;
         }
         size = 1024;
-        default_action = NoAction();
+        default_action = clear_int();
     }
 
     apply {
-        data_inspection_t.apply();
+        if (standard_metadata.instance_type != 0) {
+            if (hdr.ipv4.isValid()) {
+                data_forward_ipv4_t.apply();
+            }
+            if (hdr.ipv6.isValid()) {
+                data_forward_ipv6_t.apply();
+            }
+            if (hdr.int_shim.isValid()) {
+                clear_int_t.apply();
+            }
+        } else {
+            data_inspection_t.apply();
+        }
     }
 }
+
 
 /*************************************************************************
 ***********************  S W I T C H  ************************************
@@ -135,7 +141,7 @@ V1Switch(
     TpsCoreParser(),
     TpsVerifyChecksum(),
     TpsCoreIngress(),
-    TpsCoreEgress(),
+    TpsEgress(),
     TpsComputeChecksum(),
     TpsDeparser()
 ) main;

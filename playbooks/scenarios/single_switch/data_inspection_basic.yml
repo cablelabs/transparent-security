@@ -39,7 +39,7 @@
     p4_te_log_dir: "{{ host_log_dir }}"
     p4_te_log_file: "di-inspection-create-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
 
-# Sending UDP packets expect all to be received with one INT hop
+# Sending UDP packets expect all to be received with configured INT hops sr1_rec_int_hops
 - import_playbook: ../test_cases/send_receive.yml
   vars:
     int_hops: "{{ sr1_rec_int_hops | default(0) }}"
@@ -62,7 +62,7 @@
     p4_te_log_file: "di-inspection-delete-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
     p4_te_insert: False
 
-# Sending packet expect to be received without INT
+# Sending UDP packets expect all to be received with configured INT hops sr2_rec_int_hops
 - import_playbook: ../test_cases/send_receive.yml
   vars:
     int_hops: "{{ sr2_rec_int_hops | default(0) }}"
