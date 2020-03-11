@@ -69,27 +69,38 @@ def __log_packet(packet, int_hops, ip_ver):
         try:
             ip_proto = packet[IPv6].nh
         except Exception:
-            logger.debug('Cannot log, not an IPv6 packet - %s',
-                         packet.summary())
+            logger.debug(
+                'Cannot log, not an IPv6 packet - %s with length - [%s]',
+                packet.summary(), len(packet))
 
     logger.info('IP Protocol - [%s]', ip_proto)
     if int_hops > 0 and ip_proto == oinc.INT_PROTO:
         logger.debug('INT Packet received')
+        udp_int_pkt = packet[UdpInt]
+        logger.debug('UdpInt - sport - [%s], dport - [%s], len - [%s]',
+                     udp_int_pkt.sport, udp_int_pkt.dport, udp_int_pkt.len)
+        int_shim_pkt = packet[IntShim]
+        logger.debug('IntShim - next_proto - [%s], length - [%s]',
+                     int_shim_pkt.next_proto, int_shim_pkt.length)
+        int_hdr_pkt = packet[IntHeader]
+        logger.debug(
+            'INT Header meta_len - [%s] and remaining_hop_cnt - [%s]',
+            int_hdr_pkt.meta_len, int_hdr_pkt.remaining_hop_cnt)
 
         switch_id_2 = None
         switch_id_3 = None
         if int_hops == 1:
-            source_int_meta = SourceIntMeta(_pkt=packet[IntHeader].payload)
+            source_int_meta = SourceIntMeta(_pkt=int_hdr_pkt.payload)
             mac1 = source_int_meta.orig_mac
             switch_id_1 = source_int_meta.switch_id
         elif int_hops == 2:
-            int_meta_2 = IntMeta2(_pkt=packet[IntHeader].payload)
+            int_meta_2 = IntMeta2(_pkt=int_hdr_pkt.payload)
             source_int_meta = SourceIntMeta(_pkt=int_meta_2.payload)
             mac1 = source_int_meta.orig_mac
             switch_id_1 = source_int_meta.switch_id
             switch_id_2 = int_meta_2.switch_id
         elif int_hops == 3:
-            int_meta_1 = IntMeta1(_pkt=packet[IntHeader].payload)
+            int_meta_1 = IntMeta1(_pkt=int_hdr_pkt.payload)
             int_meta_2 = IntMeta2(int_meta_1.payload)
             source_int_meta = SourceIntMeta(_pkt=int_meta_2.payload)
             mac1 = source_int_meta.orig_mac
