@@ -95,8 +95,9 @@ External Gateway INT Data header definition
 header int_udp_shim_t { /* 4 */
     bit<4>  type;
     bit<2>  npt;
-    bit<2>  reserved;
+    bit<2>  res1;
     bit<8>  length;
+    bit<8>  res2;
     bit<8>  next_proto;
 }
 
