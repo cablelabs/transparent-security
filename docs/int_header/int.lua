@@ -18,53 +18,49 @@ end
 -- declare our protocol
 tps_proto = Proto("TPS_INT","TPS INT Protocol")
 -- create a function to dissect it
+
 function tps_proto.dissector(buffer,pinfo,tree)
     pinfo.cols.protocol = "TPS INT"
-
-    -- INT Shim Header
-    header_offset = 0
     total_hops = 1
-    type = buffer(0,1):uint()
-    reserved = buffer(1,1):uint()
-    length = buffer(2,1):uint()
-    next_proto = buffer(3,1):uint()
-    local subtree = tree:add(tps_proto,buffer(header_offset,length),"In-band Network Telemetry (INT)")
-    shim_tree = subtree:add(buffer(header_offset,4),"INT Shim Header")
-    shim_tree:add(buffer(0,1),"Type: " .. type)
-    shim_tree:add(buffer(1,1),"Reserved: " .. reserved)
-    shim_tree:add(buffer(2,1),"Length: " .. length)
-    shim_tree:add(buffer(3,1),"Next Protocol: " .. next_proto)
 
-    -- INT Metadata Header
-    header_tree = subtree:add(buffer(4,12), "INT Metadata Header")
-    tvbr = buffer(4,1)
-    version = tvbr:bitfield(0,4)
-    header_tree:add("Version: " .. version)
-    replication = tvbr:bitfield(4,2)
-    header_tree:add("Replication: " .. replication)
-    copy = tvbr:bitfield(6,1)
-    header_tree:add("Copy: " .. copy)
-    hop_exceeded = tvbr:bitfield(7,1)
-    header_tree:add("Max Hop count exceeded: " .. hop_exceeded)
-    tvbr = buffer(5,2)
-    mtu = tvbr:bitfield(0,1)
-    header_tree:add("MTU Exceeded: " .. mtu)
-    reserved = tvbr:bitfield(1,10)
-    header_tree:add("Reserved: " .. reserved)
-    metalen = tvbr:bitfield(11,5)
-    header_tree:add("Per-hop Metadata Length: " .. metalen)
-    rem_hop_count = buffer(7,1):uint()
-    header_tree:add(buffer(7,1),"Remaining Hop count: " .. rem_hop_count)
-    inst_bitmap = buffer(8,2):uint()
-    header_tree:add(buffer(8,2),"Instruction Bitmap: " .. inst_bitmap)
-    reserved = buffer(10,2):uint()
-    header_tree:add(buffer(10,2),"Reserved: " .. reserved)
-    domain_id = buffer(12,2):uint()
-    header_tree:add(buffer(12,2),"Domain ID: " ..  domain_id)
-    ds_instruction = buffer(14,2):uint()
-    header_tree:add(buffer(14,2),"Domain-specific Instruction: " ..  ds_instruction)
+    -- UDP Encapsulation Header - 4 bytes
+    local subtree = tree:add(tps_proto,buffer(0,20),"In-band Network Telemetry (INT)")
 
-    -- INT Metadata Stack
+    udp_int_buf = buffer(0,4)
+    udp_tree = subtree:add(udp_int_buf(),"UDP Encapsulation")
+    udp_tree:add("sport: " .. udp_int_buf(0,1):uint())
+    udp_tree:add("dport: " .. udp_int_buf(1,1):uint())
+    udp_tree:add("len: " .. udp_int_buf(2,1):uint())
+    udp_tree:add("cksum: " .. udp_int_buf(3,1):uint())
+
+    -- INT Shim Header - 4 bytes
+    shim_buf = buffer(4,8)
+    shim_tree = subtree:add(buffer(4,8),"INT Shim Header")
+    shim_tree:add("Type: " .. shim_buf(0,1):bitfield(0,4))
+    shim_tree:add("NPT: " .. shim_buf(1,1):bitfield(4,2))
+    shim_tree:add("res1: " .. shim_buf(2,1):bitfield(6,2))
+    local length = shim_buf(3,1):uint()
+    shim_tree:add("length: " .. length)
+    shim_tree:add("res2: " .. shim_buf(4,1):uint())
+    shim_tree:add("next_proto: " .. shim_buf(5,1):uint())
+
+    -- INT Metadata Header - 12 bytes
+    header_tree = subtree:add(buffer(12,12), "INT Metadata Header")
+    tvbr = buffer(20,12)
+    header_tree:add("Version: " .. tvbr:bitfield(0,4))
+    header_tree:add("Res: " .. tvbr:bitfield(4,2))
+    header_tree:add("d: " .. tvbr:bitfield(6,1))
+    header_tree:add("e: " .. tvbr:bitfield(7,1))
+    header_tree:add("m: " .. tvbr:bitfield(8,1))
+    header_tree:add("Reserved: " .. tvbr:bitfield(9,10))
+--    metalen = tvbr:bitfield(19,5)
+    header_tree:add("Per-hop Metadata Length: " .. tvbr:bitfield(19,5))
+    header_tree:add("Remaining Hop count: " .. buffer(5,1):uint())
+    header_tree:add("Instruction Bitmap: " .. buffer(6,1):uint())
+    header_tree:add("Domain ID: " .. buffer(7,1):uint())
+    header_tree:add(buffer(8,2),"Domain-specific Instruction: " ..  buffer(8,2):uint())
+
+    -- INT Metadata Stack - 4 bytes
     header_offset = 16
     total_hops = 1 + ((length - 3 - 4)/metalen)
     if total_hops > 1 then
@@ -96,3 +92,6 @@ function tps_proto.dissector(buffer,pinfo,tree)
 end
 ip_table = DissectorTable.get("ip.proto")
 ip_table:add(253,tps_proto)
+
+--ipv6_table = DissectorTable.get("ip.nh")
+--ipv6_table:add(253,tps_proto)
