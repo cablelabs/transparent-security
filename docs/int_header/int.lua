@@ -88,9 +88,6 @@ function tps_proto.dissector(buffer,pinfo,tree)
         total_hops = total_hops - 1
     end
 
---    local device_mac = octet_to_mac(int_md_buf(int_md_buf_offset,6))
---    metaTree:add(int_md_buf(int_md_buf_offset,6),"Originating Device MAC address: " .. device_mac)
-
     if next_proto == 0x11 then
         -- UDP
         Dissector.get("udp"):call(buffer:range(buf_offset):tvb(), pinfo, tree)
