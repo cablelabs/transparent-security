@@ -23,17 +23,11 @@ from scapy.layers.inet import IP, UDP, TCP
 from scapy.layers.inet6 import IPv6
 from scapy.layers.l2 import Ether
 
+from trans_sec.consts import UDP_PROTO, UDP_INT_DST_PORT, IPV4_TYPE, IPV6_TYPE
 from trans_sec.packet.inspect_layer import (
     IntHeader, IntMeta1, IntMeta2, IntShim, SourceIntMeta, UdpInt)
 
 logger = logging.getLogger('oinc')
-
-UDP_PROTO = 0x11
-TCP_PROTO = 0x06
-INT_PROTO = 0xfd
-
-IPV4_TYPE = 0x0800
-IPV6_TYPE = 0x86dd
 
 
 class PacketAnalytics(object):
@@ -60,15 +54,15 @@ class PacketAnalytics(object):
 
         logger.debug("Completed binding packet layers")
 
-    def start_sniffing(self, iface, ip_proto=INT_PROTO):
+    def start_sniffing(self, iface, udp_dport=UDP_INT_DST_PORT):
         """
         Starts the sniffer thread
         :param iface: the interface to sniff
-        :param ip_proto: the IP protocol to sniff (default TPS - 253)
+        :param udp_dport: the UDP dport to sniff (default 555)
         """
         logger.info("AE monitoring iface %s", iface)
         sniff(iface=iface,
-              prn=lambda packet: self.handle_packet(packet, ip_proto),
+              prn=lambda packet: self.handle_packet(packet, udp_dport),
               stop_filter=lambda p: self.sniff_stop.is_set())
 
     def stop_sniffing(self):
@@ -77,14 +71,14 @@ class PacketAnalytics(object):
         """
         self.sniff_stop.set()
 
-    def handle_packet(self, packet, ip_proto):
+    def handle_packet(self, packet, udp_dport):
         """
         Determines whether or not to process this packet
         :param packet: the packet to process
-        :param ip_proto: the IP protocol to filter
+        :param udp_dport: the UDP protocol dport value to filter
         :return T/F - True when an attack has been triggered
         """
-        return self.process_packet(packet, ip_proto)
+        return self.process_packet(packet, udp_dport)
 
     def _send_attack(self, **attack_dict):
         """
@@ -96,11 +90,11 @@ class PacketAnalytics(object):
         self.sdn_interface.post('attack', attack_dict)
 
     @abc.abstractmethod
-    def process_packet(self, packet, ip_proto):
+    def process_packet(self, packet, udp_dport=UDP_INT_DST_PORT):
         """
         Processes a packet to determine if an attack is occurring
         :param packet: the packet to process
-        :param ip_proto: the IP protocol to filter
+        :param udp_dport: the UDP port value on which to filter
         :return: T/F - True when an attack has been triggered
         """
         return
@@ -157,7 +151,7 @@ class Oinc(PacketAnalytics):
                                              sample_interval)
         self.tree = Node('root')
 
-    def process_packet(self, packet, ip_proto):
+    def process_packet(self, packet, udp_dport=UDP_INT_DST_PORT):
         mac, src_ip, dst_ip, dst_port, packet_size = self.__parse_tree(packet)
 
         if mac:
@@ -265,31 +259,38 @@ class SimpleAE(PacketAnalytics):
         # Holds the last time an attack call was issued to the SDN controller
         self.attack_map = dict()
 
-    def process_packet(self, packet, ip_proto):
+    def process_packet(self, packet, udp_dport=UDP_INT_DST_PORT):
         """
         Processes a packet to determine if an attack is occurring if the IP
         protocol is as expected
         :param packet: the packet to process
-        :param ip_proto: the IP protocol to filter
+        :param udp_dport: the UDP port value on which to filter
         :return: T/F - True when an attack has been triggered
         """
         logger.debug('Packet data - [%s]', packet.summary())
         if packet[Ether].type == IPV4_TYPE:
-            protocol = packet[IP].proto
+            ip_pkt = IP(_pkt=packet[Ether].payload)
+            protocol = ip_pkt.proto
         else:
-            protocol = packet[IPv6].nh
+            ip_pkt = IPv6(_pkt=packet[Ether].payload)
+            protocol = ip_pkt.nh
 
-        if protocol == ip_proto:
-            int_data = extract_int_data(packet)
-
-            if int_data:
-                return self.__process(int_data)
+        if protocol == UDP_PROTO:
+            udp_packet = UdpInt(_pkt=ip_pkt.payload)
+            logger.info('udp sport - [%s] dport - [%s]',
+                        udp_packet.sport, udp_packet.dport)
+            if udp_packet.dport == udp_dport:
+                int_data = extract_int_data(packet)
+                if int_data:
+                    return self.__process(int_data)
+                else:
+                    logger.warn('Unable to debug INT data')
+                    return False
             else:
-                logger.warn('Unable to debug INT data')
+                logger.debug(
+                    'Cannot process UDP packet dport of - [%s], expected - '
+                    '[%s]', udp_packet.dport, udp_dport)
                 return False
-        else:
-            logger.debug('Cannot process IP proto of - [%s]', protocol)
-            return False
 
     def __process(self, int_data):
         """
@@ -352,11 +353,11 @@ class IntLoggerAE(PacketAnalytics):
     """
     Logs only INT packets
     """
-    def process_packet(self, packet, ip_proto):
+    def process_packet(self, packet, udp_dport=UDP_INT_DST_PORT):
         """
         Logs the INT data within the packet
         :param packet: the INT packet
-        :param ip_proto: the IP protocol to process
+        :param udp_dport: the UDP port value on which to filter
         :return: False
         """
         logger.info('INT Packet data - [%s]', extract_int_data(packet))
@@ -377,11 +378,11 @@ class LoggerAE(PacketAnalytics):
         logger.info('Packet data - [%s]', packet.summary())
         return False
 
-    def process_packet(self, packet, ip_proto):
+    def process_packet(self, packet, udp_dport=UDP_INT_DST_PORT):
         """
         No need to implement
         :param packet: the packet that'll never come in
-        :param ip_proto: does nothing here
+        :param udp_dport: the UDP port value on which to filter
         :raises NotImplemented
         """
         raise NotImplemented

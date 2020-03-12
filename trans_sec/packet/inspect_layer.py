@@ -14,6 +14,8 @@ from scapy.all import Packet, ShortEnumField, UDP_SERVICES, ShortField, \
     XShortField
 from scapy import fields
 
+import trans_sec.consts
+
 
 class IntShim(Packet):
     """
@@ -70,8 +72,10 @@ class SourceIntMeta(Packet):
 class UdpInt(Packet):
     name = "UDP_INT"
     fields_desc = [
-        ShortEnumField("sport", 53, UDP_SERVICES),
-        ShortEnumField("dport", 53, UDP_SERVICES),
+        ShortEnumField("sport", trans_sec.consts.UDP_INT_SRC_PORT,
+                       UDP_SERVICES),
+        ShortEnumField("dport", trans_sec.consts.UDP_INT_DST_PORT,
+                       UDP_SERVICES),
         ShortField("len", None),
         XShortField("chksum", None),
     ]

@@ -20,7 +20,7 @@ from scapy.layers.inet import IP, UDP, TCP
 from scapy.layers.inet6 import IPv6
 from scapy.layers.l2 import Ether
 
-from trans_sec.analytics import oinc
+import trans_sec.consts
 from trans_sec.packet.inspect_layer import (
     IntShim, IntHeader, IntMeta1, IntMeta2, SourceIntMeta, UdpInt)
 
@@ -56,33 +56,42 @@ def __log_packet(packet, int_hops, ip_ver):
     logger.info('Expected INT Hops - [%s] on packet - [%s]',
                 int_hops, packet.summary())
 
-    ip_proto = None
+    ether_pkt = packet[Ether]
 
     logger.info('Parsing IP version - [%s]', ip_ver)
     if ip_ver == 4:
         try:
-            ip_proto = packet[IP].proto
+            ip_pkt = packet[IP]
+            ip_proto = ip_pkt.proto
         except Exception:
             logger.debug('Cannot log, not an IPv4 packet - %s',
                          packet.summary())
+            return
     else:
         try:
-            ip_proto = packet[IPv6].nh
+            ip_pkt = packet[IPv6]
+            ip_proto = ip_pkt.nh
         except Exception:
             logger.debug(
                 'Cannot log, not an IPv6 packet - %s with length - [%s]',
                 packet.summary(), len(packet))
+            return
 
-    logger.info('IP Protocol - [%s]', ip_proto)
-    if int_hops > 0 and ip_proto == oinc.INT_PROTO:
-        logger.debug('INT Packet received')
-        udp_int_pkt = packet[UdpInt]
+    logger.info('IP Protocol - [%s] hops - [%s]', ip_proto, int_hops)
+    if int_hops > 0 and ip_proto == trans_sec.consts.UDP_PROTO:
+        udp_int_pkt = UdpInt(_pkt=ip_pkt.payload)
+        if udp_int_pkt.dport != trans_sec.consts.UDP_INT_DST_PORT:
+            logger.error('Unexpected dport of - [%s]', udp_int_pkt.dport)
+            return
+        else:
+            logger.debug('INT Packet received')
+
         logger.debug('UdpInt - sport - [%s], dport - [%s], len - [%s]',
                      udp_int_pkt.sport, udp_int_pkt.dport, udp_int_pkt.len)
-        int_shim_pkt = packet[IntShim]
+        int_shim_pkt = IntShim(_pkt=udp_int_pkt.payload)
         logger.debug('IntShim - next_proto - [%s], length - [%s]',
                      int_shim_pkt.next_proto, int_shim_pkt.length)
-        int_hdr_pkt = packet[IntHeader]
+        int_hdr_pkt = IntHeader(_pkt=int_shim_pkt.payload)
         logger.debug(
             'INT Header meta_len - [%s] and remaining_hop_cnt - [%s]',
             int_hdr_pkt.meta_len, int_hdr_pkt.remaining_hop_cnt)
@@ -110,15 +119,8 @@ def __log_packet(packet, int_hops, ip_ver):
         else:
             raise Exception('No support for hops > 3')
 
-        logger.info('Ether type - [%s]', packet[Ether].type)
-        if packet[Ether].type == oinc.IPV4_TYPE:
-            logger.info('IPv4 Packet')
-            ip_pkt = packet[IP]
-        else:
-            logger.info('IPv6 Packet')
-            ip_pkt = packet[IPv6]
-
-        if packet[IntShim].next_proto == oinc.UDP_PROTO:
+        logger.info('Ether type - [%s]', ether_pkt.type)
+        if int_shim_pkt.next_proto == trans_sec.consts.UDP_PROTO:
             logger.info('UDP Packet')
             tcp_udp_packet = UDP(_pkt=source_int_meta.payload)
         else:
@@ -126,8 +128,8 @@ def __log_packet(packet, int_hops, ip_ver):
             tcp_udp_packet = TCP(_pkt=source_int_meta.payload)
 
         int_data = dict(
-            eth_src_mac=packet[Ether].src,
-            eth_dst_mac=packet[Ether].dst,
+            eth_src_mac=ether_pkt.src,
+            eth_dst_mac=ether_pkt.dst,
             src_ip=ip_pkt.src,
             dst_ip=ip_pkt.dst,
             mac1=mac1,
@@ -139,29 +141,26 @@ def __log_packet(packet, int_hops, ip_ver):
             packetLen=len(packet),
         )
         logger.warn('INT Packet data - [%s]', int_data)
-    elif int_hops < 1 and ip_proto != oinc.INT_PROTO:
+    elif int_hops < 1:
         logger.info('Non INT Packet received - [%s]', packet.summary())
 
-        if packet[Ether].type == oinc.IPV4_TYPE:
-            logger.info('Parsing IPv4 packet')
-            ip_pkt = packet[IP]
-            proto = packet[IP].proto
-        else:
-            logger.info('Parsing IPv6 packet')
-            ip_pkt = packet[IPv6]
-            proto = packet[IPv6].nh
-
-        logger.info('Protocol to parse - [%s]', proto)
-        if proto == oinc.UDP_PROTO:
+        logger.info('Protocol to parse - [%s]', ip_proto)
+        if ip_proto == trans_sec.consts.UDP_PROTO:
             logger.info('Parsing UDP Packet')
             tcp_udp_pkt = UDP(_pkt=ip_pkt.payload)
-        else:
+        elif ip_proto == trans_sec.consts.TCP_PROTO:
             logger.info('Parsing TCP Packet')
             tcp_udp_pkt = TCP(_pkt=ip_pkt.payload)
+        else:
+            logger.debug('Nothing to log, protocol - [%s] is unsupported',
+                         ip_proto)
+            return
+
+        logger.debug('Packet payload - [%s]', tcp_udp_pkt.payload)
 
         int_data = dict(
-            eth_src_mac=packet[Ether].src,
-            eth_dst_mac=packet[Ether].dst,
+            eth_src_mac=ether_pkt.src,
+            eth_dst_mac=ether_pkt.dst,
             src_ip=ip_pkt.src,
             dst_ip=ip_pkt.dst,
             src_port=tcp_udp_pkt.sport,

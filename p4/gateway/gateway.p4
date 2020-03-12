@@ -58,6 +58,9 @@ control TpsGwIngress(inout headers hdr,
         hdr.int_header.setValid();
         hdr.int_meta.setValid();
 
+        hdr.udp_int.src_port = 0;
+        hdr.udp_int.dst_port = UDP_INT_DST_PORT;
+
         hdr.int_shim.next_proto = hdr.ipv4.protocol;
         hdr.int_shim.type = 1;
         hdr.int_shim.length = 7;
@@ -72,7 +75,7 @@ control TpsGwIngress(inout headers hdr,
         hdr.int_meta.orig_mac = hdr.ethernet.src_mac;
 
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
-        hdr.ipv4.protocol = TYPE_INSPECTION;
+        hdr.ipv4.protocol = TYPE_UDP;
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + ((bit<16>)hdr.int_shim.length * 4);
 
         forwardedPackets.count(device);
@@ -83,6 +86,9 @@ control TpsGwIngress(inout headers hdr,
         hdr.int_shim.setValid();
         hdr.int_header.setValid();
         hdr.int_meta.setValid();
+
+        hdr.udp_int.src_port = 0;
+        hdr.udp_int.dst_port = UDP_INT_DST_PORT;
 
         hdr.int_shim.next_proto = hdr.ipv6.next_hdr_proto;
         hdr.int_shim.type = 1;
@@ -97,7 +103,7 @@ control TpsGwIngress(inout headers hdr,
         hdr.int_meta.switch_id = switch_id;
         hdr.int_meta.orig_mac = hdr.ethernet.src_mac;
 
-        hdr.ipv6.next_hdr_proto = TYPE_INSPECTION;
+        hdr.ipv6.next_hdr_proto = TYPE_UDP;
         hdr.ipv6.payload_len = hdr.ipv6.payload_len + ((bit<16>)hdr.int_shim.length * 4);
 
         forwardedPackets.count(device);
@@ -118,7 +124,6 @@ control TpsGwIngress(inout headers hdr,
     }
 
     action insert_udp_int_for_udp() {
-        hdr.udp_int.dst_port = TPS_UDP_PORT;
         hdr.udp_int.len = hdr.udp.len + ((bit<16>)hdr.int_shim.length * 4);
     }
 
@@ -131,10 +136,8 @@ control TpsGwIngress(inout headers hdr,
     }
 
     action insert_udp_int_for_tcp() {
-        hdr.udp_int.dst_port = TPS_UDP_PORT;
-        /*
-        hdr.udp_int.len = ??? + ((bit<16>)hdr.int_shim.length * 4);
-        */
+        /* TODO - determine the correct start bytes using 20 but should determine the total length of the TCP */
+        hdr.udp_int.len = 20 + ((bit<16>)hdr.int_shim.length * 4);
     }
 
     table insert_udp_int_for_tcp_t {

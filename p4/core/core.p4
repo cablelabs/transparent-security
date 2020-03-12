@@ -102,9 +102,9 @@ control TpsCoreIngress(inout headers hdr,
         hdr.udp_int.setInvalid();
         hdr.int_shim.setInvalid();
         hdr.int_header.setInvalid();
-        hdr.int_meta.setInvalid();
         hdr.int_meta_2.setInvalid();
         hdr.int_meta_3.setInvalid();
+        hdr.int_meta.setInvalid();
     }
 
     table clear_int_t {
