@@ -90,8 +90,6 @@ function tps_proto.dissector(buffer,pinfo,tree)
         Dissector.get("tcp"):call(buffer:range(header_offset):tvb(), pinfo, tree)
     end
 end
-ip_table = DissectorTable.get("ip.proto")
-ip_table:add(253,tps_proto)
 
---ipv6_table = DissectorTable.get("ip.nh")
---ipv6_table:add(253,tps_proto)
+ip_table = DissectorTable.get("udp.port")
+ip_table:add(555,tps_proto)
