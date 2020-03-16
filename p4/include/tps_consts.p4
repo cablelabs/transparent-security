@@ -16,7 +16,7 @@
 const bit<8> MAX_HOPS = 0xa;
 
 const bit<4> INT_SHIM_TYPE = 0x1;
-const bit<16> INT_SHIM_DOMAIN_ID = 0x154d;
+const bit<16> INT_SHIM_DOMAIN_ID = 0x5453;
 const bit<2> INT_SHIM_NPT_UDP_FULL_WRAP = 0x2;
 const bit<4> INT_VERSION = 0x2;
 const bit<5> INT_META_LEN = 0x1;
