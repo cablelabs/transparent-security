@@ -99,7 +99,8 @@ function tps_int_md(int_tree, int_md_buf, total_hops)
             local device_mac = octet_to_mac(int_md_buf(int_md_buf_offset, 6))
             metaTree:add(int_md_buf(int_md_buf_offset, 6), "Originating Device MAC address: " .. device_mac)
             int_md_buf_offset = int_md_buf_offset + 6
-            int_md_buf(int_md_buf_offset, 2) -- get padding but don't display
+            local pad = int_md_buf(int_md_buf_offset, 2)
+            assert(pad)
             int_md_buf_offset = int_md_buf_offset + 2
         end
         total_hops = total_hops - 1
