@@ -10,7 +10,8 @@
 -- limitations under the License.
 
 
--- This Wireshark plugin reflects the INT header prior to the updated documentation
+-- This Wireshark plugin reflects the INT header prior to the updated do
+-- cumentation
 
 function octet_to_mac(buff)
     local addr = ""
@@ -38,10 +39,12 @@ function tps_int_shim(int_tree, shim_buf)
     local shim_tree = int_tree:add(shim_buf, "UDP INT Shim Header")
     shim_tree:add("Type: " .. shim_buf:bitfield(0, 4))
     shim_tree:add("NPT: " .. shim_buf:bitfield(4, 2))
+    assert(shim_buf:bitfield(6, 2)) -- reserved
     local length = shim_buf:bitfield(8, 8)
-    shim_tree:add("length: " .. length)
+    shim_tree:add(shim_buf(1, 1), "length: " .. length)
+    assert(shim_buf:bitfield(16, 8)) -- reserved
     local next_proto = shim_buf:bitfield(24, 8)
-    shim_tree:add("next_proto: " .. next_proto)
+    shim_tree:add(shim_buf(3, 1), "next_proto: " .. next_proto)
     return length, next_proto
 end
 
@@ -72,9 +75,9 @@ function tps_int_hdr(int_tree, tvbr)
     header_tree:add("e: " .. tvbr:bitfield(7, 1))
     header_tree:add("m: " .. tvbr:bitfield(8, 1))
     header_tree:add("Per-hop Metadata Length: " .. tvbr:bitfield(19, 5))
-    header_tree:add("Remaining Hop count: " .. tvbr:bitfield(24, 8))
+    header_tree:add(tvbr(3, 1), "Remaining Hop count: " .. tvbr:bitfield(24, 8))
     bit_tree_16(header_tree, tvbr, 4, 32, "Instructions", "bit")
-    header_tree:add("Domain ID: " .. tvbr:bitfield(48,16))
+    header_tree:add(tvbr(6, 2), "Domain ID: " .. tvbr:bitfield(48, 16))
     bit_tree_16(header_tree, tvbr, 8, 64, "DS Instructions", "bit")
     bit_tree_16(header_tree, tvbr, 10, 80, "DS Flags", "bit")
 end
@@ -93,7 +96,7 @@ function tps_int_md(int_tree, int_md_buf, total_hops)
 
         local metaTree = int_tree:add(int_md_buf(int_md_buf_offset, tree_bytes), "Hop " .. total_hops)
         local switch_id = int_md_buf(int_md_buf_offset, 4):uint()
-        metaTree:add("Switch ID: " .. switch_id)
+        metaTree:add(int_md_buf(int_md_buf_offset, 4), "Switch ID: " .. switch_id)
         int_md_buf_offset = int_md_buf_offset + 4
         if total_hops == 1 then
             local device_mac = octet_to_mac(int_md_buf(int_md_buf_offset, 6))
