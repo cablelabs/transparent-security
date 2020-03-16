@@ -41,7 +41,6 @@ control TpsCoreIngress(inout headers hdr,
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + 4;
         hdr.udp_int.len = hdr.udp_int.len + 4;
         hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt - 1;
-        hdr.int_header.meta_len = hdr.int_header.meta_len + 1;
         hdr.int_meta_3.switch_id = switch_id;
         recirculate<standard_metadata_t>(standard_metadata);
     }

@@ -110,13 +110,14 @@ header int_header_t { /* 12 */
     bit<10> reserved;
     bit<5>  meta_len;
     bit<8>  remaining_hop_cnt;
-    bit<16> instr_bitmap;
+    bit<1> instr_bit_0;
+    bit<15> instr_bit_bal;
     bit<16> domain_id;
-    bit<16> instructions;
+    bit<1> ds_instr_0;
+    bit<15> ds_instr_bal;
+    bit<1>  ds_flags_0;
     bit<1>  ds_flags_1;
-    bit<1>  ds_flags_2;
-    bit<1>  ds_flags_3;
-    bit<13> ds_flags_13;
+    bit<14> ds_flags_bal;
 }
 
 header source_metadata_t { /* 12 */

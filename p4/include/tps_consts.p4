@@ -13,8 +13,13 @@
 # limitations under the License.
 */
 /* -*- P4_16 -*- */
-#define MAX_HOPS 9
+const bit<8> MAX_HOPS = 0xa;
 
+const bit<4> INT_SHIM_TYPE = 0x1;
+const bit<16> INT_SHIM_DOMAIN_ID = 0x154d;
+const bit<2> INT_SHIM_NPT_UDP_FULL_WRAP = 0x2;
+const bit<4> INT_VERSION = 0x2;
+const bit<5> INT_META_LEN = 0x1;
 const bit<16> UDP_INT_SRC_PORT = 0x0;
 const bit<16> UDP_INT_DST_PORT = 0x022b;
 const bit<16> TPS_UDP_PORT = 0x216b;
@@ -22,5 +27,8 @@ const bit<16> TYPE_IPV4 = 0x0800;
 const bit<16> TYPE_IPV6 = 0x86dd;
 const bit<8> TYPE_TCP = 0x06;
 const bit<8> TYPE_UDP = 0x11;
+
 const bit<32> MAX_DEVICE_ID = 15;
 const bit<9> DROP_PORT = 511;
+const bit<1> TRUE = 0x1;
+const bit<1> FALSE = 0x0;

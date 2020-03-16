@@ -44,15 +44,16 @@ class IntHeader(Packet):
         fields.BitField('e', 0, 1),
         fields.BitField('m', 0, 1),
         fields.BitField('reserved', 0, 10),
-        fields.BitField('meta_len', 0, 5),
+        fields.BitField('meta_len', 1, 5),
         fields.ByteField('remaining_hop_cnt', 0),
-        fields.BitField('instr_bitmap', 0, 16),
+        fields.BitField('instr_bit_0', 1, 1),
+        fields.BitField('instr_bit_bal', 0, 15),
         fields.BitField('domain_id', 0, 16),
-        fields.BitField('ds_instructions', 0, 16),
-        fields.BitField('ds_flags_1', 0, 1),
-        fields.BitField('ds_flags_2', 0, 1),
-        fields.BitField('ds_flags_3', 0, 1),
-        fields.BitField('ds_flags_13', 0, 13),
+        fields.BitField('ds_instr_0', 1, 1),
+        fields.BitField('ds_instr_bal', 0, 15),
+        fields.BitField('ds_flags_0', 0, 1),
+        fields.BitField('ds_flags_1', 1, 1),
+        fields.BitField('ds_flags_bal', 0, 14),
     ]
 
 

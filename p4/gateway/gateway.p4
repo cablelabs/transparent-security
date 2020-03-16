@@ -62,14 +62,17 @@ control TpsGwIngress(inout headers hdr,
         hdr.udp_int.dst_port = UDP_INT_DST_PORT;
 
         hdr.int_shim.next_proto = hdr.ipv4.protocol;
-        hdr.int_shim.type = 1;
+        hdr.int_shim.npt = INT_SHIM_NPT_UDP_FULL_WRAP;
+        hdr.int_shim.type = INT_SHIM_TYPE;
         hdr.int_shim.length = 7;
 
-        hdr.int_header.meta_len = 3;
-        hdr.int_header.instructions = 0x80c0;
-        hdr.int_header.ds_flags_2 = 1;
-        hdr.int_header.remaining_hop_cnt = 10; /* TODO - find a better means to determine this value */
-        hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt -1;
+        hdr.int_header.ver = INT_VERSION;
+        hdr.int_header.domain_id = INT_SHIM_DOMAIN_ID;
+        hdr.int_header.meta_len = INT_META_LEN;
+        hdr.int_header.instr_bit_0 = TRUE;
+        hdr.int_header.ds_instr_0 = TRUE;
+        hdr.int_header.ds_flags_1 = TRUE;
+        hdr.int_header.remaining_hop_cnt = MAX_HOPS;
 
         hdr.int_meta.switch_id = switch_id;
         hdr.int_meta.orig_mac = hdr.ethernet.src_mac;
@@ -91,14 +94,18 @@ control TpsGwIngress(inout headers hdr,
         hdr.udp_int.dst_port = UDP_INT_DST_PORT;
 
         hdr.int_shim.next_proto = hdr.ipv6.next_hdr_proto;
-        hdr.int_shim.type = 1;
+        hdr.int_shim.npt = INT_SHIM_NPT_UDP_FULL_WRAP;
+        hdr.int_shim.type = INT_SHIM_TYPE;
         hdr.int_shim.length = 7;
 
-        hdr.int_header.meta_len = 3;
-        hdr.int_header.instructions = 0x80c0;
-        hdr.int_header.ds_flags_2 = 1;
-        hdr.int_header.remaining_hop_cnt = 10; /* TODO - find a better means to determine this value */
-        hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt -1;
+        hdr.int_header.ver = INT_VERSION;
+        hdr.int_header.domain_id = INT_SHIM_DOMAIN_ID;
+        hdr.int_header.meta_len = INT_META_LEN;
+        hdr.int_header.instr_bit_0 = TRUE;
+        hdr.int_header.ds_instr_0 = TRUE;
+        hdr.int_header.ds_flags_0 = FALSE;
+        hdr.int_header.ds_flags_1 = TRUE;
+        hdr.int_header.remaining_hop_cnt = MAX_HOPS;
 
         hdr.int_meta.switch_id = switch_id;
         hdr.int_meta.orig_mac = hdr.ethernet.src_mac;

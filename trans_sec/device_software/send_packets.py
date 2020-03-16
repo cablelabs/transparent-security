@@ -181,10 +181,7 @@ def __create_packet(args, interface):
                                 next_proto=trans_sec.consts.TCP_PROTO)
 
         if int_hops > 0:
-            meta_len = 1
-            if int_hops == 1:
-                meta_len = 3
-            pkt = pkt / IntHeader(meta_len=meta_len)
+            pkt = pkt / IntHeader()
             ctr = 0
             for int_meta in int_data['meta']:
                 logger.info('Adding int_meta - [%s] to INT data', int_meta)
