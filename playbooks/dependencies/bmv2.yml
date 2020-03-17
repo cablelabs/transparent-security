@@ -73,8 +73,6 @@
       changed_when: cmd_out is not failed
       async: 1200
 
-      ignore_errors: yes
-
     - name: install behavioral-model
       command: sudo make install
       args:
