@@ -40,7 +40,7 @@ The UDP source port will be set to 0, since the flows are being tracked on the a
 
 ### Telemetry Report Header
 
-THe Domain Specific ID will be set to 0x5453, which is the same Domain Specific ID used for the INT header for Transparent Security.  This will enable multiple types of telemetry reports to co-exist in the same network domain.
+The Domain Specific ID will be set to 0x5453, which is the same Domain Specific ID used for the INT header for Transparent Security.  This will enable multiple types of telemetry reports to co-exist in the same network domain.
 
 The Domain Specific Md Bits and Status are not being used and are reserved.  Set them to 0x0000 and 0x0000.
 
