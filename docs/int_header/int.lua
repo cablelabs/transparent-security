@@ -13,6 +13,12 @@
 -- This Wireshark plugin reflects the INT header prior to the updated do
 -- cumentation
 
+-- INT protocol example
+-- declare our protocol
+tps_udp_proto = Proto("TPS_INT", "TPS UDP INT Protocol")
+-- create a function to dissect it
+
+
 function octet_to_mac(buff)
     local addr = ""
     for i = 0,5,1
@@ -29,11 +35,6 @@ function octet_to_mac(buff)
     return addr
 end
 
--- INT protocol example
--- declare our protocol
-tps_udp_proto = Proto("TPS_INT", "TPS UDP INT Protocol")
--- create a function to dissect it
-
 function tps_int_shim(int_tree, shim_buf)
     -- UDP INT Shim Header - 4 bytes
     local shim_tree = int_tree:add(shim_buf, "UDP INT Shim Header")
@@ -47,6 +48,7 @@ function tps_int_shim(int_tree, shim_buf)
     shim_tree:add(shim_buf(3, 1), "next_proto: " .. next_proto)
     return length, next_proto
 end
+
 
 function bit_tree_16(tree, buf, buf_index, index, tree_label, item_label)
     local bit_tree = tree:add(buf(buf_index, 2), tree_label)
@@ -67,6 +69,7 @@ function bit_tree_16(tree, buf, buf_index, index, tree_label, item_label)
     bit_tree:add(item_label .. " 14: " .. buf:bitfield(index + 14, 1))
     bit_tree:add(item_label .. " 15: " .. buf:bitfield(index + 15, 1))
 end
+
 
 function tps_int_hdr(int_tree, tvbr)
     local header_tree = int_tree:add(tvbr, "INT Metadata Header")
@@ -108,25 +111,15 @@ function tps_int_md(int_tree, int_md_buf, total_hops)
         end
         total_hops = total_hops - 1
     end
-
-    if next_proto == 0x11 then
-        -- UDP
-        Dissector.get("udp"):call(buffer:range(buf_offset):tvb(), pinfo, tree)
-    elseif next_proto == 0x06 then
-        -- TCP
-        Dissector.get("tcp"):call(buffer:range(buf_offset):tvb(), pinfo, tree)
-    end
 end
 
 
 function tps_udp_proto.dissector(buffer, pinfo, tree)
     pinfo.cols.protocol = "TPS INT"
-
     local buf_offset = 0
 
     -- UDP Encapsulation Header - 8 bytes
     local int_tree = tree:add(tps_udp_proto, buffer(0, 16), "In-band Network Telemetry (INT)")
-
     local shim_buf = buffer(buf_offset, 4)
     buf_offset = buf_offset + 4
     local length, next_proto = tps_int_shim(int_tree, shim_buf)
@@ -135,7 +128,6 @@ function tps_udp_proto.dissector(buffer, pinfo, tree)
     local tvbr = buffer(buf_offset, 12)
     buf_offset = buf_offset + 12
     tps_int_hdr(int_tree, tvbr)
-
 
     -- INT Metadata Stack - 4 bytes
     local total_hops = length - 6
@@ -152,6 +144,7 @@ function tps_udp_proto.dissector(buffer, pinfo, tree)
         Dissector.get("tcp"):call(buffer:range(buf_offset):tvb(), pinfo, tree)
     end
 end
+
 
 -- INT protocol example
 ip_table = DissectorTable.get("udp.port")

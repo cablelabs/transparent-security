@@ -18,21 +18,21 @@
 - import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
     int_hops: "{{ sr_rec_int_hops | default(0) }}"
-    te_conf_file: "df-write-data-forward-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
+    te_conf_file: "df-write-data-forward-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
     p4_classname: "{{ data_forward_classname }}"
     p4_table_name: "{{ data_forward_table }}"
     p4_action_name: "{{ data_forward_action }}"
     p4_table_match_fields: "{{ data_forward_match_fields }}"
     p4_table_action_params: "{{ data_forward_action_params }}"
     p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: "df-write-data-forward-{{ send_protocol }}-ip-{{ ip_version }}.log"
+    p4_te_log_file: "df-write-data-forward-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
 
 # Sending UDP packets expect all to be received
 - import_playbook: ../test_cases/send_receive.yml
   vars:
     int_hops: "{{ sr_rec_int_hops | default(0) }}"
-    receiver_log_filename: "df_basic_receiver-{{ send_protocol }}-ih-{{ int_hops }}.out"
-    sender_log_filename: "df_basic_sender-{{ send_protocol }}.out"
+    receiver_log_filename: "df_basic_receiver-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.out"
+    sender_log_filename: "df_basic_sender-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.out"
     send_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 4) }}"
     send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 5) }}"
     send_packet_count: "{{ '%s' % 100 | random(seed=now|int + 6) }}"
@@ -42,7 +42,7 @@
 - import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
     int_hops: "{{ sr_rec_int_hops | default(0) }}"
-    te_conf_file: "df-delete-data-forward-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
+    te_conf_file: "df-delete-data-forward-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
     p4_classname: "{{ data_forward_classname }}"
     p4_table_name: "{{ data_forward_table }}"
     p4_table_match_fields: "{{ data_forward_match_fields }}"

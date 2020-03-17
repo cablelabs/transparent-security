@@ -58,13 +58,12 @@ control TpsGwIngress(inout headers hdr,
         hdr.int_header.setValid();
         hdr.int_meta.setValid();
 
-        hdr.udp_int.src_port = 0;
         hdr.udp_int.dst_port = UDP_INT_DST_PORT;
 
         hdr.int_shim.next_proto = hdr.ipv4.protocol;
         hdr.int_shim.npt = INT_SHIM_NPT_UDP_FULL_WRAP;
         hdr.int_shim.type = INT_SHIM_TYPE;
-        hdr.int_shim.length = 7;
+        hdr.int_shim.length = INT_SHIM_BASE_SIZE;
 
         hdr.int_header.ver = INT_VERSION;
         hdr.int_header.domain_id = INT_SHIM_DOMAIN_ID;
@@ -79,7 +78,7 @@ control TpsGwIngress(inout headers hdr,
 
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
         hdr.ipv4.protocol = TYPE_UDP;
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen + ((bit<16>)hdr.int_shim.length * 4);
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen + ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE) + UDP_HDR_BYTES;
 
         forwardedPackets.count(device);
     }
@@ -90,13 +89,12 @@ control TpsGwIngress(inout headers hdr,
         hdr.int_header.setValid();
         hdr.int_meta.setValid();
 
-        hdr.udp_int.src_port = 0;
         hdr.udp_int.dst_port = UDP_INT_DST_PORT;
 
         hdr.int_shim.next_proto = hdr.ipv6.next_hdr_proto;
         hdr.int_shim.npt = INT_SHIM_NPT_UDP_FULL_WRAP;
         hdr.int_shim.type = INT_SHIM_TYPE;
-        hdr.int_shim.length = 7;
+        hdr.int_shim.length = INT_SHIM_BASE_SIZE;
 
         hdr.int_header.ver = INT_VERSION;
         hdr.int_header.domain_id = INT_SHIM_DOMAIN_ID;
@@ -111,7 +109,7 @@ control TpsGwIngress(inout headers hdr,
         hdr.int_meta.orig_mac = hdr.ethernet.src_mac;
 
         hdr.ipv6.next_hdr_proto = TYPE_UDP;
-        hdr.ipv6.payload_len = hdr.ipv6.payload_len + ((bit<16>)hdr.int_shim.length * 4);
+        hdr.ipv6.payload_len = hdr.ipv6.payload_len + IPV6_HDR_BYTES + ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE) + UDP_HDR_BYTES;
 
         forwardedPackets.count(device);
     }
@@ -126,32 +124,31 @@ control TpsGwIngress(inout headers hdr,
             data_inspect_packet_ipv6;
             NoAction;
         }
-        size = 1024;
+        size = TABLE_SIZE;
         default_action = NoAction();
     }
 
     action insert_udp_int_for_udp() {
-        hdr.udp_int.len = hdr.udp.len + ((bit<16>)hdr.int_shim.length * 4);
+        hdr.udp_int.len = hdr.udp.len + ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE) + UDP_HDR_BYTES;
     }
 
     table insert_udp_int_for_udp_t {
         actions = {
             insert_udp_int_for_udp;
         }
-        size = 1024;
+        size = TABLE_SIZE;
         default_action = insert_udp_int_for_udp();
     }
 
     action insert_udp_int_for_tcp() {
-        /* TODO - determine the correct start bytes using 20 but should determine the total length of the TCP */
-        hdr.udp_int.len = 20 + ((bit<16>)hdr.int_shim.length * 4);
+        hdr.udp_int.len = ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE) + TCP_HDR_BYTES + UDP_HDR_BYTES;
     }
 
     table insert_udp_int_for_tcp_t {
         actions = {
             insert_udp_int_for_tcp;
         }
-        size = 1024;
+        size = TABLE_SIZE;
         default_action = insert_udp_int_for_tcp();
     }
 
@@ -171,7 +168,7 @@ control TpsGwIngress(inout headers hdr,
             data_drop;
             NoAction;
         }
-        size = 1024;
+        size = TABLE_SIZE;
         default_action = NoAction();
     }
 
@@ -186,7 +183,7 @@ control TpsGwIngress(inout headers hdr,
             data_drop;
             NoAction;
         }
-        size = 1024;
+        size = TABLE_SIZE;
         default_action = NoAction();
     }
 
@@ -201,7 +198,7 @@ control TpsGwIngress(inout headers hdr,
             data_drop;
             NoAction;
         }
-        size = 1024;
+        size = TABLE_SIZE;
         default_action = NoAction();
     }
 
@@ -216,7 +213,7 @@ control TpsGwIngress(inout headers hdr,
             data_drop;
             NoAction;
         }
-        size = 1024;
+        size = TABLE_SIZE;
         default_action = NoAction();
     }
 

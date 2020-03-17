@@ -157,6 +157,9 @@ def __create_packet(args, interface):
         int_hops = len(int_data['meta'])
         shim_len = 4 + 3 + int_hops - 1
         logger.info('Int data to add to packet - [%s]', int_data)
+
+        # TODO/FIXME - Is this correct??? It is not taking into account the
+        #  UDP/TCP header or payload and whats this 34???
         ip_len = 34 + (shim_len * 4)
         if ip_ver == 4:
             pkt = (Ether(src=src_mac, dst=args.switch_ethernet,
@@ -167,7 +170,7 @@ def __create_packet(args, interface):
             pkt = (Ether(src=src_mac, dst=args.switch_ethernet,
                          type=trans_sec.consts.IPV6_TYPE) /
                    IPv6(dst=args.destination, src=args.source_addr,
-                        nh=trans_sec.consts.UDP_PROTO))
+                        nh=trans_sec.consts.UDP_PROTO, plen=ip_len))
 
         # Add UDP INT header
         pkt = pkt / UdpInt()

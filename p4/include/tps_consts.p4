@@ -13,6 +13,14 @@
 # limitations under the License.
 */
 /* -*- P4_16 -*- */
+#define TABLE_SIZE 1024
+#define INT_SHIM_BASE_SIZE 7
+#define INT_SHIM_HOP_SIZE 1
+#define BYTES_PER_SHIM 4
+#define UDP_HDR_BYTES 8
+#define TCP_HDR_BYTES 20
+#define IPV6_HDR_BYTES 40
+
 const bit<8> MAX_HOPS = 0xa;
 
 const bit<4> INT_SHIM_TYPE = 0x1;

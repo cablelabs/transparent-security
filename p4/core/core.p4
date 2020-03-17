@@ -37,9 +37,9 @@ control TpsCoreIngress(inout headers hdr,
 
     action data_inspect_packet(bit<32> switch_id) {
         hdr.int_meta_3.setValid();
-        hdr.int_shim.length = hdr.int_shim.length + 1;
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen + 4;
-        hdr.udp_int.len = hdr.udp_int.len + 4;
+        hdr.int_shim.length = hdr.int_shim.length + INT_SHIM_HOP_SIZE;
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen + (INT_SHIM_HOP_SIZE * BYTES_PER_SHIM);
+        hdr.udp_int.len = hdr.udp_int.len + (INT_SHIM_HOP_SIZE * BYTES_PER_SHIM);
         hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt - 1;
         hdr.int_meta_3.switch_id = switch_id;
         recirculate<standard_metadata_t>(standard_metadata);
@@ -57,7 +57,7 @@ control TpsCoreIngress(inout headers hdr,
             data_inspect_packet;
             recirc;
         }
-        size = 1024;
+        size = TABLE_SIZE;
         default_action = recirc();
     }
 
@@ -77,7 +77,7 @@ control TpsCoreIngress(inout headers hdr,
             data_forward;
             NoAction;
         }
-        size = 1024;
+        size = TABLE_SIZE;
         default_action = NoAction();
     }
 
@@ -89,15 +89,15 @@ control TpsCoreIngress(inout headers hdr,
             data_forward;
             NoAction;
         }
-        size = 1024;
+        size = TABLE_SIZE;
         default_action = NoAction();
     }
 
     action clear_int() {
         hdr.ipv4.protocol = hdr.int_shim.next_proto;
         hdr.ipv6.next_hdr_proto = hdr.int_shim.next_proto;
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen - ((bit<16>)hdr.int_shim.length * 4);
-        hdr.ipv6.payload_len = hdr.ipv6.payload_len - ((bit<16>)hdr.int_shim.length * 4);
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen - ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE);
+        hdr.ipv6.payload_len = hdr.ipv6.payload_len - ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE);
 
         hdr.udp_int.setInvalid();
         hdr.int_shim.setInvalid();
@@ -111,7 +111,7 @@ control TpsCoreIngress(inout headers hdr,
         actions = {
             clear_int;
         }
-        size = 1024;
+        size = TABLE_SIZE;
         default_action = clear_int();
     }
 

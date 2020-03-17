@@ -48,7 +48,7 @@ control TpsAggIngress(inout headers hdr,
             data_forward;
             NoAction;
         }
-        size = 1024;
+        size = TABLE_SIZE;
         default_action = NoAction();
     }
 
@@ -60,19 +60,19 @@ control TpsAggIngress(inout headers hdr,
             data_forward;
             NoAction;
         }
-        size = 1024;
+        size = TABLE_SIZE;
         default_action = NoAction();
     }
 
     action data_inspect_packet(bit<32> device, bit<32> switch_id) {
         hdr.int_meta_2.setValid();
-        hdr.int_shim.length = hdr.int_shim.length + 1;
+        hdr.int_shim.length = hdr.int_shim.length + INT_SHIM_HOP_SIZE;
         hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt - 1;
         hdr.int_meta_2.switch_id = switch_id;
 
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen + 4;
-        hdr.udp_int.len = hdr.udp_int.len + 4;
-        hdr.ipv6.payload_len = hdr.ipv6.payload_len + 4;
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen + BYTES_PER_SHIM * INT_SHIM_HOP_SIZE;
+        hdr.udp_int.len = hdr.udp_int.len + BYTES_PER_SHIM * INT_SHIM_HOP_SIZE;
+        hdr.ipv6.payload_len = hdr.ipv6.payload_len + BYTES_PER_SHIM * INT_SHIM_HOP_SIZE;
         forwardedPackets.count(device);
     }
 
@@ -84,7 +84,7 @@ control TpsAggIngress(inout headers hdr,
             data_inspect_packet;
             NoAction;
         }
-        size = 1024;
+        size = TABLE_SIZE;
         default_action = NoAction();
     }
 
