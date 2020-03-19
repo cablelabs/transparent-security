@@ -22,10 +22,25 @@
 #include <tps_checksum.p4>
 #include <tps_egress.p4>
 
-#define BMV2_V1MODEL_INSTANCE_TYPE_INGRESS_CLONE 1
+const bit<32> BMV2_V1MODEL_INSTANCE_TYPE_NORMAL        = 0;
+const bit<32> BMV2_V1MODEL_INSTANCE_TYPE_INGRESS_CLONE = 1;
+const bit<32> BMV2_V1MODEL_INSTANCE_TYPE_EGRESS_CLONE  = 2;
+const bit<32> BMV2_V1MODEL_INSTANCE_TYPE_COALESCED     = 3;
+const bit<32> BMV2_V1MODEL_INSTANCE_TYPE_RECIRC        = 4;
+const bit<32> BMV2_V1MODEL_INSTANCE_TYPE_REPLICATION   = 5;
+const bit<32> BMV2_V1MODEL_INSTANCE_TYPE_RESUBMIT      = 6;
+
+#define IS_NORMAL(std_meta) (std_meta.instance_type == BMV2_V1MODEL_INSTANCE_TYPE_NORMAL)
+#define IS_RESUBMITTED(std_meta) (std_meta.instance_type == BMV2_V1MODEL_INSTANCE_TYPE_RESUBMIT)
+#define IS_RECIRCULATED(std_meta) (std_meta.instance_type == BMV2_V1MODEL_INSTANCE_TYPE_RECIRC)
 #define IS_I2E_CLONE(std_meta) (std_meta.instance_type == BMV2_V1MODEL_INSTANCE_TYPE_INGRESS_CLONE)
-#define IOAM_CLONE_SPEC 0x1000
+#define IS_E2E_CLONE(std_meta) (std_meta.instance_type == BMV2_V1MODEL_INSTANCE_TYPE_EGRESS_CLONE)
+#define IS_REPLICATED(std_meta) (std_meta.instance_type == BMV2_V1MODEL_INSTANCE_TYPE_REPLICATION)
+
+/*#define IOAM_CLONE_SPEC 0x1000*/
 const bit<32> I2E_CLONE_SESSION_ID = 5;
+const bit<32> E2E_CLONE_SESSION_ID = 11;
+
 
 /*************************************************************************
 **************  I N G R E S S   P R O C E S S I N G   ********************
@@ -35,6 +50,30 @@ control TpsCoreIngress(inout headers hdr,
                        inout metadata meta,
                        inout standard_metadata_t standard_metadata) {
 
+    /**
+    * Responsible for recirculating a packet after egress processing
+    */
+    action recirculate_packet() {
+        recirculate(standard_metadata);
+    }
+
+    /**
+    * Responsible for cloning a packet as ingressed
+    */
+    action clone_packet_i2e() {
+        clone3(CloneType.I2E, I2E_CLONE_SESSION_ID, standard_metadata);
+    }
+
+    /**
+    * Responsible for cloning a packet as egressed
+    */
+    action clone_packet_e2e() {
+        clone3(CloneType.E2E, E2E_CLONE_SESSION_ID, standard_metadata);
+    }
+
+    /**
+    * Adds INT data if data_inspection_t table has a match on hdr.ethernet.src_mac
+    */
     action data_inspect_packet(bit<32> switch_id) {
         hdr.int_meta_3.setValid();
         hdr.int_shim.length = hdr.int_shim.length + INT_SHIM_HOP_SIZE;
@@ -42,11 +81,6 @@ control TpsCoreIngress(inout headers hdr,
         hdr.udp_int.len = hdr.udp_int.len + (INT_SHIM_HOP_SIZE * BYTES_PER_SHIM);
         hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt - 1;
         hdr.int_meta_3.switch_id = switch_id;
-        recirculate<standard_metadata_t>(standard_metadata);
-    }
-
-    action recirc() {
-        recirculate<standard_metadata_t>(standard_metadata);
     }
 
     table data_inspection_t {
@@ -55,14 +89,16 @@ control TpsCoreIngress(inout headers hdr,
         }
         actions = {
             data_inspect_packet;
-            recirc;
+            NoAction;
         }
         size = TABLE_SIZE;
-        default_action = recirc();
+        default_action = NoAction();
     }
 
+    /**
+    * Prepares a packet to be forwarded when data_forward tables have a match on dstAddr
+    */
     action data_forward(macAddr_t dstAddr, egressSpec_t port) {
-        clone3(CloneType.I2E, I2E_CLONE_SESSION_ID, standard_metadata);
         standard_metadata.egress_spec = port;
         hdr.ethernet.src_mac = hdr.ethernet.dst_mac;
         hdr.ethernet.dst_mac = dstAddr;
@@ -93,6 +129,9 @@ control TpsCoreIngress(inout headers hdr,
         default_action = NoAction();
     }
 
+    /**
+    * Removes INT data from a packet
+    */
     action clear_int() {
         hdr.ipv4.protocol = hdr.int_shim.next_proto;
         hdr.ipv6.next_hdr_proto = hdr.int_shim.next_proto;
@@ -107,27 +146,77 @@ control TpsCoreIngress(inout headers hdr,
         hdr.int_meta.setInvalid();
     }
 
-    table clear_int_t {
-        actions = {
-            clear_int;
+    apply {
+        if (standard_metadata.egress_spec != DROP_PORT) {
+            if (IS_NORMAL(standard_metadata)) {
+                data_inspection_t.apply();
+                recirculate_packet();
+            } else if (IS_RESUBMITTED(standard_metadata) || IS_RECIRCULATED(standard_metadata)) {
+                if (hdr.ipv4.isValid()) {
+                    data_forward_ipv4_t.apply();
+                } else if (hdr.ipv6.isValid()) {
+                    data_forward_ipv6_t.apply();
+                }
+                if (hdr.int_shim.isValid()) {
+                    clone_packet_i2e();
+                    clear_int();
+                }
+            }
         }
-        size = TABLE_SIZE;
-        default_action = clear_int();
+    }
+}
+
+
+/*************************************************************************
+****************  E G R E S S   P R O C E S S I N G   ********************
+*************************************************************************/
+
+control TpsCoreEgress(inout headers hdr,
+                      inout metadata meta,
+                      inout standard_metadata_t standard_metadata) {
+
+    /**
+    * Restrutures data within INT packet into a Telemetry Report packet type
+    */
+    action setup_telem_rpt() {
+        /* TODO - Implement me */
+        /*hdr.int_shim.setInvalid();*/
+    }
+
+    table debug_meta {
+        key = {
+           standard_metadata.instance_type: exact;
+        }
+        actions = {
+            NoAction;
+        }
+        const default_action = NoAction();
+    }
+
+    table debug_int {
+        key = {
+           hdr.udp_int.dst_port: exact;
+           hdr.int_shim.next_proto: exact;
+           hdr.udp_int.dst_port: exact;
+           hdr.int_header.meta_len: exact;
+           hdr.int_meta.orig_mac: exact;
+        }
+        actions = {
+            NoAction;
+        }
+        const default_action = NoAction();
     }
 
     apply {
-        if (standard_metadata.instance_type != 0) {
-            if (hdr.ipv4.isValid()) {
-                data_forward_ipv4_t.apply();
+        debug_meta.apply();
+        if (hdr.int_shim.isValid()) {
+            debug_int.apply();
+        }
+
+        if (standard_metadata.egress_spec != DROP_PORT) {
+            if (IS_E2E_CLONE(standard_metadata) || IS_I2E_CLONE(standard_metadata)) {
+                setup_telem_rpt();
             }
-            if (hdr.ipv6.isValid()) {
-                data_forward_ipv6_t.apply();
-            }
-            if (hdr.int_shim.isValid()) {
-                clear_int_t.apply();
-            }
-        } else {
-            data_inspection_t.apply();
         }
     }
 }
@@ -141,7 +230,7 @@ V1Switch(
     TpsCoreParser(),
     TpsVerifyChecksum(),
     TpsCoreIngress(),
-    TpsEgress(),
+    TpsCoreEgress(),
     TpsComputeChecksum(),
     TpsDeparser()
 ) main;
