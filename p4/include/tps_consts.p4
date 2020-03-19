@@ -62,3 +62,14 @@ const bit<1> FALSE = 0x0;
 const bit<32> MAX_DEVICE_ID = 15;
 /* The drop port to check at the ingress but is this really correct??? */
 const bit<9> DROP_PORT = 511;
+
+/* Constants for determining BMV2 Packet instance_types */
+const bit<32> BMV2_V1MODEL_INSTANCE_TYPE_NORMAL        = 0;
+const bit<32> BMV2_V1MODEL_INSTANCE_TYPE_INGRESS_CLONE = 1;
+const bit<32> BMV2_V1MODEL_INSTANCE_TYPE_EGRESS_CLONE  = 2;
+const bit<32> BMV2_V1MODEL_INSTANCE_TYPE_COALESCED     = 3;
+const bit<32> BMV2_V1MODEL_INSTANCE_TYPE_RECIRC        = 4;
+const bit<32> BMV2_V1MODEL_INSTANCE_TYPE_REPLICATION   = 5;
+const bit<32> BMV2_V1MODEL_INSTANCE_TYPE_RESUBMIT      = 6;
+const bit<32> I2E_CLONE_SESSION_ID = 5;
+const bit<32> E2E_CLONE_SESSION_ID = 11;
