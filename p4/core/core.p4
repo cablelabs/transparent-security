@@ -22,25 +22,9 @@
 #include <tps_checksum.p4>
 #include <tps_egress.p4>
 
-const bit<32> BMV2_V1MODEL_INSTANCE_TYPE_NORMAL        = 0;
-const bit<32> BMV2_V1MODEL_INSTANCE_TYPE_INGRESS_CLONE = 1;
-const bit<32> BMV2_V1MODEL_INSTANCE_TYPE_EGRESS_CLONE  = 2;
-const bit<32> BMV2_V1MODEL_INSTANCE_TYPE_COALESCED     = 3;
-const bit<32> BMV2_V1MODEL_INSTANCE_TYPE_RECIRC        = 4;
-const bit<32> BMV2_V1MODEL_INSTANCE_TYPE_REPLICATION   = 5;
-const bit<32> BMV2_V1MODEL_INSTANCE_TYPE_RESUBMIT      = 6;
-
 #define IS_NORMAL(std_meta) (std_meta.instance_type == BMV2_V1MODEL_INSTANCE_TYPE_NORMAL)
-#define IS_RESUBMITTED(std_meta) (std_meta.instance_type == BMV2_V1MODEL_INSTANCE_TYPE_RESUBMIT)
 #define IS_RECIRCULATED(std_meta) (std_meta.instance_type == BMV2_V1MODEL_INSTANCE_TYPE_RECIRC)
 #define IS_I2E_CLONE(std_meta) (std_meta.instance_type == BMV2_V1MODEL_INSTANCE_TYPE_INGRESS_CLONE)
-#define IS_E2E_CLONE(std_meta) (std_meta.instance_type == BMV2_V1MODEL_INSTANCE_TYPE_EGRESS_CLONE)
-#define IS_REPLICATED(std_meta) (std_meta.instance_type == BMV2_V1MODEL_INSTANCE_TYPE_REPLICATION)
-
-/*#define IOAM_CLONE_SPEC 0x1000*/
-const bit<32> I2E_CLONE_SESSION_ID = 5;
-const bit<32> E2E_CLONE_SESSION_ID = 11;
-
 
 /*************************************************************************
 **************  I N G R E S S   P R O C E S S I N G   ********************
@@ -62,13 +46,6 @@ control TpsCoreIngress(inout headers hdr,
     */
     action clone_packet_i2e() {
         clone3(CloneType.I2E, I2E_CLONE_SESSION_ID, standard_metadata);
-    }
-
-    /**
-    * Responsible for cloning a packet as egressed
-    */
-    action clone_packet_e2e() {
-        clone3(CloneType.E2E, E2E_CLONE_SESSION_ID, standard_metadata);
     }
 
     /**
@@ -151,7 +128,7 @@ control TpsCoreIngress(inout headers hdr,
             if (IS_NORMAL(standard_metadata)) {
                 data_inspection_t.apply();
                 recirculate_packet();
-            } else if (IS_RESUBMITTED(standard_metadata) || IS_RECIRCULATED(standard_metadata)) {
+            } else if (IS_RECIRCULATED(standard_metadata)) {
                 if (hdr.ipv4.isValid()) {
                     data_forward_ipv4_t.apply();
                 } else if (hdr.ipv6.isValid()) {
@@ -183,38 +160,9 @@ control TpsCoreEgress(inout headers hdr,
         /*hdr.int_shim.setInvalid();*/
     }
 
-    table debug_meta {
-        key = {
-           standard_metadata.instance_type: exact;
-        }
-        actions = {
-            NoAction;
-        }
-        const default_action = NoAction();
-    }
-
-    table debug_int {
-        key = {
-           hdr.udp_int.dst_port: exact;
-           hdr.int_shim.next_proto: exact;
-           hdr.udp_int.dst_port: exact;
-           hdr.int_header.meta_len: exact;
-           hdr.int_meta.orig_mac: exact;
-        }
-        actions = {
-            NoAction;
-        }
-        const default_action = NoAction();
-    }
-
     apply {
-        debug_meta.apply();
-        if (hdr.int_shim.isValid()) {
-            debug_int.apply();
-        }
-
         if (standard_metadata.egress_spec != DROP_PORT) {
-            if (IS_E2E_CLONE(standard_metadata) || IS_I2E_CLONE(standard_metadata)) {
+            if (IS_I2E_CLONE(standard_metadata)) {
                 setup_telem_rpt();
             }
         }
