@@ -16,67 +16,71 @@
 # Add table entry to "{{ data_forward_table }}"
 - import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
-    te_conf_file: "~/di-forward-create-{{ send_protocol }}.yml"
+    int_hops: "{{ sr1_rec_int_hops | default(0) }}"
+    te_conf_file: "~/di-forward-create-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
     p4_classname: "{{ data_forward_classname }}"
     p4_table_name: "{{ data_forward_table }}"
     p4_action_name: "{{ data_forward_action }}"
     p4_table_match_fields: "{{ data_forward_match_fields }}"
     p4_table_action_params: "{{ data_forward_action_params }}"
     p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: "di-forward-create-{{ send_protocol }}.log"
+    p4_te_log_file: "di-forward-create-{{ send_protocol }}-ip-{{ ip_version }}.log"
 
 # Add table entry to "{{ data_inspection_table }}"
 - import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
-    te_conf_file: "~/di-inspect-create-{{ send_protocol }}.yml"
+    int_hops: "{{ sr1_rec_int_hops | default(0) }}"
+    te_conf_file: "~/di-inspect-create-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
     p4_classname: "{{ data_inspection_classname }}"
     p4_table_name: "{{ data_inspection_table }}"
     p4_action_name: "{{ data_inspection_action }}"
     p4_table_match_fields: "{{ data_inspection_match_fields }}"
     p4_table_action_params: "{{ data_inspection_action_params }}"
     p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: "di-inspection-create-{{ send_protocol }}.log"
+    p4_te_log_file: "di-inspection-create-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
 
-# Sending UDP packets expect all to be received with one INT hop
+# Sending UDP packets expect all to be received with configured INT hops sr1_rec_int_hops
 - import_playbook: ../test_cases/send_receive.yml
   vars:
-    receiver_log_filename: "di_basic_receiver-{{ send_protocol }}-1.out"
-    sender_log_filename: "di_basic_sender-{{ send_protocol }}-1.out"
+    int_hops: "{{ sr1_rec_int_hops | default(0) }}"
+    receiver_log_filename: "di_basic_receiver-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}-1.out"
+    sender_log_filename: "di_basic_sender-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}-1.out"
     send_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 9) }}"
     send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 10) }}"
     send_packet_count: "{{ '%s' % 100 | random(seed=now|int + 11) }}"
     inspection_data: "{{ sr1_data_inspection_int | default(None) }}"
-    int_hops: "{{ sr1_rec_int_hops | default(0) }}"
 
 # Delete table entry to "{{ data_inspection_table }}"
 - import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
-    te_conf_file: "~/di-inspect-delete-{{ send_protocol }}.yml"
+    int_hops: "{{ sr1_rec_int_hops | default(0) }}"
+    te_conf_file: "~/di-inspect-delete-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
     p4_classname: "{{ data_inspection_classname }}"
     p4_table_name: "{{ data_inspection_table }}"
     p4_table_match_fields: "{{ data_inspection_match_fields }}"
     p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: "di-inspection-delete-{{ send_protocol }}.log"
+    p4_te_log_file: "di-inspection-delete-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
     p4_te_insert: False
 
-# Sending packet expect to be received without INT
+# Sending UDP packets expect all to be received with configured INT hops sr2_rec_int_hops
 - import_playbook: ../test_cases/send_receive.yml
   vars:
-    receiver_log_filename: "di_basic_receiver-{{ send_protocol }}-2.out"
-    sender_log_filename: "di_basic_sender-{{ send_protocol }}-2.out"
+    int_hops: "{{ sr2_rec_int_hops | default(0) }}"
+    receiver_log_filename: "di_basic_receiver-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}-2.out"
+    sender_log_filename: "di_basic_sender-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}-2.out"
     send_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 12) }}"
     send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 13) }}"
     send_packet_count: "{{ '%s' % 100 | random(seed=now|int + 14) }}"
     inspection_data: "{{ sr2_data_inspection_int | default(None) }}"
-    int_hops: "{{ sr2_rec_int_hops | default(0) }}"
 
 # Delete table entry to "{{ data_forward_table }}"
 - import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
-    te_conf_file: "~/di-forward-delete-{{ send_protocol }}.yml"
+    int_hops: "{{ sr2_rec_int_hops | default(0) }}"
+    te_conf_file: "~/di-forward-delete-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
     p4_classname: "{{ data_forward_classname }}"
     p4_table_name: "{{ data_forward_table }}"
     p4_table_match_fields: "{{ data_forward_match_fields }}"
     p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: "di-forward-delete-{{ send_protocol }}.log"
+    p4_te_log_file: "di-forward-delete-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
     p4_te_insert: False

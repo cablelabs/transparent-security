@@ -12,6 +12,8 @@
 # limitations under the License.
 from logging import getLogger
 
+import trans_sec.consts
+from trans_sec.analytics import oinc
 from trans_sec.controller.abstract_controller import AbstractController
 
 logger = getLogger('gateway_controller')
@@ -65,7 +67,7 @@ class GatewayController(AbstractController):
                     table_name='{}.data_inspection_t'.format(self.p4_ingress),
                     match_fields={
                         'hdr.ethernet.src_mac': device['mac'],
-                        'hdr.ethernet.etherType': 0x0800
+                        'hdr.ethernet.etherType': trans_sec.consts.IPV4_TYPE
                     },
                     action_name='{}.data_inspect_packet_ipv4'.format(
                         self.p4_ingress),
@@ -81,7 +83,7 @@ class GatewayController(AbstractController):
                     table_name='{}.data_inspection_t'.format(self.p4_ingress),
                     match_fields={
                         'hdr.ethernet.src_mac': device['mac'],
-                        'hdr.ethernet.etherType': 0x86dd
+                        'hdr.ethernet.etherType': trans_sec.consts.IPV6_TYPE
                     },
                     action_name='{}.data_inspect_packet_ipv6'.format(
                         self.p4_ingress),

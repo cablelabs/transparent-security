@@ -48,7 +48,7 @@
         value: "{{ switch.mac }}"
       - key: port
         value: "{{ rec_sw_port }}"
-    data_inspection_classname: TpsCoreEgress
+    data_inspection_classname: TpsCoreIngress
     data_inspection_table: data_inspection_t
     data_inspection_action: data_inspect_packet
     data_inspection_match_fields:
@@ -97,7 +97,7 @@
         value: "{{ switch.mac }}"
       - key: port
         value: "{{ rec_sw_port }}"
-    data_inspection_classname: TpsCoreEgress
+    data_inspection_classname: TpsCoreIngress
     data_inspection_table: data_inspection_t
     data_inspection_action: data_inspect_packet
     data_inspection_match_fields:

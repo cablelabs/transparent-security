@@ -10,8 +10,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from scapy.all import Packet
+from scapy.all import Packet, ShortEnumField, UDP_SERVICES, ShortField, \
+    XShortField
 from scapy import fields
+
+import trans_sec.consts
 
 
 class IntShim(Packet):
@@ -20,9 +23,11 @@ class IntShim(Packet):
     generating and parsing
     """
     fields_desc = [
-        fields.ByteField('type', 0),
-        fields.ByteField('reserved', 0),
+        fields.BitField('type', 0, 4),
+        fields.BitField('npt', 0, 2),
+        fields.BitField('res1', 0, 2),
         fields.ByteField('length', 0),
+        fields.ByteField('res2', 0),
         fields.ByteField('next_proto', 0),
     ]
 
@@ -35,27 +40,45 @@ class IntHeader(Packet):
     fields_desc = [
         fields.BitField('ver', 0, 4),
         fields.BitField('rep', 0, 2),
-        fields.BitField('c', 0, 1),
+        fields.BitField('d', 0, 1),
         fields.BitField('e', 0, 1),
         fields.BitField('m', 0, 1),
-        fields.BitField('res1', 0, 10),
-        fields.BitField('meta_len', 0, 5),
+        fields.BitField('reserved', 0, 10),
+        fields.BitField('meta_len', 1, 5),
         fields.ByteField('remaining_hop_cnt', 0),
-        fields.BitField('instr_bitmap', 0, 16),
-        fields.BitField('res2', 0, 16),
+        fields.BitField('instr_bit_0', 1, 1),
+        fields.BitField('instr_bit_bal', 0, 15),
         fields.BitField('domain_id', 0, 16),
-        fields.BitField('ds_instruction', 0, 16),
+        fields.BitField('ds_instr_0', 1, 1),
+        fields.BitField('ds_instr_bal', 0, 15),
+        fields.BitField('ds_flags_0', 0, 1),
+        fields.BitField('ds_flags_1', 1, 1),
+        fields.BitField('ds_flags_bal', 0, 14),
     ]
 
 
-class SourceMeta(Packet):
+class SourceIntMeta(Packet):
     """
     This class represents the INT metadata being placed onto the packets
     """
+    name = "Source_INT_Meta"
+
     fields_desc = [
         fields.IntField('switch_id', 0),
         fields.MACField('orig_mac', 0),
         fields.BitField('reserved', 0, 16),
+    ]
+
+
+class UdpInt(Packet):
+    name = "UDP_INT"
+    fields_desc = [
+        ShortEnumField("sport", trans_sec.consts.UDP_INT_SRC_PORT,
+                       UDP_SERVICES),
+        ShortEnumField("dport", trans_sec.consts.UDP_INT_DST_PORT,
+                       UDP_SERVICES),
+        ShortField("len", None),
+        XShortField("chksum", None),
     ]
 
 
@@ -80,10 +103,3 @@ class IntMeta2(IntMeta):
     This class represents the second INT metadata being placed onto the packets
     """
     name = "INT_META_2"
-
-
-class SourceIntMeta(SourceMeta):
-    """
-    This class represents the third INT metadata being placed onto the packets
-    """
-    name = "Source_INT_Meta"

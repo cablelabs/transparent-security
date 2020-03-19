@@ -21,7 +21,7 @@
     receive_timeout: "{{ receiver_timeout_seconds | default(60) }}"
     hops: "{{ int_hops | default(0) }}"
     ip_ver: "{{ ip_version | default('4') }}"
-    receiver_log_file: "{{ host_log_dir }}/ip-{{ ip_ver }}-ih-{{ hops }}-{{ receiver_log_filename }}"
+    receiver_log_file: "{{ host_log_dir }}/{{ receiver_log_filename }}"
   tasks:
     - debug:
         msg: "Expected INT hops to receive {{ hops }}"
@@ -72,9 +72,9 @@
     loops: "{{ send_loops | default(1) }}"
     loop_delay: "{{ send_loop_delay | default(0) }}"
     hops: "{{ int_hops | default(0) }}"
-    sender_log_file: "{{ host_log_dir }}/ip-{{ ip_ver }}-ih-{{ hops }}-{{ sender_log_filename }}"
-    int_hdr_df: "{{ send_int_data_filename | default('send_int_data.yml') }}"
+    sender_log_file: "{{ host_log_dir }}/{{ sender_log_filename }}"
     protocol: "{{ send_protocol | default('UDP') }}"
+    int_hdr_df: "{{ host_log_dir }}/send_int_data-ip-{{ ip_ver }}-proto-{{ protocol }}-ih-{{ hops }}.yml"
     ip_ver: "{{ ip_version | default('4') }}"
     sender_ip: "{{ sender.ip if ip_ver == '4' else sender.ipv6 }}"
     receiver_ip: "{{ receiver.ip if ip_ver == '4' else receiver.ipv6 }}"
@@ -132,7 +132,7 @@
     max_packet_count: "{{ max_received_packet_count | default(send_packet_count) | int }}"
     hops: "{{ int_hops | default(0) }}"
     ip_ver: "{{ ip_version | default('4') }}"
-    receiver_log_file: "{{ host_log_dir }}/ip-{{ ip_ver }}-ih-{{ hops }}-{{ receiver_log_filename }}"
+    receiver_log_file: "{{ host_log_dir }}/{{ receiver_log_filename }}"
     sender_ip: "{{ sender.ip if ip_ver == '4' else sender.ipv6 }}"
     receiver_ip: "{{ receiver.ip if ip_ver == '4' else receiver.ipv6 }}"
   tasks:

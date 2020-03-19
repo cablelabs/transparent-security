@@ -1,98 +1,151 @@
--- This reflects the INT header prior to the updated documentation
+-- Copyright (c) 2019 Cable Television Laboratories, Inc.
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--    http://www.apache.org/licenses/LICENSE-2.0
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
+
+-- This Wireshark plugin reflects the INT header prior to the updated do
+-- cumentation
+
+-- INT protocol example
+-- declare our protocol
+tps_udp_proto = Proto("TPS_INT", "TPS UDP INT Protocol")
+-- create a function to dissect it
+
 
 function octet_to_mac(buff)
-    addr = ""
+    local addr = ""
     for i = 0,5,1
     do
-        octect = buff(i,1):uint()
+        local octect = buff(i, 1):uint()
+        --noinspection StringConcatenationInLoops
         addr = addr  .. string.format("%02X", octect)
         if i < 5
         then
+            --noinspection StringConcatenationInLoops
             addr = addr .. ":"
         end
     end
     return addr
 end
 
--- INT protocol example
--- declare our protocol
-tps_proto = Proto("TPS_INT","TPS INT Protocol")
--- create a function to dissect it
-function tps_proto.dissector(buffer,pinfo,tree)
-    pinfo.cols.protocol = "TPS INT"
+function tps_int_shim(int_tree, shim_buf)
+    -- UDP INT Shim Header - 4 bytes
+    local shim_tree = int_tree:add(shim_buf, "UDP INT Shim Header")
+    shim_tree:add("Type: " .. shim_buf:bitfield(0, 4))
+    shim_tree:add("NPT: " .. shim_buf:bitfield(4, 2))
+    assert(shim_buf:bitfield(6, 2)) -- reserved
+    local length = shim_buf:bitfield(8, 8)
+    shim_tree:add(shim_buf(1, 1), "length: " .. length)
+    assert(shim_buf:bitfield(16, 8)) -- reserved
+    local next_proto = shim_buf:bitfield(24, 8)
+    shim_tree:add(shim_buf(3, 1), "next_proto: " .. next_proto)
+    return length, next_proto
+end
 
-    -- INT Shim Header
-    header_offset = 0
-    total_hops = 1
-    type = buffer(0,1):uint()
-    reserved = buffer(1,1):uint()
-    length = buffer(2,1):uint()
-    next_proto = buffer(3,1):uint()
-    local subtree = tree:add(tps_proto,buffer(header_offset,length),"In-band Network Telemetry (INT)")
-    shim_tree = subtree:add(buffer(header_offset,4),"INT Shim Header")
-    shim_tree:add(buffer(0,1),"Type: " .. type)
-    shim_tree:add(buffer(1,1),"Reserved: " .. reserved)
-    shim_tree:add(buffer(2,1),"Length: " .. length)
-    shim_tree:add(buffer(3,1),"Next Protocol: " .. next_proto)
 
-    -- INT Metadata Header
-    header_tree = subtree:add(buffer(4,12), "INT Metadata Header")
-    tvbr = buffer(4,1)
-    version = tvbr:bitfield(0,4)
-    header_tree:add("Version: " .. version)
-    replication = tvbr:bitfield(4,2)
-    header_tree:add("Replication: " .. replication)
-    copy = tvbr:bitfield(6,1)
-    header_tree:add("Copy: " .. copy)
-    hop_exceeded = tvbr:bitfield(7,1)
-    header_tree:add("Max Hop count exceeded: " .. hop_exceeded)
-    tvbr = buffer(5,2)
-    mtu = tvbr:bitfield(0,1)
-    header_tree:add("MTU Exceeded: " .. mtu)
-    reserved = tvbr:bitfield(1,10)
-    header_tree:add("Reserved: " .. reserved)
-    metalen = tvbr:bitfield(11,5)
-    header_tree:add("Per-hop Metadata Length: " .. metalen)
-    rem_hop_count = buffer(7,1):uint()
-    header_tree:add(buffer(7,1),"Remaining Hop count: " .. rem_hop_count)
-    inst_bitmap = buffer(8,2):uint()
-    header_tree:add(buffer(8,2),"Instruction Bitmap: " .. inst_bitmap)
-    reserved = buffer(10,2):uint()
-    header_tree:add(buffer(10,2),"Reserved: " .. reserved)
-    domain_id = buffer(12,2):uint()
-    header_tree:add(buffer(12,2),"Domain ID: " ..  domain_id)
-    ds_instruction = buffer(14,2):uint()
-    header_tree:add(buffer(14,2),"Domain-specific Instruction: " ..  ds_instruction)
+function bit_tree_16(tree, buf, buf_index, index, tree_label, item_label)
+    local bit_tree = tree:add(buf(buf_index, 2), tree_label)
+    bit_tree:add(item_label .. " 0: " .. buf:bitfield(index, 1))
+    bit_tree:add(item_label .. " 1: " .. buf:bitfield(index + 1, 1))
+    bit_tree:add(item_label .. " 2: " .. buf:bitfield(index + 2, 1))
+    bit_tree:add(item_label .. " 3: " .. buf:bitfield(index + 3, 1))
+    bit_tree:add(item_label .. " 4: " .. buf:bitfield(index + 4, 1))
+    bit_tree:add(item_label .. " 5: " .. buf:bitfield(index + 5, 1))
+    bit_tree:add(item_label .. " 6: " .. buf:bitfield(index + 6, 1))
+    bit_tree:add(item_label .. " 7: " .. buf:bitfield(index + 7, 1))
+    bit_tree:add(item_label .. " 8: " .. buf:bitfield(index + 8, 1))
+    bit_tree:add(item_label .. " 9: " .. buf:bitfield(index + 9, 1))
+    bit_tree:add(item_label .. " 10: " .. buf:bitfield(index + 10, 1))
+    bit_tree:add(item_label .. " 11: " .. buf:bitfield(index + 11, 1))
+    bit_tree:add(item_label .. " 12: " .. buf:bitfield(index + 12, 1))
+    bit_tree:add(item_label .. " 13: " .. buf:bitfield(index + 13, 1))
+    bit_tree:add(item_label .. " 14: " .. buf:bitfield(index + 14, 1))
+    bit_tree:add(item_label .. " 15: " .. buf:bitfield(index + 15, 1))
+end
 
-    -- INT Metadata Stack
-    header_offset = 16
-    total_hops = 1 + ((length - 3 - 4)/metalen)
-    if total_hops > 1 then
-        stack_length = 12 + (total_hops-1)*4*metalen
-    else
-        stack_length = total_hops*4*metalen
-    end
-    subtree = subtree:add(buffer(header_offset,stack_length),"Metadata Stack")
-    while (total_hops >= 2)
+
+function tps_int_hdr(int_tree, tvbr)
+    local header_tree = int_tree:add(tvbr, "INT Metadata Header")
+    header_tree:add("Version: " .. tvbr:bitfield(0, 4))
+    header_tree:add("d: " .. tvbr:bitfield(6, 1))
+    header_tree:add("e: " .. tvbr:bitfield(7, 1))
+    header_tree:add("m: " .. tvbr:bitfield(8, 1))
+    header_tree:add("Per-hop Metadata Length: " .. tvbr:bitfield(19, 5))
+    header_tree:add(tvbr(3, 1), "Remaining Hop count: " .. tvbr:bitfield(24, 8))
+    bit_tree_16(header_tree, tvbr, 4, 32, "Instructions", "bit")
+    header_tree:add(tvbr(6, 2), "Domain ID: " .. tvbr:bitfield(48, 16))
+    bit_tree_16(header_tree, tvbr, 8, 64, "DS Instructions", "bit")
+    bit_tree_16(header_tree, tvbr, 10, 80, "DS Flags", "bit")
+end
+
+
+function tps_int_md(int_tree, int_md_buf, total_hops)
+    -- INT Metadata Stack - 4 bytes
+    local int_tree = int_tree:add(int_md_buf, "Metadata Stack")
+    local int_md_buf_offset = 0
+    while (total_hops > 0)
     do
-        metaTree = subtree:add(buffer(header_offset,(metalen)),"Hop " .. total_hops)
-        switch_id = buffer(header_offset,4):uint()
-        metaTree:add(buffer(header_offset,4),"Switch ID: " .. switch_id)
+        local tree_bytes = 4
+        if total_hops == 1 then
+            tree_bytes = 12
+        end
+
+        local metaTree = int_tree:add(int_md_buf(int_md_buf_offset, tree_bytes), "Hop " .. total_hops)
+        local switch_id = int_md_buf(int_md_buf_offset, 4):uint()
+        metaTree:add(int_md_buf(int_md_buf_offset, 4), "Switch ID: " .. switch_id)
+        int_md_buf_offset = int_md_buf_offset + 4
+        if total_hops == 1 then
+            local device_mac = octet_to_mac(int_md_buf(int_md_buf_offset, 6))
+            metaTree:add(int_md_buf(int_md_buf_offset, 6), "Originating Device MAC address: " .. device_mac)
+            int_md_buf_offset = int_md_buf_offset + 6
+            local pad = int_md_buf(int_md_buf_offset, 2)
+            assert(pad)
+            int_md_buf_offset = int_md_buf_offset + 2
+        end
         total_hops = total_hops - 1
-        header_offset = header_offset + (metalen*4)
-    end
-    metaTree = subtree:add(buffer(header_offset,(metalen)),"Hop " .. 1)
-    switch_id = buffer(header_offset,4):uint()
-    metaTree:add(buffer(header_offset,4),"Switch ID: " .. switch_id)
-    device_mac = octet_to_mac(buffer(header_offset+4,6))
-    metaTree:add(buffer(header_offset+4,6),"Originating Device MAC address: " .. device_mac)
-    -- UDP
-    header_offset = header_offset + 12
-    if next_proto == 0x11 then
-        Dissector.get("udp"):call(buffer:range(header_offset):tvb(), pinfo, tree)
-    elseif next_proto == 0x06 then
-        Dissector.get("tcp"):call(buffer:range(header_offset):tvb(), pinfo, tree)
     end
 end
-ip_table = DissectorTable.get("ip.proto")
-ip_table:add(253,tps_proto)
+
+
+function tps_udp_proto.dissector(buffer, pinfo, tree)
+    pinfo.cols.protocol = "TPS INT"
+    local buf_offset = 0
+
+    -- UDP Encapsulation Header - 8 bytes
+    local int_tree = tree:add(tps_udp_proto, buffer(0, 16), "In-band Network Telemetry (INT)")
+    local shim_buf = buffer(buf_offset, 4)
+    buf_offset = buf_offset + 4
+    local length, next_proto = tps_int_shim(int_tree, shim_buf)
+
+    -- INT Metadata Header - 12 bytes
+    local tvbr = buffer(buf_offset, 12)
+    buf_offset = buf_offset + 12
+    tps_int_hdr(int_tree, tvbr)
+
+    -- INT Metadata Stack - 4 bytes
+    local total_hops = length - 6
+    local buf_bytes = total_hops * 4 + 6 + 2
+    local int_md_buf = buffer(buf_offset, buf_bytes)
+    buf_offset = buf_offset + buf_bytes
+    tps_int_md(int_tree, int_md_buf, total_hops)
+
+    if next_proto == 0x11 then
+        -- UDP
+        Dissector.get("udp"):call(buffer:range(buf_offset):tvb(), pinfo, tree)
+    elseif next_proto == 0x06 then
+        -- TCP
+        Dissector.get("tcp"):call(buffer:range(buf_offset):tvb(), pinfo, tree)
+    end
+end
+
+
+-- INT protocol example
+ip_table = DissectorTable.get("udp.port")
+ip_table:add(555, tps_udp_proto)

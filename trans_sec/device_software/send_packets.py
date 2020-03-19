@@ -28,8 +28,9 @@ from scapy.layers.l2 import Ether
 from scapy.sendrecv import sendp
 
 # Logger stuff
+import trans_sec.consts
 from trans_sec.packet.inspect_layer import (
-    IntShim, IntHeader, IntMeta1, IntMeta2, SourceIntMeta)
+    IntShim, IntHeader, IntMeta1, IntMeta2, SourceIntMeta, UdpInt)
 
 logger = getLogger('send_packets')
 
@@ -156,25 +157,34 @@ def __create_packet(args, interface):
         int_hops = len(int_data['meta'])
         shim_len = 4 + 3 + int_hops - 1
         logger.info('Int data to add to packet - [%s]', int_data)
+
+        # TODO/FIXME - Is this correct??? It is not taking into account the
+        #  UDP/TCP header or payload and whats this 34???
         ip_len = 34 + (shim_len * 4)
         if ip_ver == 4:
-            pkt = (Ether(src=src_mac, dst=args.switch_ethernet, type=0x0800) /
+            pkt = (Ether(src=src_mac, dst=args.switch_ethernet,
+                         type=trans_sec.consts.IPV4_TYPE) /
                    IP(dst=args.destination, src=args.source_addr, len=ip_len,
-                      proto=0xfd))
+                      proto=trans_sec.consts.UDP_PROTO))
         else:
-            pkt = (Ether(src=src_mac, dst=args.switch_ethernet, type=0x86dd) /
-                   IPv6(dst=args.destination, src=args.source_addr, nh=0xfd))
+            pkt = (Ether(src=src_mac, dst=args.switch_ethernet,
+                         type=trans_sec.consts.IPV6_TYPE) /
+                   IPv6(dst=args.destination, src=args.source_addr,
+                        nh=trans_sec.consts.UDP_PROTO, plen=ip_len))
 
+        # Add UDP INT header
+        pkt = pkt / UdpInt()
+
+        # Create INT Shim header
         if args.protocol == 'UDP':
-            pkt = pkt / IntShim(length=shim_len, next_proto=0x11)
+            pkt = pkt / IntShim(length=shim_len,
+                                next_proto=trans_sec.consts.UDP_PROTO)
         elif args.protocol == 'TCP':
-            pkt = pkt / IntShim(length=shim_len, next_proto=0x06)
+            pkt = pkt / IntShim(length=shim_len,
+                                next_proto=trans_sec.consts.TCP_PROTO)
 
         if int_hops > 0:
-            meta_len = 1
-            if int_hops == 1:
-                meta_len = 3
-            pkt = pkt / IntHeader(meta_len=meta_len)
+            pkt = pkt / IntHeader()
             ctr = 0
             for int_meta in int_data['meta']:
                 logger.info('Adding int_meta - [%s] to INT data', int_meta)
@@ -198,22 +208,24 @@ def __create_packet(args, interface):
         if ip_ver == 4:
             if args.protocol == 'TCP':
                 ip_hdr = IP(dst=args.destination, src=args.source_addr,
-                            proto=0x06)
+                            proto=trans_sec.consts.TCP_PROTO)
             elif args.protocol == 'UDP':
                 ip_hdr = IP(dst=args.destination, src=args.source_addr,
-                            proto=0x11)
+                            proto=trans_sec.consts.UDP_PROTO)
         else:
             if args.protocol == 'TCP':
                 ip_hdr = IPv6(dst=args.destination, src=args.source_addr,
-                              nh=0x06)
+                              nh=trans_sec.consts.TCP_PROTO)
             elif args.protocol == 'UDP':
                 ip_hdr = IPv6(dst=args.destination, src=args.source_addr,
-                              nh=0x11)
+                              nh=trans_sec.consts.UDP_PROTO)
 
         if ip_ver == 4:
-            pkt = Ether(src=src_mac, dst=args.switch_ethernet, type=0x0800)
+            pkt = Ether(src=src_mac, dst=args.switch_ethernet,
+                        type=trans_sec.consts.IPV4_TYPE)
         else:
-            pkt = Ether(src=src_mac, dst=args.switch_ethernet, type=0x86dd)
+            pkt = Ether(src=src_mac, dst=args.switch_ethernet,
+                        type=trans_sec.consts.IPV6_TYPE)
 
         if ip_hdr:
             pkt = pkt / ip_hdr

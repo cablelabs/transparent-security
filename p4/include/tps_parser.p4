@@ -89,7 +89,7 @@ parser TpsAggParser(packet_in packet,
     state parse_ipv4 {
         packet.extract(hdr.ipv4);
         transition select(hdr.ipv4.protocol) {
-            TYPE_INSPECTION: parse_int_shim;
+            TYPE_UDP: parse_udp_int;
             default: accept;
         }
     }
@@ -97,7 +97,15 @@ parser TpsAggParser(packet_in packet,
     state parse_ipv6 {
         packet.extract(hdr.ipv6);
         transition select(hdr.ipv6.next_hdr_proto) {
-            TYPE_INSPECTION: parse_int_shim;
+            TYPE_UDP: parse_udp_int;
+            default: accept;
+        }
+    }
+
+    state parse_udp_int {
+        packet.extract(hdr.udp_int);
+        transition select(hdr.udp_int.src_port) {
+            UDP_INT_SRC_PORT: parse_int_shim;
             default: accept;
         }
     }
@@ -136,7 +144,7 @@ parser TpsCoreParser(packet_in packet,
     state parse_ipv4 {
         packet.extract(hdr.ipv4);
         transition select(hdr.ipv4.protocol) {
-            TYPE_INSPECTION: parse_int_shim;
+            TYPE_UDP: parse_udp_int;
             default: accept;
         }
     }
@@ -144,7 +152,15 @@ parser TpsCoreParser(packet_in packet,
     state parse_ipv6 {
         packet.extract(hdr.ipv6);
         transition select(hdr.ipv6.next_hdr_proto) {
-            TYPE_INSPECTION: parse_int_shim;
+            TYPE_UDP: parse_udp_int;
+            default: accept;
+        }
+    }
+
+    state parse_udp_int {
+        packet.extract(hdr.udp_int);
+        transition select(hdr.udp_int.dst_port) {
+            UDP_INT_DST_PORT: parse_int_shim;
             default: accept;
         }
     }
