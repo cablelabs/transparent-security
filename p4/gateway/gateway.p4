@@ -48,7 +48,7 @@ control TpsGwIngress(inout headers hdr,
             data_forward;
             NoAction;
         }
-        size = 1024;
+        size = TABLE_SIZE;
         default_action = NoAction();
     }
 
@@ -132,24 +132,8 @@ control TpsGwIngress(inout headers hdr,
         hdr.udp_int.len = hdr.udp.len + ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE) + UDP_HDR_BYTES;
     }
 
-    table insert_udp_int_for_udp_t {
-        actions = {
-            insert_udp_int_for_udp;
-        }
-        size = TABLE_SIZE;
-        default_action = insert_udp_int_for_udp();
-    }
-
     action insert_udp_int_for_tcp() {
         hdr.udp_int.len = ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE) + TCP_HDR_BYTES + UDP_HDR_BYTES;
-    }
-
-    table insert_udp_int_for_tcp_t {
-        actions = {
-            insert_udp_int_for_tcp;
-        }
-        size = TABLE_SIZE;
-        default_action = insert_udp_int_for_tcp();
     }
 
     action data_drop(bit<32> device) {
@@ -243,10 +227,10 @@ control TpsGwIngress(inout headers hdr,
 
             if (hdr.int_shim.isValid()) {
                 if (hdr.udp.isValid()) {
-                    insert_udp_int_for_udp_t.apply();
+                    insert_udp_int_for_udp();
                 }
                 if (hdr.tcp.isValid()) {
-                    insert_udp_int_for_tcp_t.apply();
+                    insert_udp_int_for_tcp();
                 }
             }
 
