@@ -24,18 +24,13 @@
     log_file: "{{ p4_te_log_file }}"
     insert_flag: "{{ p4_te_insert | default('True') }}"
     template_file: ../templates/table_entry.yml.j2
+    table_action: "{{ p4_table_action }}"
   tasks:
     - name: Create config {{ table_entry_config }}
       template:
         src: "{{ template_file }}"
         dest: "{{ table_entry_config }}"
         backup: yes
-      vars:
-        p4_class: "{{ p4_classname }}"
-        table_name: "{{ p4_table_name }}"
-        match_fields: "{{ p4_table_match_fields }}"
-        action_params: "{{ p4_table_action_params | default('') }}"
-        action_name: "{{ p4_action_name | default('') }}"
 
     - name: Creating add table command
       set_fact:

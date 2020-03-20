@@ -31,16 +31,18 @@
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth2' % switch.name }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
-    data_forward_classname: TpsGwIngress
-    data_forward_table: data_forward_t
-    data_forward_action: data_forward
-    data_forward_match_fields:
-      - key: standard_metadata.ingress_port
-        value: "{{ send_sw_port }}"
-    data_forward_action_params:
-      - key: dstAddr
-        value: "{{ switch.mac }}"
-      - key: port
-        value: "{{ rec_sw_port }}"
-      - key: l2ptr
-        value: 0
+    data_forward_table_action:
+      control_name: TpsGwIngress
+      table_name: data_forward_t
+      action:
+        name: data_forward
+        match_fields:
+          - key: standard_metadata.ingress_port
+            value: "{{ send_sw_port }}"
+        params:
+          - key: dstAddr
+            value: "{{ switch.mac }}"
+          - key: port
+            value: "{{ rec_sw_port }}"
+          - key: l2ptr
+            value: 0

@@ -31,21 +31,23 @@
     receiver: "{{ topo_dict.hosts.host2 }}"
     receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth2' % switch.name }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
-    data_forward_classname: TpsAggIngress
-    data_forward_table: "{{ 'data_forward_ipv4_t' if ip_version == '4' else 'data_forward_ipv6_t' }}"
-    data_forward_action: data_forward
-    data_forward_match_fields:
-      - key: "{{ 'hdr.ipv4.dstAddr' if ip_version == '4' else 'hdr.ipv6.dstAddr' }}"
-        value:
-          - "{{ receiver.ip if ip_version == '4' else receiver.ipv6 }}"
-          - "{{ 32 if ip_version == '4' else 128 }}"
-    data_forward_action_params:
-      - key: dstAddr
-        value: "{{ switch.mac }}"
-      - key: port
-        value: "{{ rec_sw_port }}"
-      - key: l2ptr
-        value: 0
+    data_forward_table_action:
+      control_name: TpsAggIngress
+      table_name: "{{ 'data_forward_ipv4_t' if ip_version == '4' else 'data_forward_ipv6_t' }}"
+      action:
+        name: data_forward
+        match_fields:
+          - key: "{{ 'hdr.ipv4.dstAddr' if ip_version == '4' else 'hdr.ipv6.dstAddr' }}"
+            value:
+              - "{{ receiver.ip if ip_version == '4' else receiver.ipv6 }}"
+              - "{{ 32 if ip_version == '4' else 128 }}"
+        params:
+          - key: dstAddr
+            value: "{{ switch.mac }}"
+          - key: port
+            value: "{{ rec_sw_port }}"
+          - key: l2ptr
+            value: 0
 
 # Basic Data Forward scenario for INT UDP Packets without a data-inspection table entry so the original simply passes through
 - import_playbook: ../single_switch/data_forward_basic.yml
@@ -64,21 +66,23 @@
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth2' % switch.name }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
-    data_forward_classname: TpsAggIngress
-    data_forward_table: "{{ 'data_forward_ipv4_t' if ip_version == '4' else 'data_forward_ipv6_t' }}"
-    data_forward_action: data_forward
-    data_forward_match_fields:
-      - key: "{{ 'hdr.ipv4.dstAddr' if ip_version == '4' else 'hdr.ipv6.dstAddr' }}"
-        value:
-          - "{{ receiver.ip if ip_version == '4' else receiver.ipv6 }}"
-          - "{{ 32 if ip_version == '4' else 128 }}"
-    data_forward_action_params:
-      - key: dstAddr
-        value: "{{ switch.mac }}"
-      - key: port
-        value: "{{ rec_sw_port }}"
-      - key: l2ptr
-        value: 0
+    data_forward_table_action:
+      control_name: TpsAggIngress
+      table_name: "{{ 'data_forward_ipv4_t' if ip_version == '4' else 'data_forward_ipv6_t' }}"
+      action:
+        name: data_forward
+        match_fields:
+          - key: "{{ 'hdr.ipv4.dstAddr' if ip_version == '4' else 'hdr.ipv6.dstAddr' }}"
+            value:
+              - "{{ receiver.ip if ip_version == '4' else receiver.ipv6 }}"
+              - "{{ 32 if ip_version == '4' else 128 }}"
+        params:
+          - key: dstAddr
+            value: "{{ switch.mac }}"
+          - key: port
+            value: "{{ rec_sw_port }}"
+          - key: l2ptr
+            value: 0
     # For sending INT packets on the #1 of 3 send/receive iteration
     sr_data_inspection_int:
       - switch_id: 1001

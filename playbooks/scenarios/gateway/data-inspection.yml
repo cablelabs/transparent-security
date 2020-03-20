@@ -31,30 +31,34 @@
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth2' % switch.name }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
-    data_forward_classname: TpsGwIngress
-    data_forward_action: data_forward
-    data_forward_table: data_forward_t
-    data_forward_match_fields:
-      - key: standard_metadata.ingress_port
-        value: "{{ send_sw_port }}"
-    data_forward_action_params:
-      - key: dstAddr
-        value: "{{ switch.mac }}"
-      - key: port
-        value: "{{ rec_sw_port }}"
-      - key: l2ptr
-        value: 0
-    data_inspection_classname: TpsGwIngress
-    data_inspection_table: data_inspection_t
-    data_inspection_action: "{{ 'data_inspect_packet_ipv4' if ip_version == '4' else 'data_inspect_packet_ipv6' }}"
-    data_inspection_match_fields:
-      - key: hdr.ethernet.src_mac
-        value: "{{ sender.mac }}"
-      - key: hdr.ethernet.etherType
-        value: "{{ '0x0800' if ip_version == '4' else '0x86dd' }}"
-    data_inspection_action_params:
-      - key: device
-        value: "{{ sender.id }}"
-      - key: switch_id
-        value: "{{ switch.id }}"
+    data_forward_table_action:
+      control_name: TpsGwIngress
+      table_name: data_forward_t
+      action:
+        name: data_forward
+        match_fields:
+          - key: standard_metadata.ingress_port
+            value: "{{ send_sw_port }}"
+        params:
+          - key: dstAddr
+            value: "{{ switch.mac }}"
+          - key: port
+            value: "{{ rec_sw_port }}"
+          - key: l2ptr
+            value: 0
+    data_inspection_table_action:
+      control_name: TpsGwIngress
+      table_name: data_inspection_t
+      action:
+        name: "{{ 'data_inspect_packet_ipv4' if ip_version == '4' else 'data_inspect_packet_ipv6' }}"
+        match_fields:
+          - key: hdr.ethernet.src_mac
+            value: "{{ sender.mac }}"
+          - key: hdr.ethernet.etherType
+            value: "{{ '0x0800' if ip_version == '4' else '0x86dd' }}"
+        params:
+          - key: device
+            value: "{{ sender.id }}"
+          - key: switch_id
+            value: "{{ switch.id }}"
     sr1_rec_int_hops: 1

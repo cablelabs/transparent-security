@@ -19,11 +19,7 @@
   vars:
     int_hops: "{{ sr_rec_int_hops | default(0) }}"
     te_conf_file: "df-write-data-forward-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
-    p4_classname: "{{ data_forward_classname }}"
-    p4_table_name: "{{ data_forward_table }}"
-    p4_action_name: "{{ data_forward_action }}"
-    p4_table_match_fields: "{{ data_forward_match_fields }}"
-    p4_table_action_params: "{{ data_forward_action_params }}"
+    p4_table_action: "{{ data_forward_table_action }}"
     p4_te_log_dir: "{{ host_log_dir }}"
     p4_te_log_file: "df-write-data-forward-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
 
@@ -43,9 +39,7 @@
   vars:
     int_hops: "{{ sr_rec_int_hops | default(0) }}"
     te_conf_file: "df-delete-data-forward-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
-    p4_classname: "{{ data_forward_classname }}"
-    p4_table_name: "{{ data_forward_table }}"
-    p4_table_match_fields: "{{ data_forward_match_fields }}"
+    p4_table_action: "{{ data_forward_table_action }}"
     p4_te_log_dir: "{{ host_log_dir }}"
     p4_te_log_file: "df-delete-data-forward-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
     p4_te_insert: False
