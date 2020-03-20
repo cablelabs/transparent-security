@@ -191,6 +191,25 @@ parser TpsCoreParser(packet_in packet,
 
     state parse_int_meta {
         packet.extract(hdr.int_meta);
+        transition select (hdr.int_shim.next_proto) {
+            TYPE_UDP: parse_udp;
+            TYPE_TCP: parse_tcp;
+        }
+    }
+
+    state parse_udp {
+        packet.extract(hdr.udp);
+        transition parse_payload_frg;
+    }
+
+    state parse_tcp {
+        packet.extract(hdr.tcp);
+        transition parse_payload_frg;
+    }
+
+    state parse_payload_frg {
+        packet.extract(hdr.payload_frg);
         transition accept;
     }
+
 }

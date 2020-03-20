@@ -130,13 +130,8 @@ header int_metadata_t { /* 4 */
     bit<32>  switch_id;
 }
 
-struct fwd_meta_t {
-    bit<32> l2ptr;
-    bit<24> out_bd;
-}
-
-struct metadata {
-    fwd_meta_t fwd;
+header payload_frg_t { /* 4 */
+    bit<128>  payload_bytes;
 }
 
 struct headers {
@@ -151,4 +146,14 @@ struct headers {
     source_metadata_t int_meta;
     udp_t             udp;
     tcp_t             tcp;
+    payload_frg_t     payload_frg;
+}
+
+struct fwd_meta_t {
+    bit<32> l2ptr;
+    bit<24> out_bd;
+}
+
+struct metadata {
+    fwd_meta_t fwd;
 }
