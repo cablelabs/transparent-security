@@ -18,11 +18,7 @@
   vars:
     int_hops: "{{ sr1_rec_int_hops | default(0) }}"
     te_conf_file: "~/dd-forward-create-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
-    p4_classname: "{{ data_forward_classname }}"
-    p4_table_name: "{{ data_forward_table }}"
-    p4_action_name: "{{ data_forward_action }}"
-    p4_table_match_fields: "{{ data_forward_match_fields }}"
-    p4_table_action_params: "{{ data_forward_action_params }}"
+    p4_table_action: "{{ data_forward_table_action }}"
     p4_te_log_dir: "{{ host_log_dir }}"
     p4_te_log_file: "dd-forward-create-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
 
@@ -42,11 +38,7 @@
   vars:
     int_hops: "{{ sr2_rec_int_hops | default(0) }}"
     te_conf_file: "~/dd-drop-create-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
-    p4_classname: "{{ data_forward_classname }}"
-    p4_table_name: "{{ data_drop_table }}"
-    p4_action_name: "{{ data_drop_action }}"
-    p4_table_match_fields: "{{ data_drop_match_fields }}"
-    p4_table_action_params: "{{ data_drop_action_params }}"
+    p4_table_action: "{{ data_drop_table_action }}"
     p4_te_log_dir: "{{ host_log_dir }}"
     p4_te_log_file: "dd-drop-create-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
 
@@ -68,9 +60,7 @@
   vars:
     int_hops: "{{ sr2_rec_int_hops | default(0) }}"
     te_conf_file: "~/dd-drop-delete-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
-    p4_classname: "{{ data_drop_classname }}"
-    p4_table_name: "{{ data_drop_table }}"
-    p4_table_match_fields: "{{ data_drop_match_fields }}"
+    p4_table_action: "{{ data_drop_table_action }}"
     p4_te_log_dir: "{{ host_log_dir }}"
     p4_te_log_file: "dd-drop-delete-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
     p4_te_insert: False
@@ -91,9 +81,7 @@
   vars:
     int_hops: "{{ sr3_rec_int_hops | default(0) }}"
     te_conf_file: "~/dd-forward-delete-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
-    p4_classname: "{{ data_drop_classname }}"
-    p4_table_name: "{{ data_forward_table }}"
-    p4_table_match_fields: "{{ data_forward_match_fields }}"
+    p4_table_action: "{{ data_forward_table_action }}"
     p4_te_log_dir: "{{ host_log_dir }}"
     p4_te_log_file: "dd-forward-delete-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
     p4_te_insert: False

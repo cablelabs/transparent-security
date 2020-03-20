@@ -13,13 +13,13 @@
 
 # Jinja2 template for use as an input to insert_p4_table_entry.py
 ---
-- table_name: {{ p4_class }}.{{ table_name }}
-{% if action_name or action_name != '' %}
-  action_name: {{ p4_class }}.{{ action_name }}
+- table_name: {{ table_action.control_name }}.{{ table_action.table_name }}
+{% if table_action.action.name or table_action.action.name != '' %}
+  action_name: {{ table_action.control_name }}.{{ table_action.action.name }}
 {% endif %}
-{% if match_fields %}
+{% if table_action.action.match_fields %}
   match_fields:
-{% for match_field in match_fields %}
+{% for match_field in table_action.action.match_fields %}
 {% if match_field.value is iterable and match_field.value is not string %}
     {{ match_field.key }}:
 {% for match_val in match_field.value %}
@@ -30,9 +30,9 @@
 {% endif %}
 {% endfor %}
 {% endif %}
-{% if action_params %}
+{% if table_action.action.params %}
   action_params:
-{% for action_param in action_params %}
+{% for action_param in table_action.action.params %}
     {{ action_param.key }}: {{ action_param.value }}
 {% endfor %}
 {% endif %}

@@ -32,31 +32,35 @@
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth2' % switch.name }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
-    data_forward_classname: TpsGwIngress
-    data_forward_table: data_forward_t
-    data_forward_action: data_forward
-    data_forward_match_fields:
-      - key: standard_metadata.ingress_port
-        value: "{{ send_sw_port }}"
-    data_forward_action_params:
-      - key: dstAddr
-        value: "{{ switch.mac }}"
-      - key: port
-        value: "{{ rec_sw_port }}"
-      - key: l2ptr
-        value: 0
-    data_drop_classname: TpsGwIngress
-    data_drop_table: "{{ 'data_drop_udp_ipv%s_t' % ip_version if send_protocol == 'UDP' else 'data_drop_tcp_ipv%s_t' % ip_version }}"
-    data_drop_action: data_drop
-    data_drop_match_fields:
-      - key: hdr.ethernet.src_mac
-        value: "{{ sender.mac }}"
-      - key: "{{ 'hdr.ipv%s.srcAddr' % ip_version }}"
-        value: "{{ sender.ip  if ip_version == '4' else sender.ipv6 }}"
-      - key: "{{ 'hdr.ipv%s.dstAddr' % ip_version }}"
-        value: "{{ receiver.ip if ip_version == '4' else receiver.ipv6 }}"
-      - key: "{{ 'hdr.udp.dst_port' if send_protocol == 'UDP' else 'hdr.tcp.dst_port' }}"
-        value: "{{ send_port }}"
-    data_drop_action_params:
-      - key: device
-        value: "{{ sender.id }}"
+    data_forward_table_action:
+      control_name: TpsGwIngress
+      table_name: data_forward_t
+      action:
+        name: data_forward
+        match_fields:
+          - key: standard_metadata.ingress_port
+            value: "{{ send_sw_port }}"
+        params:
+          - key: dstAddr
+            value: "{{ switch.mac }}"
+          - key: port
+            value: "{{ rec_sw_port }}"
+          - key: l2ptr
+            value: 0
+    data_drop_table_action:
+      control_name: TpsGwIngress
+      table_name: "{{ 'data_drop_udp_ipv%s_t' % ip_version if send_protocol == 'UDP' else 'data_drop_tcp_ipv%s_t' % ip_version }}"
+      action:
+        name: data_drop
+        match_fields:
+          - key: hdr.ethernet.src_mac
+            value: "{{ sender.mac }}"
+          - key: "{{ 'hdr.ipv%s.srcAddr' % ip_version }}"
+            value: "{{ sender.ip  if ip_version == '4' else sender.ipv6 }}"
+          - key: "{{ 'hdr.ipv%s.dstAddr' % ip_version }}"
+            value: "{{ receiver.ip if ip_version == '4' else receiver.ipv6 }}"
+          - key: "{{ 'hdr.udp.dst_port' if send_protocol == 'UDP' else 'hdr.tcp.dst_port' }}"
+            value: "{{ send_port }}"
+        params:
+          - key: device
+            value: "{{ sender.id }}"
