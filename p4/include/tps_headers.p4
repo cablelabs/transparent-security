@@ -20,6 +20,7 @@
 typedef bit<9>  egressSpec_t;
 typedef bit<48> macAddr_t;
 typedef bit<32> ip4Addr_t;
+typedef bit<128> ip6Addr_t;
 
 /*************************
 Ethernet header definition
@@ -58,8 +59,8 @@ header ipv6_t {
     bit<16>   payload_len;
     bit<8>    next_hdr_proto;
     bit<8>    hop_limit;
-    bit<128>  srcAddr;
-    bit<128>  dstAddr;
+    ip6Addr_t srcAddr;
+    ip6Addr_t dstAddr;
 }
 
 /*************************
@@ -146,6 +147,12 @@ struct headers {
     source_metadata_t int_meta;
     udp_t             udp;
     tcp_t             tcp;
+
+    ethernet_t        trpt_eth;
+    ipv4_t            trpt_ipv4;
+    ipv6_t            trpt_ipv6;
+    udp_t             trpt_udp;
+
     payload_frg_t     payload_frg;
 }
 
