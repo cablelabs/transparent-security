@@ -152,18 +152,65 @@ control TpsCoreEgress(inout headers hdr,
                       inout metadata meta,
                       inout standard_metadata_t standard_metadata) {
 
+    action control_drop() {
+        mark_to_drop(standard_metadata);;
+    }
+
     /**
-    * Restrutures data within INT packet into a Telemetry Report packet type
+    * Restrutures data within INT packet into a Telemetry Report packet type for ipv4
     */
-    action setup_telem_rpt() {
-        /* TODO - Implement me */
-        /*hdr.int_shim.setInvalid();*/
+    action init_telem_rpt() {
+        /* Disable the INT headers so they don't get added to the Telemetry Report */
+        hdr.udp_int.setInvalid();
+        hdr.int_shim.setInvalid();
+        hdr.int_header.setInvalid();
+        hdr.int_meta_2.setInvalid();
+        hdr.int_meta_3.setInvalid();
+        hdr.int_meta.setInvalid();
+
+        hdr.trpt_eth.setValid();
+        hdr.trpt_ipv4.setValid();
+        hdr.trpt_udp.setValid();
+    }
+
+    /**
+    * Restrutures data within INT packet into a Telemetry Report packet type for ipv4
+    */
+    action setup_telem_rpt_ipv4(ip4Addr_t dev_ip, ip4Addr_t ae_ip) {
+        hdr.trpt_ipv4.srcAddr = dev_ip;
+        hdr.trpt_ipv4.srcAddr = ae_ip;
+    }
+
+    /**
+    * Restrutures data within INT packet into a Telemetry Report packet type for ipv4
+    */
+    action setup_telem_rpt_ipv6(ip6Addr_t dev_ip, ip6Addr_t ae_ip) {
+        hdr.trpt_ipv6.srcAddr = dev_ip;
+        hdr.trpt_ipv6.srcAddr = ae_ip;
+    }
+
+    /* TODO - Design table properly, currently just making IPv4 or IPv6 Choices */
+    table setup_telemetry_rpt_t {
+        key = {
+            hdr.udp.dst_port: exact;
+        }
+        actions = {
+            setup_telem_rpt_ipv4;
+            setup_telem_rpt_ipv6;
+            /*control_drop;*/
+            NoAction;
+        }
+        size = TABLE_SIZE;
+        /*default_action = control_drop();*/
+        default_action = NoAction();
     }
 
     apply {
         if (standard_metadata.egress_spec != DROP_PORT) {
             if (IS_I2E_CLONE(standard_metadata)) {
-                setup_telem_rpt();
+                /* TODO - Setup a table for configuring when and how to create the TRPT */
+                /*init_telem_rpt();*/
+                setup_telemetry_rpt_t.apply();
             }
         }
     }
