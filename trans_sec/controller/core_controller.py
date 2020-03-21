@@ -10,7 +10,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import socket
 from logging import getLogger
 
 from trans_sec.controller.abstract_controller import AbstractController
@@ -33,6 +33,7 @@ class CoreController(AbstractController):
         super(self.__class__, self).__init__(
             platform, p4_build_out, topo, 'core', list(), log_dir, load_p4,
             'TpsCoreIngress')
+        self.p4_egress = 'TpsCoreEgress'
 
     def make_rules(self, sw, sw_info, north_facing_links, south_facing_links):
         super(self.__class__, self).make_rules(
@@ -41,6 +42,28 @@ class CoreController(AbstractController):
             sw_info['clone_egress'])
         sw.write_clone_entries(clone_entry)
         logger.info('Installed clone on %s' % sw.name)
+
+        # TODO - Make this more configurable and support at least 2 ports as
+        #  well as IPv6 create an optional configuration item in the topology
+        #  specifically for the ae_ip
+        ae_ip = self.topo['external']['analytics_engine']['ip']
+        ae_ip = socket.gethostbyname(ae_ip)
+        logger.info('Starting telemetry report for INT headers with dst_port '
+                    'value of 555 to AE IP [%s]', ae_ip)
+        table_name = '{}.setup_telemetry_rpt_t'.format(self.p4_egress)
+        action_name = '{}.setup_telem_rpt_ipv4'.format(self.p4_egress)
+        match_fields = {
+            'hdr.udp_int.dst_port': 555
+        }
+        action_params = {
+            'ae_ip': ae_ip
+        }
+        table_entry = self.p4info_helper.build_table_entry(
+            table_name=table_name,
+            match_fields=match_fields,
+            action_name=action_name,
+            action_params=action_params)
+        sw.write_table_entry(table_entry)
 
         logger.info('self.topo - [%s]', self.topo)
         logger.info('north_facing_links - [%s]', north_facing_links)

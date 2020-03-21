@@ -89,6 +89,30 @@
   vars:
     clone_entry: True
 
+# Create Telemetry Report table entry to setup_telemetry_rpt_t
+- import_playbook: ../test_cases/write_to_p4_table.yml
+  vars:
+    send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
+    ip_version: "{{ scenario_send_ip_version | default(4) }}"
+    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
+    switch: "{{ topo_dict.switches.core }}"
+    int_hops: "{{ sr_rec_int_hops | default(0) }}"
+    te_conf_file: "core-df-setup-telemetry-report-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
+    p4_table_action:
+      control_name: TpsCoreEgress
+      table_name: setup_telemetry_rpt_t
+      action:
+        # TODO - Add support for IPv6 TRPT endpoints
+        name: setup_telem_rpt_ipv4
+        match_fields:
+          - key: hdr.udp_int.dst_port
+            value: 555
+        params:
+          - key: ae_ip
+            value: "{{ topo_dict.hosts.clone.ip }}"
+    p4_te_log_dir: "{{ host_log_dir }}"
+    p4_te_log_file: "df-setup-telemetry-report-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
+
 # Basic Data Forward scenario for INT packets to clone port
 - import_playbook: ../single_switch/data_forward_basic.yml
   vars:
@@ -131,3 +155,28 @@
 - import_playbook: ../test_cases/write_clone_entry.yml
   vars:
     clone_entry: False
+
+# Cleanup Telemetry Report table entry
+- import_playbook: ../test_cases/write_to_p4_table.yml
+  vars:
+    send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
+    ip_version: "{{ scenario_send_ip_version | default(4) }}"
+    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
+    switch: "{{ topo_dict.switches.core }}"
+    int_hops: "{{ sr_rec_int_hops | default(0) }}"
+    sender: "{{ topo_dict.hosts[remote_send_host] }}"
+    te_conf_file: "core-df-setup-telemetry-report-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
+    p4_table_action:
+      control_name: TpsCoreEgress
+      table_name: setup_telemetry_rpt_t
+      action:
+        name: setup_telem_rpt_ipv4
+        match_fields:
+          - key: hdr.udp_int.dst_port
+            value: 555
+        params:
+          - key: ae_ip
+            value: "{{ topo_dict.hosts.clone.ip }}"
+    p4_te_log_dir: "{{ host_log_dir }}"
+    p4_te_log_file: "df-setup-telemetry-report-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
+    p4_te_insert: False
