@@ -22,9 +22,6 @@
 #include <tps_checksum.p4>
 #include <tps_egress.p4>
 
-#define IS_NORMAL(std_meta) (std_meta.instance_type == BMV2_V1MODEL_INSTANCE_TYPE_NORMAL)
-#define IS_RECIRCULATED(std_meta) (std_meta.instance_type == BMV2_V1MODEL_INSTANCE_TYPE_RECIRC)
-#define IS_I2E_CLONE(std_meta) (std_meta.instance_type == BMV2_V1MODEL_INSTANCE_TYPE_INGRESS_CLONE)
 
 /*************************************************************************
 **************  I N G R E S S   P R O C E S S I N G   ********************
@@ -160,33 +157,55 @@ control TpsCoreEgress(inout headers hdr,
     * Restrutures data within INT packet into a Telemetry Report packet type for ipv4
     */
     action init_telem_rpt() {
-        /* Disable the INT headers so they don't get added to the Telemetry Report */
-        hdr.udp_int.setInvalid();
-        hdr.int_shim.setInvalid();
-        hdr.int_header.setInvalid();
-        hdr.int_meta_2.setInvalid();
-        hdr.int_meta_3.setInvalid();
-        hdr.int_meta.setInvalid();
-
         hdr.trpt_eth.setValid();
-        hdr.trpt_ipv4.setValid();
         hdr.trpt_udp.setValid();
+        hdr.trpt_hdr.setValid();
+
+        hdr.trpt_eth.dst_mac = hdr.ethernet.dst_mac;
+        hdr.trpt_eth.src_mac = hdr.ethernet.src_mac;
+
+        hdr.trpt_udp.dst_port = TRPT_INT_DST_PORT;
+
+        hdr.trpt_hdr.ver = TRPT_VERSION;
+        hdr.trpt_hdr.domain_id = TRPT_HDR_DOMAIN_ID;
+
+        /* TODO - Verify if this is correct */
+        hdr.trpt_udp.len = (bit<16>)standard_metadata.packet_length + 28;
+
+        /* TODO - determine length */
+        hdr.trpt_hdr.length = hdr.int_shim.length + 7;
+
+        /* TODO - determine how to use a counter or something */
+        hdr.trpt_hdr.sequence_no = 1;
     }
 
     /**
     * Restrutures data within INT packet into a Telemetry Report packet type for ipv4
     */
     action setup_telem_rpt_ipv4(ip4Addr_t ae_ip) {
+        hdr.trpt_ipv4.setValid();
+
+        hdr.trpt_eth.etherType = TYPE_IPV4;
+
+        hdr.trpt_ipv4.version = 0x4;
+        hdr.trpt_ipv4.ihl = 0x5;
+        hdr.trpt_ipv4.totalLen = hdr.ipv4.totalLen + TRPT_SHIM_BASE_SIZE + UDP_HDR_BYTES;
+
+        hdr.trpt_ipv4.flags = IPV4_DONT_FRAGMENT;
+        hdr.trpt_ipv4.protocol = TYPE_UDP;
         hdr.trpt_ipv4.srcAddr = hdr.ipv4.srcAddr;
-        hdr.trpt_ipv4.srcAddr = ae_ip;
+        hdr.trpt_ipv4.dstAddr = ae_ip;
     }
 
     /**
     * Restrutures data within INT packet into a Telemetry Report packet type for ipv4
     */
     action setup_telem_rpt_ipv6(ip6Addr_t ae_ip) {
+        hdr.trpt_ipv6.setValid();
+        hdr.trpt_eth.etherType = TYPE_IPV6;
+        hdr.trpt_ipv6.next_hdr_proto = TYPE_UDP;
         hdr.trpt_ipv6.srcAddr = hdr.ipv6.srcAddr;
-        hdr.trpt_ipv6.srcAddr = ae_ip;
+        hdr.trpt_ipv6.dstAddr = ae_ip;
     }
 
     /* TODO - Design table properly, currently just making IPv4 or IPv6 Choices */
@@ -206,8 +225,7 @@ control TpsCoreEgress(inout headers hdr,
     apply {
         if (standard_metadata.egress_spec != DROP_PORT) {
             if (IS_I2E_CLONE(standard_metadata)) {
-                /* TODO - Setup a table for configuring when and how to create the TRPT */
-                /*init_telem_rpt();*/
+                init_telem_rpt();
                 setup_telemetry_rpt_t.apply();
             }
         }

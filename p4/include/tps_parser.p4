@@ -199,16 +199,11 @@ parser TpsCoreParser(packet_in packet,
 
     state parse_udp {
         packet.extract(hdr.udp);
-        transition parse_payload_frg;
+        transition accept;
     }
 
     state parse_tcp {
         packet.extract(hdr.tcp);
-        transition parse_payload_frg;
-    }
-
-    state parse_payload_frg {
-        packet.extract(hdr.payload_frg);
         transition accept;
     }
 

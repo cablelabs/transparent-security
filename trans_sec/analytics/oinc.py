@@ -17,15 +17,16 @@ import threading
 import time
 
 from anytree import search, Node, RenderTree
-from scapy.all import bind_layers
 from scapy.all import sniff
 from scapy.layers.inet import IP, UDP, TCP
 from scapy.layers.inet6 import IPv6
 from scapy.layers.l2 import Ether
 
-from trans_sec.consts import UDP_PROTO, UDP_INT_DST_PORT, IPV4_TYPE, IPV6_TYPE
+from trans_sec.consts import UDP_PROTO, UDP_TRPT_DST_PORT, IPV4_TYPE, \
+    UDP_INT_DST_PORT, IPV6_TYPE
 from trans_sec.packet.inspect_layer import (
-    IntHeader, IntMeta1, IntMeta2, IntShim, SourceIntMeta, UdpInt)
+    IntHeader, IntMeta1, IntMeta2, IntShim, SourceIntMeta, TelemetryReport,
+    EthInt)
 
 logger = logging.getLogger('oinc')
 
@@ -48,13 +49,9 @@ class PacketAnalytics(object):
         self.count_map = dict()
         self.sniff_stop = threading.Event()
 
-        logger.info('Binding layers')
-        bind_layers(Ether, IP, type=IPV4_TYPE)
-        bind_layers(Ether, IPv6, type=IPV6_TYPE)
-
         logger.debug("Completed binding packet layers")
 
-    def start_sniffing(self, iface, udp_dport=UDP_INT_DST_PORT):
+    def start_sniffing(self, iface, udp_dport=UDP_TRPT_DST_PORT):
         """
         Starts the sniffer thread
         :param iface: the interface to sniff
@@ -100,29 +97,49 @@ class PacketAnalytics(object):
         return
 
 
-def extract_int_data(packet):
+def extract_int_data(ether_pkt):
     """
     Parses the required data from the packet
-    :param packet: the packet to parse
+    :param ether_pkt: the packet to parse
     :return: dict with choice header fields extracted
     """
-    ether_pkt = packet[Ether]
     if ether_pkt.type == IPV4_TYPE:
         ip_pkt = IP(_pkt=ether_pkt.payload)
-    else:
+        logger.debug('IPv4 dst - [%s], src - [%s], proto - [%s]',
+                     ip_pkt.dst, ip_pkt.src, ip_pkt.proto)
+    elif ether_pkt.type == IPV6_TYPE:
         ip_pkt = IPv6(_pkt=ether_pkt.payload)
+        logger.debug('IPv6 dst - [%s], src - [%s], nh - [%s]',
+                     ip_pkt.dst, ip_pkt.src, ip_pkt.nh)
+    else:
+        logger.warn('Unable to process ether type - [%s]', ether_pkt.type)
+        return None
 
-    udp_int_pkt = UdpInt(_pkt=ip_pkt.payload)
+    udp_int_pkt = UDP(_pkt=ip_pkt.payload)
+    logger.debug('UDP INT sport - [%s], dport - [%s], len - [%s]',
+                 udp_int_pkt.sport, udp_int_pkt.dport, udp_int_pkt.len)
     int_shim_pkt = IntShim(_pkt=udp_int_pkt.payload)
+    logger.debug('INT Shim next_proto - [%s], npt - [%s], length - [%s]',
+                 int_shim_pkt.next_proto, int_shim_pkt.npt,
+                 int_shim_pkt.length)
     int_hdr_pkt = IntHeader(_pkt=int_shim_pkt.payload)
+    logger.debug('INT Header ver - [%s]', int_hdr_pkt.ver)
     int_meta_1 = IntMeta1(_pkt=int_hdr_pkt.payload)
+    logger.debug('INT Meta 1 switch_id - [%s]', int_meta_1.switch_id)
     int_meta_2 = IntMeta2(_pkt=int_meta_1.payload)
+    logger.debug('INT Meta 2 switch_id - [%s]', int_meta_2.switch_id)
     source_int_pkt = SourceIntMeta(_pkt=int_meta_2.payload)
+    logger.debug('SourceIntMeta switch_id - [%s], orig_mac - [%s]',
+                 source_int_pkt.switch_id, source_int_pkt.orig_mac)
 
     if int_shim_pkt.next_proto == UDP_PROTO:
         tcp_udp_pkt = UDP(_pkt=source_int_pkt.payload)
+        logger.debug('TCP sport - [%s], dport - [%s], len - [%s]',
+                     tcp_udp_pkt.sport, tcp_udp_pkt.dport, tcp_udp_pkt.len)
     else:
         tcp_udp_pkt = TCP(_pkt=source_int_pkt.payload)
+        logger.debug('TCP sport - [%s], dport - [%s]',
+                     tcp_udp_pkt.sport, tcp_udp_pkt.dport)
 
     orig_mac = source_int_pkt.orig_mac
 
@@ -133,13 +150,30 @@ def extract_int_data(packet):
             dstAddr=ip_pkt.dst,
             dstPort=tcp_udp_pkt.dport,
             protocol=int_shim_pkt.next_proto,
-            packetLen=len(packet),
+            packetLen=len(ether_pkt),
         )
     except Exception as e:
         logger.error('Error extracting header data - %s', e)
         return None
     logger.debug('Extracted header data [%s]', out)
     return out
+
+
+def extract_trpt_data(udp_packet):
+    """
+    Parses the required data from the packet
+    :param udp_packet: the packet to parse
+    :return: dict with choice header fields extracted
+    """
+    logger.debug('UDP packet sport [%s], dport [%s], len [%s]',
+                 udp_packet.sport, udp_packet.dport, udp_packet.len)
+
+    trpt_pkt = TelemetryReport(_pkt=udp_packet.payload)
+    logger.debug('TRPT packet domain ID - [%s]', trpt_pkt.domain_id)
+    trpt_eth = EthInt(trpt_pkt.payload)
+    logger.debug('TRPT ethernet dst - [%s], src - [%s], type - [%s]',
+                 trpt_eth.dst, trpt_eth.src, trpt_eth.type)
+    return extract_int_data(trpt_eth)
 
 
 class Oinc(PacketAnalytics):
@@ -164,7 +198,7 @@ class Oinc(PacketAnalytics):
         """
         Processes a packet from a new device that has not been counted
         """
-        info = extract_int_data(packet)
+        info = extract_int_data(packet[Ether])
         logger.info('Processing packet with info [%s]', info)
 
         macs = search.findall_by_attr(self.tree, info.get('srcMac'),
@@ -219,7 +253,7 @@ class Oinc(PacketAnalytics):
         """
         Processes a packet from an existing device that has been counted
         """
-        logger.info('Packet with MAC [%s] and source IP [%s]', mac, src_ip)
+        logger.debug('Packet with MAC [%s] and source IP [%s]', mac, src_ip)
         count = packet_size.children[0]
         count.value = count.value + 1
         base_time = count.time
@@ -276,11 +310,20 @@ class SimpleAE(PacketAnalytics):
             protocol = ip_pkt.nh
 
         if protocol == UDP_PROTO:
-            udp_packet = UdpInt(_pkt=ip_pkt.payload)
-            logger.info('udp sport - [%s] dport - [%s]',
-                        udp_packet.sport, udp_packet.dport)
-            if udp_packet.dport == udp_dport:
-                int_data = extract_int_data(packet)
+            udp_packet = UDP(_pkt=ip_pkt.payload)
+            logger.debug(
+                'udp sport - [%s] dport - [%s] - expected dport - [%s]',
+                udp_packet.sport, udp_packet.dport, udp_dport)
+            if udp_packet.dport == udp_dport and udp_dport == UDP_INT_DST_PORT:
+                int_data = extract_int_data(packet[Ether])
+                if int_data:
+                    return self.__process(int_data)
+                else:
+                    logger.warn('Unable to debug INT data')
+                    return False
+            elif (udp_packet.dport == udp_dport
+                  and udp_dport == UDP_TRPT_DST_PORT):
+                int_data = extract_trpt_data(udp_packet)
                 if int_data:
                     return self.__process(int_data)
                 else:
@@ -360,7 +403,7 @@ class IntLoggerAE(PacketAnalytics):
         :param udp_dport: the UDP port value on which to filter
         :return: False
         """
-        logger.info('INT Packet data - [%s]', extract_int_data(packet))
+        logger.info('INT Packet data - [%s]', extract_int_data(packet[Ether]))
         return False
 
 

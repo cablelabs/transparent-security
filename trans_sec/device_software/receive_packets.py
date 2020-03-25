@@ -21,8 +21,10 @@ from scapy.layers.inet6 import IPv6
 from scapy.layers.l2 import Ether
 
 import trans_sec.consts
+from trans_sec import consts
 from trans_sec.packet.inspect_layer import (
-    IntShim, IntHeader, IntMeta1, IntMeta2, SourceIntMeta, UdpInt)
+    IntShim, IntHeader, IntMeta1, IntMeta2, SourceIntMeta, UdpInt,
+    TelemetryReport, EthInt)
 
 logger = logging.getLogger('receive_packets')
 FORMAT = '%(levelname)s %(asctime)-15s %(filename)s %(message)s'
@@ -37,9 +39,6 @@ def get_args():
         '-f', '--logfile', help='File to log to defaults to console',
         required=False, dest='log_file')
     parser.add_argument(
-        '-v', '--ip-ver', help='The IP version to parse (4|6) default 4',
-        required=False, default=4, dest='ip_ver', choices=[4, 6], type=int)
-    parser.add_argument(
         '-ih', '--int-hops', help='Number of expected INT hops, no INT when 0',
         required=False, default=0, dest='int_hops', type=int)
     parser.add_argument(
@@ -52,14 +51,16 @@ def get_args():
     return parser.parse_args()
 
 
-def __log_packet(packet, int_hops, ip_ver):
+def __log_packet(packet, int_hops):
     logger.info('Expected INT Hops - [%s] on packet - [%s]',
                 int_hops, packet.summary())
 
     ether_pkt = packet[Ether]
+    ip_proto = 0
+    ip_pkt = None
 
-    logger.info('Parsing IP version - [%s]', ip_ver)
-    if ip_ver == 4:
+    if ether_pkt.type == consts.IPV4_TYPE:
+        logger.info('Parsing IPv4 packet')
         try:
             ip_pkt = packet[IP]
             ip_proto = ip_pkt.proto
@@ -67,7 +68,8 @@ def __log_packet(packet, int_hops, ip_ver):
             logger.debug('Cannot log, not an IPv4 packet - %s',
                          packet.summary())
             return
-    else:
+    elif ether_pkt.type == consts.IPV6_TYPE:
+        logger.info('Parsing IPv6 packet')
         try:
             ip_pkt = packet[IPv6]
             ip_proto = ip_pkt.nh
@@ -79,114 +81,152 @@ def __log_packet(packet, int_hops, ip_ver):
 
     logger.info('IP Protocol - [%s] hops - [%s]', ip_proto, int_hops)
     if int_hops > 0 and ip_proto == trans_sec.consts.UDP_PROTO:
-        udp_int_pkt = UdpInt(_pkt=ip_pkt.payload)
-        if udp_int_pkt.dport != trans_sec.consts.UDP_INT_DST_PORT:
-            logger.error('Unexpected dport of - [%s]', udp_int_pkt.dport)
-            return
-        else:
-            logger.debug('INT Packet received')
-
-        logger.debug('UdpInt - sport - [%s], dport - [%s], len - [%s]',
-                     udp_int_pkt.sport, udp_int_pkt.dport, udp_int_pkt.len)
-        int_shim_pkt = IntShim(_pkt=udp_int_pkt.payload)
-        logger.debug('IntShim - next_proto - [%s], length - [%s]',
-                     int_shim_pkt.next_proto, int_shim_pkt.length)
-        int_hdr_pkt = IntHeader(_pkt=int_shim_pkt.payload)
-        logger.debug(
-            'INT Header meta_len - [%s] and remaining_hop_cnt - [%s]',
-            int_hdr_pkt.meta_len, int_hdr_pkt.remaining_hop_cnt)
-
-        switch_id_2 = None
-        switch_id_3 = None
-        if int_hops == 1:
-            source_int_meta = SourceIntMeta(_pkt=int_hdr_pkt.payload)
-            mac1 = source_int_meta.orig_mac
-            switch_id_1 = source_int_meta.switch_id
-        elif int_hops == 2:
-            int_meta_2 = IntMeta2(_pkt=int_hdr_pkt.payload)
-            source_int_meta = SourceIntMeta(_pkt=int_meta_2.payload)
-            mac1 = source_int_meta.orig_mac
-            switch_id_1 = source_int_meta.switch_id
-            switch_id_2 = int_meta_2.switch_id
-        elif int_hops == 3:
-            int_meta_1 = IntMeta1(_pkt=int_hdr_pkt.payload)
-            int_meta_2 = IntMeta2(int_meta_1.payload)
-            source_int_meta = SourceIntMeta(_pkt=int_meta_2.payload)
-            mac1 = source_int_meta.orig_mac
-            switch_id_1 = source_int_meta.switch_id
-            switch_id_2 = int_meta_2.switch_id
-            switch_id_3 = int_meta_1.switch_id
-        else:
-            raise Exception('No support for hops > 3')
-
-        logger.info('Ether type - [%s]', ether_pkt.type)
-        if int_shim_pkt.next_proto == trans_sec.consts.UDP_PROTO:
-            logger.info('UDP Packet')
-            tcp_udp_packet = UDP(_pkt=source_int_meta.payload)
-        else:
-            logger.info('TCP Packet')
-            tcp_udp_packet = TCP(_pkt=source_int_meta.payload)
-
-        int_data = dict(
-            eth_src_mac=ether_pkt.src,
-            eth_dst_mac=ether_pkt.dst,
-            src_ip=ip_pkt.src,
-            dst_ip=ip_pkt.dst,
-            mac1=mac1,
-            switch_id_1=switch_id_1,
-            switch_id_2=switch_id_2,
-            switch_id_3=switch_id_3,
-            src_port=tcp_udp_packet.sport,
-            dst_port=tcp_udp_packet.dport,
-            packetLen=len(packet),
-        )
-        logger.warn('INT Packet data - [%s]', int_data)
+        __log_int_packet(ether_pkt, ip_pkt, int_hops, len(packet))
     elif int_hops < 1:
-        logger.info('Non INT Packet received - [%s]', packet.summary())
-
-        logger.info('Protocol to parse - [%s]', ip_proto)
-        if ip_proto == trans_sec.consts.UDP_PROTO:
-            logger.info('Parsing UDP Packet')
-            tcp_udp_pkt = UDP(_pkt=ip_pkt.payload)
-        elif ip_proto == trans_sec.consts.TCP_PROTO:
-            logger.info('Parsing TCP Packet')
-            tcp_udp_pkt = TCP(_pkt=ip_pkt.payload)
-        else:
-            logger.debug('Nothing to log, protocol - [%s] is unsupported',
-                         ip_proto)
-            return
-
-        logger.debug('Packet payload - [%s]', tcp_udp_pkt.payload)
-
-        int_data = dict(
-            eth_src_mac=ether_pkt.src,
-            eth_dst_mac=ether_pkt.dst,
-            src_ip=ip_pkt.src,
-            dst_ip=ip_pkt.dst,
-            src_port=tcp_udp_pkt.sport,
-            dst_port=tcp_udp_pkt.dport,
-            packetLen=len(packet),
-        )
-
-        logger.warn('Packet data - [%s]', int_data)
+        __log_std_packet(ether_pkt, ip_pkt, ip_proto, len(packet))
     else:
         logger.debug('Nothing to log here')
 
 
-def device_sniff(iface, duration, int_hops, ip_ver):
+def __log_std_packet(ether_pkt, ip_pkt, ip_proto, pkt_len):
+    logger.info('Protocol to parse - [%s]', ip_proto)
+    if ip_proto == trans_sec.consts.UDP_PROTO:
+        logger.info('Parsing UDP Packet')
+        tcp_udp_pkt = UDP(_pkt=ip_pkt.payload)
+    elif ip_proto == trans_sec.consts.TCP_PROTO:
+        logger.info('Parsing TCP Packet')
+        tcp_udp_pkt = TCP(_pkt=ip_pkt.payload)
+    else:
+        logger.debug('Nothing to log, protocol - [%s] is unsupported',
+                     ip_proto)
+        return
+
+    logger.debug('Packet payload - [%s]', tcp_udp_pkt.payload)
+
+    int_data = dict(
+        eth_src_mac=ether_pkt.src,
+        eth_dst_mac=ether_pkt.dst,
+        src_ip=ip_pkt.src,
+        dst_ip=ip_pkt.dst,
+        src_port=tcp_udp_pkt.sport,
+        dst_port=tcp_udp_pkt.dport,
+        packetLen=pkt_len,
+    )
+
+    logger.warn('Packet data - [%s]', int_data)
+
+
+def __log_int_packet(ether_pkt, ip_pkt, int_hops, pkt_len):
+    ip_pkt, udp_int_pkt = __get_ip_udp_int_pkt(ip_pkt)
+    if not ip_pkt or not udp_int_pkt:
+        logger.error('Unable to locate INT UDP Packet')
+        return
+
+    logger.debug('UdpInt - sport - [%s], dport - [%s], len - [%s]',
+                 udp_int_pkt.sport, udp_int_pkt.dport, udp_int_pkt.len)
+    int_shim_pkt = IntShim(_pkt=udp_int_pkt.payload)
+    logger.debug('IntShim - next_proto - [%s], length - [%s]',
+                 int_shim_pkt.next_proto, int_shim_pkt.length)
+    int_hdr_pkt = IntHeader(_pkt=int_shim_pkt.payload)
+    logger.debug(
+        'INT Header meta_len - [%s] and remaining_hop_cnt - [%s]',
+        int_hdr_pkt.meta_len, int_hdr_pkt.remaining_hop_cnt)
+
+    switch_id_2 = None
+    switch_id_3 = None
+    if int_hops == 1:
+        source_int_meta = SourceIntMeta(_pkt=int_hdr_pkt.payload)
+        mac1 = source_int_meta.orig_mac
+        switch_id_1 = source_int_meta.switch_id
+    elif int_hops == 2:
+        int_meta_2 = IntMeta2(_pkt=int_hdr_pkt.payload)
+        source_int_meta = SourceIntMeta(_pkt=int_meta_2.payload)
+        mac1 = source_int_meta.orig_mac
+        switch_id_1 = source_int_meta.switch_id
+        switch_id_2 = int_meta_2.switch_id
+    elif int_hops == 3:
+        int_meta_1 = IntMeta1(_pkt=int_hdr_pkt.payload)
+        int_meta_2 = IntMeta2(int_meta_1.payload)
+        source_int_meta = SourceIntMeta(_pkt=int_meta_2.payload)
+        mac1 = source_int_meta.orig_mac
+        switch_id_1 = source_int_meta.switch_id
+        switch_id_2 = int_meta_2.switch_id
+        switch_id_3 = int_meta_1.switch_id
+    else:
+        raise Exception('No support for hops > 3')
+
+    logger.info('Ether type - [%s]', ether_pkt.type)
+    if int_shim_pkt.next_proto == trans_sec.consts.UDP_PROTO:
+        logger.info('UDP Packet')
+        tcp_udp_packet = UDP(_pkt=source_int_meta.payload)
+    else:
+        logger.info('TCP Packet')
+        tcp_udp_packet = TCP(_pkt=source_int_meta.payload)
+
+    int_data = dict(
+        eth_src_mac=ether_pkt.src,
+        eth_dst_mac=ether_pkt.dst,
+        src_ip=ip_pkt.src,
+        dst_ip=ip_pkt.dst,
+        mac1=mac1,
+        switch_id_1=switch_id_1,
+        switch_id_2=switch_id_2,
+        switch_id_3=switch_id_3,
+        src_port=tcp_udp_packet.sport,
+        dst_port=tcp_udp_packet.dport,
+        packetLen=pkt_len,
+    )
+    logger.warn('INT Packet data - [%s]', int_data)
+
+
+def __get_ip_udp_int_pkt(ip_pkt):
+    """
+    Retrieves the INT UDP packet
+    :param ip_pkt:
+    :return:
+    """
+    logger.info('Obtaining INT data')
+    udp_pkt = UDP(_pkt=ip_pkt.payload)
+    logger.debug('UDP packet dport - [%s]', udp_pkt.dport)
+    if udp_pkt.dport == trans_sec.consts.UDP_INT_DST_PORT:
+        logger.debug('Packet is of type INT, returning UDP packet object')
+        return ip_pkt, udp_pkt
+    elif udp_pkt.dport == trans_sec.consts.UDP_TRPT_DST_PORT:
+        logger.debug('Packet is of type Telemetry Report')
+        trpt_pkt = TelemetryReport(_pkt=udp_pkt.payload)
+        logger.debug('TRPT packet domain ID - [%s]', trpt_pkt.domain_id)
+        trpt_eth = EthInt(_pkt=trpt_pkt.payload)
+        logger.debug('trpt_eth type - [%s]', trpt_eth.type)
+        if trpt_eth.type == trans_sec.consts.IPV4_TYPE:
+            trpt_ip_pkt = IP(_pkt=trpt_eth.payload)
+            logger.debug('IPv4 src - [%s], dst - [%s]',
+                         trpt_ip_pkt.src, trpt_ip_pkt.dst)
+        elif trpt_eth.type == trans_sec.consts.IPV6_TYPE:
+            trpt_ip_pkt = IPv6(_pkt=trpt_eth.payload)
+            logger.debug('IPv6 src - [%s], dst - [%s]',
+                         trpt_ip_pkt.src, trpt_ip_pkt.dst)
+        else:
+            raise Exception('Invalid eth type - [{}]'.format(trpt_eth.type))
+
+        return trpt_ip_pkt, UDP(_pkt=trpt_ip_pkt.payload)
+    else:
+        logger.warn('Invalid INT packet received with dport - [%s]',
+                    udp_pkt.dport)
+        return None, None
+
+
+def device_sniff(iface, duration, int_hops):
     if int_hops > 0:
         logger.info('Binding layers for INT with hops - [%s]', int_hops)
 
-        if ip_ver == 4:
-            logger.info('Binding Ether -> IP -> UdpInt -> IntShim')
-            bind_layers(Ether, IP)
-            bind_layers(IP, UdpInt)
-            bind_layers(UdpInt, IntShim)
-        else:
-            logger.info('Binding Ether -> IPv6 -> UdpInt -> IntShim')
-            bind_layers(Ether, IPv6)
-            bind_layers(IPv6, UdpInt)
-            bind_layers(UdpInt, IntShim)
+        logger.info('Binding Ether -> IP -> UdpInt -> IntShim')
+        bind_layers(Ether, IP, type=consts.IPV4_TYPE)
+        bind_layers(IP, UdpInt)
+        bind_layers(UdpInt, IntShim)
+        logger.info('Binding Ether -> IPv6 -> UdpInt -> IntShim')
+        bind_layers(Ether, IPv6, type=consts.IPV6_TYPE)
+        bind_layers(IPv6, UdpInt)
+        bind_layers(UdpInt, IntShim)
 
         logger.info('Binding IntShim -> IntHeader')
         bind_layers(IntShim, IntHeader)
@@ -195,25 +235,23 @@ def device_sniff(iface, duration, int_hops, ip_ver):
             raise Exception('Cannot currently support more than 3 hops')
     else:
         logger.info('Binding layers for IP')
-        if ip_ver == 4:
-            bind_layers(Ether, IP)
-            bind_layers(IP, UDP)
-            bind_layers(IP, TCP)
-        else:
-            bind_layers(Ether, IPv6)
-            bind_layers(IPv6, UDP)
-            bind_layers(IPv6, TCP)
+        bind_layers(Ether, IP, type=consts.IPV4_TYPE)
+        bind_layers(IP, UDP)
+        bind_layers(IP, TCP)
+        bind_layers(Ether, IPv6, type=consts.IPV6_TYPE)
+        bind_layers(IPv6, UDP)
+        bind_layers(IPv6, TCP)
 
     logger.info("Sniffing for packets on iface - [%s]", iface)
     if duration > 0:
         logger.info('Running sniffer for [%s] seconds', duration)
         sniff(iface=iface,
-              prn=lambda packet: __log_packet(packet, int_hops, ip_ver),
+              prn=lambda packet: __log_packet(packet, int_hops),
               timeout=duration)
     else:
         logger.info('Running sniffer indefinitely')
         sniff(iface=iface,
-              prn=lambda packet: __log_packet(packet, int_hops, ip_ver))
+              prn=lambda packet: __log_packet(packet, int_hops))
 
 
 if __name__ == '__main__':
@@ -228,4 +266,4 @@ if __name__ == '__main__':
 
     logger.info('Logger initialized')
 
-    device_sniff(args.iface, args.duration, args.int_hops, args.ip_ver)
+    device_sniff(args.iface, args.duration, args.int_hops)

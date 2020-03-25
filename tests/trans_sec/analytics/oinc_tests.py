@@ -24,10 +24,12 @@ from scapy.layers.inet6 import IPv6
 from scapy.layers.l2 import Ether
 
 import trans_sec.consts
+from trans_sec import consts
 from trans_sec.analytics import oinc
 from trans_sec.analytics.oinc import SimpleAE
 from trans_sec.packet.inspect_layer import (
-    IntShim, IntMeta2, IntHeader, SourceIntMeta, IntMeta1, UdpInt)
+    IntShim, IntMeta2, IntHeader, SourceIntMeta, IntMeta1, UdpInt,
+    TelemetryReport)
 from trans_sec.utils.http_session import HttpSession
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -52,108 +54,206 @@ class SimpleAETests(unittest.TestCase):
         self.src_ipv6 = ipaddress.ip_address(
             unicode('0000:0000:0000:0000:0000:0002:0000:0001'))
         self.dst_mac = rand_mac()
-        self.orig_mac = rand_mac()
+        self.src_mac = rand_mac()
+        # self.orig_mac = rand_mac()
+        self.orig_mac = '00:00:00:02:02:00'
         logger.info('Test sport - [%s] dport - [%s]', self.sport, self.dport)
+
+        self.int_pkt_ipv4_udp = (
+                Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac) /
+                IP(dst=self.dst_ipv4, src=self.src_ipv4,
+                   proto=trans_sec.consts.UDP_PROTO) /
+                UdpInt(dport=trans_sec.consts.UDP_INT_DST_PORT) /
+                IntShim(length=9, next_proto=trans_sec.consts.UDP_PROTO) /
+                IntHeader(meta_len=1) /
+                IntMeta1(switch_id=3) /
+                IntMeta2(switch_id=2) /
+                SourceIntMeta(switch_id=1, orig_mac=self.orig_mac) /
+                UDP(dport=self.dport, sport=self.sport) /
+                'hello transparent-security'
+        )
+
+        self.int_pkt_ipv4_tcp = (
+                Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac) /
+                IP(dst=self.dst_ipv4, src=self.src_ipv4,
+                   proto=trans_sec.consts.UDP_PROTO) /
+                UdpInt(dport=trans_sec.consts.UDP_INT_DST_PORT) /
+                IntShim(length=9, next_proto=trans_sec.consts.TCP_PROTO) /
+                IntHeader(meta_len=1) /
+                IntMeta1(switch_id=3) /
+                IntMeta2(switch_id=2) /
+                SourceIntMeta(switch_id=1, orig_mac=self.orig_mac) /
+                TCP(dport=self.dport, sport=self.sport) /
+                'hello transparent-security'
+        )
+
+        self.int_pkt_ipv6_udp = (
+            Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac,
+                  type=trans_sec.consts.IPV6_TYPE) /
+            IPv6(dst=self.dst_ipv6,
+                 src=self.src_ipv6,
+                 nh=trans_sec.consts.UDP_PROTO) /
+            UDP(dport=consts.UDP_TRPT_DST_PORT) /
+            IntShim(length=9, next_proto=trans_sec.consts.UDP_PROTO) /
+            IntHeader(meta_len=1) /
+            IntMeta1(switch_id=3) /
+            IntMeta2(switch_id=2) /
+            SourceIntMeta(switch_id=1, orig_mac=self.orig_mac) /
+            UDP(dport=self.dport, sport=self.sport) /
+            'hello transparent-security'
+        )
+
+        self.int_pkt_ipv6_tcp = (
+            Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac,
+                  type=trans_sec.consts.IPV6_TYPE) /
+            IPv6(dst=self.dst_ipv6,
+                 src=self.src_ipv6,
+                 nh=trans_sec.consts.UDP_PROTO) /
+            UDP(dport=consts.UDP_TRPT_DST_PORT) /
+            IntShim(length=9, next_proto=trans_sec.consts.TCP_PROTO) /
+            IntHeader(meta_len=1) /
+            IntMeta1(switch_id=3) /
+            IntMeta2(switch_id=2) /
+            SourceIntMeta(switch_id=1, orig_mac=self.orig_mac) /
+            TCP(dport=self.dport, sport=self.sport) /
+            'hello transparent-security'
+        )
+
+        self.trpt_pkt_ipv4_out_ipv4_in_udp = (
+                Ether(src=self.src_mac, dst=self.dst_mac) /
+                IP(dst=self.dst_ipv4, src=self.src_ipv4,
+                   proto=trans_sec.consts.UDP_PROTO) /
+                UDP(sport=0, dport=consts.UDP_TRPT_DST_PORT,
+                    # udp + telemetry header size
+                    len=len(self.int_pkt_ipv4_udp) + 20 + 20) /
+                TelemetryReport(domain_id=consts.TRPT_DOMAIN_ID) /
+                str(self.int_pkt_ipv4_udp)
+        )
+
+        self.trpt_pkt_ipv4_out_ipv6_in_udp = (
+                Ether(src=self.src_mac, dst=self.dst_mac) /
+                IP(dst=self.dst_ipv4, src=self.src_ipv4,
+                   proto=trans_sec.consts.UDP_PROTO) /
+                UDP(sport=0, dport=consts.UDP_TRPT_DST_PORT,
+                    # udp + telemetry header size
+                    len=len(self.int_pkt_ipv4_udp) + 20 + 20) /
+                TelemetryReport(domain_id=consts.TRPT_DOMAIN_ID) /
+                str(self.int_pkt_ipv6_udp)
+        )
+
+        self.trpt_pkt_ipv4_out_ipv4_in_tcp = (
+                Ether(src=self.src_mac, dst=self.dst_mac) /
+                IP(dst=self.dst_ipv4, src=self.src_ipv4,
+                   proto=trans_sec.consts.UDP_PROTO) /
+                UDP(sport=0, dport=consts.UDP_TRPT_DST_PORT,
+                    # udp + telemetry header size
+                    len=len(self.int_pkt_ipv4_udp) + 20 + 20) /
+                TelemetryReport(domain_id=consts.TRPT_DOMAIN_ID) /
+                str(self.int_pkt_ipv4_tcp)
+        )
+
+        self.trpt_pkt_ipv4_out_ipv6_in_tcp = (
+                Ether(src=self.src_mac, dst=self.dst_mac) /
+                IP(dst=self.dst_ipv4, src=self.src_ipv4,
+                   proto=trans_sec.consts.UDP_PROTO) /
+                UDP(sport=0, dport=consts.UDP_TRPT_DST_PORT,
+                    # udp + telemetry header size
+                    len=len(self.int_pkt_ipv4_udp) + 20 + 20) /
+                TelemetryReport(domain_id=consts.TRPT_DOMAIN_ID) /
+                str(self.int_pkt_ipv6_tcp)
+        )
 
     def test_extract_ipv4_udp_packet(self):
         """
         Tests to ensure that an IPv4 UDP single packet will be parsed properly
         """
-        pkt = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac) /
-               IP(dst=self.dst_ipv4, src=self.src_ipv4,
-                  proto=trans_sec.consts.UDP_PROTO) /
-               UdpInt() /
-               IntShim(length=9, next_proto=trans_sec.consts.UDP_PROTO) /
-               IntHeader(meta_len=1) /
-               IntMeta1(switch_id=3) /
-               IntMeta2(switch_id=2) /
-               SourceIntMeta(switch_id=1, orig_mac=self.orig_mac) /
-               UDP(dport=self.dport, sport=self.sport) /
-               'hello transparent-security')
-        int_data = oinc.extract_int_data(pkt)
+        int_data = oinc.extract_int_data(self.int_pkt_ipv4_udp[Ether])
         self.assertEqual(self.orig_mac, int_data['devMac'])
         self.assertEqual(self.src_ipv4, int_data['devAddr'])
         self.assertEqual(self.dst_ipv4, int_data['dstAddr'])
         self.assertEqual(self.dport, int_data['dstPort'])
         self.assertEqual(trans_sec.consts.UDP_PROTO, int_data['protocol'])
-        self.assertEqual(len(pkt), int_data['packetLen'])
+
+    def test_extract_ipv4_udp_packet_trpt(self):
+        """
+        Tests to ensure that an IPv4 UDP single packet will be parsed properly
+        """
+        int_data = oinc.extract_trpt_data(
+            self.trpt_pkt_ipv4_out_ipv4_in_udp[UDP])
+        self.assertEqual(self.orig_mac, int_data['devMac'])
+        self.assertEqual(self.src_ipv4, int_data['devAddr'])
+        self.assertEqual(self.dst_ipv4, int_data['dstAddr'])
+        self.assertEqual(self.dport, int_data['dstPort'])
+        self.assertEqual(trans_sec.consts.UDP_PROTO, int_data['protocol'])
 
     def test_extract_ipv4_tcp_packet(self):
         """
         Tests to ensure that an IPv4 UDP single packet will be parsed properly
         """
-        pkt = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac) /
-               IP(dst=self.dst_ipv4, src=self.src_ipv4,
-                  proto=trans_sec.consts.UDP_PROTO) /
-               UdpInt() /
-               IntShim(length=9, next_proto=trans_sec.consts.TCP_PROTO) /
-               IntHeader(meta_len=1) /
-               IntMeta1(switch_id=3) /
-               IntMeta2(switch_id=2) /
-               SourceIntMeta(switch_id=1, orig_mac=self.orig_mac) /
-               TCP(dport=self.dport, sport=self.sport) /
-               'hello transparent-security')
-        int_data = oinc.extract_int_data(pkt)
+        int_data = oinc.extract_int_data(self.int_pkt_ipv4_tcp[Ether])
         self.assertEqual(self.orig_mac, int_data['devMac'])
         self.assertEqual(self.src_ipv4, int_data['devAddr'])
         self.assertEqual(self.dst_ipv4, int_data['dstAddr'])
         self.assertEqual(self.dport, int_data['dstPort'])
         self.assertEqual(trans_sec.consts.TCP_PROTO, int_data['protocol'])
-        self.assertEqual(len(pkt), int_data['packetLen'])
+
+    def test_extract_ipv4_tcp_packet_trpt(self):
+        """
+        Tests to ensure that an IPv4 UDP single packet will be parsed properly
+        """
+        int_data = oinc.extract_trpt_data(
+            self.trpt_pkt_ipv4_out_ipv4_in_tcp[UDP])
+        self.assertEqual(self.orig_mac, int_data['devMac'])
+        self.assertEqual(self.src_ipv4, int_data['devAddr'])
+        self.assertEqual(self.dst_ipv4, int_data['dstAddr'])
+        self.assertEqual(self.dport, int_data['dstPort'])
+        self.assertEqual(trans_sec.consts.TCP_PROTO, int_data['protocol'])
 
     def test_extract_ipv6_udp_packet(self):
         """
-        Tests to ensure that an IPv6 UDP single packet will be parsed properly
+        Tests to ensure that an IPv4 UDP single packet will be parsed properly
         """
-        pkt = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac,
-                     type=trans_sec.consts.IPV6_TYPE) /
-               IPv6(dst=self.dst_ipv6,
-                    src=self.src_ipv6,
-                    nh=trans_sec.consts.UDP_PROTO) /
-               UdpInt() /
-               IntShim(length=9, next_proto=trans_sec.consts.UDP_PROTO) /
-               IntHeader(meta_len=1) /
-               IntMeta1(switch_id=3) /
-               IntMeta2(switch_id=2) /
-               SourceIntMeta(switch_id=1, orig_mac=self.orig_mac) /
-               UDP(dport=self.dport, sport=self.sport) /
-               'hello transparent-security')
-        logger.info('Packet - [%s]', len(pkt))
-
-        int_data = oinc.extract_int_data(pkt)
+        int_data = oinc.extract_int_data(self.int_pkt_ipv6_udp[Ether])
         self.assertEqual(self.orig_mac, int_data['devMac'])
         self.assertEqual(str(self.src_ipv6), int_data['devAddr'])
         self.assertEqual(str(self.dst_ipv6), int_data['dstAddr'])
         self.assertEqual(self.dport, int_data['dstPort'])
         self.assertEqual(trans_sec.consts.UDP_PROTO, int_data['protocol'])
-        self.assertEqual(len(pkt), int_data['packetLen'])
+
+    def test_extract_ipv6_udp_packet_trpt(self):
+        """
+        Tests to ensure that an IPv6 UDP single packet will be parsed properly
+        """
+        int_data = oinc.extract_trpt_data(
+            self.trpt_pkt_ipv4_out_ipv6_in_udp[UDP])
+        self.assertEqual(self.orig_mac, int_data['devMac'])
+        self.assertEqual(str(self.src_ipv6), int_data['devAddr'])
+        self.assertEqual(str(self.dst_ipv6), int_data['dstAddr'])
+        self.assertEqual(self.dport, int_data['dstPort'])
+        self.assertEqual(trans_sec.consts.UDP_PROTO, int_data['protocol'])
 
     def test_extract_ipv6_tcp_packet(self):
         """
         Tests to ensure that an IPv6 TCP single packet will be parsed properly
         """
-        pkt = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac,
-                     type=trans_sec.consts.IPV6_TYPE) /
-               IPv6(dst=self.dst_ipv6,
-                    src=self.src_ipv6,
-                    nh=trans_sec.consts.UDP_PROTO) /
-               UdpInt() /
-               IntShim(length=9, next_proto=trans_sec.consts.TCP_PROTO) /
-               IntHeader(meta_len=1) /
-               IntMeta1(switch_id=3) /
-               IntMeta2(switch_id=2) /
-               SourceIntMeta(switch_id=1, orig_mac=self.orig_mac) /
-               TCP(dport=self.dport, sport=self.sport) /
-               'hello transparent-security')
-        logger.info('Packet - [%s]', len(pkt))
-
-        int_data = oinc.extract_int_data(pkt)
+        int_data = oinc.extract_int_data(self.int_pkt_ipv6_tcp[Ether])
         self.assertEqual(self.orig_mac, int_data['devMac'])
         self.assertEqual(str(self.src_ipv6), int_data['devAddr'])
         self.assertEqual(str(self.dst_ipv6), int_data['dstAddr'])
         self.assertEqual(self.dport, int_data['dstPort'])
         self.assertEqual(trans_sec.consts.TCP_PROTO, int_data['protocol'])
-        self.assertEqual(len(pkt), int_data['packetLen'])
+
+    def test_extract_ipv6_tcp_packet_trpt(self):
+        """
+        Tests to ensure that an IPv6 TCP single packet will be parsed properly
+        """
+        int_data = oinc.extract_trpt_data(
+            self.trpt_pkt_ipv4_out_ipv6_in_tcp[UDP])
+        self.assertEqual(self.orig_mac, int_data['devMac'])
+        self.assertEqual(str(self.src_ipv6), int_data['devAddr'])
+        self.assertEqual(str(self.dst_ipv6), int_data['dstAddr'])
+        self.assertEqual(self.dport, int_data['dstPort'])
+        self.assertEqual(trans_sec.consts.TCP_PROTO, int_data['protocol'])
 
     def test_process_single_ipv4_udp_packet(self):
         """
@@ -162,18 +262,17 @@ class SimpleAETests(unittest.TestCase):
               by the scapy sniffer thread
         :return:
         """
-        pkt = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac) /
-               IP(dst=self.dst_ipv4, src=self.src_ipv4,
-                  proto=trans_sec.consts.UDP_PROTO) /
-               UdpInt() /
-               IntShim(length=9, next_proto=trans_sec.consts.UDP_PROTO) /
-               IntHeader(meta_len=1) /
-               IntMeta1(switch_id=3) /
-               IntMeta2(switch_id=2) /
-               SourceIntMeta(switch_id=1, orig_mac=self.orig_mac) /
-               UDP(dport=self.dport, sport=self.sport) /
-               'hello transparent-security')
-        self.ae.process_packet(pkt)
+        self.assertFalse(self.ae.process_packet(self.int_pkt_ipv4_udp))
+
+    def test_process_single_ipv4_udp_packet_trpt(self):
+        """
+        Tests to ensure that an IPv4 UDP single packet is handled without Error
+        note: only testing via the handle_packet() API which would be called by
+              by the scapy sniffer thread
+        :return:
+        """
+        self.assertFalse(
+            self.ae.process_packet(self.trpt_pkt_ipv4_out_ipv4_in_udp))
 
     def test_process_single_ipv6_udp_packet(self):
         """
@@ -182,21 +281,16 @@ class SimpleAETests(unittest.TestCase):
               by the scapy sniffer thread
         :return:
         """
-        pkt = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac,
-                     type=trans_sec.consts.IPV6_TYPE) /
-               IPv6(dst=self.dst_ipv6,
-                    src=self.src_ipv6,
-                    nh=trans_sec.consts.UDP_PROTO) /
-               UdpInt() /
-               IntShim(length=9, next_proto=trans_sec.consts.UDP_PROTO) /
-               IntHeader(meta_len=1) /
-               IntMeta1(switch_id=3) /
-               IntMeta2(switch_id=2) /
-               SourceIntMeta(switch_id=1, orig_mac=self.orig_mac) /
-               UDP(dport=self.dport, sport=self.sport) /
-               'hello transparent-security')
-        logger.info('Packet - [%s]', len(pkt))
-        self.ae.process_packet(pkt)
+        self.ae.process_packet(self.int_pkt_ipv6_udp)
+
+    def test_process_single_ipv6_udp_packet_trpt(self):
+        """
+        Tests to ensure that an IPv6 UDP single packet is handled without Error
+        note: only testing via the handle_packet() API which would be called by
+              by the scapy sniffer thread
+        :return:
+        """
+        self.ae.process_packet(self.trpt_pkt_ipv4_out_ipv6_in_udp)
 
     def test_process_single_ipv4_tcp_packet(self):
         """
@@ -205,18 +299,16 @@ class SimpleAETests(unittest.TestCase):
               by the scapy sniffer thread
         :return:
         """
-        pkt = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac) /
-               IP(dst=self.dst_ipv4, src=self.src_ipv4,
-                  proto=trans_sec.consts.UDP_PROTO) /
-               UdpInt() /
-               IntShim(length=9, next_proto=trans_sec.consts.TCP_PROTO) /
-               IntHeader(meta_len=1) /
-               IntMeta1(switch_id=3) /
-               IntMeta2(switch_id=2) /
-               SourceIntMeta(switch_id=1, orig_mac=self.orig_mac) /
-               TCP(dport=self.dport, sport=self.dport) /
-               'hello transparent-security')
-        self.ae.process_packet(pkt)
+        self.ae.process_packet(self.int_pkt_ipv4_tcp)
+
+    def test_process_single_ipv4_tcp_packet_trpt(self):
+        """
+        Tests to ensure that a single IPv4 TCP packet is handled without Error
+        note: only testing via the handle_packet() API which would be called by
+              by the scapy sniffer thread
+        :return:
+        """
+        self.ae.process_packet(self.trpt_pkt_ipv4_out_ipv4_in_tcp)
 
     def test_process_single_ipv6_tcp_packet(self):
         """
@@ -225,42 +317,40 @@ class SimpleAETests(unittest.TestCase):
               by the scapy sniffer thread
         :return:
         """
-        pkt = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac,
-                     type=trans_sec.consts.IPV6_TYPE) /
-               IPv6(dst=self.dst_ipv6,
-                    src=self.src_ipv6,
-                    nh=trans_sec.consts.UDP_PROTO) /
-               UdpInt() /
-               IntShim(length=9, next_proto=trans_sec.consts.TCP_PROTO) /
-               IntHeader(meta_len=1) /
-               IntMeta1(switch_id=3) /
-               IntMeta2(switch_id=2) /
-               SourceIntMeta(switch_id=1, orig_mac=self.orig_mac) /
-               TCP(dport=self.dport, sport=self.sport) /
-               'hello transparent-security')
-        self.ae.process_packet(pkt)
+        self.ae.process_packet(self.int_pkt_ipv6_tcp)
+
+    def test_process_single_ipv6_tcp_packet_trpt(self):
+        """
+        Tests to ensure that a single IPv6 TCP packet is handled without Error
+        note: only testing via the handle_packet() API which would be called by
+              by the scapy sniffer thread
+        :return:
+        """
+        self.ae.process_packet(self.trpt_pkt_ipv4_out_ipv6_in_tcp)
 
     def test_start_one_ipv4_udp_attack(self):
         """
         Tests to ensure that one IPv4 UDP attack has been triggered
         :return:
         """
-        pkt = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac) /
-               IP(dst=self.dst_ipv4, src=self.src_ipv4,
-                  proto=trans_sec.consts.UDP_PROTO) /
-               UdpInt() /
-               IntShim(length=9, next_proto=trans_sec.consts.UDP_PROTO) /
-               IntHeader(meta_len=1) /
-               IntMeta1(switch_id=3) /
-               IntMeta2(switch_id=2) /
-               SourceIntMeta(switch_id=1, orig_mac=self.orig_mac) /
-               UDP(dport=self.dport, sport=self.sport) /
-               'hello transparent-security')
-
         for index in range(0, self.ae.packet_count + 1):
             logger.debug('Processing packet #%s', index)
-            ret_val = self.ae.process_packet(pkt)
+            ret_val = self.ae.process_packet(self.int_pkt_ipv4_udp)
             if index < self.ae.packet_count:
+                self.assertFalse(ret_val)
+            else:
+                self.assertTrue(ret_val)
+
+    def test_start_one_ipv4_udp_attack_trpt(self):
+        """
+        Tests to ensure that one IPv4 UDP attack has been triggered
+        :return:
+        """
+        for index in range(0, self.ae.packet_count + 1):
+            logger.debug('Processing packet #%s', index)
+            ret_val = self.ae.process_packet(
+                self.trpt_pkt_ipv4_out_ipv4_in_udp)
+            if index < self.ae.packet_count + 1:
                 self.assertFalse(ret_val)
             else:
                 self.assertTrue(ret_val)
@@ -270,24 +360,24 @@ class SimpleAETests(unittest.TestCase):
         Tests to ensure that one IPv6 UDP attack has been triggered
         :return:
         """
-        pkt = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac,
-                     type=trans_sec.consts.IPV6_TYPE) /
-               IPv6(dst=self.dst_ipv6,
-                    src=self.src_ipv6,
-                    nh=trans_sec.consts.UDP_PROTO) /
-               UdpInt() /
-               IntShim(length=9, next_proto=trans_sec.consts.UDP_PROTO) /
-               IntHeader(meta_len=1) /
-               IntMeta1(switch_id=3) /
-               IntMeta2(switch_id=2) /
-               SourceIntMeta(switch_id=1, orig_mac=self.orig_mac) /
-               UDP(dport=self.dport, sport=self.sport) /
-               'hello transparent-security')
-
         for index in range(0, self.ae.packet_count + 1):
             logger.debug('Processing packet #%s', index)
-            ret_val = self.ae.process_packet(pkt)
-            if index < self.ae.packet_count:
+            ret_val = self.ae.process_packet(self.int_pkt_ipv6_udp)
+            if index < self.ae.packet_count + 1:
+                self.assertFalse(ret_val)
+            else:
+                self.assertTrue(ret_val)
+
+    def test_start_one_ipv6_udp_attack_trpt(self):
+        """
+        Tests to ensure that one IPv6 UDP attack has been triggered
+        :return:
+        """
+        for index in range(0, self.ae.packet_count + 1):
+            logger.debug('Processing packet #%s', index)
+            ret_val = self.ae.process_packet(
+                self.trpt_pkt_ipv4_out_ipv6_in_udp)
+            if index < self.ae.packet_count + 1:
                 self.assertFalse(ret_val)
             else:
                 self.assertTrue(ret_val)
@@ -297,22 +387,24 @@ class SimpleAETests(unittest.TestCase):
         Tests to ensure that one IPv4 TCP attack has been triggered
         :return:
         """
-        pkt = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac) /
-               IP(dst=self.dst_ipv4, src=self.src_ipv4,
-                  proto=trans_sec.consts.UDP_PROTO) /
-               UdpInt() /
-               IntShim(length=9, next_proto=trans_sec.consts.TCP_PROTO) /
-               IntHeader(meta_len=1) /
-               IntMeta1(switch_id=3) /
-               IntMeta2(switch_id=2) /
-               SourceIntMeta(switch_id=1, orig_mac=self.orig_mac) /
-               TCP(dport=self.dport, sport=self.sport) /
-               'hello transparent-security')
-
         for index in range(0, self.ae.packet_count + 1):
             logger.debug('Processing packet #%s', index)
-            ret_val = self.ae.process_packet(pkt)
+            ret_val = self.ae.process_packet(self.int_pkt_ipv4_tcp)
             if index < self.ae.packet_count:
+                self.assertFalse(ret_val)
+            else:
+                self.assertTrue(ret_val)
+
+    def test_start_one_ipv4_tcp_attack_trpt(self):
+        """
+        Tests to ensure that one IPv4 TCP attack has been triggered
+        :return:
+        """
+        for index in range(0, self.ae.packet_count + 1):
+            logger.debug('Processing packet #%s', index)
+            ret_val = self.ae.process_packet(
+                self.trpt_pkt_ipv4_out_ipv4_in_tcp)
+            if index < self.ae.packet_count + 1:
                 self.assertFalse(ret_val)
             else:
                 self.assertTrue(ret_val)
@@ -322,24 +414,24 @@ class SimpleAETests(unittest.TestCase):
         Tests to ensure that one IPv6 TCP attack has been triggered
         :return:
         """
-        pkt = (Ether(src=get_if_hwaddr('lo'), dst=self.dst_mac,
-                     type=trans_sec.consts.IPV6_TYPE) /
-               IPv6(dst=self.dst_ipv6,
-                    src=self.src_ipv6,
-                    nh=trans_sec.consts.UDP_PROTO) /
-               UdpInt() /
-               IntShim(length=9, next_proto=trans_sec.consts.TCP_PROTO) /
-               IntHeader(meta_len=1) /
-               IntMeta1(switch_id=3) /
-               IntMeta2(switch_id=2) /
-               SourceIntMeta(switch_id=1, orig_mac=self.orig_mac) /
-               TCP(dport=self.dport, sport=self.sport) /
-               'hello transparent-security')
-
         for index in range(0, self.ae.packet_count + 1):
             logger.debug('Processing packet #%s', index)
-            ret_val = self.ae.process_packet(pkt)
-            if index < self.ae.packet_count:
+            ret_val = self.ae.process_packet(self.int_pkt_ipv6_tcp)
+            if index < self.ae.packet_count + 1:
+                self.assertFalse(ret_val)
+            else:
+                self.assertTrue(ret_val)
+
+    def test_start_one_ipv6_tcp_attack_trpt(self):
+        """
+        Tests to ensure that one IPv6 TCP attack has been triggered
+        :return:
+        """
+        for index in range(0, self.ae.packet_count + 1):
+            logger.debug('Processing packet #%s', index)
+            ret_val = self.ae.process_packet(
+                self.trpt_pkt_ipv4_out_ipv6_in_tcp)
+            if index < self.ae.packet_count + 1:
                 self.assertFalse(ret_val)
             else:
                 self.assertTrue(ret_val)

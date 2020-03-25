@@ -153,84 +153,9 @@ def __create_packet(args, interface):
     logger.info('IP version is - [%s]', ip_ver)
 
     if args.int_hdr_file:
-        int_data = __read_yaml_file(args.int_hdr_file)
-        int_hops = len(int_data['meta'])
-        shim_len = 4 + 3 + int_hops - 1
-        logger.info('Int data to add to packet - [%s]', int_data)
-
-        # TODO/FIXME - Is this correct??? It is not taking into account the
-        #  UDP/TCP header or payload and whats this 34???
-        ip_len = 34 + (shim_len * 4)
-        if ip_ver == 4:
-            pkt = (Ether(src=src_mac, dst=args.switch_ethernet,
-                         type=trans_sec.consts.IPV4_TYPE) /
-                   IP(dst=args.destination, src=args.source_addr, len=ip_len,
-                      proto=trans_sec.consts.UDP_PROTO))
-        else:
-            pkt = (Ether(src=src_mac, dst=args.switch_ethernet,
-                         type=trans_sec.consts.IPV6_TYPE) /
-                   IPv6(dst=args.destination, src=args.source_addr,
-                        nh=trans_sec.consts.UDP_PROTO, plen=ip_len))
-
-        # Add UDP INT header
-        pkt = pkt / UdpInt()
-
-        # Create INT Shim header
-        if args.protocol == 'UDP':
-            pkt = pkt / IntShim(length=shim_len,
-                                next_proto=trans_sec.consts.UDP_PROTO)
-        elif args.protocol == 'TCP':
-            pkt = pkt / IntShim(length=shim_len,
-                                next_proto=trans_sec.consts.TCP_PROTO)
-
-        if int_hops > 0:
-            pkt = pkt / IntHeader()
-            ctr = 0
-            for int_meta in int_data['meta']:
-                logger.info('Adding int_meta - [%s] to INT data', int_meta)
-
-                if ctr == 0 and not int_meta.get('orig_mac'):
-                    logger.info('Adding IntMeta1')
-                    pkt = pkt / IntMeta1(switch_id=int_meta['switch_id'])
-                elif ctr > 0 and not int_meta.get('orig_mac'):
-                    logger.info('Adding IntMeta2')
-                    pkt = pkt / IntMeta2(switch_id=int_meta['switch_id'])
-                elif int_meta.get('orig_mac'):
-                    orig_mac = int_meta.get('orig_mac')
-                    logger.info('Adding Source INT Meta with orig_mac - [%s]',
-                                orig_mac)
-                    pkt = pkt / SourceIntMeta(
-                        switch_id=int_meta['switch_id'],
-                        orig_mac=orig_mac)
-                ctr += 1
+        pkt = __gen_int_pkt(args=args, ip_ver=ip_ver, src_mac=src_mac)
     else:
-        ip_hdr = None
-        if ip_ver == 4:
-            if args.protocol == 'TCP':
-                ip_hdr = IP(dst=args.destination, src=args.source_addr,
-                            proto=trans_sec.consts.TCP_PROTO)
-            elif args.protocol == 'UDP':
-                ip_hdr = IP(dst=args.destination, src=args.source_addr,
-                            proto=trans_sec.consts.UDP_PROTO)
-        else:
-            if args.protocol == 'TCP':
-                ip_hdr = IPv6(dst=args.destination, src=args.source_addr,
-                              nh=trans_sec.consts.TCP_PROTO)
-            elif args.protocol == 'UDP':
-                ip_hdr = IPv6(dst=args.destination, src=args.source_addr,
-                              nh=trans_sec.consts.UDP_PROTO)
-
-        if ip_ver == 4:
-            pkt = Ether(src=src_mac, dst=args.switch_ethernet,
-                        type=trans_sec.consts.IPV4_TYPE)
-        else:
-            pkt = Ether(src=src_mac, dst=args.switch_ethernet,
-                        type=trans_sec.consts.IPV6_TYPE)
-
-        if ip_hdr:
-            pkt = pkt / ip_hdr
-
-    logger.info('Packet to emit - [%s]', pkt.summary())
+        pkt = __gen_std_pkt(args=args, ip_ver=ip_ver, src_mac=src_mac)
 
     if args.protocol == 'TCP':
         logger.info('Generating a TCP packet')
@@ -239,7 +164,94 @@ def __create_packet(args, interface):
         logger.info('Generating a UDP packet')
         pkt = pkt / UDP(dport=args.port, sport=args.source_port)
 
+    logger.info('Packet to emit - [%s]', pkt.summary())
+
     return pkt / args.msg
+
+
+def __gen_std_pkt(args, ip_ver, src_mac):
+    ip_hdr = None
+    if ip_ver == 4:
+        if args.protocol == 'TCP':
+            ip_hdr = IP(dst=args.destination, src=args.source_addr,
+                        proto=trans_sec.consts.TCP_PROTO)
+        elif args.protocol == 'UDP':
+            ip_hdr = IP(dst=args.destination, src=args.source_addr,
+                        proto=trans_sec.consts.UDP_PROTO)
+    else:
+        if args.protocol == 'TCP':
+            ip_hdr = IPv6(dst=args.destination, src=args.source_addr,
+                          nh=trans_sec.consts.TCP_PROTO)
+        elif args.protocol == 'UDP':
+            ip_hdr = IPv6(dst=args.destination, src=args.source_addr,
+                          nh=trans_sec.consts.UDP_PROTO)
+
+    if ip_ver == 4:
+        pkt = Ether(src=src_mac, dst=args.switch_ethernet,
+                    type=trans_sec.consts.IPV4_TYPE)
+    else:
+        pkt = Ether(src=src_mac, dst=args.switch_ethernet,
+                    type=trans_sec.consts.IPV6_TYPE)
+
+    if ip_hdr:
+        pkt = pkt / ip_hdr
+
+    return pkt
+
+
+def __gen_int_pkt(args, ip_ver, src_mac):
+    int_data = __read_yaml_file(args.int_hdr_file)
+    int_hops = len(int_data['meta'])
+    shim_len = 4 + 3 + int_hops - 1
+    logger.info('Int data to add to packet - [%s]', int_data)
+
+    # TODO/FIXME - Is this correct??? It is not taking into account the
+    #  UDP/TCP header or payload and whats this 34???
+    ip_len = 34 + (shim_len * 4)
+    if ip_ver == 4:
+        pkt = (Ether(src=src_mac, dst=args.switch_ethernet,
+                     type=trans_sec.consts.IPV4_TYPE) /
+               IP(dst=args.destination, src=args.source_addr, len=ip_len,
+                  proto=trans_sec.consts.UDP_PROTO))
+    else:
+        pkt = (Ether(src=src_mac, dst=args.switch_ethernet,
+                     type=trans_sec.consts.IPV6_TYPE) /
+               IPv6(dst=args.destination, src=args.source_addr,
+                    nh=trans_sec.consts.UDP_PROTO, plen=ip_len))
+
+    # Add UDP INT header
+    pkt = pkt / UdpInt(len=shim_len * 4 + 8 + 6)
+
+    # Create INT Shim header
+    if args.protocol == 'UDP':
+        pkt = pkt / IntShim(length=shim_len,
+                            next_proto=trans_sec.consts.UDP_PROTO)
+    elif args.protocol == 'TCP':
+        pkt = pkt / IntShim(length=shim_len,
+                            next_proto=trans_sec.consts.TCP_PROTO)
+
+    if int_hops > 0:
+        pkt = pkt / IntHeader()
+        ctr = 0
+        for int_meta in int_data['meta']:
+            logger.info('Adding int_meta - [%s] to INT data', int_meta)
+
+            if ctr == 0 and not int_meta.get('orig_mac'):
+                logger.info('Adding IntMeta1')
+                pkt = pkt / IntMeta1(switch_id=int_meta['switch_id'])
+            elif ctr > 0 and not int_meta.get('orig_mac'):
+                logger.info('Adding IntMeta2')
+                pkt = pkt / IntMeta2(switch_id=int_meta['switch_id'])
+            elif int_meta.get('orig_mac'):
+                orig_mac = int_meta.get('orig_mac')
+                logger.info('Adding Source INT Meta with orig_mac - [%s]',
+                            orig_mac)
+                pkt = pkt / SourceIntMeta(
+                    switch_id=int_meta['switch_id'],
+                    orig_mac=orig_mac)
+            ctr += 1
+
+    return pkt
 
 
 def __read_yaml_file(config_file_path):

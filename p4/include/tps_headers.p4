@@ -131,11 +131,54 @@ header int_metadata_t { /* 4 */
     bit<32>  switch_id;
 }
 
-header payload_frg_t { /* 4 */
-    bit<128>  payload_bytes;
+header telem_rpt_t { /* 10 */
+    bit<4>  ver;
+    bit<6>  hw_id;
+    bit<22> sequence_no;
+    bit<32> node_id;
+    bit<4> type1;
+    bit<4> in_proto;
+    bit<8> length;
+    bit<16> domain_id;
+    bit<1> d;
+    bit<1> q;
+    bit<1> f;
+    bit<1> i;
+    bit<4> reserved;
+    bit<1>  rep_md_bit0; /* Contains Ingress & Egress port IDs */
+    bit<1>  rep_md_bit1;
+    bit<1>  rep_md_bit2;
+    bit<1>  rep_md_bit3;
+    bit<1>  rep_md_bit4;
+    bit<1>  rep_md_bit5;
+    bit<1>  rep_md_bit6;
+    bit<1>  rep_md_bit7;
+    bit<1>  rep_md_bit8;
+    bit<1>  rep_md_bit9;
+    bit<1>  rep_md_bit10;
+    bit<1>  rep_md_bit11;
+    bit<1>  rep_md_bit12;
+    bit<1>  rep_md_bit13;
+    bit<1>  rep_md_bit14;
+    bit<1>  rep_md_bit15;
+    bit<1>  ds_md_bit0;
+    bit<1>  ds_md_bit1;
+    bit<1>  ds_md_bit2;
+    bit<1>  ds_md_bit3;
+    bit<1>  ds_md_bit4;
+    bit<1>  ds_md_bit5;
+    bit<1>  ds_md_bit6;
+    bit<1>  ds_md_bit7;
+    bit<32> var_opt_md;
 }
 
 struct headers {
+    ethernet_t        trpt_eth;
+    ipv4_t            trpt_ipv4;
+    ipv6_t            trpt_ipv6;
+    udp_t             trpt_udp;
+    telem_rpt_t       trpt_hdr;
+
     ethernet_t        ethernet;
     ipv4_t            ipv4;
     ipv6_t            ipv6;
@@ -145,15 +188,9 @@ struct headers {
     int_metadata_t    int_meta_3;
     int_metadata_t    int_meta_2;
     source_metadata_t int_meta;
+
     udp_t             udp;
     tcp_t             tcp;
-
-    ethernet_t        trpt_eth;
-    ipv4_t            trpt_ipv4;
-    ipv6_t            trpt_ipv6;
-    udp_t             trpt_udp;
-
-    payload_frg_t     payload_frg;
 }
 
 struct fwd_meta_t {
