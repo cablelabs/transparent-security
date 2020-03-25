@@ -92,6 +92,16 @@ control TpsComputeChecksum(inout headers  hdr, inout metadata meta) {
             HashAlgorithm.csum16
         );
 
+	update_checksum(hdr.udp.isValid(),
+            {
+                hdr.udp.src_port,
+                hdr.udp.dst_port,
+                hdr.udp.len
+            },
+            hdr.udp.cksum,
+            HashAlgorithm.csum16
+        );
+
 	update_checksum(hdr.udp_int.isValid(),
             {
                 hdr.udp_int.src_port,
@@ -99,6 +109,16 @@ control TpsComputeChecksum(inout headers  hdr, inout metadata meta) {
                 hdr.udp_int.len
             },
             hdr.udp_int.cksum,
+            HashAlgorithm.csum16
+        );
+
+	update_checksum(hdr.trpt_udp.isValid(),
+            {
+                hdr.trpt_udp.src_port,
+                hdr.trpt_udp.dst_port,
+                hdr.trpt_udp.len
+            },
+            hdr.trpt_udp.cksum,
             HashAlgorithm.csum16
         );
     }

@@ -30,6 +30,8 @@
 #define TCP_HDR_BYTES 20
 /* Number of bytes used by an IPv6 header */
 #define IPV6_HDR_BYTES 40
+/* Number of bytes used by an IPv6 header */
+#define DFLT_IPV4_TTL 64
 
 /* Start value for INT Header remaining_hop_cnt */
 const bit<8> MAX_HOPS = 0xa;

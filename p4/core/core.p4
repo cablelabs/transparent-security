@@ -169,9 +169,6 @@ control TpsCoreEgress(inout headers hdr,
         hdr.trpt_hdr.ver = TRPT_VERSION;
         hdr.trpt_hdr.domain_id = TRPT_HDR_DOMAIN_ID;
 
-        /* TODO - Verify if this is correct */
-        hdr.trpt_udp.len = (bit<16>)standard_metadata.packet_length + 28;
-
         /* TODO - determine length */
         hdr.trpt_hdr.length = hdr.int_shim.length + 7;
 
@@ -189,8 +186,17 @@ control TpsCoreEgress(inout headers hdr,
 
         hdr.trpt_ipv4.version = 0x4;
         hdr.trpt_ipv4.ihl = 0x5;
-        hdr.trpt_ipv4.totalLen = hdr.ipv4.totalLen + TRPT_SHIM_BASE_SIZE + UDP_HDR_BYTES;
 
+        /* TODO - Verify if this is correct - the 20 should work for UDP, but probably not TCP */
+        hdr.trpt_udp.len = (bit<16>)standard_metadata.packet_length - 14 - 20;
+
+        /* TODO - determine if this is correct - ALSO do same for IPv6
+        hdr.trpt_ipv4.totalLen = hdr.ipv4.totalLen + TRPT_SHIM_BASE_SIZE + UDP_HDR_BYTES;
+        hdr.trpt_ipv4.totalLen = hdr.ipv4.totalLen;
+        /* Below should work when the packets down the stack are UDP, need to validate check for TCP */
+        hdr.trpt_ipv4.totalLen = (bit<16>)standard_metadata.packet_length - 14;
+
+        hdr.trpt_ipv4.ttl = DFLT_IPV4_TTL;
         hdr.trpt_ipv4.flags = IPV4_DONT_FRAGMENT;
         hdr.trpt_ipv4.protocol = TYPE_UDP;
         hdr.trpt_ipv4.srcAddr = hdr.ipv4.srcAddr;
@@ -201,6 +207,7 @@ control TpsCoreEgress(inout headers hdr,
     * Restrutures data within INT packet into a Telemetry Report packet type for ipv4
     */
     action setup_telem_rpt_ipv6(ip6Addr_t ae_ip) {
+        /* TODO - need to add tests for this condition */
         hdr.trpt_ipv6.setValid();
         hdr.trpt_eth.etherType = TYPE_IPV6;
         hdr.trpt_ipv6.next_hdr_proto = TYPE_UDP;
