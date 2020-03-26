@@ -31,7 +31,7 @@
 /* Number of bytes used by an IPv4 header */
 #define IPV4_HDR_BYTES 20
 /* Number of bytes used by an IPv6 header */
-#define IPV6_HDR_BYTES 16
+#define IPV6_HDR_BYTES 40
 /* Number of bytes used by an IPv6 header */
 #define DFLT_IPV4_TTL 64
 
