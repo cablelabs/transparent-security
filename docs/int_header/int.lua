@@ -155,17 +155,19 @@ end
 
 function tps_udp_proto.dissector(buffer, pinfo, tree)
     pinfo.cols.protocol = "TPS INT"
-    local buf_offset = 0
+    local shim_buf = buffer(0, 4)
+    local buf_offset = 4
+    local tvbr = buffer(buf_offset, 12)
+    buf_offset = buf_offset + 12
+    local length = shim_buf:bitfield(8, 8)
+    local total_hops = length - 6
+    local buf_bytes = total_hops * 4 + 6 + 2
 
     -- INT Shim Header - 8 bytes
-    local int_tree = tree:add(tps_udp_proto, buffer(0, 16), "In-band Network Telemetry (INT)")
-    local shim_buf = buffer(buf_offset, 4)
-    buf_offset = buf_offset + 4
+    local int_tree = tree:add(tps_udp_proto, buffer(0, 16+buf_bytes), "In-band Network Telemetry (INT)")
     local length, next_proto = tps_int_shim(int_tree, shim_buf)
 
     -- INT Metadata Header - 12 bytes
-    local tvbr = buffer(buf_offset, 12)
-    buf_offset = buf_offset + 12
     tps_int_hdr(int_tree, tvbr)
 
     -- INT Metadata Stack - 4 bytes
