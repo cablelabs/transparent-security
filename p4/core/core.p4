@@ -186,21 +186,14 @@ control TpsCoreEgress(inout headers hdr,
 
         hdr.trpt_ipv4.version = 0x4;
         hdr.trpt_ipv4.ihl = 0x5;
-
-        /* TODO - Verify if this is correct - the 20 should work for UDP, but probably not TCP */
-        hdr.trpt_udp.len = (bit<16>)standard_metadata.packet_length - 14 - 20;
-
-        /* TODO - determine if this is correct - ALSO do same for IPv6
-        hdr.trpt_ipv4.totalLen = hdr.ipv4.totalLen + TRPT_SHIM_BASE_SIZE + UDP_HDR_BYTES;
-        hdr.trpt_ipv4.totalLen = hdr.ipv4.totalLen;
-        /* Below should work when the packets down the stack are UDP, need to validate check for TCP */
-        hdr.trpt_ipv4.totalLen = (bit<16>)standard_metadata.packet_length - 14;
-
+        hdr.trpt_ipv4.totalLen = (bit<16>)standard_metadata.packet_length + IPV4_HDR_BYTES + UDP_HDR_BYTES + TRPT_HDR_BASE_BYTES;
         hdr.trpt_ipv4.ttl = DFLT_IPV4_TTL;
         hdr.trpt_ipv4.flags = IPV4_DONT_FRAGMENT;
         hdr.trpt_ipv4.protocol = TYPE_UDP;
         hdr.trpt_ipv4.srcAddr = hdr.ipv4.srcAddr;
         hdr.trpt_ipv4.dstAddr = ae_ip;
+
+        hdr.trpt_udp.len = hdr.trpt_ipv4.totalLen - IPV4_HDR_BYTES;
     }
 
     /**

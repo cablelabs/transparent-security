@@ -19,7 +19,7 @@
 /* The INT Shim length at the gateway */
 #define INT_SHIM_BASE_SIZE 7
 /* The INT Shim length at the gateway */
-#define TRPT_SHIM_BASE_SIZE 20
+#define TRPT_HDR_BASE_BYTES 20
 /* Amount to add to the INT Shim length at each hop */
 #define INT_SHIM_HOP_SIZE 1
 /* Number of bytes per INT Shim length */
@@ -28,8 +28,10 @@
 #define UDP_HDR_BYTES 8
 /* Number of bytes used by a TCP header */
 #define TCP_HDR_BYTES 20
+/* Number of bytes used by an IPv4 header */
+#define IPV4_HDR_BYTES 20
 /* Number of bytes used by an IPv6 header */
-#define IPV6_HDR_BYTES 40
+#define IPV6_HDR_BYTES 16
 /* Number of bytes used by an IPv6 header */
 #define DFLT_IPV4_TTL 64
 
