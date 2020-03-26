@@ -143,8 +143,8 @@ function tps_trpt_hdr(header_tree, tvbr)
 end
 
 
-function trpt_eth_hdr(trpt_tree, tvbr)
-    local eth_tree = trpt_tree:add(tvbr, "Telemetry Report Ethernet Header")
+function int_eth_hdr(trpt_tree, tvbr)
+    local eth_tree = trpt_tree:add(tvbr, "INT Ethernet Header")
     eth_tree:add(tvbr(0,6), "Dest MAC: " .. octet_to_mac(tvbr(0, 6)))
     eth_tree:add(tvbr(6,6), "Source MAC: " .. octet_to_mac(tvbr(6, 6)))
     local ether_type = tvbr:bitfield(96, 16)
@@ -200,7 +200,7 @@ function tps_trpt_proto.dissector(buffer, pinfo, tree)
     Dissector.get("ethertype"):call(buffer:range(buf_offset):tvb(), pinfo, tree)
     local trpt_eth_buf = buffer(buf_offset, 14)
     buf_offset = buf_offset + 14
-    local ether_type = trpt_eth_hdr(tree, trpt_eth_buf)
+    local ether_type = int_eth_hdr(tree, trpt_eth_buf)
     local ip_buf = buffer(buf_offset, 20)
     if ether_type == 0x0800 then
         Dissector.get("ip"):call(buffer:range(buf_offset):tvb(), pinfo, tree)
