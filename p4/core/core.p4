@@ -22,6 +22,8 @@
 #include <tps_checksum.p4>
 #include <tps_egress.p4>
 
+const bit<32> INT_CTR_IDX = 1;
+
 
 /*************************************************************************
 **************  I N G R E S S   P R O C E S S I N G   ********************
@@ -149,6 +151,8 @@ control TpsCoreEgress(inout headers hdr,
                       inout metadata meta,
                       inout standard_metadata_t standard_metadata) {
 
+    register<bit<22>>(INT_CTR_IDX) trpt_pkts;
+
     action control_drop() {
         mark_to_drop(standard_metadata);;
     }
@@ -168,12 +172,12 @@ control TpsCoreEgress(inout headers hdr,
 
         hdr.trpt_hdr.ver = TRPT_VERSION;
         hdr.trpt_hdr.domain_id = TRPT_HDR_DOMAIN_ID;
+        hdr.trpt_hdr.length = hdr.trpt_hdr.length + hdr.int_shim.length + 5; /* 5 Reflects TRPT ethernet & udp packets
 
-        /* TODO - determine length */
-        hdr.trpt_hdr.length = hdr.int_shim.length + 7;
-
-        /* TODO - determine how to use a counter or something */
-        hdr.trpt_hdr.sequence_no = 1;
+        /* TODO - determine if counter resets to 0 once it reaches max */
+        trpt_pkts.read(hdr.trpt_hdr.sequence_no, 32w0x0);
+        hdr.trpt_hdr.sequence_no = hdr.trpt_hdr.sequence_no + 1;
+        trpt_pkts.write(32w0x0, hdr.trpt_hdr.sequence_no);
     }
 
     /**
@@ -182,6 +186,7 @@ control TpsCoreEgress(inout headers hdr,
     action setup_telem_rpt_ipv4(ip4Addr_t ae_ip) {
         hdr.trpt_ipv4.setValid();
 
+        hdr.trpt_hdr.length = hdr.trpt_hdr.length + 5;  /* Reflects the IPv4 header bytes */
         hdr.trpt_eth.etherType = TYPE_IPV4;
 
         hdr.trpt_ipv4.version = 0x4;
@@ -200,8 +205,8 @@ control TpsCoreEgress(inout headers hdr,
     * Restrutures data within INT packet into a Telemetry Report packet type for ipv4
     */
     action setup_telem_rpt_ipv6(ip6Addr_t ae_ip) {
-        /* TODO - need to add tests for this condition */
         hdr.trpt_ipv6.setValid();
+        hdr.trpt_hdr.length = hdr.trpt_hdr.length + 10; /* Reflects the IPv6 header bytes */
         hdr.trpt_eth.etherType = TYPE_IPV6;
         hdr.trpt_ipv6.next_hdr_proto = TYPE_UDP;
         hdr.trpt_ipv6.srcAddr = hdr.ipv6.srcAddr;

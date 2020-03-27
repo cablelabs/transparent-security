@@ -102,14 +102,13 @@
       control_name: TpsCoreEgress
       table_name: setup_telemetry_rpt_t
       action:
-        # TODO - Add support for IPv6 TRPT endpoints
-        name: setup_telem_rpt_ipv4
+        name: "{{ 'setup_telem_rpt_ipv4' if ip_version == '4' else 'setup_telem_rpt_ipv6' }}"
         match_fields:
           - key: hdr.udp_int.dst_port
             value: 555
         params:
           - key: ae_ip
-            value: "{{ topo_dict.hosts.clone.ip }}"
+            value: "{{ topo_dict.hosts.clone.ip if ip_version == '4' else topo_dict.hosts.clone.ipv6 }}"
     p4_te_log_dir: "{{ host_log_dir }}"
     p4_te_log_file: "df-setup-telemetry-report-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
 
@@ -170,13 +169,14 @@
       control_name: TpsCoreEgress
       table_name: setup_telemetry_rpt_t
       action:
-        name: setup_telem_rpt_ipv4
+        name: "{{ 'setup_telem_rpt_ipv4' if ip_version == '4' else 'setup_telem_rpt_ipv6' }}"
         match_fields:
           - key: hdr.udp_int.dst_port
             value: 555
         params:
           - key: ae_ip
-            value: "{{ topo_dict.hosts.clone.ip }}"
+            value: "{{ topo_dict.hosts.clone.ip if ip_version == '4' else topo_dict.hosts.clone.ipv6 }}"
+
     p4_te_log_dir: "{{ host_log_dir }}"
     p4_te_log_file: "df-setup-telemetry-report-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
     p4_te_insert: False
