@@ -186,7 +186,6 @@ control TpsCoreEgress(inout headers hdr,
     action setup_telem_rpt_ipv4(ip4Addr_t ae_ip) {
         hdr.trpt_ipv4.setValid();
 
-        hdr.trpt_hdr.length = hdr.trpt_hdr.length + 5;  /* Reflects the IPv4 header bytes */
         hdr.trpt_eth.etherType = TYPE_IPV4;
 
         hdr.trpt_ipv4.version = 0x4;
@@ -206,11 +205,26 @@ control TpsCoreEgress(inout headers hdr,
     */
     action setup_telem_rpt_ipv6(ip6Addr_t ae_ip) {
         hdr.trpt_ipv6.setValid();
-        hdr.trpt_hdr.length = hdr.trpt_hdr.length + 10; /* Reflects the IPv6 header bytes */
+
         hdr.trpt_eth.etherType = TYPE_IPV6;
+
         hdr.trpt_ipv6.next_hdr_proto = TYPE_UDP;
         hdr.trpt_ipv6.srcAddr = hdr.ipv6.srcAddr;
         hdr.trpt_ipv6.dstAddr = ae_ip;
+    }
+
+    /**
+    * Updates the TRPT header length value when the underlying packet is IPv4
+    */
+    action update_trpt_hdr_len_ipv4() {
+        hdr.trpt_hdr.length = hdr.trpt_hdr.length + 5;
+    }
+
+    /**
+    * Updates the TRPT header length value when the underlying packet is IPv6
+    */
+    action update_trpt_hdr_len_ipv6() {
+        hdr.trpt_hdr.length = hdr.trpt_hdr.length + 10;
     }
 
     /* TODO - Design table properly, currently just making IPv4 or IPv6 Choices */
@@ -232,6 +246,11 @@ control TpsCoreEgress(inout headers hdr,
             if (IS_I2E_CLONE(standard_metadata)) {
                 init_telem_rpt();
                 setup_telemetry_rpt_t.apply();
+                if (hdr.ipv4.isValid()) {
+                    update_trpt_hdr_len_ipv4();
+                } else if (hdr.ipv6.isValid()) {
+                    update_trpt_hdr_len_ipv6();
+                }
             }
         }
     }
