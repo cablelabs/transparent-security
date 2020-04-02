@@ -47,7 +47,7 @@
       set_fact:
         receive_cmd: >
           sudo /usr/bin/python {{ remote_tps_dir }}/trans_sec/device_software/receive_packets.py
-          -i {{ receiver_intf }} -f {{ receiver_log_file }} -d {{ receive_timeout }} -ih {{ hops }} -v {{ ip_ver }}
+          -i {{ receiver_intf }} -f {{ receiver_log_file }} -d {{ receive_timeout }} -ih {{ hops }}
 
     - debug:
         var: receive_cmd

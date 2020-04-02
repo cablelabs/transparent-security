@@ -8,15 +8,11 @@
 -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
+-- This Wireshark plugin outputs the TPS Telemetry Report & INT packets
 
-
--- This Wireshark plugin reflects the INT header prior to the updated do
--- cumentation
-
--- INT protocol example
--- declare our protocol
+-- Declare our protocols
 tps_udp_proto = Proto("TPS_INT", "TPS UDP INT Protocol")
--- create a function to dissect it
+tps_trpt_proto = Proto("TRPT_INT", "Transparency Report UDP INT Protocol")
 
 
 function octet_to_mac(buff)
@@ -47,6 +43,19 @@ function tps_int_shim(int_tree, shim_buf)
     local next_proto = shim_buf:bitfield(24, 8)
     shim_tree:add(shim_buf(3, 1), "next_proto: " .. next_proto)
     return length, next_proto
+end
+
+
+function bit_tree_8(tree, buf, buf_index, index, tree_label, item_label)
+    local bit_tree = tree:add(buf(buf_index, 1), tree_label)
+    bit_tree:add(item_label .. " 0: " .. buf:bitfield(index, 1))
+    bit_tree:add(item_label .. " 1: " .. buf:bitfield(index + 1, 1))
+    bit_tree:add(item_label .. " 2: " .. buf:bitfield(index + 2, 1))
+    bit_tree:add(item_label .. " 3: " .. buf:bitfield(index + 3, 1))
+    bit_tree:add(item_label .. " 4: " .. buf:bitfield(index + 4, 1))
+    bit_tree:add(item_label .. " 5: " .. buf:bitfield(index + 5, 1))
+    bit_tree:add(item_label .. " 6: " .. buf:bitfield(index + 6, 1))
+    bit_tree:add(item_label .. " 7: " .. buf:bitfield(index + 7, 1))
 end
 
 
@@ -114,19 +123,51 @@ function tps_int_md(int_tree, int_md_buf, total_hops)
 end
 
 
+function tps_trpt_hdr(header_tree, tvbr)
+    header_tree:add("Version: " .. tvbr:bitfield(0, 4))
+    header_tree:add("Hardware ID: " .. tvbr:bitfield(4, 6))
+    header_tree:add("Sequence No: " .. tvbr:bitfield(10, 22))
+    header_tree:add(tvbr(4, 4), "Node ID: " .. tvbr:bitfield(32, 32))
+    header_tree:add("Type 1: " .. tvbr:bitfield(64, 4))
+    header_tree:add("In Proto: " .. tvbr:bitfield(68, 4))
+    header_tree:add(tvbr(9, 1), "Length: " .. tvbr:bitfield(72, 8))
+    header_tree:add(tvbr(10, 2), "Domain ID: " .. tvbr:bitfield(80, 16))
+    header_tree:add(tvbr(12, 1), "d: " .. tvbr:bitfield(96, 1))
+    header_tree:add(tvbr(12, 1), "q: " .. tvbr:bitfield(97, 1))
+    header_tree:add(tvbr(12, 1), "f: " .. tvbr:bitfield(98, 1))
+    header_tree:add(tvbr(12, 1), "i: " .. tvbr:bitfield(99, 1))
+    assert(tvbr:bitfield(100, 4)) -- reserved
+    bit_tree_16(header_tree, tvbr, 13, 16, "Rep MD", "bit")
+    bit_tree_8(header_tree, tvbr, 15, 8, "DS MD", "bit")
+    header_tree:add(tvbr(16, 4), "Var Opt MD: " .. tvbr:bitfield(124, 32))
+end
+
+
+function int_eth_hdr(trpt_tree, tvbr)
+    local eth_tree = trpt_tree:add(tvbr, "INT Ethernet Header")
+    eth_tree:add(tvbr(0,6), "Dest MAC: " .. octet_to_mac(tvbr(0, 6)))
+    eth_tree:add(tvbr(6,6), "Source MAC: " .. octet_to_mac(tvbr(6, 6)))
+    local ether_type = tvbr:bitfield(96, 16)
+    eth_tree:add(tvbr(12,2), "Ether Type: " .. ether_type)
+    return ether_type
+end
+
+
 function tps_udp_proto.dissector(buffer, pinfo, tree)
     pinfo.cols.protocol = "TPS INT"
-    local buf_offset = 0
+    local shim_buf = buffer(0, 4)
+    local buf_offset = 4
+    local tvbr = buffer(buf_offset, 12)
+    buf_offset = buf_offset + 12
+    local length = shim_buf:bitfield(8, 8)
+    local total_hops = length - 6
+    local buf_bytes = total_hops * 4 + 6 + 2
 
-    -- UDP Encapsulation Header - 8 bytes
-    local int_tree = tree:add(tps_udp_proto, buffer(0, 16), "In-band Network Telemetry (INT)")
-    local shim_buf = buffer(buf_offset, 4)
-    buf_offset = buf_offset + 4
+    -- INT Shim Header - 8 bytes
+    local int_tree = tree:add(tps_udp_proto, buffer(0, 16+buf_bytes), "In-band Network Telemetry (INT)")
     local length, next_proto = tps_int_shim(int_tree, shim_buf)
 
     -- INT Metadata Header - 12 bytes
-    local tvbr = buffer(buf_offset, 12)
-    buf_offset = buf_offset + 12
     tps_int_hdr(int_tree, tvbr)
 
     -- INT Metadata Stack - 4 bytes
@@ -146,6 +187,32 @@ function tps_udp_proto.dissector(buffer, pinfo, tree)
 end
 
 
+function tps_trpt_proto.dissector(buffer, pinfo, tree)
+    pinfo.cols.protocol = "TRPT/INT"
+
+    -- TRPT Header - 20 bytes
+    local trpt_buf = buffer(buf_offset, 20)
+    local buf_offset = 20
+    local trpt_tree = tree:add(tps_trpt_proto, trpt_buf, "Telemetry Report")
+    tps_trpt_hdr(trpt_tree, trpt_buf)
+
+    -- INT Ethernet
+    Dissector.get("ethertype"):call(buffer:range(buf_offset):tvb(), pinfo, tree)
+    local trpt_eth_buf = buffer(buf_offset, 14)
+    buf_offset = buf_offset + 14
+    local ether_type = int_eth_hdr(tree, trpt_eth_buf)
+    local ip_buf = buffer(buf_offset, 20)
+    if ether_type == 0x0800 then
+        Dissector.get("ip"):call(buffer:range(buf_offset):tvb(), pinfo, tree)
+        buf_offset = buf_offset + 24
+    elseif ether_type == 0x86dd then
+        Dissector.get("ipv6"):call(buffer:range(buf_offset):tvb(), pinfo, tree)
+        buf_offset = buf_offset + 20
+    end
+end
+
+
 -- INT protocol example
 ip_table = DissectorTable.get("udp.port")
 ip_table:add(555, tps_udp_proto)
+ip_table:add(556, tps_trpt_proto)

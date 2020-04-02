@@ -74,6 +74,34 @@ control TpsComputeChecksum(inout headers  hdr, inout metadata meta) {
             HashAlgorithm.csum16
         );
 
+        update_checksum(hdr.trpt_ipv4.isValid(),
+            {
+                hdr.trpt_ipv4.version,
+                hdr.trpt_ipv4.ihl,
+                hdr.trpt_ipv4.diffserv,
+                hdr.trpt_ipv4.totalLen,
+                hdr.trpt_ipv4.identification,
+                hdr.trpt_ipv4.flags,
+                hdr.trpt_ipv4.fragOffset,
+                hdr.trpt_ipv4.ttl,
+                hdr.trpt_ipv4.protocol,
+                hdr.trpt_ipv4.srcAddr,
+                hdr.trpt_ipv4.dstAddr
+            },
+            hdr.trpt_ipv4.hdrChecksum,
+            HashAlgorithm.csum16
+        );
+
+	update_checksum(hdr.udp.isValid(),
+            {
+                hdr.udp.src_port,
+                hdr.udp.dst_port,
+                hdr.udp.len
+            },
+            hdr.udp.cksum,
+            HashAlgorithm.csum16
+        );
+
 	update_checksum(hdr.udp_int.isValid(),
             {
                 hdr.udp_int.src_port,
@@ -81,6 +109,16 @@ control TpsComputeChecksum(inout headers  hdr, inout metadata meta) {
                 hdr.udp_int.len
             },
             hdr.udp_int.cksum,
+            HashAlgorithm.csum16
+        );
+
+	update_checksum(hdr.trpt_udp.isValid(),
+            {
+                hdr.trpt_udp.src_port,
+                hdr.trpt_udp.dst_port,
+                hdr.trpt_udp.len
+            },
+            hdr.trpt_udp.cksum,
             HashAlgorithm.csum16
         );
     }

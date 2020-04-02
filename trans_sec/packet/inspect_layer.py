@@ -11,10 +11,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from scapy.all import Packet, ShortEnumField, UDP_SERVICES, ShortField, \
-    XShortField
+    XShortField, ETHER_TYPES
 from scapy import fields
 
 import trans_sec.consts
+from trans_sec import consts
 
 
 class IntShim(Packet):
@@ -38,7 +39,7 @@ class IntHeader(Packet):
     help generating and parsing
     """
     fields_desc = [
-        fields.BitField('ver', 0, 4),
+        fields.BitField('ver', 2, 4),
         fields.BitField('rep', 0, 2),
         fields.BitField('d', 0, 1),
         fields.BitField('e', 0, 1),
@@ -67,6 +68,15 @@ class SourceIntMeta(Packet):
         fields.IntField('switch_id', 0),
         fields.MACField('orig_mac', 0),
         fields.BitField('reserved', 0, 16),
+    ]
+
+
+class EthInt(Packet):
+    name = "UDP_INT"
+    fields_desc = [
+        fields.MACField('dst', 0),
+        fields.MACField('src', 0),
+        fields.XShortEnumField("type", 0x9000, ETHER_TYPES),
     ]
 
 
@@ -103,3 +113,28 @@ class IntMeta2(IntMeta):
     This class represents the second INT metadata being placed onto the packets
     """
     name = "INT_META_2"
+
+
+class TelemetryReport(Packet):
+    """
+    This class represents the INT header data being placed onto the packets to
+    help generating and parsing
+    """
+    fields_desc = [
+        fields.BitField('ver', 0, 4),
+        fields.BitField('hw_id', 0, 6),
+        fields.BitField('sequence_no', 0, 22),
+        fields.IntField('node_id', 0),
+        fields.BitField('type1', 0, 4),
+        fields.BitField('in_proto', 0, 4),
+        fields.ByteField('length', 0),
+        fields.ShortField('domain_id', consts.TRPT_DOMAIN_ID),
+        fields.BitField('d', 0, 1),
+        fields.BitField('q', 0, 1),
+        fields.BitField('f', 0, 1),
+        fields.BitField('i', 0, 1),
+        fields.BitField('reserved', 0, 4),
+        fields.ShortField('rep_md_bits', 0),
+        fields.ByteField('ds_md_bits', 0),
+        fields.IntField('var_opt_md', 0)
+    ]
