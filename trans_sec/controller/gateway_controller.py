@@ -13,7 +13,7 @@
 from logging import getLogger
 
 import trans_sec.consts
-from trans_sec.analytics import oinc
+
 from trans_sec.controller.abstract_controller import AbstractController
 
 logger = getLogger('gateway_controller')
@@ -108,8 +108,7 @@ class GatewayController(AbstractController):
                 action_name='{}.data_forward'.format(self.p4_ingress),
                 action_params={
                     'dstAddr': north_switch['mac'],
-                    'port': sw_link['north_facing_port'],
-                    'l2ptr': 0
+                    'port': sw_link['north_facing_port']
                 })
             sw.write_table_entry(table_entry)
             logger.info('Installed Northbound from port 1 to port %d',
@@ -123,8 +122,7 @@ class GatewayController(AbstractController):
                 action_name='{}.data_forward'.format(self.p4_ingress),
                 action_params={
                     'dstAddr': north_switch['mac'],
-                    'port': sw_link['north_facing_port'],
-                    'l2ptr': 0
+                    'port': sw_link['north_facing_port']
                 })
             sw.write_table_entry(table_entry)
             logger.info('Installed Northbound from port 2 to port %d',
@@ -138,8 +136,7 @@ class GatewayController(AbstractController):
                 action_name='{}.data_forward'.format(self.p4_ingress),
                 action_params={
                     'dstAddr': north_switch['mac'],
-                    'port': sw_link['north_facing_port'],
-                    'l2ptr': 0
+                    'port': sw_link['north_facing_port']
                 })
             sw.write_table_entry(table_entry)
             logger.info('Installed Northbound from port 3 to port %d',

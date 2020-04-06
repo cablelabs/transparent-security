@@ -33,11 +33,10 @@ control TpsGwIngress(inout headers hdr,
     counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) forwardedPackets;
     counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) droppedPackets;
 
-    action data_forward(macAddr_t dstAddr, egressSpec_t port, bit<32> l2ptr) {
+    action data_forward(macAddr_t dstAddr, egressSpec_t port) {
         standard_metadata.egress_spec = port;
         hdr.ethernet.src_mac = hdr.ethernet.dst_mac;
         hdr.ethernet.dst_mac = dstAddr;
-        meta.fwd.l2ptr = l2ptr;
     }
 
     table data_forward_t {

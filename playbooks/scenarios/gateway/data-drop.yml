@@ -45,8 +45,6 @@
             value: "{{ switch.mac }}"
           - key: port
             value: "{{ rec_sw_port }}"
-          - key: l2ptr
-            value: 0
     data_drop_table_action:
       control_name: TpsGwIngress
       table_name: "{{ 'data_drop_udp_ipv%s_t' % ip_version if send_protocol == 'UDP' else 'data_drop_tcp_ipv%s_t' % ip_version }}"

@@ -44,5 +44,3 @@
             value: "{{ switch.mac }}"
           - key: port
             value: "{{ rec_sw_port }}"
-          - key: l2ptr
-            value: 0

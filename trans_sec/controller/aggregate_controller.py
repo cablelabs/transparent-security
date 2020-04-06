@@ -50,8 +50,7 @@ class AggregateController(AbstractController):
                 action_name='{}.data_forward'.format(self.p4_ingress),
                 action_params={
                     'dstAddr': north_node['mac'],
-                    'port': north_link['north_facing_port'],
-                    'l2ptr': 0
+                    'port': north_link['north_facing_port']
                 })
             sw.write_table_entry(table_entry)
 
@@ -64,8 +63,7 @@ class AggregateController(AbstractController):
                 action_name='{}.data_forward'.format(self.p4_ingress),
                 action_params={
                     'dstAddr': north_node['mac'],
-                    'port': north_link['north_facing_port'],
-                    'l2ptr': 0
+                    'port': north_link['north_facing_port']
                 })
             sw.write_table_entry(table_entry)
 

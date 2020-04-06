@@ -44,8 +44,6 @@
             value: "{{ switch.mac }}"
           - key: port
             value: "{{ rec_sw_port }}"
-          - key: l2ptr
-            value: 0
     data_inspection_table_action:
       control_name: TpsGwIngress
       table_name: data_inspection_t
