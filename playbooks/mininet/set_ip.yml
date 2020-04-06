@@ -54,12 +54,12 @@
 
     - name: Set IP for intf {{ intf_name }}
       become: yes
-      command: "ip addr del {{ intf_prfx }}.{{ intf_sufx }}/30 dev {{ intf_name }}"
+      command: "ip addr del {{ intf_prfx }}.{{ intf_sufx }}/24 dev {{ intf_name }}"
       ignore_errors: yes
 
     - name: Set IP for intf {{ intf_name }}
       become: yes
-      command: "ip addr add {{ intf_prfx }}.{{ intf_sufx }}/30 dev {{ intf_name }}"
+      command: "ip addr add {{ intf_prfx }}.{{ intf_sufx }}/24 dev {{ intf_name }}"
 
     - name: Set /etc/hosts
       become: yes
