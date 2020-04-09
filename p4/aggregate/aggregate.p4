@@ -92,7 +92,15 @@ control TpsAggIngress(inout headers hdr,
     }
 
      apply {
-        if (standard_metadata.egress_spec != DROP_PORT) {
+        if (hdr.arp.isValid()) {
+            generate_learn_notification();
+            if (hdr.arp.opcode == 1) {
+                mac_learn_t.apply();
+            }
+            else if (hdr.arp.opcode == 2) {
+                data_forward_ipv4_t.apply();
+            }
+        } else if (standard_metadata.egress_spec != DROP_PORT) {
             data_inspection_t.apply();
             if (hdr.ipv4.isValid()) {
                 data_forward_ipv4_t.apply();
