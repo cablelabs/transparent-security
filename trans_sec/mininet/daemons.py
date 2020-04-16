@@ -15,7 +15,7 @@ import logging
 import threading
 
 from trans_sec.device_software.device_daemon import SniffAndLogDaemon, \
-    HeartbeatDaemon, AttackDaemon
+    HeartbeatDaemon, AttackDaemon, ForwardingDaemon
 
 logger = logging.getLogger('daemons')
 
@@ -75,7 +75,19 @@ class DaemonRunner:
         if daemon_type and mn_device:
             device_log_file = '{}/device_{}_{}.log'.format(
                 self.log_dir, daemon_type, host_name)
-            if daemon_type == 'attack':
+            if daemon_type == 'forwarding':
+                logger.info(
+                    'Creating forwarding daemon for [%s] and log file [%s]',
+                    host_name, device_log_file)
+                return ForwardingDaemon(
+                    device_name=host_name,
+                    mn_device=mn_device,
+                    device_config=dev_conf,
+                    log_file=device_log_file,
+                    device_log_dir=self.log_dir,
+                    level=logging.DEBUG)
+
+            elif daemon_type == 'attack':
                 logger.info(
                     'Creating attack daemon for [%s] and log file [%s]',
                     host_name, device_log_file)
