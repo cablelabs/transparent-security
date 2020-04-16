@@ -4,7 +4,6 @@ inet:
     iface: inet-eth0
     loglevel: DEBUG
     logfile:  inet_sniff_inet.log
-
 Camera1:
   - daemon: heartbeat
     destination: 10.0.1.8
@@ -16,7 +15,6 @@ Camera1:
     switch_ethernet: 00:00:00:01:01:00
     delay: 3
     interval: 3
-
 NAS1:
   - daemon: heartbeat
     destination: 10.0.1.8
@@ -28,7 +26,6 @@ NAS1:
     switch_ethernet: 00:00:00:01:01:00
     delay: 3
     interval: 3
-  
 Game1:
   - daemon: heartbeat
     destination: 10.0.1.8
@@ -40,7 +37,6 @@ Game1:
     switch_ethernet: 00:00:00:01:01:00
     delay: 3
     interval: 3
-  
 Camera2:
   - daemon: heartbeat
     destination: 10.0.1.8
@@ -52,7 +48,6 @@ Camera2:
     switch_ethernet: 00:00:00:01:02:00
     delay: 3
     interval: 3
-  
 Game2:
   - daemon: heartbeat
     destination: 10.0.1.8
@@ -64,7 +59,6 @@ Game2:
     switch_ethernet: 00:00:00:01:02:00
     delay: 3
     interval: 3
-
 Camera3:
   - daemon: heartbeat
     destination: 10.0.1.8
@@ -76,7 +70,6 @@ Camera3:
     switch_ethernet: 00:00:00:01:03:00
     delay: 3
     interval: 3
-  
 Game3:
   - daemon: heartbeat
     destination: 10.0.1.8

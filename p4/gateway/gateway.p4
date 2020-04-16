@@ -39,9 +39,21 @@ control TpsGwIngress(inout headers hdr,
         hdr.ethernet.dst_mac = dstAddr;
     }
 
-    table data_forward_t {
+    table data_forward_ipv6_t {
         key = {
-            standard_metadata.ingress_port: exact;
+            hdr.ipv6.dstAddr: lpm;
+        }
+        actions = {
+            data_forward;
+            NoAction;
+        }
+        size = TABLE_SIZE;
+        default_action = NoAction();
+    }
+
+    table data_forward_ipv4_t {
+        key = {
+            hdr.ipv4.dstAddr: lpm;
         }
         actions = {
             data_forward;
@@ -204,6 +216,47 @@ control TpsGwIngress(inout headers hdr,
         mark_to_drop(standard_metadata);;
     }
 
+    action arp_flood(macAddr_t srcAddr) {
+            hdr.ethernet.src_mac = srcAddr;
+            standard_metadata.mcast_grp = 1;
+    }
+
+    action generate_learn_notification() {
+        digest<mac_learn_digest>((bit<32>) 1024,
+            { hdr.arp.srcAddr,
+              hdr.ethernet.src_mac,
+              standard_metadata.ingress_port
+            });
+    }
+
+    action arp_reply(macAddr_t srcAddr, macAddr_t dstAddr, egressSpec_t port) {
+        hdr.ethernet.src_mac = srcAddr;
+        hdr.ethernet.dst_mac = dstAddr;
+        standard_metadata.egress_spec = port;
+    }
+
+    table arp_reply_t {
+        key = {
+            hdr.arp.dstAddr: lpm;
+        }
+        actions = {
+            arp_reply;
+            NoAction;
+        }
+        default_action = NoAction();
+    }
+
+    table mac_learn_t {
+        key = {
+            hdr.ethernet.dst_mac: exact;
+        }
+        actions = {
+            arp_flood;
+            NoAction;
+        }
+        default_action = NoAction();
+    }
+
      apply {
         if (hdr.udp.isValid()) {
             if (hdr.ipv4.isValid()) {
@@ -220,8 +273,16 @@ control TpsGwIngress(inout headers hdr,
                 data_drop_tcp_ipv6_t.apply();
             }
         }
-
-        if (standard_metadata.egress_spec != DROP_PORT) {
+        if (hdr.arp.isValid()) {
+            generate_learn_notification();
+            if (hdr.arp.opcode == 1) {
+                mac_learn_t.apply();
+            }
+            else {
+                arp_reply_t.apply();
+            }
+        }
+        else if (standard_metadata.egress_spec != DROP_PORT) {
             data_inspection_t.apply();
 
             if (hdr.int_shim.isValid()) {
@@ -232,8 +293,8 @@ control TpsGwIngress(inout headers hdr,
                     insert_udp_int_for_tcp();
                 }
             }
-
-            data_forward_t.apply();
+            data_forward_ipv6_t.apply();
+            data_forward_ipv4_t.apply();
         }
     }
 }

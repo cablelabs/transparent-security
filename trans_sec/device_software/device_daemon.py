@@ -54,7 +54,8 @@ class HeartbeatDaemon(AbstractDaemon):
             'switch_ethernet')
         self.logger.info('Command run on device %s - [%s]',
                          self.device_name, cmd)
-        self.cmd = cmd
+        command = 'ping 10.0.1.8 -c 25 -I %s -i 3' % self.device_config.get('interface')
+        self.cmd = command
 
 
 class SniffAndLogDaemon(AbstractDaemon):

@@ -264,3 +264,23 @@ class P4InfoHelper(object):
         pre_entry.clone_session_entry.CopyFrom(clone_session_entry)
         logger.info('Clone entry - [%s]', pre_entry)
         return pre_entry
+
+    def build_digest_entry(self, digest_name):
+        digest_entry = p4runtime_pb2.DigestEntry()
+        # using name
+        digest_entry.digest_id = self.get_digests_id(digest_name)
+        # using id directly
+        digest_entry.config.max_timeout_ns = 0
+        digest_entry.config.max_list_size = 1
+        digest_entry.config.ack_timeout_ns = 0
+        return digest_entry
+
+    def build_multicast_group_entry(self, mc_group_id, replicas):
+        mc_entry = p4runtime_pb2.PacketReplicationEngineEntry()
+        mc_entry.multicast_group_entry.multicast_group_id = mc_group_id
+        for replica in replicas:
+            r = p4runtime_pb2.Replica()
+            r.egress_port = int(replica['egress_port'])
+            r.instance = int(replica['instance'])
+            mc_entry.multicast_group_entry.replicas.extend([r])
+        return mc_entry

@@ -31,6 +31,7 @@ parser TpsGwParser(packet_in packet,
     state parse_ethernet {
         packet.extract(hdr.ethernet);
         transition select(hdr.ethernet.etherType) {
+            TYPE_ARP: parse_arp;
             TYPE_IPV4: parse_ipv4;
             TYPE_IPV6: parse_ipv6;
             default: accept;
@@ -64,6 +65,11 @@ parser TpsGwParser(packet_in packet,
         packet.extract(hdr.tcp);
         transition accept;
     }
+
+    state parse_arp {
+        packet.extract(hdr.arp);
+        transition accept;
+    }
 }
 
 /*************************************************************************
@@ -80,6 +86,7 @@ parser TpsAggParser(packet_in packet,
     state parse_ethernet {
         packet.extract(hdr.ethernet);
         transition select(hdr.ethernet.etherType) {
+            TYPE_ARP: parse_arp;
             TYPE_IPV4: parse_ipv4;
             TYPE_IPV6: parse_ipv6;
             default: accept;
@@ -119,6 +126,11 @@ parser TpsAggParser(packet_in packet,
         packet.extract(hdr.int_header);
         transition accept;
     }
+
+    state parse_arp {
+        packet.extract(hdr.arp);
+        transition accept;
+    }
 }
 
 /*************************************************************************
@@ -135,6 +147,7 @@ parser TpsCoreParser(packet_in packet,
     state parse_ethernet {
         packet.extract(hdr.ethernet);
         transition select(hdr.ethernet.etherType) {
+            TYPE_ARP: parse_arp;
             TYPE_IPV4: parse_ipv4;
             TYPE_IPV6: parse_ipv6;
             default: accept;
@@ -204,6 +217,11 @@ parser TpsCoreParser(packet_in packet,
 
     state parse_tcp {
         packet.extract(hdr.tcp);
+        transition accept;
+    }
+
+    state parse_arp {
+        packet.extract(hdr.arp);
         transition accept;
     }
 

@@ -12,7 +12,7 @@
 # limitations under the License.
 import ipaddress
 from logging import getLogger
-
+from threading import Thread
 from trans_sec.p4runtime_lib import bmv2, helper, tofino
 
 logger = getLogger('abstract_controller')
@@ -111,7 +111,7 @@ class AbstractController(object):
         pass
 
     def __add_helpers(self):
-        logger.info('Setting up helpers')
+        logger.info('Setting up helpers for %s', self.switch_type)
         for name, switch in self.topo['switches'].items():
             logger.info('Setting up helper for - [%s] of type - [%s]',
                         name, switch.get('type'))
@@ -174,6 +174,14 @@ class AbstractController(object):
             self.make_rules(sw=switch, sw_info=sw_info,
                             north_facing_links=north_links,
                             south_facing_links=south_links)
+
+    def switch_forwarding(self):
+        logger.info('Forwarding Rules for controller [%s]', self.switch_type)
+        for switch in self.switches:
+            logger.info('L2 forwarding rules for %s', switch.name)
+            sw_info, north_links, south_links = self.__get_links(switch.name)
+            self.set_multicast_group(switch, sw_info)
+            self.send_digest_entry(switch, sw_info)
 
     def add_attacker(self, attack, host):
         logger.info('Adding an attack [%s] to host [%s] and switches [%s]',

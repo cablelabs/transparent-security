@@ -61,6 +61,8 @@ const bit<16> TRPT_INT_DST_PORT = 0x022c;
 const bit<16> TYPE_IPV4 = 0x0800;
 /* The Ethernet type of IPv6 */
 const bit<16> TYPE_IPV6 = 0x86dd;
+/* The Ethernet type of ARP */
+const bit<16> TYPE_ARP = 0x806;
 /* The IP protocol or IPv6 next header protocol value for TCP */
 const bit<8> TYPE_TCP = 0x06;
 /* The IP protocol or IPv6 next header protocol value for UDP */

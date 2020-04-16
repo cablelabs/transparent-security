@@ -23,8 +23,16 @@ control TpsEgress(inout headers hdr,
                   inout metadata meta,
                   inout standard_metadata_t standard_metadata) {
 
-    apply {
+    action drop() {
+            mark_to_drop(standard_metadata);
+    }
 
+    apply {
+        if(IS_REPLICATED(standard_metadata)) {
+            if (standard_metadata.egress_port == standard_metadata.ingress_port) {
+                drop();
+            }
+        }
     }
 }
 
@@ -43,6 +51,7 @@ control TpsDeparser(packet_out packet, in headers hdr) {
 
         /* For Standard and INT Packets */
         packet.emit(hdr.ethernet);
+        packet.emit(hdr.arp);
         packet.emit(hdr.ipv4);
         packet.emit(hdr.ipv6);
         packet.emit(hdr.udp_int);

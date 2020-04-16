@@ -14,7 +14,7 @@ import socket
 from logging import getLogger
 
 from trans_sec.controller.abstract_controller import AbstractController
-
+from threading import Thread
 logger = getLogger('core_controller')
 
 
@@ -34,6 +34,7 @@ class CoreController(AbstractController):
             platform, p4_build_out, topo, 'core', list(), log_dir, load_p4,
             'TpsCoreIngress')
         self.p4_egress = 'TpsCoreEgress'
+        self.known_devices = set()
 
     def make_rules(self, sw, sw_info, north_facing_links, south_facing_links):
         super(self.__class__, self).make_rules(
@@ -110,19 +111,6 @@ class CoreController(AbstractController):
                 'Adding data_forward entry to forward packets to  port - [%s]',
                 north_link['north_facing_port'])
 
-            # Add entry for forwarding IPv4 packets
-            table_entry = self.p4info_helper.build_table_entry(
-                table_name='{}.data_forward_ipv4_t'.format(self.p4_ingress),
-                match_fields={
-                    'hdr.ipv4.dstAddr': (north_device['ip'], 32),
-                },
-                action_name='{}.data_forward'.format(self.p4_ingress),
-                action_params={
-                    'dstAddr': north_device['mac'],
-                    'port': north_link['north_facing_port']
-                })
-            sw.write_table_entry(table_entry)
-
             # Add entry for forwarding IPv6 packets
             table_entry = self.p4info_helper.build_table_entry(
                 table_name='{}.data_forward_ipv6_t'.format(self.p4_ingress),
@@ -139,3 +127,89 @@ class CoreController(AbstractController):
             logger.info(
                 'Installed Host %s ipv4 cloning rule on %s',
                 north_device.get('ip'), sw.name)
+
+    def set_multicast_group(self, sw, sw_info):
+        mc_group_id = 1
+        replicas = [
+            {'egress_port': '1', 'instance': '1'},
+            {'egress_port': '2', 'instance': '1'}]
+
+        multicast_entry = self.p4info_helper.build_multicast_group_entry(mc_group_id,replicas)
+        logger.info('Build Multicast Entry: %s', multicast_entry)
+        sw.write_multicast_entry(multicast_entry)
+        table_entry = self.p4info_helper.build_table_entry(
+            table_name='{}.mac_learn_t'.format(self.p4_ingress),
+            match_fields={'hdr.ethernet.dst_mac': 'ff:ff:ff:ff:ff:ff'},
+            action_name='{}.arp_flood'.format(self.p4_ingress),
+            action_params={
+                'srcAddr': sw_info['mac']
+            })
+        sw.write_table_entry(table_entry)
+
+    def bytes_to_mac(self, mac_string):
+        return ':'.join('%02x' % ord(b) for b in mac_string)
+
+    def bytes_to_ip(self, ip_string):
+        output = []
+        for b in ip_string:
+            ord_char = '%02x' % ord(b)
+            int_char = int(ord_char, 16)
+            str_char = str(int_char)
+            output.append(str_char)
+        return '.'.join(output)
+
+    def add_data_forward(self, sw, sw_info, src_ip, mac, port):
+        logger.info("Core - Check if %s belongs to: %s", src_ip, list(self.known_devices))
+        if src_ip not in list(self.known_devices):
+            logger.info("Adding unique table entry on %s for %s", sw_info['name'], src_ip)
+            table_entry = self.p4info_helper.build_table_entry(
+                table_name='{}.data_forward_ipv4_t'.format(self.p4_ingress),
+                match_fields={
+                    'hdr.ipv4.dstAddr': (src_ip, 32)
+                },
+                action_name='{}.data_forward'.format(self.p4_ingress),
+                action_params={
+                    'dstAddr': mac,
+                    'port': port
+                })
+            sw.write_table_entry(table_entry)
+            table_entry = self.p4info_helper.build_table_entry(
+                table_name='{}.arp_reply_t'.format(self.p4_ingress),
+                match_fields={'hdr.arp.dstAddr': (src_ip, 32)},
+                action_name='{}.arp_reply'.format(self.p4_ingress),
+                action_params={
+                    'srcAddr': sw_info['mac'],
+                    'dstAddr': mac,
+                    'port': port
+                })
+            sw.write_table_entry(table_entry)
+        self.known_devices.add(src_ip)
+
+    def interpret_digest(self, sw, sw_info, digest_data):
+        logger.debug("Digest data %s", digest_data)
+        for members in digest_data:
+            logger.debug("Members: %s", members)
+            if members.WhichOneof('data') == 'struct':
+                source_ip = self.bytes_to_ip(members.struct.members[0].bitstring)
+                logger.info('Learned IP Address is: %s', source_ip)
+                source_mac = self.bytes_to_mac(members.struct.members[1].bitstring)
+                logger.info('Learned MAC Address is: %s', source_mac)
+                ingress_port = int(members.struct.members[2].bitstring.encode('hex'), 16)
+                logger.info('Ingress Port is %s', ingress_port)
+                self.add_data_forward(sw, sw_info, source_ip, source_mac, ingress_port)
+
+    def receive_digests(self, sw, sw_info):
+        logger.info("Started listening thread for %s", sw_info['name'])
+        while True:
+            digests = sw.digest_list()
+            digest_data = digests.digest.data
+            logger.info('Received digests: [%s]', digests)
+            self.interpret_digest(sw, sw_info, digest_data)
+
+    def send_digest_entry(self, sw, sw_info):
+        digest_entry = self.p4info_helper.build_digest_entry(digest_name="mac_learn_digest")
+        sw.write_digest_entry(digest_entry)
+        logger.info('Core: Sent Digest Entry via P4Runtime: [%s]', digest_entry)
+        digest_list = Thread(target=self.receive_digests, args=(sw, sw_info))
+        digest_list.start()
+
