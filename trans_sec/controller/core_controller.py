@@ -14,6 +14,8 @@ import socket
 from logging import getLogger
 
 from trans_sec.controller.abstract_controller import AbstractController
+from trans_sec.utils.convert import decode_mac, decode_ipv4
+
 from threading import Thread
 logger = getLogger('core_controller')
 
@@ -146,18 +148,6 @@ class CoreController(AbstractController):
             })
         sw.write_table_entry(table_entry)
 
-    def bytes_to_mac(self, mac_string):
-        return ':'.join('%02x' % ord(b) for b in mac_string)
-
-    def bytes_to_ip(self, ip_string):
-        output = []
-        for b in ip_string:
-            ord_char = '%02x' % ord(b)
-            int_char = int(ord_char, 16)
-            str_char = str(int_char)
-            output.append(str_char)
-        return '.'.join(output)
-
     def add_data_forward(self, sw, sw_info, src_ip, mac, port):
         logger.info("Core - Check if %s belongs to: %s", src_ip, list(self.known_devices))
         if src_ip not in list(self.known_devices):
@@ -190,9 +180,9 @@ class CoreController(AbstractController):
         for members in digest_data:
             logger.debug("Members: %s", members)
             if members.WhichOneof('data') == 'struct':
-                source_ip = self.bytes_to_ip(members.struct.members[0].bitstring)
+                source_ip = decode_ipv4(members.struct.members[0].bitstring)
                 logger.info('Learned IP Address is: %s', source_ip)
-                source_mac = self.bytes_to_mac(members.struct.members[1].bitstring)
+                source_mac = decode_mac(members.struct.members[1].bitstring)
                 logger.info('Learned MAC Address is: %s', source_mac)
                 ingress_port = int(members.struct.members[2].bitstring.encode('hex'), 16)
                 logger.info('Ingress Port is %s', ingress_port)

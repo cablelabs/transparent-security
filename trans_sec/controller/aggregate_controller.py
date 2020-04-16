@@ -13,6 +13,7 @@
 from logging import getLogger
 from threading import Thread
 from trans_sec.controller.abstract_controller import AbstractController
+from trans_sec.utils.convert import decode_mac, decode_ipv4
 
 logger = getLogger('aggregate_controller')
 
@@ -81,13 +82,13 @@ class AggregateController(AbstractController):
     def set_multicast_group(self, sw, sw_info):
         mc_group_id = 1
         replicas = [
-                    {'egress_port':'1', 'instance':'1'},
-                    {'egress_port':'2', 'instance':'1'},
-                    {'egress_port':'3', 'instance':'1'},
-                    {'egress_port':'4', 'instance':'1'}
+                    {'egress_port': '1', 'instance': '1'},
+                    {'egress_port': '2', 'instance': '1'},
+                    {'egress_port': '3', 'instance': '1'},
+                    {'egress_port': '4', 'instance': '1'}
                     ]
 
-        multicast_entry = self.p4info_helper.build_multicast_group_entry(mc_group_id,replicas)
+        multicast_entry = self.p4info_helper.build_multicast_group_entry(mc_group_id, replicas)
         logger.info('Build Multicast Entry: %s', multicast_entry)
         sw.write_multicast_entry(multicast_entry)
         table_entry = self.p4info_helper.build_table_entry(
@@ -98,18 +99,6 @@ class AggregateController(AbstractController):
                 'srcAddr': sw_info['mac']
             })
         sw.write_table_entry(table_entry)
-
-    def bytes_to_mac(self, mac_string):
-            return ':'.join('%02x' % ord(b) for b in mac_string)
-
-    def bytes_to_ip(self, ip_string):
-        output = []
-        for b in ip_string:
-            ord_char = '%02x' % ord(b)
-            int_char = int(ord_char, 16)
-            str_char = str(int_char)
-            output.append(str_char)
-        return '.'.join(output)
 
     def add_data_forward(self, sw, sw_info, src_ip, mac, port):
         logger.info("Aggregate - Check if %s belongs to: %s", src_ip, list(self.known_devices))
@@ -141,9 +130,9 @@ class AggregateController(AbstractController):
     def interpret_digest(self, sw, sw_info, digest_data):
         for members in digest_data:
             if members.WhichOneof('data') == 'struct':
-                source_ip = self.bytes_to_ip(members.struct.members[0].bitstring)
+                source_ip = decode_ipv4(members.struct.members[0].bitstring)
                 logger.info('Learned IP Address is: %s', source_ip)
-                source_mac = self.bytes_to_mac(members.struct.members[1].bitstring)
+                source_mac = decode_mac(members.struct.members[1].bitstring)
                 logger.info('Learned MAC Address is: %s', source_mac)
                 ingress_port = int(members.struct.members[2].bitstring.encode('hex'), 16)
                 logger.info('Ingress Port is %s', ingress_port)
