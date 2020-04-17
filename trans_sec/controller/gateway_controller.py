@@ -11,12 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from logging import getLogger
-from threading import Thread
-
 import trans_sec.consts
-
 from trans_sec.controller.abstract_controller import AbstractController
-from trans_sec.utils.convert import decode_mac, decode_ipv4
 
 logger = getLogger('gateway_controller')
 
@@ -100,11 +96,7 @@ class GatewayController(AbstractController):
 
             inet = self.topo['hosts']['inet']
 
-            # TODO/FIXME - Need to add logic to parse the topology to determine
-            #     how many ports are being used on this switch. The
-            #     action_params appear to be fine but the ingress_port number
-            #     should be dynamic
-            # Northbound Routing
+            # Add entry for forwarding IPv6 packets
             table_entry = self.p4info_helper.build_table_entry(
                 table_name='{}.data_forward_ipv6_t'.format(self.p4_ingress),
                 match_fields={
@@ -122,6 +114,10 @@ class GatewayController(AbstractController):
 
     def set_multicast_group(self, sw, sw_info):
         mc_group_id = 1
+
+        # TODO/FIXME - Need to add logic to parse the topology to determine
+        #     egress ports being used on the switch.
+
         if sw_info['name'] == 'gateway1':
             replicas = [{'egress_port': '1', 'instance': '1'},
                         {'egress_port': '2', 'instance': '1'},
@@ -144,8 +140,8 @@ class GatewayController(AbstractController):
         sw.write_table_entry(table_entry)
 
     def add_data_forward(self, sw, sw_info, src_ip, mac, port):
-        logger.info("Gateway - Check if %s belongs to: %s", src_ip, list(self.known_devices))
-        if src_ip not in list(self.known_devices):
+        logger.info("Gateway - Check if %s belongs to: %s", src_ip, self.known_devices)
+        if src_ip not in self.known_devices:
             logger.info("Adding unique table entry on %s for %s", sw_info['name'], src_ip)
             table_entry = self.p4info_helper.build_table_entry(
                 table_name='{}.data_forward_ipv4_t'.format(self.p4_ingress),
@@ -169,29 +165,3 @@ class GatewayController(AbstractController):
                 })
             sw.write_table_entry(table_entry)
         self.known_devices.add(src_ip)
-
-    def interpret_digest(self, sw, sw_info, digest_data):
-        for members in digest_data:
-            if members.WhichOneof('data') == 'struct':
-                source_ip = decode_ipv4(members.struct.members[0].bitstring)
-                logger.info('Learned IP Address is: %s', source_ip)
-                source_mac = decode_mac(members.struct.members[1].bitstring)
-                logger.info('Learned MAC Address is: %s', source_mac)
-                ingress_port = int(members.struct.members[2].bitstring.encode('hex'), 16)
-                logger.info('Ingress Port is %s', ingress_port)
-                self.add_data_forward(sw, sw_info, source_ip, source_mac, ingress_port)
-
-    def receive_digests(self, sw, sw_info):
-        logger.info("Started listening thread for %s", sw_info['name'])
-        while True:
-            digests = sw.digest_list()
-            digest_data = digests.digest.data
-            logger.info('Received digests: [%s]', digests)
-            self.interpret_digest(sw, sw_info, digest_data)
-
-    def send_digest_entry(self, sw, sw_info):
-        digest_entry = self.p4info_helper.build_digest_entry(digest_name="mac_learn_digest")
-        sw.write_digest_entry(digest_entry)
-        logger.info('Gateway: Sent Digest Entry via P4Runtime: [%s]', digest_entry)
-        digest_list = Thread(target=self.receive_digests, args=(sw, sw_info))
-        digest_list.start()
