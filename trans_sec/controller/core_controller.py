@@ -14,9 +14,7 @@ import socket
 from logging import getLogger
 
 from trans_sec.controller.abstract_controller import AbstractController
-from trans_sec.utils.convert import decode_mac, decode_ipv4
 
-from threading import Thread
 logger = getLogger('core_controller')
 
 

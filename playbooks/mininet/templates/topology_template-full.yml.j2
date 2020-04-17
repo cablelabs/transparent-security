@@ -88,16 +88,6 @@ hosts:
     type: server
 switches:
 # TODO - Determine why changes to the ID in any of the switch id values causes a GRPC exception in the SDN controller upon startup
-  core:
-    name: core
-    id: 1
-    runtime_p4info: {{ remote_scripts_dir }}/p4/core.p4info
-    runtime_json: {{ remote_scripts_dir }}/p4/core.json
-    clone_egress: {{ clone_egress_port }}
-    subnet: 10.0.1.0
-    type: core
-    mac: 00:00:00:03:05:00
-    grpc: 127.0.0.1:50052
   gateway1:
     name: gateway1
     id: 2
@@ -134,6 +124,16 @@ switches:
     type: aggregate
     mac: 00:00:00:02:04:00
     grpc: 127.0.0.1:50051
+  core:
+    name: core
+    id: 1
+    runtime_p4info: {{ remote_scripts_dir }}/p4/core.p4info
+    runtime_json: {{ remote_scripts_dir }}/p4/core.json
+    clone_egress: {{ clone_egress_port }}
+    subnet: 10.0.1.0
+    type: core
+    mac: 00:00:00:03:05:00
+    grpc: 127.0.0.1:50052
 external:
   analytics_engine:
     name: ae

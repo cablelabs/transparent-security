@@ -11,9 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from logging import getLogger
-from threading import Thread
 from trans_sec.controller.abstract_controller import AbstractController
-from trans_sec.utils.convert import decode_mac, decode_ipv4
 
 logger = getLogger('aggregate_controller')
 
