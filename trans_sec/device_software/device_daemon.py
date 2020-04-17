@@ -19,6 +19,7 @@ from dateutil import parser
 
 from trans_sec.device_software.abstract_daemon import AbstractDaemon
 
+
 class ForwardingDaemon(AbstractDaemon):
     """
     Starts and controls an daemon running on a device within to send some UDP

@@ -138,7 +138,7 @@ class CoreController(AbstractController):
             {'egress_port': '1', 'instance': '1'},
             {'egress_port': '2', 'instance': '1'}]
 
-        multicast_entry = self.p4info_helper.build_multicast_group_entry(mc_group_id,replicas)
+        multicast_entry = self.p4info_helper.build_multicast_group_entry(mc_group_id, replicas)
         logger.info('Build Multicast Entry: %s', multicast_entry)
         sw.write_multicast_entry(multicast_entry)
         table_entry = self.p4info_helper.build_table_entry(
