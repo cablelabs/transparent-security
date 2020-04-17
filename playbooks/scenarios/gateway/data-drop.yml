@@ -34,12 +34,14 @@
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
     data_forward_table_action:
       control_name: TpsGwIngress
-      table_name: data_forward_t
+      table_name: "{{ 'data_forward_ipv4_t' if ip_version == '4' else 'data_forward_ipv6_t' }}"
       action:
         name: data_forward
         match_fields:
-          - key: standard_metadata.ingress_port
-            value: "{{ send_sw_port }}"
+          - key: "{{ 'hdr.ipv4.dstAddr' if ip_version == '4' else 'hdr.ipv6.dstAddr' }}"
+            value:
+              - "{{ receiver.ip if ip_version == '4' else receiver.ipv6 }}"
+              - "{{ 32 if ip_version == '4' else 128 }}"
         params:
           - key: dstAddr
             value: "{{ switch.mac }}"
