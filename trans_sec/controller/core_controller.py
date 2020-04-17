@@ -176,32 +176,3 @@ class CoreController(AbstractController):
                 })
             sw.write_table_entry(table_entry)
         self.known_devices.add(src_ip)
-
-    # def interpret_digest(self, sw, sw_info, digest_data):
-    #     logger.debug("Digest data %s", digest_data)
-    #     for members in digest_data:
-    #         logger.debug("Members: %s", members)
-    #         if members.WhichOneof('data') == 'struct':
-    #             source_ip = decode_ipv4(members.struct.members[0].bitstring)
-    #             logger.info('Learned IP Address is: %s', source_ip)
-    #             source_mac = decode_mac(members.struct.members[1].bitstring)
-    #             logger.info('Learned MAC Address is: %s', source_mac)
-    #             ingress_port = int(members.struct.members[2].bitstring.encode('hex'), 16)
-    #             logger.info('Ingress Port is %s', ingress_port)
-    #             self.add_data_forward(sw, sw_info, source_ip, source_mac, ingress_port)
-    #
-    # def receive_digests(self, sw, sw_info):
-    #     logger.info("Started listening thread for %s", sw_info['name'])
-    #     while True:
-    #         digests = sw.digest_list()
-    #         digest_data = digests.digest.data
-    #         logger.info('Received digests: [%s]', digests)
-    #         self.interpret_digest(sw, sw_info, digest_data)
-    #
-    # def send_digest_entry(self, sw, sw_info):
-    #     digest_entry = self.p4info_helper.build_digest_entry(digest_name="mac_learn_digest")
-    #     sw.write_digest_entry(digest_entry)
-    #     logger.info('Core: Sent Digest Entry via P4Runtime: [%s]', digest_entry)
-    #     digest_list = Thread(target=self.receive_digests, args=(sw, sw_info))
-    #     digest_list.start()
-
