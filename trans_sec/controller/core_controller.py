@@ -140,7 +140,7 @@ class CoreController(AbstractController):
         logger.info('Build Multicast Entry: %s', multicast_entry)
         sw.write_multicast_entry(multicast_entry)
         table_entry = self.p4info_helper.build_table_entry(
-            table_name='{}.mac_learn_t'.format(self.p4_ingress),
+            table_name='{}.arp_flood_t'.format(self.p4_ingress),
             match_fields={'hdr.ethernet.dst_mac': 'ff:ff:ff:ff:ff:ff'},
             action_name='{}.arp_flood'.format(self.p4_ingress),
             action_params={

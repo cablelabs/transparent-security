@@ -216,11 +216,6 @@ control TpsGwIngress(inout headers hdr,
         mark_to_drop(standard_metadata);;
     }
 
-    action arp_flood(macAddr_t srcAddr) {
-            hdr.ethernet.src_mac = srcAddr;
-            standard_metadata.mcast_grp = 1;
-    }
-
     action generate_learn_notification() {
         digest<mac_learn_digest>((bit<32>) 1024,
             { hdr.arp.srcAddr,
@@ -246,7 +241,12 @@ control TpsGwIngress(inout headers hdr,
         default_action = NoAction();
     }
 
-    table mac_learn_t {
+    action arp_flood(macAddr_t srcAddr) {
+        hdr.ethernet.src_mac = srcAddr;
+        standard_metadata.mcast_grp = 1;
+    }
+
+    table arp_flood_t {
         key = {
             hdr.ethernet.dst_mac: exact;
         }
@@ -276,7 +276,7 @@ control TpsGwIngress(inout headers hdr,
         if (hdr.arp.isValid()) {
             generate_learn_notification();
             if (hdr.arp.opcode == 1) {
-                mac_learn_t.apply();
+                arp_flood_t.apply();
             }
             else {
                 arp_reply_t.apply();

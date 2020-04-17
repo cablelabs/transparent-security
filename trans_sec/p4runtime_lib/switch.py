@@ -228,19 +228,14 @@ class SwitchConnection(object):
         update.type = p4runtime_pb2.Update.INSERT
         update.entity.digest_entry.CopyFrom(digest_entry)
         self.client_stub.Write(request)
-        logger.info('Digest Entry written')
 
     def digest_list_ack(self, digest_ack):
-        logger.debug("Before sending Digest List Acknowledgement")
         request = p4runtime_pb2.StreamMessageRequest()
         request.digest_ack.CopyFrom(digest_ack)
         self.requests_stream.put(request)
-        logger.debug("After receiving Digest List Acknowledgement")
 
     def digest_list(self):
-        logger.debug("Before receiving digest list")
         for item in self.stream_msg_resp:
-            logger.debug("After receiving digest list, returning %s", item)
             return item
 
     def write_multicast_entry(self, mc_entry):
