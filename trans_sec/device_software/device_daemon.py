@@ -36,7 +36,10 @@ class ForwardingDaemon(AbstractDaemon):
         self.logger.info('Starting thread for %s', self.mn_device)
 
     def __setup_device(self):
-        cmd = 'ping 10.0.1.8 -c 10 -I %s -i 3' % self.device_config.get('interface')
+        cmd = 'ping %s' % self.device_config.get('destination')
+        cmd += ' -c %s' % self.device_config.get('packet_count')
+        cmd += ' -I %s' % self.device_config.get('interface')
+        cmd += ' -i %s' % self.device_config.get('interval')
         self.logger.info('Command run on device %s - [%s]',
                          self.device_name, cmd)
         self.cmd = cmd
