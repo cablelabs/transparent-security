@@ -24,7 +24,7 @@ control TpsEgress(inout headers hdr,
                   inout standard_metadata_t standard_metadata) {
 
     action drop() {
-            mark_to_drop(standard_metadata);
+        mark_to_drop(standard_metadata);
     }
 
     apply {
