@@ -27,7 +27,6 @@ class GatewayController(AbstractController):
             platform, p4_build_out, topo, 'gateway',
             ['TpsGwIngress.forwardedPackets', 'TpsGwIngress.droppedPackets'],
             log_dir, load_p4, 'TpsGwIngress')
-        self.known_devices = set()
 
     def make_rules(self, sw, sw_info, north_facing_links, south_facing_links):
         """

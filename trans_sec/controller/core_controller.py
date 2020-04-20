@@ -34,7 +34,6 @@ class CoreController(AbstractController):
             platform, p4_build_out, topo, 'core', list(), log_dir, load_p4,
             'TpsCoreIngress')
         self.p4_egress = 'TpsCoreEgress'
-        self.known_devices = set()
 
     def make_rules(self, sw, sw_info, north_facing_links, south_facing_links):
         super(self.__class__, self).make_rules(

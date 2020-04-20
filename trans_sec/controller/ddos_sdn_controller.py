@@ -63,7 +63,6 @@ class DdosSdnController:
         logger.info('Starting Controllers')
         for controller in self.controllers.values():
             controller.start()
-            controller.switch_forwarding()
 
         self.__make_switch_rules()
         self.__build_skeleton_packet_telemetry()

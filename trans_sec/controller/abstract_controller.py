@@ -43,6 +43,8 @@ class AbstractController(object):
         self.load_p4 = load_p4
         self.switches = list()
         self.p4_ingress = p4_ingress
+        self.known_devices = set()
+        self.digest_daemon = None
 
         if self.platform == 'bmv2':
             p4info_txt = "{0}/{1}.{2}".format(
@@ -59,6 +61,7 @@ class AbstractController(object):
         logger.info('Adding helpers to switch of type - [%s]',
                     self.switch_type)
         self.__add_helpers()
+        self.switch_forwarding()
 
     def make_rules(self, sw, sw_info, north_facing_links, south_facing_links):
         """
@@ -209,8 +212,11 @@ class AbstractController(object):
         digest_entry = self.p4info_helper.build_digest_entry(digest_name="mac_learn_digest")
         sw.write_digest_entry(digest_entry)
         logger.info('Core: Sent Digest Entry via P4Runtime: [%s]', digest_entry)
-        digest_list = Thread(target=self.receive_digests, args=(sw, sw_info))
-        digest_list.start()
+        self.digest_daemon = Thread(target=self.receive_digests, args=(sw, sw_info))
+        self.digest_daemon.start()
+
+    def stop(self):
+        self.digest_daemon.stop()
 
     def add_attacker(self, attack, host):
         logger.info('Adding an attack [%s] to host [%s] and switches [%s]',
@@ -393,7 +399,7 @@ class AbstractController(object):
                     self.switch_type, name)
 
     def set_multicast_group(self, switch, sw_info):
-        pass
+        raise NotImplemented
 
     def add_data_forward(self, sw, sw_info, source_ip, source_mac, ingress_port):
-        pass
+        raise NotImplemented

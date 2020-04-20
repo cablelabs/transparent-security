@@ -26,7 +26,6 @@ class AggregateController(AbstractController):
             platform, p4_build_out, topo, 'aggregate',
             ['TpsAggIngress.forwardedPackets'],
             log_dir, load_p4, 'TpsAggIngress')
-        self.known_devices = set()
 
     def make_north_rules(self, sw, sw_info, north_link):
         if north_link.get('north_facing_port'):
