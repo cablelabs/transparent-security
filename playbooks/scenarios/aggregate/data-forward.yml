@@ -46,8 +46,6 @@
             value: "{{ switch.mac }}"
           - key: port
             value: "{{ rec_sw_port }}"
-          - key: l2ptr
-            value: 0
 
 # Basic Data Forward scenario for INT UDP Packets without a data-inspection table entry so the original simply passes through
 - import_playbook: ../single_switch/data_forward_basic.yml
@@ -81,8 +79,6 @@
             value: "{{ switch.mac }}"
           - key: port
             value: "{{ rec_sw_port }}"
-          - key: l2ptr
-            value: 0
     # For sending INT packets on the #1 of 3 send/receive iteration
     sr_data_inspection_int:
       - switch_id: 1001

@@ -20,6 +20,32 @@ from dateutil import parser
 from trans_sec.device_software.abstract_daemon import AbstractDaemon
 
 
+class ForwardingDaemon(AbstractDaemon):
+    """
+    Starts and controls an daemon running on a device within to send some UDP
+    packets
+    """
+
+    def start(self):
+        # wait a few seconds to start
+        super(self.__class__, self).start()
+        sleep(5)
+        self.logger.info('Starting ForwardingDaemon on device - [%s]',
+                         self.mn_device.name)
+        self.__setup_device()
+        self.run()
+        self.logger.info('Starting thread for %s', self.mn_device)
+
+    def __setup_device(self):
+        cmd = 'ping %s' % self.device_config.get('destination')
+        cmd += ' -c %s' % self.device_config.get('packet_count')
+        cmd += ' -I %s' % self.device_config.get('interface')
+        cmd += ' -i %s' % self.device_config.get('interval')
+        self.logger.info('Command run on device %s - [%s]',
+                         self.device_name, cmd)
+        self.cmd = cmd
+
+
 class HeartbeatDaemon(AbstractDaemon):
     """
     Starts and controls an daemon running on a device within to send some UDP
@@ -54,7 +80,8 @@ class HeartbeatDaemon(AbstractDaemon):
             'switch_ethernet')
         self.logger.info('Command run on device %s - [%s]',
                          self.device_name, cmd)
-        self.cmd = cmd
+        command = 'ping 10.0.1.8 -c 10 -I %s -i 3' % self.device_config.get('interface')
+        self.cmd = command
 
 
 class SniffAndLogDaemon(AbstractDaemon):

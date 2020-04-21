@@ -48,8 +48,8 @@ def get_args():
 
     attack = {
         'src_mac': '00:00:00:00:03:01',
-        'src_ip': '192.168.3.2',
-        'dst_ip': '10.2.5.2',
+        'src_ip': '10.0.1.6',
+        'dst_ip': '10.0.1.8',
         'dst_port': '4323',
         'packet_size': '86',
         'attack_type': 'UDP Flood',

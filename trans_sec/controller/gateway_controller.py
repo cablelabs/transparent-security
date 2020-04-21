@@ -11,9 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from logging import getLogger
-
 import trans_sec.consts
-from trans_sec.analytics import oinc
 from trans_sec.controller.abstract_controller import AbstractController
 
 logger = getLogger('gateway_controller')
@@ -95,55 +93,74 @@ class GatewayController(AbstractController):
                     ' MAC - [%s] with action params - [%s]',
                     device.get('mac'), action_params)
 
-            # TODO/FIXME - Need to add logic to parse the topology to determine
-            #     how many ports are being used on this switch. The
-            #     action_params appear to be fine but the ingress_port number
-            #     should be dynamic
-            # Northbound Routing
+            inet = self.topo['hosts']['inet']
+
+            # Add entry for forwarding IPv6 packets
             table_entry = self.p4info_helper.build_table_entry(
-                table_name='{}.data_forward_t'.format(self.p4_ingress),
+                table_name='{}.data_forward_ipv6_t'.format(self.p4_ingress),
                 match_fields={
-                    'standard_metadata.ingress_port': 1
+                    'hdr.ipv6.dstAddr': (inet['ipv6'], 128)
                 },
                 action_name='{}.data_forward'.format(self.p4_ingress),
                 action_params={
                     'dstAddr': north_switch['mac'],
-                    'port': sw_link['north_facing_port'],
-                    'l2ptr': 0
+                    'port': sw_link['north_facing_port']
                 })
             sw.write_table_entry(table_entry)
-            logger.info('Installed Northbound from port 1 to port %d',
-                        sw_link.get('north_facing_port'))
-            # Northbound Routing
-            table_entry = self.p4info_helper.build_table_entry(
-                table_name='{}.data_forward_t'.format(self.p4_ingress),
-                match_fields={
-                    'standard_metadata.ingress_port': 2
-                },
-                action_name='{}.data_forward'.format(self.p4_ingress),
-                action_params={
-                    'dstAddr': north_switch['mac'],
-                    'port': sw_link['north_facing_port'],
-                    'l2ptr': 0
-                })
-            sw.write_table_entry(table_entry)
-            logger.info('Installed Northbound from port 2 to port %d',
-                        sw_link.get('north_facing_port'))
-            # Northbound Routing
-            table_entry = self.p4info_helper.build_table_entry(
-                table_name='{}.data_forward_t'.format(self.p4_ingress),
-                match_fields={
-                    'standard_metadata.ingress_port': 3
-                },
-                action_name='{}.data_forward'.format(self.p4_ingress),
-                action_params={
-                    'dstAddr': north_switch['mac'],
-                    'port': sw_link['north_facing_port'],
-                    'l2ptr': 0
-                })
-            sw.write_table_entry(table_entry)
-            logger.info('Installed Northbound from port 3 to port %d',
-                        sw_link.get('north_facing_port'))
         else:
             logger.error('Wrong number of nb switches on gateway')
             logger.error(sw_info.get('name'))
+
+    def set_multicast_group(self, sw, sw_info):
+        mc_group_id = 1
+
+        # TODO/FIXME - Need to add logic to parse the topology to determine
+        #     egress ports being used on the switch.
+
+        if sw_info['name'] == 'gateway1':
+            replicas = [{'egress_port': '1', 'instance': '1'},
+                        {'egress_port': '2', 'instance': '1'},
+                        {'egress_port': '3', 'instance': '1'},
+                        {'egress_port': '4', 'instance': '1'}]
+        else:
+            replicas = [{'egress_port': '1', 'instance': '1'},
+                        {'egress_port': '2', 'instance': '1'},
+                        {'egress_port': '3', 'instance': '1'}]
+        multicast_entry = self.p4info_helper.build_multicast_group_entry(mc_group_id, replicas)
+        logger.info('Build Multicast Entry: %s', multicast_entry)
+        sw.write_multicast_entry(multicast_entry)
+        table_entry = self.p4info_helper.build_table_entry(
+            table_name='{}.arp_flood_t'.format(self.p4_ingress),
+            match_fields={'hdr.ethernet.dst_mac': 'ff:ff:ff:ff:ff:ff'},
+            action_name='{}.arp_flood'.format(self.p4_ingress),
+            action_params={
+                'srcAddr': sw_info['mac']
+            })
+        sw.write_table_entry(table_entry)
+
+    def add_data_forward(self, sw, sw_info, src_ip, mac, port):
+        logger.info("Gateway - Check if %s belongs to: %s", src_ip, self.known_devices)
+        if src_ip not in self.known_devices:
+            logger.info("Adding unique table entry on %s for %s", sw_info['name'], src_ip)
+            table_entry = self.p4info_helper.build_table_entry(
+                table_name='{}.data_forward_ipv4_t'.format(self.p4_ingress),
+                match_fields={
+                    'hdr.ipv4.dstAddr': (src_ip, 32)
+                },
+                action_name='{}.data_forward'.format(self.p4_ingress),
+                action_params={
+                    'dstAddr': mac,
+                    'port': port
+                })
+            sw.write_table_entry(table_entry)
+            table_entry = self.p4info_helper.build_table_entry(
+                table_name='{}.arp_reply_t'.format(self.p4_ingress),
+                match_fields={'hdr.arp.dstAddr': (src_ip, 32)},
+                action_name='{}.arp_reply'.format(self.p4_ingress),
+                action_params={
+                    'srcAddr': sw_info['mac'],
+                    'dstAddr': mac,
+                    'port': port
+                })
+            sw.write_table_entry(table_entry)
+        self.known_devices.add(src_ip)

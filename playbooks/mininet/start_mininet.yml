@@ -26,6 +26,10 @@
   gather_facts: no
   become: yes
   tasks:
+    - name: Create forwarding configuration
+      template:
+        src: templates/forwarding-daemons.yaml.j2
+        dest: "{{ forwarding_conf_file }}"
     - name: Create devices configuration
       template:
         src: templates/devices.yaml.j2

@@ -59,6 +59,7 @@ class SwitchConnection(object):
         self.requests_stream = IterableQueue()
         self.stream_msg_resp = self.client_stub.StreamChannel(iter(
             self.requests_stream))
+        self.proto_dump_file = proto_dump_file
 
     @abstractmethod
     def build_device_config(self, **kwargs):
@@ -218,6 +219,41 @@ class SwitchConnection(object):
         logger.debug('Request for resetting counters to device %s - [%s]',
                      self.device_id, request)
         self.client_stub.Write(request)
+
+    def write_digest_entry(self, digest_entry):
+        request = p4runtime_pb2.WriteRequest()
+        request.device_id = self.device_id
+        request.election_id.low = 1
+        update = request.updates.add()
+        update.type = p4runtime_pb2.Update.INSERT
+        update.entity.digest_entry.CopyFrom(digest_entry)
+        self.client_stub.Write(request)
+
+    def digest_list_ack(self, digest_ack):
+        request = p4runtime_pb2.StreamMessageRequest()
+        request.digest_ack.CopyFrom(digest_ack)
+        self.requests_stream.put(request)
+
+    def digest_list(self):
+        for item in self.stream_msg_resp:
+            return item
+
+    def write_multicast_entry(self, mc_entry):
+        request = p4runtime_pb2.WriteRequest()
+        request.device_id = self.device_id
+        request.election_id.low = 1
+        update = request.updates.add()
+        update.type = p4runtime_pb2.Update.INSERT
+        update.entity.packet_replication_engine_entry.CopyFrom(mc_entry)
+
+        try:
+            logger.debug(
+                'Request for writing a multicast entry to device %s - [%s]',
+                self.device_id, request)
+            self.client_stub.Write(request)
+        except Exception as e:
+            logging.error('Error requesting [%s] multicast - [%s]', request, e)
+            raise e
 
 
 class GrpcRequestLogger(grpc.UnaryUnaryClientInterceptor,

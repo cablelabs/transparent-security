@@ -110,19 +110,6 @@ class CoreController(AbstractController):
                 'Adding data_forward entry to forward packets to  port - [%s]',
                 north_link['north_facing_port'])
 
-            # Add entry for forwarding IPv4 packets
-            table_entry = self.p4info_helper.build_table_entry(
-                table_name='{}.data_forward_ipv4_t'.format(self.p4_ingress),
-                match_fields={
-                    'hdr.ipv4.dstAddr': (north_device['ip'], 32),
-                },
-                action_name='{}.data_forward'.format(self.p4_ingress),
-                action_params={
-                    'dstAddr': north_device['mac'],
-                    'port': north_link['north_facing_port']
-                })
-            sw.write_table_entry(table_entry)
-
             # Add entry for forwarding IPv6 packets
             table_entry = self.p4info_helper.build_table_entry(
                 table_name='{}.data_forward_ipv6_t'.format(self.p4_ingress),
@@ -139,3 +126,52 @@ class CoreController(AbstractController):
             logger.info(
                 'Installed Host %s ipv4 cloning rule on %s',
                 north_device.get('ip'), sw.name)
+
+    def set_multicast_group(self, sw, sw_info):
+        mc_group_id = 1
+
+        # TODO/FIXME - Need to add logic to parse the topology to determine
+        #     egress ports being used on the switch.
+
+        replicas = [
+            {'egress_port': '1', 'instance': '1'},
+            {'egress_port': '2', 'instance': '1'}]
+
+        multicast_entry = self.p4info_helper.build_multicast_group_entry(mc_group_id, replicas)
+        logger.info('Build Multicast Entry: %s', multicast_entry)
+        sw.write_multicast_entry(multicast_entry)
+        table_entry = self.p4info_helper.build_table_entry(
+            table_name='{}.arp_flood_t'.format(self.p4_ingress),
+            match_fields={'hdr.ethernet.dst_mac': 'ff:ff:ff:ff:ff:ff'},
+            action_name='{}.arp_flood'.format(self.p4_ingress),
+            action_params={
+                'srcAddr': sw_info['mac']
+            })
+        sw.write_table_entry(table_entry)
+
+    def add_data_forward(self, sw, sw_info, src_ip, mac, port):
+        logger.info("%s - Check if %s belongs to: %s", sw_info['name'], src_ip, self.known_devices)
+        if src_ip not in self.known_devices:
+            logger.info("Adding unique table entry on %s for %s", sw_info['name'], src_ip)
+            table_entry = self.p4info_helper.build_table_entry(
+                table_name='{}.data_forward_ipv4_t'.format(self.p4_ingress),
+                match_fields={
+                    'hdr.ipv4.dstAddr': (src_ip, 32)
+                },
+                action_name='{}.data_forward'.format(self.p4_ingress),
+                action_params={
+                    'dstAddr': mac,
+                    'port': port
+                })
+            sw.write_table_entry(table_entry)
+            table_entry = self.p4info_helper.build_table_entry(
+                table_name='{}.arp_reply_t'.format(self.p4_ingress),
+                match_fields={'hdr.arp.dstAddr': (src_ip, 32)},
+                action_name='{}.arp_reply'.format(self.p4_ingress),
+                action_params={
+                    'srcAddr': sw_info['mac'],
+                    'dstAddr': mac,
+                    'port': port
+                })
+            sw.write_table_entry(table_entry)
+        self.known_devices.add(src_ip)

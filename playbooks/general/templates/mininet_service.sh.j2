@@ -15,7 +15,7 @@
 #
 # Stops then starts mininet with the given topology
 {% if run_daemons %}
-mn -c; python {{ remote_tps_dir }}/bin/run_p4_mininet.py -t {{ topo_file_loc }} -l {{ srvc_log_dir }} -dc {{ devices_conf_file }} -lp {{ load_p4 | default('False') }}
+mn -c; python {{ remote_tps_dir }}/bin/run_p4_mininet.py -t {{ topo_file_loc }} -l {{ srvc_log_dir }} -fc {{ forwarding_conf_file }} -dc {{ devices_conf_file }} -lp {{ load_p4 | default('False') }}
 {% else %}
-mn -c; python {{ remote_tps_dir }}/bin/run_p4_mininet.py -t {{ topo_file_loc }} -l {{ srvc_log_dir }} -lp {{ load_p4 | default('False') }}
+mn -c; python {{ remote_tps_dir }}/bin/run_p4_mininet.py -t {{ topo_file_loc }} -l {{ srvc_log_dir }} -fc {{ forwarding_conf_file }} -lp {{ load_p4 | default('False') }}
 {% endif %}

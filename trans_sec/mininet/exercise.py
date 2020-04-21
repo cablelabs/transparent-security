@@ -160,7 +160,7 @@ class ExerciseRunner:
     """
 
     def __init__(self, topo, log_dir, pcap_dir, switch_json,
-                 devices_conf=None, start_cli=False, load_p4=True):
+                 devices_conf=None, forwarding_conf=None, start_cli=False, load_p4=True):
         """ Initializes some attributes and reads the topology json. Does not
             actually run the exercise. Use run_exercise() for that.
 
@@ -179,6 +179,7 @@ class ExerciseRunner:
         self.external = topo.get('external')
         self.links = topo['links']
         self.devices_conf = devices_conf
+        self.forwarding_conf = forwarding_conf
         self.start_cli = start_cli
         self.load_p4 = load_p4
 
@@ -217,6 +218,11 @@ class ExerciseRunner:
         if self.load_p4:
             logger.info('Loading P4 programs on switches')
             self.__program_switches()
+
+        if self.forwarding_conf:
+            self.daemon_runner = DaemonRunner(self.mininet, self.forwarding_conf,
+                                              self.log_dir)
+            self.daemon_runner.start_daemons()
 
         if self.devices_conf:
             self.daemon_runner = DaemonRunner(self.mininet, self.devices_conf,

@@ -12,8 +12,9 @@
 # limitations under the License.
 import ipaddress
 from logging import getLogger
-
+from threading import Thread
 from trans_sec.p4runtime_lib import bmv2, helper, tofino
+from trans_sec.utils.convert import decode_ipv4, decode_mac
 
 logger = getLogger('abstract_controller')
 
@@ -42,6 +43,8 @@ class AbstractController(object):
         self.load_p4 = load_p4
         self.switches = list()
         self.p4_ingress = p4_ingress
+        self.known_devices = set()
+        self.digest_threads = list()
 
         if self.platform == 'bmv2':
             p4info_txt = "{0}/{1}.{2}".format(
@@ -58,6 +61,11 @@ class AbstractController(object):
         logger.info('Adding helpers to switch of type - [%s]',
                     self.switch_type)
         self.__add_helpers()
+        self.switch_forwarding()
+
+    def stop(self):
+        for thread in self.digest_threads:
+            thread.stop()
 
     def make_rules(self, sw, sw_info, north_facing_links, south_facing_links):
         """
@@ -111,7 +119,7 @@ class AbstractController(object):
         pass
 
     def __add_helpers(self):
-        logger.info('Setting up helpers')
+        logger.info('Setting up helpers for %s', self.switch_type)
         for name, switch in self.topo['switches'].items():
             logger.info('Setting up helper for - [%s] of type - [%s]',
                         name, switch.get('type'))
@@ -174,6 +182,43 @@ class AbstractController(object):
             self.make_rules(sw=switch, sw_info=sw_info,
                             north_facing_links=north_links,
                             south_facing_links=south_links)
+
+    def switch_forwarding(self):
+        logger.info('Forwarding Rules for controller [%s]', self.switch_type)
+        for switch in self.switches:
+            logger.info('L2 forwarding rules for %s', switch.name)
+            sw_info, north_links, south_links = self.__get_links(switch.name)
+            self.set_multicast_group(switch, sw_info)
+            self.send_digest_entry(switch, sw_info)
+
+    def interpret_digest(self, sw, sw_info, digest_data):
+        logger.debug("Digest data %s", digest_data)
+        for members in digest_data:
+            logger.debug("Members: %s", members)
+            if members.WhichOneof('data') == 'struct':
+                source_ip = decode_ipv4(members.struct.members[0].bitstring)
+                logger.info('Learned IP Address is: %s', source_ip)
+                source_mac = decode_mac(members.struct.members[1].bitstring)
+                logger.info('Learned MAC Address is: %s', source_mac)
+                ingress_port = int(members.struct.members[2].bitstring.encode('hex'), 16)
+                logger.info('Ingress Port is %s', ingress_port)
+                self.add_data_forward(sw, sw_info, source_ip, source_mac, ingress_port)
+
+    def receive_digests(self, sw, sw_info):
+        logger.info("Started listening thread for %s", sw_info['name'])
+        while True:
+            digests = sw.digest_list()
+            digest_data = digests.digest.data
+            logger.info('Received digests: [%s]', digests)
+            self.interpret_digest(sw, sw_info, digest_data)
+
+    def send_digest_entry(self, sw, sw_info):
+        digest_daemon = Thread(target=self.receive_digests, args=(sw, sw_info))
+        self.digest_threads.append(digest_daemon)
+        digest_entry = self.p4info_helper.build_digest_entry(digest_name="mac_learn_digest")
+        sw.write_digest_entry(digest_entry)
+        logger.info('Core: Sent Digest Entry via P4Runtime: [%s]', digest_entry)
+        digest_daemon.start()
 
     def add_attacker(self, attack, host):
         logger.info('Adding an attack [%s] to host [%s] and switches [%s]',
@@ -354,3 +399,9 @@ class AbstractController(object):
         self.switches.append(new_switch)
         logger.info('Instantiated connection to Tofino switch - [%s]',
                     self.switch_type, name)
+
+    def set_multicast_group(self, switch, sw_info):
+        raise NotImplemented
+
+    def add_data_forward(self, sw, sw_info, source_ip, source_mac, ingress_port):
+        raise NotImplemented

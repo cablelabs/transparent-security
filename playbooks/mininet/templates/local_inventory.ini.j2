@@ -11,6 +11,7 @@ trans_sec_dir={{ remote_tps_dir | default('/home/ubuntu/transparent-security') }
 remote_scripts_dir={{ remote_scripts_dir | default('/etc/transparent-security') }}
 topo_file={{ topo_file_loc | default('/etc/transparent-security/mininet-sim-topology.yaml') }}
 dev_daemon_file={{ dev_daemon_file | default('/etc/transparent-security/device-daemons.yml') }}
+forwarding_daemon_file={{ forwarding_daemon_file | default('/etc/transparent-security/forwarding-daemons.yml') }}
 sdn_host={{ sdn_host | default('localhost') }}
 sdn_port={{ sdn_port | default('9998') }}
 ae_host={{ ae_host | default('localhost') }}

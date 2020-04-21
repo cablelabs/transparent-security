@@ -305,7 +305,7 @@ class SimpleAE(PacketAnalytics):
         if packet[Ether].type == IPV4_TYPE:
             ip_pkt = IP(_pkt=packet[Ether].payload)
             protocol = ip_pkt.proto
-        else:
+        elif packet[Ether].type == IPV6_TYPE:
             ip_pkt = IPv6(_pkt=packet[Ether].payload)
             protocol = ip_pkt.nh
 

@@ -32,6 +32,20 @@ header ethernet_t {
 }
 
 /*************************
+ARP header definition
+**************************/
+header arp_t {
+    bit<16>    hwType;
+    bit<16>    protoType;
+    bit<8>     hwAddrLen;
+    bit<8>     protoAddrLen;
+    bit<16>    opcode;
+    bit<48>    src_mac;
+    bit<32>    srcAddr;
+    bit<48>    dst_mac;
+    bit<32>    dstAddr;
+}
+/*************************
 IPv4 header definition
 **************************/
 header ipv4_t {
@@ -189,15 +203,16 @@ struct headers {
     int_metadata_t    int_meta_2;
     source_metadata_t int_meta;
 
+    arp_t             arp;
     udp_t             udp;
     tcp_t             tcp;
 }
 
-struct fwd_meta_t {
-    bit<32> l2ptr;
-    bit<24> out_bd;
+struct mac_learn_digest {
+    bit<32> src_IP;
+    bit<48> src_mac;
+    bit<9> ingress_port;
 }
 
 struct metadata {
-    fwd_meta_t fwd;
 }
