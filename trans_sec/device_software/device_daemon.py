@@ -28,7 +28,7 @@ class ForwardingDaemon(AbstractDaemon):
         self.logger.info('Starting ForwardingDaemon on device - [%s]',
                          self.mn_device.name)
         self.__setup_device()
-        self.__run()
+        self.run()
         self.logger.info('Starting thread for %s', self.mn_device)
 
     def __setup_device(self):

@@ -43,7 +43,7 @@ class AbstractDaemon(object):
         self.running = False
         self.logger.info('Thread %s stopping' % self.mn_device.name)
 
-    def __run(self):
+    def run(self):
         if self.cmd:
             self.logger.info('Command run on device %s - [%s] from class [%s]',
                              self.device_name, self.cmd,
