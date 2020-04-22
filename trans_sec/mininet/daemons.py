@@ -14,8 +14,7 @@
 import logging
 import threading
 
-from trans_sec.device_software.device_daemon import SniffAndLogDaemon, \
-    HeartbeatDaemon, AttackDaemon, ForwardingDaemon
+from trans_sec.device_software.device_daemon import ForwardingDaemon
 
 logger = logging.getLogger('daemons')
 
@@ -44,17 +43,14 @@ class DaemonRunner:
 
         # Create Mininet host daemons
         for host_name, dev_confs in self.devices_conf.items():
-            # if self.mininet.get(host_name):
             for dev_conf in dev_confs:
-                daemon = self.__create_daemon(host_name, dev_conf)
-                if daemon:
-                    self.daemons.append(self.__create_daemon(
-                        host_name, dev_conf))
+                self.daemons.append(self.__create_daemon(host_name, dev_conf))
 
         for daemon in self.daemons:
             logger.info('Starting Daemon for %s', daemon.mn_device.name)
             t1 = threading.Thread(target=daemon.start, args=())
             t1.start()
+            logger.info('Daemon [%s] started', daemon.mn_device.name)
             self.threads.append(t1)
 
     def stop(self):
@@ -66,59 +62,21 @@ class DaemonRunner:
         Instantiates the configured daemon object
         """
         logger.info('Creating daemon on %s with conf %s', host_name, dev_conf)
-        daemon_type = dev_conf.get('daemon')
         mn_device = None
         for device in self.mininet.hosts:
             if device.name == host_name:
                 mn_device = device
 
-        if daemon_type and mn_device:
-            device_log_file = '{}/device_{}_{}.log'.format(
-                self.log_dir, daemon_type, host_name)
-            if daemon_type == 'forwarding':
-                logger.info(
-                    'Creating forwarding daemon for [%s] and log file [%s]',
-                    host_name, device_log_file)
-                return ForwardingDaemon(
-                    device_name=host_name,
-                    mn_device=mn_device,
-                    device_config=dev_conf,
-                    log_file=device_log_file,
-                    device_log_dir=self.log_dir,
-                    level=logging.DEBUG)
-
-            elif daemon_type == 'attack':
-                logger.info(
-                    'Creating attack daemon for [%s] and log file [%s]',
-                    host_name, device_log_file)
-                return AttackDaemon(
-                    device_name=host_name,
-                    mn_device=mn_device,
-                    device_config=dev_conf,
-                    log_file=device_log_file,
-                    device_log_dir=self.log_dir,
-                    level=logging.DEBUG)
-
-            elif daemon_type == 'heartbeat':
-                logger.info(
-                    'Creating heartbeat daemon for [%s] and log file [%s]',
-                    host_name, device_log_file)
-                return HeartbeatDaemon(
-                    device_name=host_name,
-                    mn_device=mn_device,
-                    device_config=dev_conf,
-                    log_file=device_log_file,
-                    device_log_dir=self.log_dir,
-                    level=logging.DEBUG)
-
-            elif daemon_type == 'sniff_and_log':
-                logger.info(
-                    'Creating sniff and log daemon for [%s] and log file [%s]',
-                    host_name, device_log_file)
-                return SniffAndLogDaemon(
-                    device_name=host_name,
-                    mn_device=mn_device,
-                    device_config=dev_conf,
-                    log_file=device_log_file,
-                    device_log_dir=self.log_dir,
-                    level=logging.DEBUG)
+        if mn_device:
+            device_log_file = '{}/fwd_daemon_{}.log'.format(
+                self.log_dir, host_name)
+            logger.info(
+                'Creating forwarding daemon for [%s] and log file [%s]',
+                host_name, device_log_file)
+            return ForwardingDaemon(
+                device_name=host_name,
+                mn_device=mn_device,
+                device_config=dev_conf,
+                log_file=device_log_file,
+                device_log_dir=self.log_dir,
+                level=logging.DEBUG)

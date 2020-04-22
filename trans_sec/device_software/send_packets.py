@@ -137,7 +137,8 @@ def device_send(args):
 
 
 def __create_packet(args, interface):
-    logger.info('Send to destination - [%s]', args.destination)
+    logger.info('Send to destination - [%s] on interface - [%s]',
+                args.destination, interface)
 
     src_mac = args.src_mac
     if not src_mac:

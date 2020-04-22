@@ -1,43 +1,36 @@
 ---
-Camera1:
-  - daemon: forwarding
-    destination: 10.0.1.8
-    interface: Camera1-eth0
-    packet_count: 10
+{{ topo_dict.hosts['Camera1'].name }}:
+  - destination: {{ topo_dict.hosts['inet'].ip }}
+    interface: {{ topo_dict.hosts['Camera1'].name }}-eth0
+    packet_count: 15
     interval: 3
-NAS1:
-  - daemon: forwarding
-    destination: 10.0.1.8
-    interface: NAS1-eth0
-    packet_count: 10
+{{ topo_dict.hosts['NAS1'].name }}:
+  - destination: {{ topo_dict.hosts['inet'].ip }}
+    interface: {{ topo_dict.hosts['NAS1'].name }}-eth0
+    packet_count: 15
     interval: 3
-Game1:
-  - daemon: forwarding
-    destination: 10.0.1.8
-    interface: Game1-eth0
-    packet_count: 10
+{{ topo_dict.hosts['Game1'].name }}:
+  - destination: {{ topo_dict.hosts['inet'].ip }}
+    interface: {{ topo_dict.hosts['Game1'].name }}-eth0
+    packet_count: 15
     interval: 3
-Camera2:
-  - daemon: forwarding
-    destination: 10.0.1.8
-    interface: Camera2-eth0
-    packet_count: 10
+{{ topo_dict.hosts['Camera2'].name }}:
+  - destination: {{ topo_dict.hosts['inet'].ip }}
+    interface: {{ topo_dict.hosts['Camera2'].name }}-eth0
+    packet_count: 15
     interval: 3
-Game2:
-  - daemon: forwarding
-    destination: 10.0.1.8
-    interface: Game2-eth0
-    packet_count: 10
+{{ topo_dict.hosts['Game2'].name }}:
+  - destination: {{ topo_dict.hosts['inet'].ip }}
+    interface: {{ topo_dict.hosts['Game2'].name }}-eth0
+    packet_count: 15
     interval: 3
-Camera3:
--   daemon: forwarding
-    destination: 10.0.1.8
-    interface: Camera3-eth0
-    packet_count: 10
+{{ topo_dict.hosts['Camera3'].name }}:
+-   destination: {{ topo_dict.hosts['inet'].ip }}
+    interface: {{ topo_dict.hosts['Camera3'].name }}-eth0
+    packet_count: 15
     interval: 3
-Game3:
-  - daemon: forwarding
-    destination: 10.0.1.8
-    interface: Game3-eth0
-    packet_count: 10
+{{ topo_dict.hosts['Game3'].name }}:
+  - destination: {{ topo_dict.hosts['inet'].ip }}
+    interface: {{ topo_dict.hosts['Game3'].name }}-eth0
+    packet_count: 15
     interval: 3
