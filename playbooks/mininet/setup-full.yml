@@ -24,6 +24,7 @@
       - aggregate
       - gateway
     topology_template: "templates/topology_template-full.yml.j2"
+    use_fwd_config: True
 
 - import_playbook: ../general/start_service.yml
   vars:

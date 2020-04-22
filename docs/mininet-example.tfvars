@@ -25,7 +25,3 @@ ec2_region = "us-west-2"
 # MUST be changed to the AMI ID generated from CI env-build
 # Only used for running simulator
 # mininet_ami = "ami-060d055b5ca40de8c"
-
-# When 'True', the mininet host daemons will be started else not (Default 'True')
-# Only used for running simulator
-# run_daemons = "True"

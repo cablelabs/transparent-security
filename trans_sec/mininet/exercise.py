@@ -160,7 +160,7 @@ class ExerciseRunner:
     """
 
     def __init__(self, topo, log_dir, pcap_dir, switch_json,
-                 devices_conf=None, forwarding_conf=None, start_cli=False, load_p4=True):
+                 forwarding_conf=None, start_cli=False, load_p4=True):
         """ Initializes some attributes and reads the topology json. Does not
             actually run the exercise. Use run_exercise() for that.
 
@@ -178,7 +178,6 @@ class ExerciseRunner:
         self.switches = topo['switches']
         self.external = topo.get('external')
         self.links = topo['links']
-        self.devices_conf = devices_conf
         self.forwarding_conf = forwarding_conf
         self.start_cli = start_cli
         self.load_p4 = load_p4
@@ -197,9 +196,7 @@ class ExerciseRunner:
                                  self.links, self.log_dir)
         self.mininet = self.__setup_mininet()
         self.running = False
-        self.daemons = list()
-        self.daemon_threads = list()
-        self.daemon_runner = None
+        self.fwd_runner = None
 
     def run_exercise(self):
         """ Sets up the mininet instance, programs the switches,
@@ -220,14 +217,11 @@ class ExerciseRunner:
             self.__program_switches()
 
         if self.forwarding_conf:
-            self.daemon_runner = DaemonRunner(self.mininet, self.forwarding_conf,
-                                              self.log_dir)
-            self.daemon_runner.start_daemons()
-
-        if self.devices_conf:
-            self.daemon_runner = DaemonRunner(self.mininet, self.devices_conf,
-                                              self.log_dir)
-            self.daemon_runner.start_daemons()
+            logger.debug('Starting forwarding daemon with config - [%s]',
+                         self.forwarding_conf)
+            self.fwd_runner = DaemonRunner(self.mininet, self.forwarding_conf,
+                                           self.log_dir)
+            self.fwd_runner.start_daemons()
 
         if self.start_cli:
             logger.info('Starting mininet CLI')
@@ -237,7 +231,8 @@ class ExerciseRunner:
         self.running = True
 
     def stop(self):
-        self.daemon_runner.stop()
+        if self.fwd_runner:
+            self.fwd_runner.stop()
         self.running = False
 
     def __setup_mininet(self):

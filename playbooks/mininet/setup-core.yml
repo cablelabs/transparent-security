@@ -24,3 +24,4 @@
       - core
     topology_template: "templates/topology_template-single_switch.yml.j2"
     p4_prog: "{{ p4_progs[0] }}"
+    use_fwd_config: False

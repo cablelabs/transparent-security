@@ -44,11 +44,13 @@ class AbstractDaemon(object):
         self.logger.info('Thread %s stopping' % self.mn_device.name)
 
     def run(self):
-        logging.info('Executing command [%s] on device [%s] for class [%s]',
-                     self.cmd, self.device_name, self.__class__.__name__)
         if self.cmd:
-            self.logger.info('Command run on device %s - [%s]',
-                             self.device_name, self.cmd)
-            self.mn_device.cmd(self.cmd)
+            self.logger.info('Command run on device %s - [%s] from class [%s]',
+                             self.device_name, self.cmd,
+                             self.__class__.__name__)
+            ret = self.mn_device.cmd(self.cmd)
+            self.logger.info('Command [%s] executed with return value - [%s]',
+                             ret)
         else:
-            raise Exception('Command is None')
+            self.logger.error('No command to execute')
+            raise Exception('No command to execute')
