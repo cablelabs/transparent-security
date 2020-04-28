@@ -18,8 +18,14 @@
 #define TABLE_SIZE 1024
 /* The INT Shim length at the gateway */
 #define INT_SHIM_BASE_SIZE 7
-/* The INT Shim length at the gateway */
-#define TRPT_HDR_BASE_BYTES 20
+/* The Telemetry Report header bytes */
+#define TRPT_HDR_BASE_BYTES 24
+/* The Telemetry Report in_type ethernet */
+#define TRPT_HDR_IN_TYPE_ETH 2
+/* The Telemetry Report in_type IPv4 */
+#define TRPT_HDR_IN_TYPE_IPV4 4
+/* The Telemetry Report in_type IPv6 */
+#define TRPT_HDR_IN_TYPE_IPV6 5
 /* Amount to add to the INT Shim length at each hop */
 #define INT_SHIM_HOP_SIZE 1
 /* Number of bytes per INT Shim length */
