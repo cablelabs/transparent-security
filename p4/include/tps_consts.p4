@@ -16,8 +16,9 @@
 /* The default table size */
 /* TODO - make this configurable at compile time */
 #define TABLE_SIZE 1024
-/* The INT Shim length at the gateway */
-#define INT_SHIM_BASE_SIZE 7
+
+/* The Telemetry Report type for INT >= 2.0 */
+#define TRPT_RPT_TYPE_INT_2 0
 /* The Telemetry Report header bytes */
 #define TRPT_HDR_BASE_BYTES 24
 /* The Telemetry Report in_type ethernet */
@@ -26,10 +27,14 @@
 #define TRPT_HDR_IN_TYPE_IPV4 4
 /* The Telemetry Report in_type IPv6 */
 #define TRPT_HDR_IN_TYPE_IPV6 5
+
+/* The INT Shim length at the gateway */
+#define INT_SHIM_BASE_SIZE 7
 /* Amount to add to the INT Shim length at each hop */
 #define INT_SHIM_HOP_SIZE 1
 /* Number of bytes per INT Shim length */
 #define BYTES_PER_SHIM 4
+
 /* Number of bytes used by a UDP header */
 #define UDP_HDR_BYTES 8
 /* Number of bytes used by a TCP header */

@@ -214,9 +214,10 @@ control TpsCoreEgress(inout headers hdr,
         hdr.trpt_udp.setValid();
         hdr.trpt_hdr.setValid();
 
-        hdr.trpt_hdr.rep_type = 0;
+        hdr.trpt_hdr.node_id = hdr.int_meta_3.switch_id;
+        hdr.trpt_hdr.rep_type = TRPT_RPT_TYPE_INT_2;
         hdr.trpt_hdr.in_type = TRPT_HDR_IN_TYPE_ETH;
-        hdr.trpt_hdr.md_len = 0;
+        hdr.trpt_hdr.md_len = hdr.int_shim.length;
 
         hdr.trpt_eth.dst_mac = hdr.ethernet.dst_mac;
         hdr.trpt_eth.src_mac = hdr.ethernet.src_mac;
