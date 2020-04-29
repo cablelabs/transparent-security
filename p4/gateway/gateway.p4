@@ -155,7 +155,6 @@ control TpsGwIngress(inout headers hdr,
     table data_drop_udp_ipv4_t {
         key = {
             hdr.ethernet.src_mac: exact;
-            hdr.ipv4.srcAddr: exact;
             hdr.ipv4.dstAddr: exact;
             hdr.udp.dst_port: exact;
         }
@@ -170,7 +169,6 @@ control TpsGwIngress(inout headers hdr,
     table data_drop_udp_ipv6_t {
         key = {
             hdr.ethernet.src_mac: exact;
-            hdr.ipv6.srcAddr: exact;
             hdr.ipv6.dstAddr: exact;
             hdr.udp.dst_port: exact;
         }
@@ -185,7 +183,6 @@ control TpsGwIngress(inout headers hdr,
     table data_drop_tcp_ipv4_t {
         key = {
             hdr.ethernet.src_mac: exact;
-            hdr.ipv4.srcAddr: exact;
             hdr.ipv4.dstAddr: exact;
             hdr.tcp.dst_port: exact;
         }
@@ -200,7 +197,6 @@ control TpsGwIngress(inout headers hdr,
     table data_drop_tcp_ipv6_t {
         key = {
             hdr.ethernet.src_mac: exact;
-            hdr.ipv6.srcAddr: exact;
             hdr.ipv6.dstAddr: exact;
             hdr.tcp.dst_port: exact;
         }
@@ -224,6 +220,14 @@ control TpsGwIngress(inout headers hdr,
             });
     }
 
+    action nat_learn_notification() {
+        digest<nat_digest>((bit<32>) 1024,
+            { hdr.udp.src_port,
+              hdr.tcp.src_port,
+              hdr.ipv4.srcAddr
+            });
+    }
+
     action arp_reply(macAddr_t srcAddr, macAddr_t dstAddr, egressSpec_t port) {
         hdr.ethernet.src_mac = srcAddr;
         hdr.ethernet.dst_mac = dstAddr;
@@ -241,7 +245,8 @@ control TpsGwIngress(inout headers hdr,
         default_action = NoAction();
     }
 
-    action arp_flood(macAddr_t srcAddr) {
+    action arp_flood(bit <32> ip_srcAddr, macAddr_t srcAddr) {
+        hdr.arp.srcAddr = ip_srcAddr;
         hdr.ethernet.src_mac = srcAddr;
         standard_metadata.mcast_grp = 1;
     }
@@ -252,6 +257,74 @@ control TpsGwIngress(inout headers hdr,
         }
         actions = {
             arp_flood;
+            NoAction;
+        }
+        default_action = NoAction();
+    }
+
+    action udp_global_to_local(bit <16> src_port, bit< 32> ip_srcAddr) {
+        hdr.udp.src_port = src_port;
+        hdr.ipv4.srcAddr = ip_srcAddr;
+    }
+
+    table udp_global_to_local_t {
+        key = {
+            hdr.udp.src_port: exact;
+            hdr.ipv4.srcAddr: lpm;
+        }
+        actions = {
+            udp_global_to_local;
+            NoAction;
+        }
+        default_action = NoAction();
+    }
+
+    action tcp_global_to_local(bit <16> src_port, bit< 32> ip_srcAddr) {
+        hdr.tcp.src_port = src_port;
+        hdr.ipv4.srcAddr = ip_srcAddr;
+    }
+
+    table tcp_global_to_local_t {
+        key = {
+            hdr.tcp.src_port: exact;
+            hdr.ipv4.srcAddr: lpm;
+        }
+        actions = {
+            tcp_global_to_local;
+            NoAction;
+        }
+        default_action = NoAction();
+    }
+
+    action udp_local_to_global(bit <16> src_port, bit< 32> ip_srcAddr) {
+        hdr.udp.src_port = src_port;
+        hdr.ipv4.srcAddr = ip_srcAddr;
+    }
+
+    table udp_local_to_global_t {
+        key = {
+            hdr.udp.src_port: exact;
+            hdr.ipv4.srcAddr: lpm;
+        }
+        actions = {
+            udp_local_to_global;
+            NoAction;
+        }
+        default_action = NoAction();
+    }
+
+    action tcp_local_to_global(bit <16> src_port, bit< 32> ip_srcAddr) {
+        hdr.tcp.src_port = src_port;
+        hdr.ipv4.srcAddr = ip_srcAddr;
+    }
+
+    table tcp_local_to_global_t {
+        key = {
+            hdr.tcp.src_port: exact;
+            hdr.ipv4.srcAddr: lpm;
+        }
+        actions = {
+            tcp_local_to_global;
             NoAction;
         }
         default_action = NoAction();
@@ -286,15 +359,24 @@ control TpsGwIngress(inout headers hdr,
             data_inspection_t.apply();
 
             if (hdr.int_shim.isValid()) {
+                nat_learn_notification();
                 if (hdr.udp.isValid()) {
+                    udp_local_to_global_t.apply();
+                    udp_global_to_local_t.apply();
                     insert_udp_int_for_udp();
                 }
-                if (hdr.tcp.isValid()) {
+                else if (hdr.tcp.isValid()) {
+                    tcp_local_to_global_t.apply();
+                    tcp_global_to_local_t.apply();
                     insert_udp_int_for_tcp();
                 }
             }
-            data_forward_ipv6_t.apply();
-            data_forward_ipv4_t.apply();
+            if (hdr.ipv4.isValid()) {
+                data_forward_ipv4_t.apply();
+            } else if (hdr.ipv6.isValid()) {
+                data_forward_ipv6_t.apply();
+            }
+
         }
     }
 }

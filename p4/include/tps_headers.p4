@@ -214,5 +214,11 @@ struct mac_learn_digest {
     bit<9> ingress_port;
 }
 
+struct nat_digest {
+   bit<16> udp_src_port;
+   bit<16> tcp_src_port;
+   bit<32> local_ip;
+}
+
 struct metadata {
 }

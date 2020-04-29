@@ -55,8 +55,6 @@
         match_fields:
           - key: hdr.ethernet.src_mac
             value: "{{ sender.mac }}"
-          - key: "{{ 'hdr.ipv%s.srcAddr' % ip_version }}"
-            value: "{{ sender.ip  if ip_version == '4' else sender.ipv6 }}"
           - key: "{{ 'hdr.ipv%s.dstAddr' % ip_version }}"
             value: "{{ receiver.ip if ip_version == '4' else receiver.ipv6 }}"
           - key: "{{ 'hdr.udp.dst_port' if send_protocol == 'UDP' else 'hdr.tcp.dst_port' }}"

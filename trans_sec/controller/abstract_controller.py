@@ -45,6 +45,7 @@ class AbstractController(object):
         self.p4_ingress = p4_ingress
         self.known_devices = set()
         self.digest_threads = list()
+        self.digest_dict = {}
 
         if self.platform == 'bmv2':
             p4info_txt = "{0}/{1}.{2}".format(
@@ -210,14 +211,23 @@ class AbstractController(object):
             digests = sw.digest_list()
             digest_data = digests.digest.data
             logger.info('Received digests: [%s]', digests)
-            self.interpret_digest(sw, sw_info, digest_data)
+            if str(digests.digest.digest_id) == str(self.digest_dict['mac_learn_digest']):
+                self.interpret_digest(sw, sw_info, digest_data)
+            elif int(digests.digest.digest_id) != 0:
+                self.interpret_nat_digest(sw, sw_info, digest_data)
 
     def send_digest_entry(self, sw, sw_info):
         digest_daemon = Thread(target=self.receive_digests, args=(sw, sw_info))
         self.digest_threads.append(digest_daemon)
-        digest_entry = self.p4info_helper.build_digest_entry(digest_name="mac_learn_digest")
+        digest_entry, digest_id = self.p4info_helper.build_digest_entry(digest_name="mac_learn_digest")
+        self.digest_dict['mac_learn_digest'] = digest_id
         sw.write_digest_entry(digest_entry)
-        logger.info('Core: Sent Digest Entry via P4Runtime: [%s]', digest_entry)
+        logger.info('%s: Sent Digest Entry via P4Runtime: [%s]', sw_info['name'], digest_entry)
+        if sw_info['type'] == 'gateway':
+            logger.info("Sending NAT digest entry for %s", sw_info['name'])
+            digest_entry, digest_id = self.p4info_helper.build_digest_entry(digest_name="nat_digest")
+            self.digest_dict['nat_digest'] = digest_id
+            sw.write_digest_entry(digest_entry)
         digest_daemon.start()
 
     def add_attacker(self, attack, host):
@@ -262,14 +272,13 @@ class AbstractController(object):
         src_ip = ipaddress.ip_address(unicode(attack['src_ip']))
         dst_ip = ipaddress.ip_address(unicode(attack['dst_ip']))
         logger.info('Attack src_ip - [%s], dst_ip - [%s]', src_ip, dst_ip)
-
+        # TODO - Add back source IP address as a match field after adding mitigation at the Aggregate
         self.__insert_p4_table_entry(
             switch=switch,
             table_name=table_name,
             action_name=action_name,
             match_fields={
                 'hdr.ethernet.src_mac': attack['src_mac'],
-                src_addr_key: str(src_ip.exploded),
                 dst_addr_key: str(dst_ip.exploded),
                 dst_port_key: int(attack['dst_port']),
             },
@@ -404,4 +413,7 @@ class AbstractController(object):
         raise NotImplemented
 
     def add_data_forward(self, sw, sw_info, source_ip, source_mac, ingress_port):
+        raise NotImplemented
+
+    def interpret_nat_digest(self, sw, sw_info, digest_data):
         raise NotImplemented
