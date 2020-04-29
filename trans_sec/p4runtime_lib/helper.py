@@ -273,7 +273,7 @@ class P4InfoHelper(object):
         digest_entry.config.max_timeout_ns = 0
         digest_entry.config.max_list_size = 1
         digest_entry.config.ack_timeout_ns = 0
-        return digest_entry
+        return digest_entry, digest_entry.digest_id
 
     def build_multicast_group_entry(self, mc_group_id, replicas):
         mc_entry = p4runtime_pb2.PacketReplicationEngineEntry()

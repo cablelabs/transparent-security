@@ -17,8 +17,8 @@ hosts:
   Camera1:
     name: Camera1
     id: 5
-    switch_ip: 10.0.1.254
-    ip: 10.0.1.1
+    switch_ip: 192.168.1.3
+    ip: 192.168.1.2
     ipv6: 0000:0000:0000:0000:0000:0001:0001:0002
     ip_port: any
     mac: 00:00:00:00:01:01
@@ -26,8 +26,8 @@ hosts:
   NAS1:
     name: NAS1
     id: 6
-    switch_ip: 10.0.1.254
-    ip: 10.0.1.2
+    switch_ip: 192.168.1.7
+    ip: 192.168.1.6
     ipv6: 0000:0000:0000:0000:0000:0001:0001:0003
     ip_port: any
     mac: 00:00:00:00:01:02
@@ -35,8 +35,8 @@ hosts:
   Game1:
     name: Game1
     id: 7
-    switch_ip: 10.0.1.254
-    ip: 10.0.1.3
+    switch_ip: 192.168.1.11
+    ip: 192.168.1.10
     ipv6: 0000:0000:0000:0000:0000:0001:0001:0004
     ip_port: any
     mac: 00:00:00:00:01:03
@@ -44,17 +44,17 @@ hosts:
   Camera2:
     name: Camera2
     id: 8
-    switch_ip: 10.0.1.254
+    switch_ip: 192.168.2.3
     ipv6: 0000:0000:0000:0000:0000:0001:0002:0002
-    ip: 10.0.1.4
+    ip: 192.168.2.2
     ip_port: any
     mac: 00:00:00:00:02:01
     type: webcam
   Game2:
     name: Game2
     id: 9
-    switch_ip: 10.0.1.254
-    ip: 10.0.1.5
+    switch_ip: 192.168.2.7
+    ip: 192.168.2.6
     ipv6: 0000:0000:0000:0000:0000:0001:0002:0003
     ip_port: any
     mac: 00:00:00:00:02:02
@@ -62,8 +62,8 @@ hosts:
   Camera3:
     name: Camera3
     id: 10
-    switch_ip: 10.0.1.254
-    ip: 10.0.1.6
+    switch_ip: 192.168.3.3
+    ip: 192.168.3.2
     ipv6: 0000:0000:0000:0000:0000:0001:0003:0002
     ip_port: any
     mac: 00:00:00:00:03:01
@@ -71,8 +71,8 @@ hosts:
   Game3:
     name: Game3
     id: 11
-    switch_ip: 10.0.1.254
-    ip: 10.0.1.7
+    switch_ip: 192.168.3.7
+    ip: 192.168.3.6
     ipv6: 0000:0000:0000:0000:0000:0001:0003:0003
     ip_port: any
     mac: 00:00:00:00:03:02
@@ -80,8 +80,8 @@ hosts:
   inet:
     name: inet
     id: 12
-    switch_ip: 10.0.1.254
-    ip: 10.0.1.8
+    switch_ip: 172.32.1.254
+    ip: 172.32.1.4
     ipv6: 0000:0000:0000:0000:0000:0002:0001:0002
     ip_port: any
     mac: 00:00:00:00:05:07
@@ -93,9 +93,9 @@ switches:
     id: 2
     runtime_p4info: {{ remote_scripts_dir }}/p4/gateway.p4info
     runtime_json: {{ remote_scripts_dir }}/p4/gateway.json
-    subnet: 10.0.1.0
+    public_ip: 172.32.1.1
     type: gateway
-    mac: 00:00:00:01:01:00
+    mac: 00:00:00:02:01:00
     grpc: 127.0.0.1:50053
     ipv6_term_host: inet
   gateway2:
@@ -103,9 +103,9 @@ switches:
     id: 3
     runtime_p4info: {{ remote_scripts_dir }}/p4/gateway.p4info
     runtime_json: {{ remote_scripts_dir }}/p4/gateway.json
-    subnet: 10.0.1.0
+    public_ip: 172.32.1.2
     type: gateway
-    mac: 00:00:00:01:02:00
+    mac: 00:00:00:02:02:00
     grpc: 127.0.0.1:50054
     ipv6_term_host: inet
   gateway3:
@@ -113,9 +113,9 @@ switches:
     id: 4
     runtime_p4info: {{ remote_scripts_dir }}/p4/gateway.p4info
     runtime_json: {{ remote_scripts_dir }}/p4/gateway.json
-    subnet: 10.0.1.0
+    public_ip: 172.32.1.3
     type: gateway
-    mac: 00:00:00:01:03:00
+    mac: 00:00:00:02:03:00
     grpc: 127.0.0.1:50055
     ipv6_term_host: inet
   aggregate:
@@ -123,7 +123,6 @@ switches:
     id: 0
     runtime_p4info: {{ remote_scripts_dir }}/p4/aggregate.p4info
     runtime_json: {{ remote_scripts_dir }}/p4/aggregate.json
-    subnet: 10.0.1.0
     type: aggregate
     mac: 00:00:00:02:04:00
     grpc: 127.0.0.1:50051
@@ -137,7 +136,6 @@ switches:
     telemetry_rpt:
       type: external
       name: analytics_engine
-    subnet: 10.0.1.0
     type: core
     mac: 00:00:00:03:05:00
     grpc: 127.0.0.1:50052
@@ -158,36 +156,50 @@ links:
   - north_node: gateway1
     south_node: Camera1
     south_facing_port: 1
+    south_facing_mac: 00:00:01:01:01:00
+    south_facing_ip: 192.168.1.3
     latency: 0ms
     bandwidth: null
   - north_node: gateway1
     south_node: NAS1
     south_facing_port: 2
+    south_facing_mac: 00:00:01:01:02:00
+    south_facing_ip: 192.168.1.7
     latency: 0ms
     bandwidth: null
   - north_node: gateway1
     south_node: Game1
     south_facing_port: 3
+    south_facing_mac: 00:00:01:01:03:00
+    south_facing_ip: 192.168.1.11
     latency: 0ms
     bandwidth: null
   - north_node: gateway2
     south_node: Camera2
     south_facing_port: 1
+    south_facing_mac: 00:00:02:02:01:00
+    south_facing_ip: 192.168.2.3
     latency: 0ms
     bandwidth: null
   - north_node: gateway2
     south_node: Game2
     south_facing_port: 2
+    south_facing_mac: 00:00:02:02:02:00
+    south_facing_ip: 192.168.2.7
     latency: 0ms
     bandwidth: null
   - north_node: gateway3
     south_node: Camera3
     south_facing_port: 1
+    south_facing_mac: 00:00:03:03:01:00
+    south_facing_ip: 192.168.3.3
     latency: 0ms
     bandwidth: null
   - north_node: gateway3
     south_node: Game3
     south_facing_port: 2
+    south_facing_mac: 00:00:03:03:02:00
+    south_facing_ip: 192.168.3.7
     latency: 0ms
     bandwidth: null
   - north_node: aggregate

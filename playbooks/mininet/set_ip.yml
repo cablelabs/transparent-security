@@ -18,6 +18,9 @@
     south_facing_port: "{{ item.south_facing_port | default(None) }}"
     north_facing_port: "{{ item.north_facing_port | default(None) }}"
     host: "{{ topo_dict.hosts.get(item.south_node) }}"
+    south_facing_ip: "{{ item.south_facing_ip | default(None) }}"
+    south_switch: "{{ topo_dict.switches.get(item.south_node) }}"
+    north_switch: "{{ topo_dict.switches.get(item.north_node) }}"
     intf_name: None
     dev_ip: None
     dev_name: None
@@ -38,19 +41,29 @@
     intf_name: "{{ south_node | default('') }}-eth{{ north_facing_port | default('') }}"
   when: north_facing_port and not south_facing_port
 
-- name: Determine device IP and name
+- name: Determine interface name for gateway north-facing port
   set_fact:
-    dev_ip: "{{ host.ip }}"
-    dev_name: "{{ host.name }}"
-    dev_ip_tokens: "{{ host.ip.split('.') }}"
-  when: host and host.ip
+    intf_name: "{{ south_node | default('') }}-eth{{ north_facing_port | default('') }}"
+  when: north_facing_port and south_facing_port and south_switch
 
-- name: Setup IPs in system
+- name: Set public IP on the gateway
   block:
-    - name: Set /etc/hosts
+    - name: Set public IP for intf {{ intf_name }}
       become: yes
-      lineinfile:
-        path: /etc/hosts
-        line: "{{ dev_ip }} {{ dev_name }}"
-        state: present
-  when: dev_ip_tokens
+      command: "ip addr add {{ south_switch.public_ip }}/24 dev {{ intf_name }}"
+  when: south_switch.public_ip is defined
+
+- name: Setup local IPs on the gateway
+  block:
+    - name: Set local IP for intf {{ intf_name }}
+      become: yes
+      command: "ip addr add {{ south_facing_ip }}/30 dev {{ intf_name }}"
+  when: host and north_switch.public_ip is defined
+
+- name: Set /etc/hosts
+  become: yes
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ host.ip }} {{ host.name }}"
+    state: present
+  when: host
