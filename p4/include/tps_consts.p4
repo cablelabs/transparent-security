@@ -54,6 +54,8 @@ const bit<4> INT_SHIM_TYPE = 0x1;
 const bit<16> INT_SHIM_DOMAIN_ID = 0x5453;
 /* Value of INT Shim domain_id */
 const bit<16> TRPT_HDR_DOMAIN_ID = INT_SHIM_DOMAIN_ID;
+/* Max length of the Telemetry Report - currently 200 bytes */
+const bit<32> TRPT_MAX_BYTES = 0xc8;
 /* Value of INT Shim npt as we are fully wrapping the initial UDP header */
 const bit<2> INT_SHIM_NPT_UDP_FULL_WRAP = 0x2;
 /* The supported INT version */

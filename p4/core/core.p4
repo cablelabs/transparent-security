@@ -327,6 +327,8 @@ control TpsCoreEgress(inout headers hdr,
                 } else if (hdr.ipv6.isValid()) {
                     update_trpt_hdr_len_ipv6();
                 }
+                /* Ensure packet is no larger than TRPT_MAX_BYTES */
+                truncate(TRPT_MAX_BYTES);
             }
         }
     }
