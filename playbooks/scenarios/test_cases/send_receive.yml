@@ -142,7 +142,6 @@
           grep {{ receiver_ip | ipaddr }} {{ receiver_log_file }}
           | grep 'WARNING'
           | grep {{ send_port }}
-          | grep {{ send_src_port }}
           | wc -l
       when: hops|int == 0
 
@@ -153,7 +152,6 @@
           | grep 'WARNING'
           | grep 'INT Packet data'
           | grep {{ send_port }}
-          | grep {{ send_src_port }}
           | wc -l
       when: hops|int > 0
 
