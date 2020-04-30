@@ -273,15 +273,15 @@ control TpsGwIngress(inout headers hdr,
         default_action = NoAction();
     }
 
-    action udp_global_to_local(bit <16> src_port, bit< 32> ip_srcAddr) {
-        hdr.udp.src_port = src_port;
-        hdr.ipv4.srcAddr = ip_srcAddr;
+    action udp_global_to_local(bit <16> dst_port, bit< 32> ip_dstAddr) {
+        hdr.udp.dst_port = dst_port;
+        hdr.ipv4.dstAddr = ip_dstAddr;
     }
 
     table udp_global_to_local_t {
         key = {
-            hdr.udp.src_port: exact;
-            hdr.ipv4.srcAddr: lpm;
+            hdr.udp.dst_port: exact;
+            hdr.ipv4.dstAddr: lpm;
         }
         actions = {
             udp_global_to_local;
@@ -290,15 +290,15 @@ control TpsGwIngress(inout headers hdr,
         default_action = NoAction();
     }
 
-    action tcp_global_to_local(bit <16> src_port, bit< 32> ip_srcAddr) {
-        hdr.tcp.src_port = src_port;
-        hdr.ipv4.srcAddr = ip_srcAddr;
+    action tcp_global_to_local(bit <16> dst_port, bit< 32> ip_dstAddr) {
+        hdr.tcp.dst_port = dst_port;
+        hdr.ipv4.dstAddr = ip_dstAddr;
     }
 
     table tcp_global_to_local_t {
         key = {
-            hdr.tcp.src_port: exact;
-            hdr.ipv4.srcAddr: lpm;
+            hdr.tcp.dst_port: exact;
+            hdr.ipv4.dstAddr: lpm;
         }
         actions = {
             tcp_global_to_local;

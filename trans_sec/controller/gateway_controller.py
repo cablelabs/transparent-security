@@ -30,6 +30,8 @@ class GatewayController(AbstractController):
             log_dir, load_p4, 'TpsGwIngress')
         self.nat_udp_ports = set()
         self.nat_tcp_ports = set()
+        self.tcp_port_count = 1
+        self.udp_port_count = 1
 
     def make_rules(self, sw, sw_info, north_facing_links, south_facing_links,
                    add_di):
@@ -183,6 +185,7 @@ class GatewayController(AbstractController):
     def add_nat_table(self, sw, sw_info, udp_source_port, tcp_source_port, source_ip):
         gateway_public_ip = sw_info['public_ip']
         logger.info("Adding nat table entries on %s for %s", sw_info['name'], source_ip)
+        logger.info("Check if %s not in %s for %s", udp_source_port, self.nat_udp_ports, sw_info['name'])
         # NAT Table Entries to handle UDP packets
         if udp_source_port and udp_source_port not in self.nat_udp_ports:
             table_entry = self.p4info_helper.build_table_entry(
@@ -193,51 +196,54 @@ class GatewayController(AbstractController):
                 },
                 action_name='{}.udp_local_to_global'.format(self.p4_ingress),
                 action_params={
-                    'src_port': udp_source_port,
+                    'src_port': int("50"+str(sw_info['id'])+str(self.udp_port_count)),
                     'ip_srcAddr': gateway_public_ip
                 })
             sw.write_table_entry(table_entry)
             table_entry = self.p4info_helper.build_table_entry(
                 table_name='{}.udp_global_to_local_t'.format(self.p4_ingress),
                 match_fields={
-                    'hdr.udp.dst_port': udp_source_port,
-                    'hdr.ipv4.dstAddr': gateway_public_ip
+                    'hdr.udp.dst_port': int("50"+str(sw_info['id'])+str(self.udp_port_count)),
+                    'hdr.ipv4.dstAddr': (gateway_public_ip, 32)
                 },
-                action_name='{}.udp_local_to_global'.format(self.p4_ingress),
+                action_name='{}.udp_global_to_local'.format(self.p4_ingress),
                 action_params={
                     'dst_port': udp_source_port,
-                    'ip_dstAddr': (source_ip, 32)
+                    'ip_dstAddr': source_ip
                 })
             sw.write_table_entry(table_entry)
+            self.udp_port_count = self.udp_port_count + 1
             self.nat_udp_ports.add(udp_source_port)
+            logger.info("UDP NAT table entry added on %s", sw_info['name'])
         elif tcp_source_port and tcp_source_port not in self.nat_tcp_ports:
             # NAT Table Entries to handle TCP packets
             table_entry = self.p4info_helper.build_table_entry(
                 table_name='{}.tcp_local_to_global_t'.format(self.p4_ingress),
                 match_fields={
-                    'hdr.udp.src_port': tcp_source_port,
+                    'hdr.tcp.src_port': tcp_source_port,
                     'hdr.ipv4.srcAddr': (source_ip, 32)
                 },
                 action_name='{}.tcp_local_to_global'.format(self.p4_ingress),
                 action_params={
-                    'src_port': tcp_source_port,
+                    'src_port': int("50"+str(sw_info['id'])+str(self.tcp_port_count)),
                     'ip_srcAddr': gateway_public_ip
                 })
             sw.write_table_entry(table_entry)
-            logger.info("NAT table entry added on %s", sw_info['name'])
             table_entry = self.p4info_helper.build_table_entry(
                 table_name='{}.tcp_global_to_local_t'.format(self.p4_ingress),
                 match_fields={
-                    'hdr.tcp.dst_port': tcp_source_port,
-                    'hdr.ipv4.dstAddr': gateway_public_ip
+                    'hdr.tcp.dst_port': int("50"+str(sw_info['id'])+str(self.tcp_port_count)),
+                    'hdr.ipv4.dstAddr': (gateway_public_ip, 32)
                 },
-                action_name='{}.tcp_local_to_global'.format(self.p4_ingress),
+                action_name='{}.tcp_global_to_local'.format(self.p4_ingress),
                 action_params={
                     'dst_port': tcp_source_port,
-                    'ip_dstAddr': (source_ip, 32)
+                    'ip_dstAddr': source_ip
                 })
             sw.write_table_entry(table_entry)
+            self.tcp_port_count = self.tcp_port_count + 1
             self.nat_tcp_ports.add(tcp_source_port)
+            logger.info("TCP NAT table entry added on %s", sw_info['name'])
 
     def interpret_nat_digest(self, sw, sw_info, digest_data):
         logger.debug("Digest data %s", digest_data)
