@@ -16,14 +16,25 @@
 /* The default table size */
 /* TODO - make this configurable at compile time */
 #define TABLE_SIZE 1024
+
+/* The Telemetry Report type for INT >= 2.0 */
+#define TRPT_RPT_TYPE_INT_2 0
+/* The Telemetry Report header bytes */
+#define TRPT_HDR_BASE_BYTES 24
+/* The Telemetry Report in_type ethernet */
+#define TRPT_HDR_IN_TYPE_ETH 2
+/* The Telemetry Report in_type IPv4 */
+#define TRPT_HDR_IN_TYPE_IPV4 4
+/* The Telemetry Report in_type IPv6 */
+#define TRPT_HDR_IN_TYPE_IPV6 5
+
 /* The INT Shim length at the gateway */
 #define INT_SHIM_BASE_SIZE 7
-/* The INT Shim length at the gateway */
-#define TRPT_HDR_BASE_BYTES 20
 /* Amount to add to the INT Shim length at each hop */
 #define INT_SHIM_HOP_SIZE 1
 /* Number of bytes per INT Shim length */
 #define BYTES_PER_SHIM 4
+
 /* Number of bytes used by a UDP header */
 #define UDP_HDR_BYTES 8
 /* Number of bytes used by a TCP header */
@@ -43,6 +54,8 @@ const bit<4> INT_SHIM_TYPE = 0x1;
 const bit<16> INT_SHIM_DOMAIN_ID = 0x5453;
 /* Value of INT Shim domain_id */
 const bit<16> TRPT_HDR_DOMAIN_ID = INT_SHIM_DOMAIN_ID;
+/* Max length of the Telemetry Report - currently 200 bytes */
+const bit<32> TRPT_MAX_BYTES = 0xc8;
 /* Value of INT Shim npt as we are fully wrapping the initial UDP header */
 const bit<2> INT_SHIM_NPT_UDP_FULL_WRAP = 0x2;
 /* The supported INT version */

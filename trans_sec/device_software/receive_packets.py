@@ -194,7 +194,6 @@ def __get_ip_udp_int_pkt(ip_pkt):
     elif udp_pkt.dport == trans_sec.consts.UDP_TRPT_DST_PORT:
         logger.debug('Packet is of type Telemetry Report')
         trpt_pkt = TelemetryReport(_pkt=udp_pkt.payload)
-        logger.debug('TRPT packet domain ID - [%s]', trpt_pkt.domain_id)
         trpt_eth = EthInt(_pkt=trpt_pkt.payload)
         logger.debug('trpt_eth type - [%s]', trpt_eth.type)
         if trpt_eth.type == trans_sec.consts.IPV4_TYPE:

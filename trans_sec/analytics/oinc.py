@@ -169,7 +169,6 @@ def extract_trpt_data(udp_packet):
                  udp_packet.sport, udp_packet.dport, udp_packet.len)
 
     trpt_pkt = TelemetryReport(_pkt=udp_packet.payload)
-    logger.debug('TRPT packet domain ID - [%s]', trpt_pkt.domain_id)
     trpt_eth = EthInt(trpt_pkt.payload)
     logger.debug('TRPT ethernet dst - [%s], src - [%s], type - [%s]',
                  trpt_eth.dst, trpt_eth.src, trpt_eth.type)
@@ -302,6 +301,8 @@ class SimpleAE(PacketAnalytics):
         :return: T/F - True when an attack has been triggered
         """
         logger.debug('Packet data - [%s]', packet.summary())
+        ip_pkt = None
+        protocol = None
         if packet[Ether].type == IPV4_TYPE:
             ip_pkt = IP(_pkt=packet[Ether].payload)
             protocol = ip_pkt.proto
@@ -309,7 +310,7 @@ class SimpleAE(PacketAnalytics):
             ip_pkt = IPv6(_pkt=packet[Ether].payload)
             protocol = ip_pkt.nh
 
-        if protocol == UDP_PROTO:
+        if ip_pkt and protocol and protocol == UDP_PROTO:
             udp_packet = UDP(_pkt=ip_pkt.payload)
             logger.debug(
                 'udp sport - [%s] dport - [%s] - expected dport - [%s]',

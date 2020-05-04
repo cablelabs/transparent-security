@@ -214,6 +214,11 @@ control TpsCoreEgress(inout headers hdr,
         hdr.trpt_udp.setValid();
         hdr.trpt_hdr.setValid();
 
+        hdr.trpt_hdr.node_id = hdr.int_meta_3.switch_id;
+        hdr.trpt_hdr.rep_type = TRPT_RPT_TYPE_INT_2;
+        hdr.trpt_hdr.in_type = TRPT_HDR_IN_TYPE_ETH;
+        hdr.trpt_hdr.md_len = hdr.int_shim.length;
+
         hdr.trpt_eth.dst_mac = hdr.ethernet.dst_mac;
         hdr.trpt_eth.src_mac = hdr.ethernet.src_mac;
 
@@ -221,12 +226,22 @@ control TpsCoreEgress(inout headers hdr,
 
         hdr.trpt_hdr.ver = TRPT_VERSION;
         hdr.trpt_hdr.domain_id = TRPT_HDR_DOMAIN_ID;
-        hdr.trpt_hdr.length = hdr.trpt_hdr.length + hdr.int_shim.length + 5; /* 5 Reflects TRPT ethernet & udp packets
+        hdr.trpt_hdr.rpt_len = hdr.trpt_hdr.rpt_len + hdr.int_shim.length + 5; /* 5 Reflects TRPT ethernet & udp packets
 
         /* TODO - determine if counter resets to 0 once it reaches max */
         trpt_pkts.read(hdr.trpt_hdr.sequence_no, 32w0x0);
         hdr.trpt_hdr.sequence_no = hdr.trpt_hdr.sequence_no + 1;
         trpt_pkts.write(32w0x0, hdr.trpt_hdr.sequence_no);
+    }
+
+    /* Sets the trpt_eth.in_type for IPv4 */
+    action set_telem_rpt_in_type_ipv4() {
+        hdr.trpt_hdr.in_type = TRPT_HDR_IN_TYPE_IPV4;
+    }
+
+    /* Sets the trpt_eth.in_type for IPv6 */
+    action set_telem_rpt_in_type_ipv6() {
+        hdr.trpt_hdr.in_type = TRPT_HDR_IN_TYPE_IPV6;
     }
 
     /**
@@ -266,14 +281,14 @@ control TpsCoreEgress(inout headers hdr,
     * Updates the TRPT header length value when the underlying packet is IPv4
     */
     action update_trpt_hdr_len_ipv4() {
-        hdr.trpt_hdr.length = hdr.trpt_hdr.length + 5;
+        hdr.trpt_hdr.rpt_len = hdr.trpt_hdr.rpt_len + 5;
     }
 
     /**
     * Updates the TRPT header length value when the underlying packet is IPv6
     */
     action update_trpt_hdr_len_ipv6() {
-        hdr.trpt_hdr.length = hdr.trpt_hdr.length + 10;
+        hdr.trpt_hdr.rpt_len = hdr.trpt_hdr.rpt_len + 10;
     }
 
     /* TODO - Design table properly, currently just making IPv4 or IPv6 Choices */
@@ -300,12 +315,20 @@ control TpsCoreEgress(inout headers hdr,
         } else if (standard_metadata.egress_spec != DROP_PORT) {
             if (IS_I2E_CLONE(standard_metadata)) {
                 init_telem_rpt();
+                if (hdr.ipv4.isValid()) {
+                    set_telem_rpt_in_type_ipv4();
+                }
+                if (hdr.ipv6.isValid()) {
+                    set_telem_rpt_in_type_ipv6();
+                }
                 setup_telemetry_rpt_t.apply();
                 if (hdr.ipv4.isValid()) {
                     update_trpt_hdr_len_ipv4();
                 } else if (hdr.ipv6.isValid()) {
                     update_trpt_hdr_len_ipv6();
                 }
+                /* Ensure packet is no larger than TRPT_MAX_BYTES */
+                truncate(TRPT_MAX_BYTES);
             }
         }
     }

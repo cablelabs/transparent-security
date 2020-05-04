@@ -46,37 +46,24 @@ function tps_int_shim(int_tree, shim_buf)
 end
 
 
-function bit_tree_8(tree, buf, buf_index, index, tree_label, item_label)
-    local bit_tree = tree:add(buf(buf_index, 1), tree_label)
-    bit_tree:add(item_label .. " 0: " .. buf:bitfield(index, 1))
-    bit_tree:add(item_label .. " 1: " .. buf:bitfield(index + 1, 1))
-    bit_tree:add(item_label .. " 2: " .. buf:bitfield(index + 2, 1))
-    bit_tree:add(item_label .. " 3: " .. buf:bitfield(index + 3, 1))
-    bit_tree:add(item_label .. " 4: " .. buf:bitfield(index + 4, 1))
-    bit_tree:add(item_label .. " 5: " .. buf:bitfield(index + 5, 1))
-    bit_tree:add(item_label .. " 6: " .. buf:bitfield(index + 6, 1))
-    bit_tree:add(item_label .. " 7: " .. buf:bitfield(index + 7, 1))
-end
-
-
-function bit_tree_16(tree, buf, buf_index, index, tree_label, item_label)
-    local bit_tree = tree:add(buf(buf_index, 2), tree_label)
-    bit_tree:add(item_label .. " 0: " .. buf:bitfield(index, 1))
-    bit_tree:add(item_label .. " 1: " .. buf:bitfield(index + 1, 1))
-    bit_tree:add(item_label .. " 2: " .. buf:bitfield(index + 2, 1))
-    bit_tree:add(item_label .. " 3: " .. buf:bitfield(index + 3, 1))
-    bit_tree:add(item_label .. " 4: " .. buf:bitfield(index + 4, 1))
-    bit_tree:add(item_label .. " 5: " .. buf:bitfield(index + 5, 1))
-    bit_tree:add(item_label .. " 6: " .. buf:bitfield(index + 6, 1))
-    bit_tree:add(item_label .. " 7: " .. buf:bitfield(index + 7, 1))
-    bit_tree:add(item_label .. " 8: " .. buf:bitfield(index + 8, 1))
-    bit_tree:add(item_label .. " 9: " .. buf:bitfield(index + 9, 1))
-    bit_tree:add(item_label .. " 10: " .. buf:bitfield(index + 10, 1))
-    bit_tree:add(item_label .. " 11: " .. buf:bitfield(index + 11, 1))
-    bit_tree:add(item_label .. " 12: " .. buf:bitfield(index + 12, 1))
-    bit_tree:add(item_label .. " 13: " .. buf:bitfield(index + 13, 1))
-    bit_tree:add(item_label .. " 14: " .. buf:bitfield(index + 14, 1))
-    bit_tree:add(item_label .. " 15: " .. buf:bitfield(index + 15, 1))
+function bit_tree_16(tree, buf, tree_label, item_label)
+    local bit_tree = tree:add(buf(0, 2), tree_label)
+    bit_tree:add(item_label .. " 0: " .. buf:bitfield(0, 1))
+    bit_tree:add(item_label .. " 1: " .. buf:bitfield(1, 1))
+    bit_tree:add(item_label .. " 2: " .. buf:bitfield(2, 1))
+    bit_tree:add(item_label .. " 3: " .. buf:bitfield(3, 1))
+    bit_tree:add(item_label .. " 4: " .. buf:bitfield(4, 1))
+    bit_tree:add(item_label .. " 5: " .. buf:bitfield(5, 1))
+    bit_tree:add(item_label .. " 6: " .. buf:bitfield(6, 1))
+    bit_tree:add(item_label .. " 7: " .. buf:bitfield(7, 1))
+    bit_tree:add(item_label .. " 8: " .. buf:bitfield(8, 1))
+    bit_tree:add(item_label .. " 9: " .. buf:bitfield(9, 1))
+    bit_tree:add(item_label .. " 10: " .. buf:bitfield(10, 1))
+    bit_tree:add(item_label .. " 11: " .. buf:bitfield(11, 1))
+    bit_tree:add(item_label .. " 12: " .. buf:bitfield(12, 1))
+    bit_tree:add(item_label .. " 13: " .. buf:bitfield(13, 1))
+    bit_tree:add(item_label .. " 14: " .. buf:bitfield(14, 1))
+    bit_tree:add(item_label .. " 15: " .. buf:bitfield(15, 1))
 end
 
 
@@ -88,16 +75,16 @@ function tps_int_hdr(int_tree, tvbr)
     header_tree:add("m: " .. tvbr:bitfield(8, 1))
     header_tree:add("Per-hop Metadata Length: " .. tvbr:bitfield(19, 5))
     header_tree:add(tvbr(3, 1), "Remaining Hop count: " .. tvbr:bitfield(24, 8))
-    bit_tree_16(header_tree, tvbr, 4, 32, "Instructions", "bit")
+    bit_tree_16(header_tree, tvbr(4, 2), "Instructions", "bit")
     header_tree:add(tvbr(6, 2), "Domain ID: " .. tvbr:bitfield(48, 16))
-    bit_tree_16(header_tree, tvbr, 8, 64, "DS Instructions", "bit")
-    bit_tree_16(header_tree, tvbr, 10, 80, "DS Flags", "bit")
+    bit_tree_16(header_tree, tvbr(8, 2), "DS Instructions", "bit")
+    bit_tree_16(header_tree, tvbr(10, 2), "DS Flags", "bit")
 end
 
 
 function tps_int_md(int_tree, int_md_buf, total_hops)
     -- INT Metadata Stack - 4 bytes
-    local int_tree = int_tree:add(int_md_buf, "Metadata Stack")
+    local stack_tree = int_tree:add(int_md_buf, "Metadata Stack")
     local int_md_buf_offset = 0
     while (total_hops > 0)
     do
@@ -106,7 +93,7 @@ function tps_int_md(int_tree, int_md_buf, total_hops)
             tree_bytes = 12
         end
 
-        local metaTree = int_tree:add(int_md_buf(int_md_buf_offset, tree_bytes), "Hop " .. total_hops)
+        local metaTree = stack_tree:add(int_md_buf(int_md_buf_offset, tree_bytes), "Hop " .. total_hops)
         local switch_id = int_md_buf(int_md_buf_offset, 4):uint()
         metaTree:add(int_md_buf(int_md_buf_offset, 4), "Switch ID: " .. switch_id)
         int_md_buf_offset = int_md_buf_offset + 4
@@ -124,22 +111,23 @@ end
 
 
 function tps_trpt_hdr(header_tree, tvbr)
-    header_tree:add("Version: " .. tvbr:bitfield(0, 4))
-    header_tree:add("Hardware ID: " .. tvbr:bitfield(4, 6))
-    header_tree:add("Sequence No: " .. tvbr:bitfield(10, 22))
-    header_tree:add(tvbr(4, 4), "Node ID: " .. tvbr:bitfield(32, 32))
-    header_tree:add("Type 1: " .. tvbr:bitfield(64, 4))
-    header_tree:add("In Proto: " .. tvbr:bitfield(68, 4))
-    header_tree:add(tvbr(9, 1), "Length: " .. tvbr:bitfield(72, 8))
-    header_tree:add(tvbr(10, 2), "Domain ID: " .. tvbr:bitfield(80, 16))
-    header_tree:add(tvbr(12, 1), "d: " .. tvbr:bitfield(96, 1))
-    header_tree:add(tvbr(12, 1), "q: " .. tvbr:bitfield(97, 1))
-    header_tree:add(tvbr(12, 1), "f: " .. tvbr:bitfield(98, 1))
-    header_tree:add(tvbr(12, 1), "i: " .. tvbr:bitfield(99, 1))
-    assert(tvbr:bitfield(100, 4)) -- reserved
-    bit_tree_16(header_tree, tvbr, 13, 16, "Rep MD", "bit")
-    bit_tree_8(header_tree, tvbr, 15, 8, "DS MD", "bit")
-    header_tree:add(tvbr(16, 4), "Var Opt MD: " .. tvbr:bitfield(124, 32))
+    header_tree:add(tvbr(0, 1), "Version: " .. tvbr:bitfield(0, 4))
+    header_tree:add(tvbr(0, 2), "Hardware ID: " .. tvbr:bitfield(4, 6))
+    header_tree:add(tvbr(1, 2), "Sequence No: " .. tvbr:bitfield(10, 22))
+    header_tree:add(tvbr(3, 4), "Node ID: " .. tvbr:bitfield(32, 32))
+    header_tree:add(tvbr(7, 1), "Report Type: " .. tvbr:bitfield(64, 4))
+    header_tree:add(tvbr(8, 1), "In Type: " .. tvbr:bitfield(68, 4))
+    header_tree:add(tvbr(9, 1), "Report Length: " .. tvbr:bitfield(72, 8))
+    header_tree:add(tvbr(10, 1), "MD Length: " .. tvbr:bitfield(80, 8))
+    header_tree:add(tvbr(11, 1), "d: " .. tvbr:bitfield(104, 1))
+    header_tree:add(tvbr(11, 1), "q: " .. tvbr:bitfield(105, 1))
+    header_tree:add(tvbr(11, 1), "f: " .. tvbr:bitfield(106, 1))
+    header_tree:add(tvbr(11, 1), "i: " .. tvbr:bitfield(107, 1))
+    bit_tree_16(header_tree, tvbr(12, 2),"Rep MD", "bit")
+    header_tree:add(tvbr(14, 2), "Domain ID: " .. tvbr(14, 2):bitfield(0, 16))
+    bit_tree_16(header_tree, tvbr(16, 2), "DS MDB", "bit")
+    bit_tree_16(header_tree, tvbr(18, 2), "DS MDS", "bit")
+    header_tree:add(tvbr(20, 4), "Var Opt MD: " .. tvbr:bitfield(160, 32))
 end
 
 
@@ -165,17 +153,17 @@ function tps_udp_proto.dissector(buffer, pinfo, tree)
 
     -- INT Shim Header - 8 bytes
     local int_tree = tree:add(tps_udp_proto, buffer(0, 16+buf_bytes), "In-band Network Telemetry (INT)")
-    local length, next_proto = tps_int_shim(int_tree, shim_buf)
+    local shim_length, next_proto = tps_int_shim(int_tree, shim_buf)
 
     -- INT Metadata Header - 12 bytes
     tps_int_hdr(int_tree, tvbr)
 
     -- INT Metadata Stack - 4 bytes
-    local total_hops = length - 6
-    local buf_bytes = total_hops * 4 + 6 + 2
-    local int_md_buf = buffer(buf_offset, buf_bytes)
+    local shim_hops = shim_length - 6
+    local shim_buf_bytes = total_hops * 4 + 6 + 2
+    local int_md_buf = buffer(buf_offset, shim_buf_bytes)
     buf_offset = buf_offset + buf_bytes
-    tps_int_md(int_tree, int_md_buf, total_hops)
+    tps_int_md(int_tree, int_md_buf, shim_hops)
 
     if next_proto == 0x11 then
         -- UDP
@@ -190,9 +178,9 @@ end
 function tps_trpt_proto.dissector(buffer, pinfo, tree)
     pinfo.cols.protocol = "TRPT/INT"
 
-    -- TRPT Header - 20 bytes
-    local trpt_buf = buffer(buf_offset, 20)
-    local buf_offset = 20
+    -- TRPT Header - 24 bytes
+    local trpt_buf = buffer(buf_offset, 24)
+    local buf_offset = 24
     local trpt_tree = tree:add(tps_trpt_proto, trpt_buf, "Telemetry Report")
     tps_trpt_hdr(trpt_tree, trpt_buf)
 
@@ -201,7 +189,7 @@ function tps_trpt_proto.dissector(buffer, pinfo, tree)
     local trpt_eth_buf = buffer(buf_offset, 14)
     buf_offset = buf_offset + 14
     local ether_type = int_eth_hdr(tree, trpt_eth_buf)
-    local ip_buf = buffer(buf_offset, 20)
+    --buffer(buf_offset, 20)
     if ether_type == 0x0800 then
         Dissector.get("ip"):call(buffer:range(buf_offset):tvb(), pinfo, tree)
         buf_offset = buf_offset + 24
