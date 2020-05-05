@@ -21,4 +21,5 @@ sudo {{ remote_tps_dir }}/bin/sdn_controller.py -l {{ log_level }} \
 -s {{ remote_scripts_dir }}/p4 \
 -p {{ p4_platform }} \
 -hsp {{ sdn_port }} \
--lp {{ load_p4 | default('True') }}
+-lp {{ load_p4 }} \
+-ct {{ scenario_name }}

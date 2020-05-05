@@ -83,6 +83,8 @@ class AbstractController(object):
         for south_link in south_facing_links:
             logger.info('Creating rules for the south link - [%s]', south_link)
             self.make_south_rules(sw, sw_info, south_link)
+        logger.debug('Completed creating rules for switch type [%s]',
+                     self.switch_type)
 
     def make_north_rules(self, sw, sw_info, north_link):
         raise NotImplemented
@@ -119,7 +121,8 @@ class AbstractController(object):
         pass
 
     def __add_helpers(self):
-        logger.info('Setting up helpers for %s', self.switch_type)
+        logger.info('Setting up helpers for [%s]', self.switch_type)
+        logger.debug('This topology - [%s]', self.topo)
         for name, switch in self.topo['switches'].items():
             logger.info('Setting up helper for - [%s] of type - [%s]',
                         name, switch.get('type'))
@@ -194,18 +197,25 @@ class AbstractController(object):
     def interpret_digest(self, sw, sw_info, digest_data):
         logger.debug("Digest data %s", digest_data)
         for members in digest_data:
-            logger.debug("Members: %s", members)
+            logger.debug("Digest members: %s", members)
             if members.WhichOneof('data') == 'struct':
                 source_ip = decode_ipv4(members.struct.members[0].bitstring)
                 logger.info('Learned IP Address is: %s', source_ip)
                 source_mac = decode_mac(members.struct.members[1].bitstring)
                 logger.info('Learned MAC Address is: %s', source_mac)
-                ingress_port = int(members.struct.members[2].bitstring.encode('hex'), 16)
+                ingress_port = int(
+                    members.struct.members[2].bitstring.encode('hex'), 16)
                 logger.info('Ingress Port is %s', ingress_port)
-                self.add_data_forward(sw, sw_info, source_ip, source_mac, ingress_port)
+                self.add_data_forward(sw, sw_info, source_ip, source_mac,
+                                      ingress_port)
+            else:
+                logger.warn('Digest could not be processed - [%s]',
+                            digest_data)
+
+        logger.info('Completed digest processing')
 
     def receive_digests(self, sw, sw_info):
-        logger.info("Started listening thread for %s", sw_info['name'])
+        logger.info("Started listening digest thread for %s", sw_info['name'])
         while True:
             digests = sw.digest_list()
             digest_data = digests.digest.data
@@ -213,11 +223,14 @@ class AbstractController(object):
             self.interpret_digest(sw, sw_info, digest_data)
 
     def send_digest_entry(self, sw, sw_info):
+        logger.info('Starting Digest thread')
         digest_daemon = Thread(target=self.receive_digests, args=(sw, sw_info))
         self.digest_threads.append(digest_daemon)
-        digest_entry = self.p4info_helper.build_digest_entry(digest_name="mac_learn_digest")
+        digest_entry = self.p4info_helper.build_digest_entry(
+            digest_name="mac_learn_digest")
         sw.write_digest_entry(digest_entry)
-        logger.info('Core: Sent Digest Entry via P4Runtime: [%s]', digest_entry)
+        logger.info('Sent Digest Entry via P4Runtime: [%s] from [%s]',
+                    digest_entry, self.switch_type)
         digest_daemon.start()
 
     def add_attacker(self, attack, host):
@@ -314,6 +327,7 @@ class AbstractController(object):
         :param switch_name: the name of the switch
         :return:
         """
+        logger.info('Retrieving switch links from topology')
         sw_info = self.topo['switches'][switch_name]
         conditions = {'south_node': switch_name}
         north_facing_links = filter(
@@ -403,5 +417,6 @@ class AbstractController(object):
     def set_multicast_group(self, switch, sw_info):
         raise NotImplemented
 
-    def add_data_forward(self, sw, sw_info, source_ip, source_mac, ingress_port):
+    def add_data_forward(self, sw, sw_info, source_ip, source_mac,
+                         ingress_port):
         raise NotImplemented

@@ -30,21 +30,6 @@
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth2' % switch.name }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
-    data_forward_table_action:
-      control_name: TpsCoreIngress
-      table_name: "{{ 'data_forward_ipv4_t' if ip_version == '4' else 'data_forward_ipv6_t' }}"
-      action:
-        name: data_forward
-        match_fields:
-          - key: "{{ 'hdr.ipv4.dstAddr' if ip_version == '4' else 'hdr.ipv6.dstAddr' }}"
-            value:
-              - "{{ receiver.ip if ip_version == '4' else receiver.ipv6 }}"
-              - "{{ 32 if ip_version == '4' else 128 }}"
-        params:
-          - key: dstAddr
-            value: "{{ switch.mac }}"
-          - key: port
-            value: "{{ rec_sw_port }}"
 
 # Basic Data Forward scenario for INT packets to egress port
 - import_playbook: ../single_switch/data_forward_basic.yml
@@ -63,21 +48,6 @@
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth2' % switch.name }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
-    data_forward_table_action:
-      control_name: TpsCoreIngress
-      table_name: "{{ 'data_forward_ipv4_t' if ip_version == '4' else 'data_forward_ipv6_t' }}"
-      action:
-        name: data_forward
-        match_fields:
-          - key: "{{ 'hdr.ipv4.dstAddr' if ip_version == '4' else 'hdr.ipv6.dstAddr' }}"
-            value:
-              - "{{ receiver.ip if ip_version == '4' else receiver.ipv6 }}"
-              - "{{ 32 if ip_version == '4' else 128 }}"
-        params:
-          - key: dstAddr
-            value: "{{ switch.mac }}"
-          - key: port
-            value: "{{ rec_sw_port }}"
     sr_data_inspection_int:
       - switch_id: 1002
       - switch_id: 1001
@@ -129,21 +99,6 @@
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth3' % switch.name }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
-    data_forward_table_action:
-      control_name: TpsCoreIngress
-      table_name: "{{ 'data_forward_ipv4_t' if ip_version == '4' else 'data_forward_ipv6_t' }}"
-      action:
-        name: data_forward
-        match_fields:
-          - key: "{{ 'hdr.ipv4.dstAddr' if ip_version == '4' else 'hdr.ipv6.dstAddr' }}"
-            value:
-              - "{{ receiver.ip if ip_version == '4' else receiver.ipv6 }}"
-              - "{{ 32 if ip_version == '4' else 128 }}"
-        params:
-          - key: dstAddr
-            value: "{{ switch.mac }}"
-          - key: port
-            value: "{{ rec_sw_port }}"
     sr_data_inspection_int:
       - switch_id: 1002
       - switch_id: 1001

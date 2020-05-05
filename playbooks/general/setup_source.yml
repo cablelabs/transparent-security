@@ -51,6 +51,7 @@
       command: "pip install -r {{ dest_dir }}/requirements.txt"
       register: cmd_out
       changed_when: cmd_out is not failed
+      until: cmd_out is not failed
       retries: 3
       delay: 5
 
@@ -59,6 +60,7 @@
       command: "pip install -e {{ dest_dir }}"
       register: cmd_out
       changed_when: cmd_out is not failed
+      until: cmd_out is not failed
       retries: 3
       delay: 5
 

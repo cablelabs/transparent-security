@@ -116,17 +116,22 @@ class GatewayController(AbstractController):
 
         # TODO/FIXME - Need to add logic to parse the topology to determine
         #     egress ports being used on the switch.
-
-        if sw_info['name'] == 'gateway1':
+        if len(self.topo['switches']) == 1:
             replicas = [{'egress_port': '1', 'instance': '1'},
-                        {'egress_port': '2', 'instance': '1'},
-                        {'egress_port': '3', 'instance': '1'},
-                        {'egress_port': '4', 'instance': '1'}]
+                        {'egress_port': '2', 'instance': '1'}]
         else:
-            replicas = [{'egress_port': '1', 'instance': '1'},
-                        {'egress_port': '2', 'instance': '1'},
-                        {'egress_port': '3', 'instance': '1'}]
-        multicast_entry = self.p4info_helper.build_multicast_group_entry(mc_group_id, replicas)
+            if sw_info['name'] == 'gateway1':
+                replicas = [{'egress_port': '1', 'instance': '1'},
+                            {'egress_port': '2', 'instance': '1'},
+                            {'egress_port': '3', 'instance': '1'},
+                            {'egress_port': '4', 'instance': '1'}]
+            else:
+                replicas = [{'egress_port': '1', 'instance': '1'},
+                            {'egress_port': '2', 'instance': '1'},
+                            {'egress_port': '3', 'instance': '1'}]
+
+        multicast_entry = self.p4info_helper.build_multicast_group_entry(
+            mc_group_id, replicas)
         logger.info('Build Multicast Entry: %s', multicast_entry)
         sw.write_multicast_entry(multicast_entry)
         table_entry = self.p4info_helper.build_table_entry(
@@ -139,9 +144,11 @@ class GatewayController(AbstractController):
         sw.write_table_entry(table_entry)
 
     def add_data_forward(self, sw, sw_info, src_ip, mac, port):
-        logger.info("Gateway - Check if %s belongs to: %s", src_ip, self.known_devices)
+        logger.info("Gateway - Check if %s belongs to: %s", src_ip,
+                    self.known_devices)
         if src_ip not in self.known_devices:
-            logger.info("Adding unique table entry on %s for %s", sw_info['name'], src_ip)
+            logger.info("Adding unique table entry on %s for %s",
+                        sw_info['name'], src_ip)
             table_entry = self.p4info_helper.build_table_entry(
                 table_name='{}.data_forward_ipv4_t'.format(self.p4_ingress),
                 match_fields={

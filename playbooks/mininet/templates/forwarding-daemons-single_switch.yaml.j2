@@ -11,17 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
-- import_playbook: start_mininet.yml
-  vars:
-    host_val: localhost
-    service_name: tps-mininet
-    srvc_desc: 'Mininet for aggregate.p4'
-    local_srvc_script_tmplt_file: ../general/templates/mininet_service.sh.j2
-    srvc_start_pause_time: 20
-    port_to_wait: 50051
-    load_p4: True
-    p4_progs:
-      - aggregate
-    topology_template: "templates/topology_template-single_switch.yml.j2"
-    p4_prog: "{{ p4_progs[0] }}"
-    use_fwd_config: False
+{{ topo_dict.hosts['host1'].name }}:
+  - destination: {{ topo_dict.hosts['host2'].ip }}
+    interface: {{ topo_dict.hosts['host1'].name }}-eth0
+    packet_count: 15
+    interval: 3

@@ -17,8 +17,8 @@ hosts:
   host1:
     name: host1
     id: 1
-    switch_ip: 192.168.1.254
-    ip: 192.168.1.2
+    switch_ip: 10.0.1.254
+    ip: 10.0.1.1
     ipv6: 0000:0000:0000:0000:0000:0001:0001:0002
     ip_port: any
     mac: 00:00:00:00:01:01
@@ -26,45 +26,45 @@ hosts:
   host2:
     name: host2
     id: 2
-    switch_ip: 10.2.5.254
-    ip: 10.2.5.2
-    ipv6: 0000:0000:0000:0000:0000:0002:0002:0002
+    switch_ip: 10.0.1.254
+    ip: 10.0.1.8
+    ipv6: 0000:0000:0000:0000:0000:0002:0001:0002
     ip_port: any
-    mac: 00:00:00:00:02:02
+    mac: 00:00:00:00:05:07
     type: server
   clone:
     name: clone
     id: 3
-    switch_ip: 10.2.5.254
-    ip: 10.2.5.6
-    ipv6: 0000:0000:0000:0000:0000:0002:0002:0002
+    switch_ip: 10.0.1.254
+    ip: 10.0.1.9
+    ipv6: 0000:0000:0000:0000:0000:0002:0001:0003
     ip_port: any
-    mac: 00:00:00:00:02:03
+    mac: 00:00:00:00:05:08
     type: server
 switches:
-  {{ p4_prog }}:
-    name: {{ p4_prog }}
+  {{ p4_progs[0] }}:
+    name: {{ p4_progs[0] }}
     id: 0
-    runtime_p4info: {{ remote_scripts_dir }}/p4/{{ p4_prog }}.p4info
-    runtime_json: {{ remote_scripts_dir }}/p4/{{ p4_prog }}.json
+    runtime_p4info: {{ remote_scripts_dir }}/p4/{{ p4_progs[0] }}.p4info
+    runtime_json: {{ remote_scripts_dir }}/p4/{{ p4_progs[0] }}.json
     clone_egress: {{ clone_egress_port }}
-    subnet: 10.1.1.0
-    type: {{ p4_prog }}
+    subnet: 10.0.1.0
+    type: {{ p4_progs[0] }}
     mac: 00:00:00:01:01:00
     grpc: 127.0.0.1:50051
 links:
-  - north_node: {{ p4_prog }}
+  - north_node: {{ p4_progs[0] }}
     south_node: host1
     south_facing_port: 1
     latency: 0ms
     bandwidth: null
   - north_node: host2
-    south_node: {{ p4_prog }}
+    south_node: {{ p4_progs[0] }}
     north_facing_port: 2
     latency: 0ms
     bandwidth: null
   - north_node: clone
-    south_node: {{ p4_prog }}
+    south_node: {{ p4_progs[0] }}
     north_facing_port: 3
     latency: 0ms
     bandwidth: null

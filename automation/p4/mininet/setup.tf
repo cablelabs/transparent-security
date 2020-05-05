@@ -80,13 +80,17 @@ EOT
   }
 }
 
+locals {
+  setup_pb = var.scenario_name == "full" ? "setup-full.yml" : "setup-single-switch.yml"
+}
+
 resource "null_resource" "transparent-security-start-sim" {
   depends_on = [null_resource.transparent-security-mininet-host-setup]
 
   provisioner "remote-exec" {
     inline = [
       "sudo pip install ansible",
-      "${var.ANSIBLE_CMD} -i ${var.remote_inventory_file}  ${var.remote_pb_dir}/mininet/setup-${var.scenario_name}.yml"
+      "${var.ANSIBLE_CMD} -i ${var.remote_inventory_file}  ${var.remote_pb_dir}/mininet/${local.setup_pb}"
     ]
   }
 

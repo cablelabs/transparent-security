@@ -23,8 +23,9 @@
       - core
       - aggregate
       - gateway
-    topology_template: "templates/topology_template-full.yml.j2"
-    use_fwd_config: True
+    topology_template: templates/topology_template-full.yml.j2
+    fwd_daemon_config_template: templates/forwarding-daemons-full.yaml.j2
+    load_p4: False
 
 - import_playbook: ../general/start_service.yml
   vars:
@@ -35,6 +36,7 @@
     srvc_start_pause_time: 15
     port_to_wait: "{{ sdn_port }}"
     p4_platform: bmv2
+    load_p4: True
 
 - import_playbook: ../general/start_service.yml
   vars:

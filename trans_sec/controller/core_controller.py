@@ -79,6 +79,11 @@ class CoreController(AbstractController):
         for south_link in south_facing_links:
             south_node_name = south_link['south_node']
             south_node_mac = self.topo['switches'][south_node_name]['mac']
+            # if self.topo.get('switches') and south_node_name in self.topo['switches']:
+            #     south_node_mac = self.topo['switches'][south_node_name]['mac']
+            # else:
+            #     south_node_mac = self.topo['hosts'][south_node_name]['mac']
+
             action_params = {
                 'switch_id': sw_info['id'],
             }

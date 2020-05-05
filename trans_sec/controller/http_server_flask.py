@@ -41,7 +41,10 @@ class SDNControllerServer:
 
     @staticmethod
     def stop():
-        requests.post(url='http://127.0.0.1:9998/shutdown')
+        try:
+            requests.post(url='http://127.0.0.1:9998/shutdown')
+        except Exception as e:
+            logger.warn('Trouble shutting down HTTP server - [%s]', e)
 
     def flask_thread(self, port):
         logger.info('Starting server on port [%s]', port)
