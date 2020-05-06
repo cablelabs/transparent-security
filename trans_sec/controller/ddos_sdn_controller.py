@@ -36,12 +36,13 @@ class DdosSdnController:
         self.http_server = SDNControllerServer(self, http_server_port)
         self.running = False
 
-    def start(self):
+    def start(self, add_di):
         logger.info('Starting Controllers - [%s]', self.controllers)
         for controller in self.controllers.values():
             controller.start()
 
-        self.__make_switch_rules()
+        logger.debug('Making switch rules with data inspection - [%s]', add_di)
+        self.__make_switch_rules(add_di)
         self.__build_skeleton_packet_telemetry()
 
         logger.info('Starting HTTP server on port - [%s]',
@@ -55,7 +56,7 @@ class DdosSdnController:
         self.running = False
         self.http_server.stop()
 
-    def __make_switch_rules(self):
+    def __make_switch_rules(self, add_di):
         """
         Creates the rules for each controller
         :return:
@@ -63,7 +64,7 @@ class DdosSdnController:
         logger.info('Creating switch rules on #%s different controllers',
                     len(self.controllers))
         for controller in self.controllers.values():
-            controller.make_switch_rules()
+            controller.make_switch_rules(add_di)
         logger.debug('Switch rule creation completed')
 
     def __build_skeleton_packet_telemetry(self):

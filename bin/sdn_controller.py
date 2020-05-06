@@ -51,6 +51,9 @@ def get_args():
     parser.add_argument('-s', '--switch-config-dir', dest='switch_config_dir',
                         help='Direction with Switch configurations',
                         required=True)
+    parser.add_argument('-di', '--add-di', dest='add_di', type=str2bool,
+                        help='Direction with Switch configurations',
+                        required=False, default=True)
     parser.add_argument('-dh', '--debug-host', dest='debug_host',
                         help='remote debugging host IP')
     parser.add_argument('-dp', '--debug-port', dest='debug_port', default=5678,
@@ -67,6 +70,17 @@ def get_args():
                         help='When not set, all controllers will attempt to '
                              'start')
     return parser.parse_args()
+
+
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
 
 
 def main():
@@ -121,7 +135,9 @@ def main():
         topo=topo,
         controllers=controllers,
         http_server_port=args.http_server_port)
-    sdn_controller.start()
+
+    logger.debug('Add data inspection - [%s]', bool(args.add_di))
+    sdn_controller.start(args.add_di)
     # try:
     #     sdn_controller.start()
     # except Exception as e:

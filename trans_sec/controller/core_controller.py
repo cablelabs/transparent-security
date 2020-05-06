@@ -35,9 +35,10 @@ class CoreController(AbstractController):
             'TpsCoreIngress')
         self.p4_egress = 'TpsCoreEgress'
 
-    def make_rules(self, sw, sw_info, north_facing_links, south_facing_links):
+    def make_rules(self, sw, sw_info, north_facing_links, south_facing_links,
+                   add_di):
         super(self.__class__, self).make_rules(
-            sw, sw_info, north_facing_links, south_facing_links)
+            sw, sw_info, north_facing_links, south_facing_links, add_di)
         clone_entry = self.p4info_helper.build_clone_entry(
             sw_info['clone_egress'])
         sw.write_clone_entries(clone_entry)
@@ -70,10 +71,11 @@ class CoreController(AbstractController):
         logger.info('south_facing_links - [%s]', south_facing_links)
         logger.info('sw_info - [%s]', sw_info)
 
-        for north_link in north_facing_links:
-            if 'l2ptr' in north_link:
-                self.__make_int_rules(sw, sw_info, north_link,
-                                      south_facing_links)
+        if add_di:
+            for north_link in north_facing_links:
+                if 'l2ptr' in north_link:
+                    self.__make_int_rules(sw, sw_info, north_link,
+                                          south_facing_links)
 
     def __make_int_rules(self, sw, sw_info, north_link, south_facing_links):
         for south_link in south_facing_links:

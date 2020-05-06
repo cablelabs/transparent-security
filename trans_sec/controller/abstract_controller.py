@@ -67,13 +67,15 @@ class AbstractController(object):
         for thread in self.digest_threads:
             thread.stop()
 
-    def make_rules(self, sw, sw_info, north_facing_links, south_facing_links):
+    def make_rules(self, sw, sw_info, north_facing_links, south_facing_links,
+                   add_di):
         """
         Abstract method
         :param sw: switch object
         :param sw_info: switch info object
         :param north_facing_links: northbound links
         :param south_facing_links: southbound links
+        :param add_di: populate data_inspection tables when true
         """
         logger.info('Creating rules for switch type - [%s]', self.switch_type)
         for north_link in north_facing_links:
@@ -82,14 +84,14 @@ class AbstractController(object):
 
         for south_link in south_facing_links:
             logger.info('Creating rules for the south link - [%s]', south_link)
-            self.make_south_rules(sw, sw_info, south_link)
+            self.make_south_rules(sw, sw_info, south_link, add_di)
         logger.debug('Completed creating rules for switch type [%s]',
                      self.switch_type)
 
     def make_north_rules(self, sw, sw_info, north_link):
         raise NotImplemented
 
-    def make_south_rules(self, sw, sw_info, south_link):
+    def make_south_rules(self, sw, sw_info, south_link, add_di):
         if south_link.get('south_facing_port'):
             logger.info('Creating south switch rules - [%s]', south_link)
             if self.topo['switches'].get(south_link['south_node']):
@@ -112,7 +114,7 @@ class AbstractController(object):
                     'South Bound Link for %s, %s does not exist in topology' %
                     (sw.name, south_link.get('south_node')))
 
-            if device is not None:
+            if device is not None and add_di:
                 self.add_data_inspection(sw, device, sw_info)
         else:
             logger.info('No south links to install')
@@ -178,13 +180,14 @@ class AbstractController(object):
                                     counter.data.packet_count,
                                     counter.data.byte_count))
 
-    def make_switch_rules(self):
+    def make_switch_rules(self, add_di):
         logger.info('Make Rules for controller [%s]', self.switch_type)
         for switch in self.switches:
             sw_info, north_links, south_links = self.__get_links(switch.name)
             self.make_rules(sw=switch, sw_info=sw_info,
                             north_facing_links=north_links,
-                            south_facing_links=south_links)
+                            south_facing_links=south_links,
+                            add_di=add_di)
 
     def switch_forwarding(self):
         logger.info('Forwarding Rules for controller [%s]', self.switch_type)

@@ -28,13 +28,15 @@ class GatewayController(AbstractController):
             ['TpsGwIngress.forwardedPackets', 'TpsGwIngress.droppedPackets'],
             log_dir, load_p4, 'TpsGwIngress')
 
-    def make_rules(self, sw, sw_info, north_facing_links, south_facing_links):
+    def make_rules(self, sw, sw_info, north_facing_links, south_facing_links,
+                   add_di):
         """
         Overrides the abstract method from super
         :param sw: switch object
         :param sw_info: switch info object
         :param north_facing_links: northbound links
         :param south_facing_links: southbound links
+        :param add_di: when True inserts into the data_inspection_t table
         """
         sw_link = north_facing_links[0]
         if len(self.topo['switches']) == 1:
@@ -58,42 +60,43 @@ class GatewayController(AbstractController):
                         ' to IP ' + device.get('ip') +
                         ':' + str(device.get('ip_port')))
 
-            # Northbound Traffic Inspection for IPv4
-            action_params = {
-                    'device': device['id'],
-                    'switch_id': sw_info['id']
-            }
-            table_entry = self.p4info_helper.build_table_entry(
-                table_name='{}.data_inspection_t'.format(self.p4_ingress),
-                match_fields={
-                    'hdr.ethernet.src_mac': device['mac'],
-                    'hdr.ethernet.etherType': trans_sec.consts.IPV4_TYPE
-                },
-                action_name='{}.data_inspect_packet_ipv4'.format(
-                    self.p4_ingress),
-                action_params=action_params)
-            sw.write_table_entry(table_entry)
+            if add_di:
+                # Northbound Traffic Inspection for IPv4
+                action_params = {
+                        'device': device['id'],
+                        'switch_id': sw_info['id']
+                }
+                table_entry = self.p4info_helper.build_table_entry(
+                    table_name='{}.data_inspection_t'.format(self.p4_ingress),
+                    match_fields={
+                        'hdr.ethernet.src_mac': device['mac'],
+                        'hdr.ethernet.etherType': trans_sec.consts.IPV4_TYPE
+                    },
+                    action_name='{}.data_inspect_packet_ipv4'.format(
+                        self.p4_ingress),
+                    action_params=action_params)
+                sw.write_table_entry(table_entry)
 
-            # Northbound Traffic Inspection for IPv6
-            action_params = {
-                    'device': device['id'],
-                    'switch_id': sw_info['id']
-            }
-            table_entry = self.p4info_helper.build_table_entry(
-                table_name='{}.data_inspection_t'.format(self.p4_ingress),
-                match_fields={
-                    'hdr.ethernet.src_mac': device['mac'],
-                    'hdr.ethernet.etherType': trans_sec.consts.IPV6_TYPE
-                },
-                action_name='{}.data_inspect_packet_ipv6'.format(
-                    self.p4_ingress),
-                action_params=action_params)
-            sw.write_table_entry(table_entry)
+                # Northbound Traffic Inspection for IPv6
+                action_params = {
+                        'device': device['id'],
+                        'switch_id': sw_info['id']
+                }
+                table_entry = self.p4info_helper.build_table_entry(
+                    table_name='{}.data_inspection_t'.format(self.p4_ingress),
+                    match_fields={
+                        'hdr.ethernet.src_mac': device['mac'],
+                        'hdr.ethernet.etherType': trans_sec.consts.IPV6_TYPE
+                    },
+                    action_name='{}.data_inspect_packet_ipv6'.format(
+                        self.p4_ingress),
+                    action_params=action_params)
+                sw.write_table_entry(table_entry)
 
-            logger.info(
-                'Installed Northbound Packet Inspection for device with'
-                ' MAC - [%s] with action params - [%s]',
-                device.get('mac'), action_params)
+                logger.info(
+                    'Installed Northbound Packet Inspection for device with'
+                    ' MAC - [%s] with action params - [%s]',
+                    device.get('mac'), action_params)
         if len(self.topo['switches']) == 1:
             inet = self.topo['hosts']['host2']
         else:
