@@ -97,15 +97,16 @@ class GatewayController(AbstractController):
                     'Installed Northbound Packet Inspection for device with'
                     ' MAC - [%s] with action params - [%s]',
                     device.get('mac'), action_params)
-        if len(self.topo['switches']) == 1:
-            inet = self.topo['hosts']['host2']
-        else:
-            inet = self.topo['hosts']['inet']
+
+        # TODO - Implement IPv6 learning like IPv4 and remove all inserts
+        #  into data_forward
         # Add entry for forwarding IPv6 packets
+        ipv6_addr = self.topo['hosts'][sw_info['ipv6_term_host']]['ipv6']
+        logger.info('Adding ipv6 addr [%s] to data forward', ipv6_addr)
         table_entry = self.p4info_helper.build_table_entry(
             table_name='{}.data_forward_ipv6_t'.format(self.p4_ingress),
             match_fields={
-                'hdr.ipv6.dstAddr': (inet['ipv6'], 128)
+                'hdr.ipv6.dstAddr': (ipv6_addr, 128)
             },
             action_name='{}.data_forward'.format(self.p4_ingress),
             action_params={

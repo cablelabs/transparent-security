@@ -220,6 +220,7 @@ class AbstractController(object):
     def receive_digests(self, sw, sw_info):
         logger.info("Started listening digest thread for %s", sw_info['name'])
         while True:
+            logger.debug('Requesting digests')
             digests = sw.digest_list()
             digest_data = digests.digest.data
             logger.info('Received digests: [%s]', digests)

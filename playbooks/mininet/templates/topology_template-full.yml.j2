@@ -97,6 +97,7 @@ switches:
     type: gateway
     mac: 00:00:00:01:01:00
     grpc: 127.0.0.1:50053
+    ipv6_term_host: inet
   gateway2:
     name: gateway2
     id: 3
@@ -106,6 +107,7 @@ switches:
     type: gateway
     mac: 00:00:00:01:02:00
     grpc: 127.0.0.1:50054
+    ipv6_term_host: inet
   gateway3:
     name: gateway3
     id: 4
@@ -115,6 +117,7 @@ switches:
     type: gateway
     mac: 00:00:00:01:03:00
     grpc: 127.0.0.1:50055
+    ipv6_term_host: inet
   aggregate:
     name: aggregate
     id: 0
@@ -124,16 +127,21 @@ switches:
     type: aggregate
     mac: 00:00:00:02:04:00
     grpc: 127.0.0.1:50051
+    ipv6_term_host: inet
   core:
     name: core
     id: 1
     runtime_p4info: {{ remote_scripts_dir }}/p4/core.p4info
     runtime_json: {{ remote_scripts_dir }}/p4/core.json
     clone_egress: {{ clone_egress_port }}
+    telemetry_rpt:
+      type: external
+      name: analytics_engine
     subnet: 10.0.1.0
     type: core
     mac: 00:00:00:03:05:00
     grpc: 127.0.0.1:50052
+    ipv6_term_host: inet
 external:
   analytics_engine:
     name: ae

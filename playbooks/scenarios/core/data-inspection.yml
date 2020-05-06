@@ -13,11 +13,6 @@
 # Simple scenario where packets are sent through 3 devices and only the last
 # one will be demonstrating dropped packets
 ---
-# Enable cloning
-- import_playbook: ../test_cases/write_clone_entry.yml
-  vars:
-    clone_entry: True
-
 # Create Telemetry Report table entry to setup_telemetry_rpt_t
 - import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
@@ -116,11 +111,6 @@
     # For sending INT packets on the #2 of 3 send/receive iteration
     sr2_data_inspection_int: "{{ sr1_data_inspection_int }}"
     sr2_rec_int_hops: "{{ sr1_rec_int_hops }}"
-
-# Disable cloning
-- import_playbook: ../test_cases/write_clone_entry.yml
-  vars:
-    clone_entry: False
 
 # Create Telemetry Report table entry to setup_telemetry_rpt_t
 - import_playbook: ../test_cases/write_to_p4_table.yml

@@ -44,27 +44,32 @@ class CoreController(AbstractController):
         sw.write_clone_entries(clone_entry)
         logger.info('Installed clone on %s' % sw.name)
 
-        # TODO - Make this more configurable and support at least 2 ports as
-        #  well as IPv6 create an optional configuration item in the topology
-        #  specifically for the ae_ip
-        ae_ip = self.topo['external']['analytics_engine']['ip']
-        ae_ip = socket.gethostbyname(ae_ip)
-        logger.info('Starting telemetry report for INT headers with dst_port '
-                    'value of 555 to AE IP [%s]', ae_ip)
-        table_name = '{}.setup_telemetry_rpt_t'.format(self.p4_egress)
-        action_name = '{}.setup_telem_rpt_ipv4'.format(self.p4_egress)
-        match_fields = {
-            'hdr.udp_int.dst_port': 555
-        }
-        action_params = {
-            'ae_ip': ae_ip
-        }
-        table_entry = self.p4info_helper.build_table_entry(
-            table_name=table_name,
-            match_fields=match_fields,
-            action_name=action_name,
-            action_params=action_params)
-        sw.write_table_entry(table_entry)
+        ae_ip = None
+        trpt_dict = sw_info['telemetry_rpt']
+        if trpt_dict['type'] == 'host':
+            ae_ip = self.topo['hosts'][trpt_dict['name']]['ip']
+        elif trpt_dict['type'] == 'external':
+            ae_ip = self.topo['external'][trpt_dict['name']]['ip']
+
+        if ae_ip:
+            ae_ip_addr = socket.gethostbyname(ae_ip)
+            logger.info(
+                'Starting telemetry report for INT headers with dst_port '
+                'value of 555 to AE IP [%s]', ae_ip_addr)
+            table_name = '{}.setup_telemetry_rpt_t'.format(self.p4_egress)
+            action_name = '{}.setup_telem_rpt_ipv4'.format(self.p4_egress)
+            match_fields = {
+                'hdr.udp_int.dst_port': 555
+            }
+            action_params = {
+                'ae_ip': ae_ip_addr
+            }
+            table_entry = self.p4info_helper.build_table_entry(
+                table_name=table_name,
+                match_fields=match_fields,
+                action_name=action_name,
+                action_params=action_params)
+            sw.write_table_entry(table_entry)
 
         logger.info('self.topo - [%s]', self.topo)
         logger.info('north_facing_links - [%s]', north_facing_links)
@@ -117,6 +122,8 @@ class CoreController(AbstractController):
                 'Adding data_forward entry to forward packets to  port - [%s]',
                 north_link['north_facing_port'])
 
+            # TODO - Implement IPv6 learning like IPv4 and remove all inserts
+            #  into data_forward
             # Add entry for forwarding IPv6 packets
             table_entry = self.p4info_helper.build_table_entry(
                 table_name='{}.data_forward_ipv6_t'.format(self.p4_ingress),

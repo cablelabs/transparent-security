@@ -47,29 +47,27 @@ class AggregateController(AbstractController):
                 north_link.get('north_facing_port'),
                 north_link.get('south_facing_port'))
 
-            # TODO/FIXME - Cannot have a hardcoded host as it will break when
-            #  using an topology without a host named 'inet'
-            inet = self.topo['hosts'].get('inet')
-
-            # TODO/FIXME - this needs to go away nullifying ^^^
+            # TODO - Implement IPv6 learning like IPv4 and remove all inserts
+            #  into data_forward
             # Add IPv6 entry
-            if inet:
-                table_entry = self.p4info_helper.build_table_entry(
-                    table_name='{}.data_forward_ipv6_t'.format(
-                        self.p4_ingress),
-                    match_fields={
-                        'hdr.ipv6.dstAddr': (inet['ipv6'], 128)
-                    },
-                    action_name='{}.data_forward'.format(self.p4_ingress),
-                    action_params={
-                        'dstAddr': north_node['mac'],
-                        'port': north_link['north_facing_port']
-                    })
-                sw.write_table_entry(table_entry)
+            ipv6_addr = self.topo['hosts'][sw_info['ipv6_term_host']]['ipv6']
+            logger.info('Adding ipv6 addr [%s] to data forward', ipv6_addr)
+            table_entry = self.p4info_helper.build_table_entry(
+                table_name='{}.data_forward_ipv6_t'.format(
+                    self.p4_ingress),
+                match_fields={
+                    'hdr.ipv6.dstAddr': (ipv6_addr, 128)
+                },
+                action_name='{}.data_forward'.format(self.p4_ingress),
+                action_params={
+                    'dstAddr': north_node['mac'],
+                    'port': north_link['north_facing_port']
+                })
+            sw.write_table_entry(table_entry)
 
-                logger.info('Installed Northbound from port %s to port %s',
-                            north_link.get('north_facing_port'),
-                            north_link.get('south_facing_port'))
+            logger.info('Installed Northbound from port %s to port %s',
+                        north_link.get('north_facing_port'),
+                        north_link.get('south_facing_port'))
         else:
             logger.info('No north links to install')
 
