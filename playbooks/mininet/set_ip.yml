@@ -47,20 +47,6 @@
 
 - name: Setup IPs in system
   block:
-    - name: derive interface IP
-      set_fact:
-        intf_prfx: "{{ dev_ip_tokens[0] }}.{{ dev_ip_tokens[1] }}.{{ dev_ip_tokens[2] }}"
-        intf_sufx: "{{ dev_ip_tokens[3]|int - 1 }}"
-
-    - name: Set IP for intf {{ intf_name }}
-      become: yes
-      command: "ip addr del {{ intf_prfx }}.{{ intf_sufx }}/24 dev {{ intf_name }}"
-      ignore_errors: yes
-
-    - name: Set IP for intf {{ intf_name }}
-      become: yes
-      command: "ip addr add {{ intf_prfx }}.{{ intf_sufx }}/24 dev {{ intf_name }}"
-
     - name: Set /etc/hosts
       become: yes
       lineinfile:

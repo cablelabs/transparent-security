@@ -36,80 +36,80 @@ class GatewayController(AbstractController):
         :param north_facing_links: northbound links
         :param south_facing_links: southbound links
         """
-        if 0 < len(north_facing_links) < 2:
-            sw_link = north_facing_links[0]
-            north_switch = self.topo['switches'][sw_link['north_node']]
-            logger.info('Gateway: ' + sw_info['name'] +
-                        ' connects northbound to northbound switch: ' +
-                        north_switch.get('name') +
-                        ' on physical port ' +
-                        str(sw_link.get('north_facing_port')) +
-                        ' to physical port ' +
-                        str(sw_link.get('south_facing_port')))
-
-            for device_link in south_facing_links:
-                device = self.topo['hosts'].get(device_link['south_node'])
-                logger.info('Gateway: ' + sw_info['name'] +
-                            ' connects to Device: ' + device['name'] +
-                            ' on physical port ' +
-                            str(device_link.get('south_facing_port')) +
-                            ' to IP ' + device.get('ip') +
-                            ':' + str(device.get('ip_port')))
-
-                # Northbound Traffic Inspection for IPv4
-                action_params = {
-                        'device': device['id'],
-                        'switch_id': sw_info['id']
-                }
-                table_entry = self.p4info_helper.build_table_entry(
-                    table_name='{}.data_inspection_t'.format(self.p4_ingress),
-                    match_fields={
-                        'hdr.ethernet.src_mac': device['mac'],
-                        'hdr.ethernet.etherType': trans_sec.consts.IPV4_TYPE
-                    },
-                    action_name='{}.data_inspect_packet_ipv4'.format(
-                        self.p4_ingress),
-                    action_params=action_params)
-                sw.write_table_entry(table_entry)
-
-                # Northbound Traffic Inspection for IPv6
-                action_params = {
-                        'device': device['id'],
-                        'switch_id': sw_info['id']
-                }
-                table_entry = self.p4info_helper.build_table_entry(
-                    table_name='{}.data_inspection_t'.format(self.p4_ingress),
-                    match_fields={
-                        'hdr.ethernet.src_mac': device['mac'],
-                        'hdr.ethernet.etherType': trans_sec.consts.IPV6_TYPE
-                    },
-                    action_name='{}.data_inspect_packet_ipv6'.format(
-                        self.p4_ingress),
-                    action_params=action_params)
-                sw.write_table_entry(table_entry)
-
-                logger.info(
-                    'Installed Northbound Packet Inspection for device with'
-                    ' MAC - [%s] with action params - [%s]',
-                    device.get('mac'), action_params)
-
-            inet = self.topo['hosts']['inet']
-
-            # Add entry for forwarding IPv6 packets
-            table_entry = self.p4info_helper.build_table_entry(
-                table_name='{}.data_forward_ipv6_t'.format(self.p4_ingress),
-                match_fields={
-                    'hdr.ipv6.dstAddr': (inet['ipv6'], 128)
-                },
-                action_name='{}.data_forward'.format(self.p4_ingress),
-                action_params={
-                    'dstAddr': north_switch['mac'],
-                    'port': sw_link['north_facing_port']
-                })
-            sw.write_table_entry(table_entry)
+        sw_link = north_facing_links[0]
+        if len(self.topo['switches']) == 1:
+            north_switch = self.topo['hosts'][sw_link['north_node']]
         else:
-            logger.error('Wrong number of nb switches on gateway')
-            logger.error(sw_info.get('name'))
+            north_switch = self.topo['switches'][sw_link['north_node']]
+        logger.info('Gateway: ' + sw_info['name'] +
+                    ' connects northbound to northbound switch: ' +
+                    north_switch.get('name') +
+                    ' on physical port ' +
+                    str(sw_link.get('north_facing_port')) +
+                    ' to physical port ' +
+                    str(sw_link.get('south_facing_port')))
+
+        for device_link in south_facing_links:
+            device = self.topo['hosts'].get(device_link['south_node'])
+            logger.info('Gateway: ' + sw_info['name'] +
+                        ' connects to Device: ' + device['name'] +
+                        ' on physical port ' +
+                        str(device_link.get('south_facing_port')) +
+                        ' to IP ' + device.get('ip') +
+                        ':' + str(device.get('ip_port')))
+
+            # Northbound Traffic Inspection for IPv4
+            action_params = {
+                    'device': device['id'],
+                    'switch_id': sw_info['id']
+            }
+            table_entry = self.p4info_helper.build_table_entry(
+                table_name='{}.data_inspection_t'.format(self.p4_ingress),
+                match_fields={
+                    'hdr.ethernet.src_mac': device['mac'],
+                    'hdr.ethernet.etherType': trans_sec.consts.IPV4_TYPE
+                },
+                action_name='{}.data_inspect_packet_ipv4'.format(
+                    self.p4_ingress),
+                action_params=action_params)
+            sw.write_table_entry(table_entry)
+
+            # Northbound Traffic Inspection for IPv6
+            action_params = {
+                    'device': device['id'],
+                    'switch_id': sw_info['id']
+            }
+            table_entry = self.p4info_helper.build_table_entry(
+                table_name='{}.data_inspection_t'.format(self.p4_ingress),
+                match_fields={
+                    'hdr.ethernet.src_mac': device['mac'],
+                    'hdr.ethernet.etherType': trans_sec.consts.IPV6_TYPE
+                },
+                action_name='{}.data_inspect_packet_ipv6'.format(
+                    self.p4_ingress),
+                action_params=action_params)
+            sw.write_table_entry(table_entry)
+
+            logger.info(
+                'Installed Northbound Packet Inspection for device with'
+                ' MAC - [%s] with action params - [%s]',
+                device.get('mac'), action_params)
+        if len(self.topo['switches']) == 1:
+            inet = self.topo['hosts']['host2']
+        else:
+            inet = self.topo['hosts']['inet']
+        # Add entry for forwarding IPv6 packets
+        table_entry = self.p4info_helper.build_table_entry(
+            table_name='{}.data_forward_ipv6_t'.format(self.p4_ingress),
+            match_fields={
+                'hdr.ipv6.dstAddr': (inet['ipv6'], 128)
+            },
+            action_name='{}.data_forward'.format(self.p4_ingress),
+            action_params={
+                'dstAddr': north_switch['mac'],
+                'port': sw_link['north_facing_port']
+            })
+        sw.write_table_entry(table_entry)
 
     def set_multicast_group(self, sw, sw_info):
         mc_group_id = 1
