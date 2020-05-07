@@ -28,7 +28,8 @@ class AggregateController(AbstractController):
             log_dir, load_p4, 'TpsAggIngress')
 
     def make_north_rules(self, sw, sw_info, north_link):
-        if north_link.get('north_facing_port'):
+        # TODO Add a better way for single switch tests to use the north link to host2 and NOT the clone
+        if north_link.get('north_facing_port') and north_link.get('north_node') != "clone":
             logger.info('Creating north switch rules - [%s]', north_link)
 
             # north_node = self.topo['switches'][north_link['north_node']]
