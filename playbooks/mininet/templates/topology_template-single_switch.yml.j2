@@ -32,7 +32,7 @@ hosts:
     ip_port: any
     mac: 00:00:00:00:05:07
     type: server
-{% if p4_progs[0] == 'core' %}
+{% if p4_progs[0] != 'aggregate' %}
   clone:
     name: clone
     id: 3
@@ -76,7 +76,7 @@ links:
     north_facing_port: 2
     latency: 0ms
     bandwidth: null
-{% if p4_progs[0] == 'core' %}
+{% if p4_progs[0] != 'aggregate' %}
   - north_node: clone
     south_node: {{ p4_progs[0] }}
     north_facing_port: 3
