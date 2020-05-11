@@ -70,6 +70,8 @@
         executable: pip3
       retries: 3
       delay: 5
+      register: out
+      until: out is not failed
 
     - name: install p4runtime-shell dependencies into python3 runtime
       command: "sudo pip3 install -r {{ remote_scripts_dir }}/p4runtime-shell/requirements.txt"

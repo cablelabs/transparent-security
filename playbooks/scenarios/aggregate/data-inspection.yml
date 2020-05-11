@@ -31,21 +31,6 @@
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth2' % switch.name }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
-    data_forward_table_action:
-      control_name: TpsAggIngress
-      table_name: "{{ 'data_forward_ipv4_t' if ip_version == '4' else 'data_forward_ipv6_t' }}"
-      action:
-        name: data_forward
-        match_fields:
-          - key: "{{ 'hdr.ipv4.dstAddr' if ip_version == '4' else 'hdr.ipv6.dstAddr' }}"
-            value:
-              - "{{ receiver.ip if ip_version == '4' else receiver.ipv6 }}"
-              - "{{ 32 if ip_version == '4' else 128 }}"
-        params:
-          - key: dstAddr
-            value: "{{ switch.mac }}"
-          - key: port
-            value: "{{ rec_sw_port }}"
     data_inspection_table_action:
       control_name: TpsAggIngress
       table_name: data_inspection_t

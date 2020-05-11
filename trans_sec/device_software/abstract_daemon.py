@@ -50,7 +50,7 @@ class AbstractDaemon(object):
                              self.__class__.__name__)
             ret = self.mn_device.cmd(self.cmd)
             self.logger.info('Command [%s] executed with return value - [%s]',
-                             ret)
+                             self.cmd, ret)
         else:
             self.logger.error('No command to execute')
             raise Exception('No command to execute')

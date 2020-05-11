@@ -20,7 +20,11 @@ import os
 import pydevd
 import yaml
 
-from trans_sec.controller.ddos_sdn_controller import DdosSdnController
+from trans_sec.controller.aggregate_controller import AggregateController
+from trans_sec.controller.core_controller import CoreController
+from trans_sec.controller.ddos_sdn_controller import (
+    DdosSdnController, GATEWAY_CTRL_KEY, AGG_CTRL_KEY, CORE_CTRL_KEY)
+from trans_sec.controller.gateway_controller import GatewayController
 
 FORMAT = '%(levelname)s %(asctime)-15s %(filename)s %(message)s'
 logger = logging.getLogger('sdn_controller')
@@ -47,6 +51,9 @@ def get_args():
     parser.add_argument('-s', '--switch-config-dir', dest='switch_config_dir',
                         help='Direction with Switch configurations',
                         required=True)
+    parser.add_argument('-di', '--add-di', dest='add_di', type=str2bool,
+                        help='Direction with Switch configurations',
+                        required=False, default=True)
     parser.add_argument('-dh', '--debug-host', dest='debug_host',
                         help='remote debugging host IP')
     parser.add_argument('-dp', '--debug-port', dest='debug_port', default=5678,
@@ -58,7 +65,22 @@ def get_args():
                         choices=['True', 'False'],
                         help='When set, the controller will not attempt to '
                              'load the P4 program onto the switches')
+    parser.add_argument('-ct', '--controller-type', type=str, required=True,
+                        choices=['gateway', 'aggregate', 'core', 'full'],
+                        help='When not set, all controllers will attempt to '
+                             'start')
     return parser.parse_args()
+
+
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
 
 
 def main():
@@ -86,10 +108,44 @@ def main():
     logger.info(
         'Starting SDN Controller with topology - [%s] and load_p4 flag - [%s]',
         topo, eval(args.load_p4))
+    controllers = dict()
+    if args.controller_type == 'gateway' or args.controller_type == 'full':
+        controllers[GATEWAY_CTRL_KEY] = GatewayController(
+            platform=args.platform,
+            p4_build_out=args.switch_config_dir,
+            topo=topo,
+            log_dir=args.log_dir,
+            load_p4=eval(args.load_p4))
+    if args.controller_type == 'aggregate' or args.controller_type == 'full':
+        controllers[AGG_CTRL_KEY] = AggregateController(
+            platform=args.platform,
+            p4_build_out=args.switch_config_dir,
+            topo=topo,
+            log_dir=args.log_dir,
+            load_p4=eval(args.load_p4))
+    if args.controller_type == 'core' or args.controller_type == 'full':
+        controllers[CORE_CTRL_KEY] = CoreController(
+            platform=args.platform,
+            p4_build_out=args.switch_config_dir,
+            topo=topo,
+            log_dir=args.log_dir,
+            load_p4=eval(args.load_p4))
+
     sdn_controller = DdosSdnController(
-        topo, args.platform, args.switch_config_dir, args.http_server_port,
-        args.log_dir, eval(args.load_p4))
-    sdn_controller.start()
+        topo=topo,
+        controllers=controllers,
+        http_server_port=args.http_server_port)
+
+    logger.debug('Add data inspection - [%s]', bool(args.add_di))
+    sdn_controller.start(args.add_di)
+    # try:
+    #     sdn_controller.start()
+    # except Exception as e:
+    #     logger.error(
+    #         'Unexpected error running the SDN controller - [%s] - [%s]',
+    #         e.message, e.__class__)
+    #     sdn_controller.stop()
+    #     raise e
 
 
 if __name__ == '__main__':

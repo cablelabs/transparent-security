@@ -15,13 +15,24 @@
   vars:
     host_val: localhost
     service_name: tps-mininet
-    srvc_desc: 'Mininet for aggregate.p4'
+    srvc_desc: 'Mininet for {{ scenario_name }}.p4'
     local_srvc_script_tmplt_file: ../general/templates/mininet_service.sh.j2
     srvc_start_pause_time: 20
     port_to_wait: 50051
-    load_p4: True
     p4_progs:
-      - aggregate
+      - "{{ scenario_name }}"
     topology_template: "templates/topology_template-single_switch.yml.j2"
-    p4_prog: "{{ p4_progs[0] }}"
-    use_fwd_config: False
+    fwd_daemon_config_template: templates/forwarding-daemons-single_switch.yaml.j2
+    load_p4: False
+
+- import_playbook: ../general/start_service.yml
+  vars:
+    host_val: localhost
+    service_name: tps-sdn
+    srvc_desc: 'SDN'
+    local_srvc_script_tmplt_file: ../general/templates/sdn_controller.sh.j2
+    srvc_start_pause_time: 15
+    port_to_wait: "{{ sdn_port }}"
+    p4_platform: bmv2
+    load_p4: True
+    add_data_inspection: False

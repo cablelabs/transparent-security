@@ -13,34 +13,6 @@
 # Simple scenario where packets are sent through 3 devices and only the last
 # one will be demonstrating dropped packets
 ---
-# Enable cloning
-- import_playbook: ../test_cases/write_clone_entry.yml
-  vars:
-    clone_entry: True
-
-# Create Telemetry Report table entry to setup_telemetry_rpt_t
-- import_playbook: ../test_cases/write_to_p4_table.yml
-  vars:
-    send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
-    ip_version: "{{ scenario_send_ip_version | default(4) }}"
-    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-    switch: "{{ topo_dict.switches.core }}"
-    int_hops: "{{ sr_rec_int_hops | default(0) }}"
-    te_conf_file: "core-di-setup-telemetry-report-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
-    p4_table_action:
-      control_name: TpsCoreEgress
-      table_name: setup_telemetry_rpt_t
-      action:
-        name: "{{ 'setup_telem_rpt_ipv4' if ip_version == '4' else 'setup_telem_rpt_ipv6' }}"
-        match_fields:
-          - key: hdr.udp_int.dst_port
-            value: 555
-        params:
-          - key: ae_ip
-            value: "{{ topo_dict.hosts.clone.ip if ip_version == '4' else topo_dict.hosts.clone.ipv6 }}"
-    p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: "di-setup-telemetry-report-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
-
 # Basic Data Inspection scenario for packets on clone port - sending INT packet with two hops expect to result in INT headers with 3 hops
 - import_playbook: ../single_switch/data_inspection_basic.yml
   vars:
@@ -58,21 +30,6 @@
     receiver: "{{ topo_dict.hosts.host2 }}"
     receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth3' % switch.name }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
-    data_forward_table_action:
-      control_name: TpsCoreIngress
-      table_name: "{{ 'data_forward_ipv4_t' if ip_version == '4' else 'data_forward_ipv6_t' }}"
-      action:
-        name: data_forward
-        match_fields:
-          - key: "{{ 'hdr.ipv4.dstAddr' if ip_version == '4' else 'hdr.ipv6.dstAddr' }}"
-            value:
-              - "{{ receiver.ip if ip_version == '4' else receiver.ipv6 }}"
-              - "{{ 32 if ip_version == '4' else 128 }}"
-        params:
-          - key: dstAddr
-            value: "{{ switch.mac }}"
-          - key: port
-            value: "{{ rec_sw_port }}"
     data_inspection_table_action:
       control_name: TpsCoreIngress
       table_name: data_inspection_t
@@ -111,21 +68,6 @@
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth2' % switch.name }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
-    data_forward_table_action:
-      control_name: TpsCoreIngress
-      table_name: "{{ 'data_forward_ipv4_t' if ip_version == '4' else 'data_forward_ipv6_t' }}"
-      action:
-        name: data_forward
-        match_fields:
-          - key: "{{ 'hdr.ipv4.dstAddr' if ip_version == '4' else 'hdr.ipv6.dstAddr' }}"
-            value:
-              - "{{ receiver.ip if ip_version == '4' else receiver.ipv6 }}"
-              - "{{ 32 if ip_version == '4' else 128 }}"
-        params:
-          - key: dstAddr
-            value: "{{ switch.mac }}"
-          - key: port
-            value: "{{ rec_sw_port }}"
     data_inspection_table_action:
       control_name: TpsCoreIngress
       table_name: data_inspection_t
@@ -146,32 +88,3 @@
     # For sending INT packets on the #2 of 3 send/receive iteration
     sr2_data_inspection_int: "{{ sr1_data_inspection_int }}"
     sr2_rec_int_hops: "{{ sr1_rec_int_hops }}"
-
-# Disable cloning
-- import_playbook: ../test_cases/write_clone_entry.yml
-  vars:
-    clone_entry: False
-
-# Create Telemetry Report table entry to setup_telemetry_rpt_t
-- import_playbook: ../test_cases/write_to_p4_table.yml
-  vars:
-    send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
-    ip_version: "{{ scenario_send_ip_version | default(4) }}"
-    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-    switch: "{{ topo_dict.switches.core }}"
-    int_hops: "{{ sr_rec_int_hops | default(0) }}"
-    te_conf_file: "core-di-setup-telemetry-report-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
-    p4_table_action:
-      control_name: TpsCoreEgress
-      table_name: setup_telemetry_rpt_t
-      action:
-        name: "{{ 'setup_telem_rpt_ipv4' if ip_version == '4' else 'setup_telem_rpt_ipv6' }}"
-        match_fields:
-          - key: hdr.udp_int.dst_port
-            value: 555
-        params:
-          - key: ae_ip
-            value: "{{ topo_dict.hosts.clone.ip if ip_version == '4' else topo_dict.hosts.clone.ipv6 }}"
-    p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: "di-setup-telemetry-report-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
-    p4_te_insert: False

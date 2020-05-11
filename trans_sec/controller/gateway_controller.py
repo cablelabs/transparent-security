@@ -28,34 +28,39 @@ class GatewayController(AbstractController):
             ['TpsGwIngress.forwardedPackets', 'TpsGwIngress.droppedPackets'],
             log_dir, load_p4, 'TpsGwIngress')
 
-    def make_rules(self, sw, sw_info, north_facing_links, south_facing_links):
+    def make_rules(self, sw, sw_info, north_facing_links, south_facing_links,
+                   add_di):
         """
         Overrides the abstract method from super
         :param sw: switch object
         :param sw_info: switch info object
         :param north_facing_links: northbound links
         :param south_facing_links: southbound links
+        :param add_di: when True inserts into the data_inspection_t table
         """
-        if 0 < len(north_facing_links) < 2:
-            sw_link = north_facing_links[0]
+        sw_link = north_facing_links[0]
+        if len(self.topo['switches']) == 1:
+            north_switch = self.topo['hosts'][sw_link['north_node']]
+        else:
             north_switch = self.topo['switches'][sw_link['north_node']]
+        logger.info('Gateway: ' + sw_info['name'] +
+                    ' connects northbound to northbound switch: ' +
+                    north_switch.get('name') +
+                    ' on physical port ' +
+                    str(sw_link.get('north_facing_port')) +
+                    ' to physical port ' +
+                    str(sw_link.get('south_facing_port')))
+
+        for device_link in south_facing_links:
+            device = self.topo['hosts'].get(device_link['south_node'])
             logger.info('Gateway: ' + sw_info['name'] +
-                        ' connects northbound to northbound switch: ' +
-                        north_switch.get('name') +
+                        ' connects to Device: ' + device['name'] +
                         ' on physical port ' +
-                        str(sw_link.get('north_facing_port')) +
-                        ' to physical port ' +
-                        str(sw_link.get('south_facing_port')))
+                        str(device_link.get('south_facing_port')) +
+                        ' to IP ' + device.get('ip') +
+                        ':' + str(device.get('ip_port')))
 
-            for device_link in south_facing_links:
-                device = self.topo['hosts'].get(device_link['south_node'])
-                logger.info('Gateway: ' + sw_info['name'] +
-                            ' connects to Device: ' + device['name'] +
-                            ' on physical port ' +
-                            str(device_link.get('south_facing_port')) +
-                            ' to IP ' + device.get('ip') +
-                            ':' + str(device.get('ip_port')))
-
+            if add_di:
                 # Northbound Traffic Inspection for IPv4
                 action_params = {
                         'device': device['id'],
@@ -93,40 +98,44 @@ class GatewayController(AbstractController):
                     ' MAC - [%s] with action params - [%s]',
                     device.get('mac'), action_params)
 
-            inet = self.topo['hosts']['inet']
-
-            # Add entry for forwarding IPv6 packets
-            table_entry = self.p4info_helper.build_table_entry(
-                table_name='{}.data_forward_ipv6_t'.format(self.p4_ingress),
-                match_fields={
-                    'hdr.ipv6.dstAddr': (inet['ipv6'], 128)
-                },
-                action_name='{}.data_forward'.format(self.p4_ingress),
-                action_params={
-                    'dstAddr': north_switch['mac'],
-                    'port': sw_link['north_facing_port']
-                })
-            sw.write_table_entry(table_entry)
-        else:
-            logger.error('Wrong number of nb switches on gateway')
-            logger.error(sw_info.get('name'))
+        # TODO - Implement IPv6 learning like IPv4 and remove all inserts
+        #  into data_forward
+        # Add entry for forwarding IPv6 packets
+        ipv6_addr = self.topo['hosts'][sw_info['ipv6_term_host']]['ipv6']
+        logger.info('Adding ipv6 addr [%s] to data forward', ipv6_addr)
+        table_entry = self.p4info_helper.build_table_entry(
+            table_name='{}.data_forward_ipv6_t'.format(self.p4_ingress),
+            match_fields={
+                'hdr.ipv6.dstAddr': (ipv6_addr, 128)
+            },
+            action_name='{}.data_forward'.format(self.p4_ingress),
+            action_params={
+                'dstAddr': north_switch['mac'],
+                'port': sw_link['north_facing_port']
+            })
+        sw.write_table_entry(table_entry)
 
     def set_multicast_group(self, sw, sw_info):
         mc_group_id = 1
 
         # TODO/FIXME - Need to add logic to parse the topology to determine
         #     egress ports being used on the switch.
-
-        if sw_info['name'] == 'gateway1':
+        if len(self.topo['switches']) == 1:
             replicas = [{'egress_port': '1', 'instance': '1'},
-                        {'egress_port': '2', 'instance': '1'},
-                        {'egress_port': '3', 'instance': '1'},
-                        {'egress_port': '4', 'instance': '1'}]
+                        {'egress_port': '2', 'instance': '1'}]
         else:
-            replicas = [{'egress_port': '1', 'instance': '1'},
-                        {'egress_port': '2', 'instance': '1'},
-                        {'egress_port': '3', 'instance': '1'}]
-        multicast_entry = self.p4info_helper.build_multicast_group_entry(mc_group_id, replicas)
+            if sw_info['name'] == 'gateway1':
+                replicas = [{'egress_port': '1', 'instance': '1'},
+                            {'egress_port': '2', 'instance': '1'},
+                            {'egress_port': '3', 'instance': '1'},
+                            {'egress_port': '4', 'instance': '1'}]
+            else:
+                replicas = [{'egress_port': '1', 'instance': '1'},
+                            {'egress_port': '2', 'instance': '1'},
+                            {'egress_port': '3', 'instance': '1'}]
+
+        multicast_entry = self.p4info_helper.build_multicast_group_entry(
+            mc_group_id, replicas)
         logger.info('Build Multicast Entry: %s', multicast_entry)
         sw.write_multicast_entry(multicast_entry)
         table_entry = self.p4info_helper.build_table_entry(
@@ -139,9 +148,11 @@ class GatewayController(AbstractController):
         sw.write_table_entry(table_entry)
 
     def add_data_forward(self, sw, sw_info, src_ip, mac, port):
-        logger.info("Gateway - Check if %s belongs to: %s", src_ip, self.known_devices)
+        logger.info("Gateway - Check if %s belongs to: %s", src_ip,
+                    self.known_devices)
         if src_ip not in self.known_devices:
-            logger.info("Adding unique table entry on %s for %s", sw_info['name'], src_ip)
+            logger.info("Adding unique table entry on %s for %s",
+                        sw_info['name'], src_ip)
             table_entry = self.p4info_helper.build_table_entry(
                 table_name='{}.data_forward_ipv4_t'.format(self.p4_ingress),
                 match_fields={
