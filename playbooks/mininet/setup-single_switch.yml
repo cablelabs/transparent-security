@@ -15,16 +15,14 @@
   vars:
     host_val: localhost
     service_name: tps-mininet
-    srvc_desc: 'Mininet for TPS'
+    srvc_desc: 'Mininet for {{ scenario_name }}.p4'
     local_srvc_script_tmplt_file: ../general/templates/mininet_service.sh.j2
     srvc_start_pause_time: 20
     port_to_wait: 50051
     p4_progs:
-      - core
-      - aggregate
-      - gateway
-    topology_template: templates/topology_template-full.yml.j2
-    fwd_daemon_config_template: templates/forwarding-daemons-full.yml.j2
+      - "{{ scenario_name }}"
+    topology_template: "templates/topology_template-single_switch.yml.j2"
+    fwd_daemon_config_template: templates/forwarding-daemons-single_switch.yml.j2
     load_p4: False
 
 - import_playbook: ../general/start_service.yml
@@ -37,13 +35,4 @@
     port_to_wait: "{{ sdn_port }}"
     p4_platform: bmv2
     load_p4: True
-    add_data_inspection: True
-
-- import_playbook: ../general/start_service.yml
-  vars:
-    host_val: localhost
-    service_name: tps-ae
-    srvc_desc: 'TPS-AE'
-    srvc_type: 'SIMPLE'
-    local_srvc_script_tmplt_file: ../general/templates/ae_service.sh.j2
-    monitor_intf: "{{ ae_monitor_intf }}"
+    add_data_inspection: False

@@ -141,28 +141,6 @@ class CoreController(AbstractController):
                 'Installed Host %s ipv4 cloning rule on %s',
                 north_device.get('ip'), sw.name)
 
-    def set_multicast_group(self, sw, sw_info):
-        mc_group_id = 1
-
-        # TODO/FIXME - Need to add logic to parse the topology to determine
-        #     egress ports being used on the switch.
-
-        replicas = [
-            {'egress_port': '1', 'instance': '1'},
-            {'egress_port': '2', 'instance': '1'}]
-
-        multicast_entry = self.p4info_helper.build_multicast_group_entry(mc_group_id, replicas)
-        logger.info('Build Multicast Entry: %s', multicast_entry)
-        sw.write_multicast_entry(multicast_entry)
-        table_entry = self.p4info_helper.build_table_entry(
-            table_name='{}.arp_flood_t'.format(self.p4_ingress),
-            match_fields={'hdr.ethernet.dst_mac': 'ff:ff:ff:ff:ff:ff'},
-            action_name='{}.arp_flood'.format(self.p4_ingress),
-            action_params={
-                'srcAddr': sw_info['mac']
-            })
-        sw.write_table_entry(table_entry)
-
     def add_data_forward(self, sw, sw_info, src_ip, mac, port):
         logger.info("%s - Check if %s belongs to: %s", sw_info['name'], src_ip, self.known_devices)
         if src_ip not in self.known_devices:

@@ -101,8 +101,6 @@ def __log_std_packet(ether_pkt, ip_pkt, ip_proto, pkt_len):
                      ip_proto)
         return
 
-    logger.debug('Packet payload - [%s]', tcp_udp_pkt.payload)
-
     int_data = dict(
         eth_src_mac=ether_pkt.src,
         eth_dst_mac=ether_pkt.dst,

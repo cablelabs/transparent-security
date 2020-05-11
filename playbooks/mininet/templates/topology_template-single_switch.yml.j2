@@ -58,6 +58,13 @@ switches:
       type: host
       name: clone
     ipv6_term_host: host2
+    multicast_entries:
+      - egress_port: 1
+        instance: 1
+      - egress_port: 2
+        instance: 1
+      - egress_port: 3
+        instance: 1
 links:
   - north_node: {{ p4_progs[0] }}
     south_node: host1
