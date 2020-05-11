@@ -81,7 +81,7 @@ EOT
 }
 
 locals {
-  setup_pb = var.scenario_name == "full" ? "setup-full.yml" : "setup-single-switch.yml"
+  setup_pb = var.scenario_name == "full" || var.scenario_name == "lab_trial" ? "setup-${var.scenario_name}.yml" : "setup-single_switch.yml"
 }
 
 resource "null_resource" "transparent-security-start-sim" {

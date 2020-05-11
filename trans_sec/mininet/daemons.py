@@ -73,10 +73,4 @@ class DaemonRunner:
             logger.info(
                 'Creating forwarding daemon for [%s] and log file [%s]',
                 host_name, device_log_file)
-            return ForwardingDaemon(
-                device_name=host_name,
-                mn_device=mn_device,
-                device_config=dev_conf,
-                log_file=device_log_file,
-                device_log_dir=self.log_dir,
-                level=logging.DEBUG)
+            return ForwardingDaemon(host_name, mn_device, dev_conf)

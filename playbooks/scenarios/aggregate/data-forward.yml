@@ -15,7 +15,7 @@
 ---
 
 # Basic Data Forward scenario for standard UDP Packets without a data_inspection table record to no INT data is added
-- import_playbook: ../single_switch/data_forward_basic.yml
+- import_playbook: ../general/data_forward_basic.yml
   vars:
     send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
     ip_version: "{{ scenario_send_ip_version | default(4) }}"
@@ -25,15 +25,15 @@
     remote_rec_host: host2
     send_host: "{{ remote_send_host if run_mode == 'remote' else None }}"
     rec_host: "{{ remote_rec_host if run_mode == 'remote' else None }}"
-    sender: "{{ topo_dict.hosts.host1 }}"
+    sender: "{{ topo_dict.hosts[remote_send_host] }}"
     sender_intf: "{{ '%s-eth0' % send_host if run_mode == 'remote' else '%s-eth1' % switch.name }}"
     send_sw_port: "{{ topo_dict.links[0].south_facing_port }}"
-    receiver: "{{ topo_dict.hosts.host2 }}"
+    receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth2' % switch.name }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
 
 # Basic Data Forward scenario for INT UDP Packets without a data-inspection table entry so the original simply passes through
-- import_playbook: ../single_switch/data_forward_basic.yml
+- import_playbook: ../general/data_forward_basic.yml
   vars:
     send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
     ip_version: "{{ scenario_send_ip_version | default(4) }}"

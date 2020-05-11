@@ -105,6 +105,15 @@ switches:
     mac: 00:00:00:02:01:00
     grpc: 127.0.0.1:50053
     ipv6_term_host: inet
+    multicast_entries:
+      - egress_port: 1
+        instance: 1
+      - egress_port: 2
+        instance: 1
+      - egress_port: 3
+        instance: 1
+      - egress_port: 4
+        instance: 1
   gateway2:
     name: gateway2
     id: 3
@@ -115,6 +124,13 @@ switches:
     mac: 00:00:00:02:02:00
     grpc: 127.0.0.1:50054
     ipv6_term_host: inet
+    multicast_entries:
+      - egress_port: 1
+        instance: 1
+      - egress_port: 2
+        instance: 1
+      - egress_port: 3
+        instance: 1
   gateway3:
     name: gateway3
     id: 4
@@ -125,6 +141,13 @@ switches:
     mac: 00:00:00:02:03:00
     grpc: 127.0.0.1:50055
     ipv6_term_host: inet
+    multicast_entries:
+      - egress_port: 1
+        instance: 1
+      - egress_port: 2
+        instance: 1
+      - egress_port: 3
+        instance: 1
   aggregate:
     name: aggregate
     id: 0

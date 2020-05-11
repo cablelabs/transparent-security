@@ -11,31 +11,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # Unit tests for convert.py
+import logging
 from time import sleep
-from trans_sec.device_software.abstract_daemon import AbstractDaemon
+
+logger = logging.getLogger('device_daemon')
 
 
-class ForwardingDaemon(AbstractDaemon):
+class ForwardingDaemon:
     """
     Starts and controls an daemon running on a device within to send some UDP
     packets
     """
 
+    def __init__(self, device_name, mn_device, device_config):
+        self.device_name = device_name
+        self.mn_device = mn_device
+        self.device_config = device_config
+
     def start(self):
         # wait a few seconds to start
-        super(self.__class__, self).start()
         sleep(5)
-        self.logger.info('Starting ForwardingDaemon on device - [%s]',
-                         self.mn_device.name)
-        self.__setup_device()
-        self.run()
-        self.logger.info('Starting thread for %s', self.mn_device)
+        logger.info('Starting ForwardingDaemon on device - [%s]',
+                    self.mn_device.name)
+        self.__ping_devices()
 
-    def __setup_device(self):
+    def __ping_devices(self):
         cmd = 'ping %s' % self.device_config.get('destination')
         cmd += ' -c %s' % self.device_config.get('packet_count')
         cmd += ' -I %s' % self.device_config.get('interface')
         cmd += ' -i %s' % self.device_config.get('interval')
-        self.logger.info('Ping command run on device %s - [%s]',
-                         self.device_name, cmd)
-        self.cmd = cmd
+        logger.info('Ping command run on device [%s] - [%s]',
+                    self.device_name, cmd)
+        self.mn_device.cmd(cmd)

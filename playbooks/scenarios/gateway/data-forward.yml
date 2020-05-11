@@ -15,7 +15,7 @@
 ---
 
 # Basic Data Forward scenario for UDP
-- import_playbook: ../single_switch/data_forward_basic.yml
+- import_playbook: ../general/data_forward_basic.yml
   vars:
     send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
     ip_version: "{{ scenario_send_ip_version | default(4) }}"

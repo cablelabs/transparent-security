@@ -20,10 +20,10 @@
     srvc_start_pause_time: 20
     port_to_wait: 50051
     p4_progs:
-      - "{{ scenario_name }}"
-    set_ip_file: set_ip-single-switch.yml
-    topology_template: "templates/topology_template-single_switch.yml.j2"
-    fwd_daemon_config_template: templates/forwarding-daemons-single_switch.yaml.j2
+      - core
+      - aggregate
+    topology_template: templates/topology_template-lab_trial.yml.j2
+    fwd_daemon_config_template: templates/forwarding-daemons-lab_trial.yml.j2
     load_p4: False
 
 - import_playbook: ../general/start_service.yml
@@ -36,4 +36,4 @@
     port_to_wait: "{{ sdn_port }}"
     p4_platform: bmv2
     load_p4: True
-    add_data_inspection: False
+    add_data_inspection: True
