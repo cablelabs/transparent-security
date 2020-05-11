@@ -16,3 +16,9 @@
     interface: {{ p4_progs[0] }}-eth2
     packet_count: 15
     interval: 3
+{% if 'aggregate' not in topo_dict.switches %}
+  - destination: {{ topo_dict.hosts['clone'].ip }}
+    interface: {{ topo_dict.hosts['host1'].name }}-eth0
+    packet_count: 15
+    interval: 3
+{% endif %}
