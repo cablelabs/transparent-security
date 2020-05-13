@@ -52,14 +52,12 @@ host_log_dir=${var.host_log_dir}
 remote_tps_dir=${var.remote_tps_dir}
 remote_scripts_dir=${var.remote_scripts_dir}
 topo_file_loc=${var.remote_scripts_dir}/${var.topo_file}
-forwarding_daemon_file=${var.remote_scripts_dir}/${var.forwarding_daemon_file}
 sdn_host=${var.sdn_host}
 sdn_port=${var.sdn_port}
 ae_host=${var.ae_host}
 ae_monitor_intf=${var.ae_monitor_intf}
 sdn_dev_intf=${var.sdn_dev_intf}
 ae_dev_intf=${var.ae_dev_intf}
-clone_egress_port=${var.clone_egress_port}
 scenario_name=${var.scenario_name}
 "\
 EOT

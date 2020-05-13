@@ -41,7 +41,6 @@
         - "remote_scripts_dir={{ remote_scripts_dir }}"
         - "remote_ansible_inventory={{ remote_inventory_file }}"
         - "topo_file_loc={{ topo_file }}"
-        - "forwarding_conf_file={{ forwarding_daemon_file }}"
         - "sdn_ip={{ sdn_host }}"
         - "sdn_port={{ sdn_port }}"
         - "ae_ip={{ ae_host }}"
@@ -49,5 +48,4 @@
         - "ae_dev_intf={{ ae_dev_intf }}"
         - "ae_monitor_intf={{ ae_monitor_intf }}"
         - "sdn_url=http://{{ sdn_host }}:{{ sdn_port }}"
-        - "clone_egress_port={{ clone_egress_port }}"
         - "scenario_name={{ scenario_name }}"

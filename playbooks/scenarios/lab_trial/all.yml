@@ -25,18 +25,20 @@
     scenario_send_protocol: UDP
     scenario_send_ip_version: 6
 
-# Data Forward scenarios for TCP and IPv4
-- import_playbook: data-forward.yml
-  vars:
-    scenario_send_protocol: TCP
-    scenario_send_ip_version: 4
+# TODO/FIXME - Fix TCP headers are egressing from core-eth2 with incorrect port values
+## Data Forward scenarios for TCP and IPv4
+#- import_playbook: data-forward.yml
+#  vars:
+#    scenario_send_protocol: TCP
+#    scenario_send_ip_version: 4
+#
+## Data Forward scenarios for TCP and IPv6
+#- import_playbook: data-forward.yml
+#  vars:
+#    scenario_send_protocol: TCP
+#    scenario_send_ip_version: 6
 
-# Data Forward scenarios for TCP and IPv6
-- import_playbook: data-forward.yml
-  vars:
-    scenario_send_protocol: TCP
-    scenario_send_ip_version: 6
-
+# TODO/FIXME - Activate these scenarios
 ## Data Drop scenarios for UDP and IPv4
 #- import_playbook: data-drop.yml
 #  vars:

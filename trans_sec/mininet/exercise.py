@@ -21,7 +21,6 @@ from mininet.net import Mininet
 from mininet.topo import Topo
 
 from trans_sec.controller import simple_controller
-from trans_sec.mininet.daemons import DaemonRunner
 from trans_sec.mininet.p4_mininet import P4Host
 from trans_sec.p4runtime_lib.p4runtime_switch import MininetSwitch
 
@@ -171,8 +170,8 @@ class ExerciseRunner:
             mininet : Mininet object // The mininet instance
     """
 
-    def __init__(self, topo, log_dir, pcap_dir, switch_json,
-                 forwarding_conf=None, start_cli=False, load_p4=True):
+    def __init__(self, topo, log_dir, pcap_dir, switch_json, start_cli=False,
+                 load_p4=True):
         """ Initializes some attributes and reads the topology json. Does not
             actually run the exercise. Use run_exercise() for that.
 
@@ -190,7 +189,6 @@ class ExerciseRunner:
         self.switches = topo['switches']
         self.external = topo.get('external')
         self.links = topo['links']
-        self.forwarding_conf = forwarding_conf
         self.start_cli = start_cli
         self.load_p4 = load_p4
 
@@ -227,13 +225,6 @@ class ExerciseRunner:
         if self.load_p4:
             logger.info('Loading P4 programs on switches')
             self.__program_switches()
-
-        if self.forwarding_conf:
-            logger.debug('Starting forwarding daemon with config - [%s]',
-                         self.forwarding_conf)
-            self.fwd_runner = DaemonRunner(self.mininet, self.forwarding_conf,
-                                           self.log_dir)
-            self.fwd_runner.start_daemons()
 
         if self.start_cli:
             logger.info('Starting mininet CLI')
