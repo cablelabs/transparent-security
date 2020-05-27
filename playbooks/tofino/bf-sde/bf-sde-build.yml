@@ -20,10 +20,13 @@
   vars:
     install_dir: "{{ bf_sde_install_dir | default(ansible_facts['user_dir']) }}"
   tasks:
-    - name: install bf-sde with TPS Profile
-      command: python $SDE/p4studio_build/p4studio_build.py --use-profile $SDE/p4studio_build/profiles/tps-profile.yaml --p4-runtime --grpc
+    - name: install bf-sde with P4 Runtime Profile
+      command: python $SDE/p4studio_build/p4studio_build.py --use-profile $SDE/p4studio_build/profiles/p4_runtime_profile.yaml --p4-runtime --grpc
       environment:
         SDE: "{{ install_dir }}/bf-sde-{{ bf_sde_version }}"
         SDE_INSTALL: "{{ install_dir }}/bf-sde-{{ bf_sde_version }}/install"
       async: 10800
       poll: 15
+
+    - name: Copy build python libs to runtime
+      shell: "sudo cp -r /home/ubuntu/bf-sde-{{ bf_sde_version }}/install/lib/python2.7/site-packages/* /usr/local/lib/python2.7/dist-packages/"

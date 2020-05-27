@@ -14,6 +14,9 @@
 */
 /* -*- P4_16 -*- */
 
+#ifdef TOFINO
+#include <v1model.p4>
+#endif
 
 /*************************************************************************
 ****************  E G R E S S   P R O C E S S I N G   ********************
@@ -23,14 +26,14 @@ control TpsEgress(inout headers hdr,
                   inout metadata meta,
                   inout standard_metadata_t standard_metadata) {
 
-    action drop() {
+    action drop_pkt() {
         mark_to_drop(standard_metadata);
     }
 
     apply {
         if(IS_REPLICATED(standard_metadata)) {
             if (standard_metadata.egress_port == standard_metadata.ingress_port) {
-                drop();
+                drop_pkt();
             }
         }
     }

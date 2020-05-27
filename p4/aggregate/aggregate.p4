@@ -13,6 +13,10 @@
 # limitations under the License.
 */
 /* -*- P4_16 -*- */
+#ifdef TOFINO
+#include <tofino.p4>
+#endif
+
 #include <core.p4>
 #include <v1model.p4>
 
@@ -69,9 +73,11 @@ control TpsAggIngress(inout headers hdr,
         hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt - 1;
         hdr.int_meta_2.switch_id = switch_id;
 
+        #ifdef BMV2
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + BYTES_PER_SHIM * INT_SHIM_HOP_SIZE;
         hdr.udp_int.len = hdr.udp_int.len + BYTES_PER_SHIM * INT_SHIM_HOP_SIZE;
         hdr.ipv6.payload_len = hdr.ipv6.payload_len + BYTES_PER_SHIM * INT_SHIM_HOP_SIZE;
+        #endif
         forwardedPackets.count(device);
     }
 

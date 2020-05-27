@@ -15,8 +15,6 @@
 variable "access_key" {}
 variable "secret_key" {}
 variable "build_id" {}
-variable "tofino_ami" {}
-variable "bf_sde_version" {}
 
 # Optional Variables
 variable "public_key_file" {default = "~/.ssh/id_rsa.pub"}
@@ -25,9 +23,18 @@ variable "sudo_user" {default = "ubuntu"}
 variable "region" {default = "us-west-2"}
 
 variable "host_ami" {default = "ami-08692d171e3cf02d6"}
-variable "switch_instance_type" {default = "c5d.2xlarge"}
+variable "tofino" {
+  default = {
+    sde_version = "9.2.0"
+    ami = "ami-067088e7d68b5f05e"
+  }
+}
+
+variable "switch_instance_type" {default = "t2.2xlarge"}
 variable "orch_instance_type" {default = "t2.small"}
 variable "node_instance_type" {default = "t2.micro"}
+variable "num_switches" {default = 5}
+variable "num_nodes" {default = 9}
 
 # Variables for ansible playbooks
 variable "ANSIBLE_CMD" {default = "export ANSIBLE_HOST_KEY_CHECKING=False; ansible-playbook"}

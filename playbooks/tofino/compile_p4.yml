@@ -26,21 +26,44 @@
         state: directory
 
     - set_fact:
-        configure_command: "$SDE/pkgsrc/p4-build/configure --prefix='$SDE_INSTALL' --with-p4c='$SDE_INSTALL/bin/p4c' P4_VERSION='p4-16' P4_ARCHITECTURE='v1model' P4JOBS=8 P4FLAGS='-g --verbose 2 --create-graphs' --with-tofino P4PPFLAGS=''"
+        configure_command: >
+          $SDE/pkgsrc/p4-build/configure --prefix='$SDE_INSTALL'
+          --with-p4c='$SDE_INSTALL/bin/p4c'
+          P4_VERSION='p4-16' P4_ARCHITECTURE='v1model' P4JOBS=8 P4FLAGS='-g
+          --verbose 2 --create-graphs' --with-tofino P4PPFLAGS=''
+    - debug:
+        var: configure_command
+
     - name: Configure P4 programs {{ p4_progs }}
-      command: "{{ configure_command }} P4_PATH='{{ remote_tps_dir }}/p4/{{ item }}/{{ item }}.p4' P4_NAME='{{ item }}' P4_PREFIX='{{ item }}'"
+      command: >
+        {{ configure_command }}
+        P4_PATH='{{ remote_tps_dir }}/p4/{{ item }}/{{ item }}.p4'
+        P4_NAME='{{ item }}'
+        P4_PREFIX='{{ item }}'
       loop: "{{ p4_progs }}"
 
     - set_fact:
-        compile_command: "$SDE_INSTALL/bin/bf-p4c --std p4-16 --arch v1model --p4runtime-format text"
+        compile_command: >
+          $SDE_INSTALL/bin/bf-p4c --std p4-16 --arch v1model
+          --p4runtime-format text -D TOFINO
+    - debug:
+        var: compile_command
+
     - name: Compile P4 programs {{ p4_progs }}
-      command: "{{ compile_command }} --p4runtime-files {{ remote_scripts_dir }}/p4/{{ item }}.p4info.pb.txt {{ remote_tps_dir }}/p4/{{ item }}/{{ item }}.p4"
+      command: >
+        {{ compile_command }}
+        --p4runtime-files {{ remote_scripts_dir }}/p4/{{ item }}.p4info.pb.txt
+        {{ remote_tps_dir }}/p4/{{ item }}/{{ item }}.p4
       loop: "{{ p4_progs }}"
 
     - set_fact:
         bfrt_command: "$SDE_INSTALL/bin/p4c-gen-bfrt-conf --device tofino"
     - name: p4c-gen-bfrt-conf {{ p4_progs }}
-      shell: "{{ bfrt_command }} --name {{ item }} --testdir {{ remote_tps_dir }}/../{{ item }}.tofino --pipe $SDE_INSTALL/bin/p4c-manifest-config --pipe {{ remote_tps_dir }}/../{{ item }}.tofino/manifest.json"
+      shell: >
+        {{ bfrt_command }} --name {{ item }}
+        --testdir {{ remote_tps_dir }}/../{{ item }}.tofino
+        --pipe $SDE_INSTALL/bin/p4c-manifest-config
+        --pipe {{ remote_tps_dir }}/../{{ item }}.tofino/manifest.json
       loop: "{{ p4_progs }}"
 
     - name: Copy compiled artifacts to {{ remote_scripts_dir }}/p4

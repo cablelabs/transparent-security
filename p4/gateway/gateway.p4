@@ -13,6 +13,10 @@
 # limitations under the License.
 */
 /* -*- P4_16 -*- */
+#ifdef TOFINO
+#include <tofino.p4>
+#endif
+
 #include <core.p4>
 #include <v1model.p4>
 
@@ -29,9 +33,10 @@
 control TpsGwIngress(inout headers hdr,
                      inout metadata meta,
                      inout standard_metadata_t standard_metadata) {
-
+    #ifdef BMV2
     counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) forwardedPackets;
     counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) droppedPackets;
+    #endif
 
     action data_forward(macAddr_t dstAddr, egressSpec_t port) {
         standard_metadata.egress_spec = port;
@@ -89,9 +94,11 @@ control TpsGwIngress(inout headers hdr,
 
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
         hdr.ipv4.protocol = TYPE_UDP;
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen + ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE) + UDP_HDR_BYTES;
 
+        #ifdef BMV2
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen + ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE) + UDP_HDR_BYTES;
         forwardedPackets.count(device);
+        #endif
     }
 
     action data_inspect_packet_ipv6(bit<32> device, bit<32> switch_id) {
@@ -120,9 +127,11 @@ control TpsGwIngress(inout headers hdr,
         hdr.int_meta.orig_mac = hdr.ethernet.src_mac;
 
         hdr.ipv6.next_hdr_proto = TYPE_UDP;
-        hdr.ipv6.payload_len = hdr.ipv6.payload_len + IPV6_HDR_BYTES + ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE) + UDP_HDR_BYTES;
 
+        #ifdef BMV2
+        hdr.ipv6.payload_len = hdr.ipv6.payload_len + IPV6_HDR_BYTES + ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE) + UDP_HDR_BYTES;
         forwardedPackets.count(device);
+        #endif
     }
 
     table data_inspection_t {
@@ -149,7 +158,9 @@ control TpsGwIngress(inout headers hdr,
 
     action data_drop(bit<32> device) {
         mark_to_drop(standard_metadata);
+        #ifdef BMV2
         droppedPackets.count(device);
+        #endif
     }
 
     table data_drop_udp_ipv4_t {
@@ -286,12 +297,14 @@ control TpsGwIngress(inout headers hdr,
             data_inspection_t.apply();
 
             if (hdr.int_shim.isValid()) {
+                #ifdef BMV2
                 if (hdr.udp.isValid()) {
                     insert_udp_int_for_udp();
                 }
                 if (hdr.tcp.isValid()) {
                     insert_udp_int_for_tcp();
                 }
+                #endif
             }
             data_forward_ipv6_t.apply();
             data_forward_ipv4_t.apply();
