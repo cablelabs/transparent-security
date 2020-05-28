@@ -23,6 +23,7 @@
     log_dir: "{{ srvc_log_dir | default('') }}"
     srvc_name: "{{ service_name }}"
     srv_srvc_name: "{{ service_name }}.service"
+    srvc_status: "{{ service_status_running | default('true') }}"
 
   tasks:
     - name: Ensure {{ remote_scripts_dir }} scripts directory has been created
@@ -72,12 +73,12 @@
             seconds: "{{ pause }}"
         - name: Get service facts
           service_facts:
-      when: ansible_facts.services[srv_srvc_name]['state'] != "running"
+      when: srvc_status == "true" and ansible_facts.services[srv_srvc_name]['state'] != "running"
 
     - name: Fail when {{ srvc_name }} not running
       fail:
         msg: "{{ srvc_name }} not running"
-      when: ansible_facts.services[srv_srvc_name]['state'] != "running"
+      when: srvc_status == "true" and ansible_facts.services[srv_srvc_name]['state'] != "running"
 
     - name: Wait {{ timeout }} seconds for {{ srvc_name }} to open port {{ wait_port }}
       wait_for:
