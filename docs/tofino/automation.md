@@ -31,7 +31,7 @@ This step will creat an VM on AWS, install all Tofino 9.2.0 dependencies and cre
 ```bash
 cd transparent-security/automation/p4/env-build
 terraform init
-terraform apply -auto-approve -var-file="/path/to/my-tofino.tfvars -var env_type=tofino -var bf_sde_s3_bucket={bucket name}"
+terraform apply -auto-approve -var-file="/path/to/my-tofino.tfvars -var env_type=tofino"
 ```
 
 Sample Output:
@@ -102,33 +102,15 @@ variable "tofino" {
 ```bash
 cd transparent-security/automation/p4/tofino
 terraform init
-terraform apply -auto-approve -var-file="/path/to/my-tofino.tfvars"
+terraform apply -auto-approve -var-file="/path/to/my-tofino.tfvars -var bf_sde_s3_bucket={bucket name}"
 ```
 
-Sample Output:
+### SSH into orchestrator/controller machine
 
-```bash
-aws_key_pair.transparent-security-tofino-pk: Creating...
-aws_security_group.transparent-security-img-sg: Creating...
-aws_key_pair.transparent-security-tofino-pk: Creation complete after 5s
-.
-.
-.
-Apply complete! Resources: 22 added, 0 changed, 0 destroyed.
-
-Outputs:
-
-ip = 34.211.54.181
-```
-
-### 4.3 SSH into EC2 orchestrator/controller machine
-
-Login to the VM running the simulator.  Use the SSH keys indicated in the variable file to login
-to the VM.
-
+Use the SSH keys indicated in the variable file to login to the VM.
 ```bash
 # from transparent-security/automation/p4/tofino directory
-ssh -i ubuntu@$(terraform output ip)
+ssh -i { key file } ubuntu@$(terraform output ip)
 ```
 
 ### What is deployed
