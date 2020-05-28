@@ -66,12 +66,6 @@
         path: "{{ install_dir }}/tools"
         state: directory
 
-    - name: Copy p4_build.sh
-      copy:
-        src: ./templates/p4_build.sh
-        dest: "{{ install_dir }}/tools/p4_build.sh"
-        mode: 0775
-
     - name: Copy env setup script
       copy:
         src: ./templates/set_sde.bash
