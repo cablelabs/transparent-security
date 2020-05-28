@@ -31,7 +31,7 @@ This step will creat an VM on AWS, install all Tofino 9.2.0 dependencies and cre
 ```bash
 cd transparent-security/automation/p4/env-build
 terraform init
-terraform apply -auto-approve -var-file="/path/to/my-tofino.tfvars -var env_type=tofino -var bf_sde_s3_bucket={bucket name}"
+terraform apply -auto-approve -var-file="/path/to/my-tofino.tfvars -var env_type=tofino"
 ```
 
 Sample Output:
