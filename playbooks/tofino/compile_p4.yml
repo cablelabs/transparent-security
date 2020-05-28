@@ -28,6 +28,27 @@
         path: "{{ remote_scripts_dir }}/p4"
         state: directory
 
+# TODO - Determine if this is really necessary???
+#    - set_fact:
+#        configure_command: >
+#          $SDE/pkgsrc/p4-build/configure --prefix='$SDE_INSTALL'
+#          --with-p4c='$SDE_INSTALL/bin/p4c'
+#          P4_VERSION='p4-16'
+#          P4_ARCHITECTURE='v1model'
+#          P4JOBS=8
+#          P4FLAGS='-g --verbose 2 --create-graphs'
+#          --with-tofino P4PPFLAGS=''
+#    - debug:
+#        var: configure_command
+#
+#    - name: Configure P4 programs {{ p4_progs }}
+#      command: >
+#        {{ configure_command }}
+#        P4_PATH='{{ remote_tps_dir }}/p4/{{ item }}/{{ item }}.p4'
+#        P4_NAME='{{ item }}'
+#        P4_PREFIX='{{ item }}'
+#      loop: "{{ p4_progs }}"
+
     - set_fact:
         compile_command: >
           $SDE_INSTALL/bin/bf-p4c
@@ -43,7 +64,7 @@
       become: yes
       command: >
         {{ compile_command }}
-        --p4runtime-files {{ remote_scripts_dir }}/p4/{{ item }}.tofino/p4info.pb.txt
+        --p4runtime-files {{ remote_scripts_dir }}/p4/{{ item }}.p4info.pb.txt
         -o {{ remote_scripts_dir }}/p4/{{ item }}.tofino
         {{ remote_tps_dir }}/p4/{{ item }}/{{ item }}.p4
       args:
@@ -56,3 +77,15 @@
         dest: "{{ sde_p4_target_dir }}"
         remote_src: yes
       loop: "{{ p4_progs }}"
+
+# TODO - Determine if this is really necessary???
+#    - set_fact:
+#        bfrt_command: "$SDE_INSTALL/bin/p4c-gen-bfrt-conf --device tofino"
+#    - name: p4c-gen-bfrt-conf {{ p4_progs }}
+#      become: yes
+#      shell: >
+#        {{ bfrt_command }} --name {{ item }}
+#        --testdir {{ remote_tps_dir }}/../{{ item }}.tofino
+#        --pipe $SDE_INSTALL/bin/p4c-manifest-config
+#        --pipe {{ remote_tps_dir }}/../{{ item }}.tofino/manifest.json
+#      loop: "{{ p4_progs }}"
