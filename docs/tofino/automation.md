@@ -18,8 +18,7 @@ directory and make changes to adapt the file to your local environment.
 | ec2_region       | Amazon EC2 region                                                                                                                         | string | ec2_region = "us-west-2"                                |
 | public_key_file  | Used to inject into the VM for SSH access with the user'ubuntu' (defaults to ~/.ssh/id_rsa.pub)                                           | string | public_key_file = "~/.ssh/id_rsa.pub"                   |
 | private_key_file | Used to access the VM via SSH with the user 'ubuntu' (defaults to ~/.ssh/id_rsa)                                                          | string | private_key_file = "~/.ssh/id_rsa"                      |
-| env_type         | The type of environemnt being built (only used for creating the environment)                                                              | string | env_type = "tofino"                                    |
-| tofino_ami       | The AMI for the tofino environment (defaults to "ami-060d055b5ca40de8c"). Only used for running the simulator.                           | string | tofino_ami = "ami-060d055b5ca40de8c"                   |
+| env_type         | The type of environment being built (only used for creating the environment)                                                              | string | env_type = "tofino"                                    |
 
 ### Build AMI for running the tofino-model on AWS
 
@@ -132,30 +131,35 @@ to the VM.
 ssh -i ubuntu@$(terraform output ip)
 ```
 
-Sample output -
+### What is deployed
+Controller/Orchestrator node with outside access
+9 network nodes
+5 Tofino switches
+
+####
+From the orchestrator node, you can gain access to all other nodes and switch VMs
+by name with user 'ubuntu':
+##### Switches (bf-sde-{version})
+- core
+- aggregate
+- gateway1
+- gateway2
+- gateway3
+
+##### Nodes (vanilla linux)
+- inet (to core)
+- analytics_engine (to core)
+- Camera1 (to gateway1)
+- Game1 (to gateway1)
+- NAS1 (to gateway1)
+- Camera2 (to gateway2)
+- Game2 (to gateway2)
+- Camera3 (to gateway3)
+- Game3 (to gateway3)
 
 ```bash
-Welcome to Ubuntu 16.04.5 LTS (GNU/Linux 4.4.0-1075-aws x86_64)
-
- * Documentation:  https://help.ubuntu.com
- * Management:     https://landscape.canonical.com
- * Support:        https://ubuntu.com/advantage
-
-  Get cloud support with Ubuntu Advantage Cloud Guest:
-    http://www.ubuntu.com/business/services/cloud
-
-149 packages can be updated.
-89 updates are security updates.
-
-New release '18.04.3 LTS' available.
-Run 'do-release-upgrade' to upgrade to it.
-
-
-Last login: Wed Dec 11 22:39:13 2019 from 127.0.0.1
-ubuntu@ip-172-31-15-5:~$
+ssh core
 ```
-
-Upgrading to a newer version of Ubuntu isn't currently supported.  Do so at your own risk.
 
 ### Cleanup the simulation environment
 
@@ -165,18 +169,3 @@ This will remove the VM and other artifacts created when it was deployed.
 # from transparent-security/automation/p4/tofino directory
 terraform destroy -auto-approve -var-file="/path/to/my-tofino.tfvars"
 ```
-
-Sample output:
-
-```bash
-.
-.
-Destroy complete! Resources: 12 destroyed.
-
-Process finished with exit code 0
-```
-
-### What is deployed
-Controller/Orchestrator node with outside access
-9 network nodes
-5 Tofino switches
