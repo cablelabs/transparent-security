@@ -26,12 +26,13 @@ variable "host_ami" {default = "ami-08692d171e3cf02d6"}
 variable "tofino" {
   default = {
     sde_version = "9.2.0"
-    ami = "ami-067088e7d68b5f05e"
+    ami = "ami-0738bbdc79372f56f"
+//    ami = "ami-067088e7d68b5f05e"
   }
 }
 
 variable "switch_instance_type" {default = "t2.2xlarge"}
-variable "orch_instance_type" {default = "t2.small"}
+variable "orch_instance_type" {default = "t2.medium"}
 variable "node_instance_type" {default = "t2.micro"}
 variable "num_switches" {default = 5}
 variable "num_nodes" {default = 9}
@@ -50,7 +51,7 @@ variable "remote_srvc_log_dir" {default = "/var/log/transparent-security"}
 variable "topo_file_loc" {default = "/home/ubuntu/tofino-sim-topology.yaml"}
 variable "tofino_model_start_port" {default = "8000"}
 variable "tofino_model_end_port" {default = "8004"}
-variable "grpc_port" {default = "50052"}
+variable "grpc_port" {default = "50051"}
 variable "switchd_port" {default = "9999"}
 variable "sdn_port" {default = "9998"}
 variable "node_nic_name" {default = "eth0"}
