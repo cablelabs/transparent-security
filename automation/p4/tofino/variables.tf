@@ -26,7 +26,7 @@ variable "host_ami" {default = "ami-08692d171e3cf02d6"}
 variable "tofino" {
   default = {
     sde_version = "9.2.0"
-    ami = "ami-0738bbdc79372f56f"
+    ami = "ami-0584c2d36652503c3"
   }
 }
 
