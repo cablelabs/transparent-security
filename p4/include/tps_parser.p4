@@ -13,8 +13,15 @@
 # limitations under the License.
 */
 /* -*- P4_16 -*- */
+#ifdef TOFINO
+#include <tofino.p4>
+#endif
+
+#ifdef BMV2
 #include <core.p4>
 #include <v1model.p4>
+#endif
+
 #include <tps_consts.p4>
 
 /*************************************************************************

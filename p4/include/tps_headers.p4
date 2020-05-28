@@ -148,7 +148,8 @@ header int_metadata_t { /* 4 */
 header telem_rpt_t { /* 10 */
     bit<4>  ver;
     bit<6>  hw_id;
-    bit<22> sequence_no;
+    bit<16> sequence_no;
+    bit<6> sequence_pad;
     bit<32> node_id;
     bit<4> rep_type;
     bit<4> in_type;

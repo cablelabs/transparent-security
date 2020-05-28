@@ -13,7 +13,7 @@
 
 # Orchestrator/SDN Controller Instance
 resource "aws_instance" "orchestrator" {
-  ami = var.tofino_ami
+  ami = var.tofino.ami
   instance_type = var.orch_instance_type
   key_name = aws_key_pair.snaps-mini-pk.key_name
 
@@ -41,8 +41,8 @@ resource "aws_instance" "orchestrator" {
 
 # Tofino Model Switch Instances
 resource "aws_instance" "tps-switch" {
-  count = 5
-  ami = var.tofino_ami
+  count = var.num_switches
+  ami = var.tofino.ami
   instance_type = var.switch_instance_type
   key_name = aws_key_pair.snaps-mini-pk.key_name
 
@@ -56,7 +56,7 @@ resource "aws_instance" "tps-switch" {
 
 # Network nodes
 resource "aws_instance" "node" {
-  count = 9
+  count = var.num_nodes
   ami = var.host_ami
   instance_type = var.node_instance_type
   key_name = aws_key_pair.snaps-mini-pk.key_name

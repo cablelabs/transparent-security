@@ -34,7 +34,18 @@
           - jsonschema==2.6.0
       when: bf_sde_version is version_compare('9.0', operator='eq', strict=True)
 
-    - name: get bf-sde-{{ bf_sde_version }}.tar
+    - name: get bf-sde-{{ bf_sde_version }}.tgz
+      aws_s3:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        bucket: "{{ bf_sde_s3_bucket }}"
+        object: "bf-sde-{{ bf_sde_version }}.tgz"
+        dest: "{{ install_dir }}/bf-sde-{{ bf_sde_version }}.tar"
+        mode: get
+      register: out_tgz
+      ignore_errors: yes
+
+    - name: get bf-sde-{{ bf_sde_version }}.tar instead
       aws_s3:
         aws_access_key: "{{ aws_access_key }}"
         aws_secret_key: "{{ aws_secret_key }}"
@@ -42,6 +53,7 @@
         object: "bf-sde-{{ bf_sde_version }}.tar"
         dest: "{{ install_dir }}/bf-sde-{{ bf_sde_version }}.tar"
         mode: get
+      when: out_tgz is failed
 
     - name: extract bf-sde-{{ bf_sde_version }}.tar
       unarchive:
@@ -72,21 +84,3 @@
         regex: ". {{ install_dir }}/tools/set_sde.bash"
         line: ". {{ install_dir }}/tools/set_sde.bash"
         state: present
-
-    - name: Set default switch_profile variable
-      set_fact:
-        switch_profile: "{{ tofino_switch_profile | default('a0_tofino') }}"
-
-    - name: Set switch_profile fact for BF SDE < 8.9.0
-      set_fact:
-        switch_profile: DC_BASIC_PROFILE
-      when: bf_sde_version is version_compare('8.9.0', operator='lt', strict=True)
-
-    - name: Copy transparent-security profile with switch_profile {{ switch_profile }}
-      template:
-        src: ./templates/tps-bf-sde-profile.yml.j2
-        dest: "$SDE/p4studio_build/profiles/tps-profile.yaml"
-      vars:
-        arch: "{{ tofino_arch | default('tofino') }}"
-      environment:
-        SDE: "{{ install_dir }}/bf-sde-{{ bf_sde_version }}"

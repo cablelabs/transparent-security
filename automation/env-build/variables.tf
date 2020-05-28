@@ -19,10 +19,10 @@ variable "ec2_region" {}
 variable "env_type" {default = "mininet"}
 
 # Dependency version only for tofino environments
-variable "bf_sde_version" {default = "null"}
 variable "bf_sde_s3_bucket" {default = "null"}
 
 # Optional Variables
+variable "bf_sde_version" {default = "9.2.0"}
 variable "create_ami" {default = "yes"}
 variable "public_key_file" {default = "~/.ssh/id_rsa.pub"}
 variable "private_key_file" {default = "~/.ssh/id_rsa"}
@@ -30,7 +30,9 @@ variable "sudo_user" {default = "ubuntu"}
 
 # ubuntu 16
 variable "base_ami" {default = "ami-08692d171e3cf02d6"}
-variable "instance_type" {default = "c5d.2xlarge"}
+# ubuntu 18
+//variable "base_ami" {default = "ami-06f2f779464715dc5"}
+variable "instance_type" {default = "t2.2xlarge"}
 variable "run_tests" {default = "yes"}
 
 # Dependency versions only for mininet environments

@@ -13,6 +13,10 @@
 # limitations under the License.
 */
 /* -*- P4_16 -*- */
+#ifdef TOFINO
+#include <tofino.p4>
+#endif
+
 #include <core.p4>
 #include <v1model.p4>
 
@@ -22,7 +26,7 @@
 #include <tps_checksum.p4>
 #include <tps_egress.p4>
 
-const bit<32> INT_CTR_IDX = 1;
+const bit<32> INT_CTR_SIZE = 1;
 
 
 /*************************************************************************
@@ -37,7 +41,12 @@ control TpsCoreIngress(inout headers hdr,
     * Responsible for recirculating a packet after egress processing
     */
     action recirculate_packet() {
+        #ifdef TOFINO
+        resubmit(standard_metadata);
+        #endif
+        #ifdef BMV2
         recirculate(standard_metadata);
+        #endif
     }
 
     /**
@@ -111,8 +120,11 @@ control TpsCoreIngress(inout headers hdr,
     action clear_int() {
         hdr.ipv4.protocol = hdr.int_shim.next_proto;
         hdr.ipv6.next_hdr_proto = hdr.int_shim.next_proto;
+
+        #ifdef BMV2
         hdr.ipv4.totalLen = hdr.ipv4.totalLen - ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE);
         hdr.ipv6.payload_len = hdr.ipv6.payload_len - ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE);
+        #endif
 
         hdr.udp_int.setInvalid();
         hdr.int_shim.setInvalid();
@@ -200,10 +212,12 @@ control TpsCoreEgress(inout headers hdr,
                       inout metadata meta,
                       inout standard_metadata_t standard_metadata) {
 
-    register<bit<22>>(INT_CTR_IDX) trpt_pkts;
+    #ifdef BMV2
+    register<bit<16>>(INT_CTR_SIZE) trpt_pkts;
+    #endif
 
     action control_drop() {
-        mark_to_drop(standard_metadata);;
+        mark_to_drop(standard_metadata);
     }
 
     /**
@@ -226,12 +240,18 @@ control TpsCoreEgress(inout headers hdr,
 
         hdr.trpt_hdr.ver = TRPT_VERSION;
         hdr.trpt_hdr.domain_id = TRPT_HDR_DOMAIN_ID;
+
+        hdr.trpt_hdr.sequence_no = 0;
+        hdr.trpt_hdr.sequence_pad = 0;
+
+        #ifdef BMV2
         hdr.trpt_hdr.rpt_len = hdr.trpt_hdr.rpt_len + hdr.int_shim.length + 5; /* 5 Reflects TRPT ethernet & udp packets
 
         /* TODO - determine if counter resets to 0 once it reaches max */
-        trpt_pkts.read(hdr.trpt_hdr.sequence_no, 32w0x0);
+        trpt_pkts.read(hdr.trpt_hdr.sequence_no, INT_CTR_SIZE - 1);
         hdr.trpt_hdr.sequence_no = hdr.trpt_hdr.sequence_no + 1;
-        trpt_pkts.write(32w0x0, hdr.trpt_hdr.sequence_no);
+        //trpt_pkts.write(INT_CTR_SIZE - 1, hdr.trpt_hdr.sequence_no);
+        #endif
     }
 
     /* Sets the trpt_eth.in_type for IPv4 */
@@ -254,14 +274,16 @@ control TpsCoreEgress(inout headers hdr,
 
         hdr.trpt_ipv4.version = 0x4;
         hdr.trpt_ipv4.ihl = 0x5;
-        hdr.trpt_ipv4.totalLen = (bit<16>)standard_metadata.packet_length + IPV4_HDR_BYTES + UDP_HDR_BYTES + TRPT_HDR_BASE_BYTES;
         hdr.trpt_ipv4.ttl = DFLT_IPV4_TTL;
         hdr.trpt_ipv4.flags = IPV4_DONT_FRAGMENT;
         hdr.trpt_ipv4.protocol = TYPE_UDP;
         hdr.trpt_ipv4.srcAddr = hdr.ipv4.srcAddr;
         hdr.trpt_ipv4.dstAddr = ae_ip;
 
+        #ifdef BMV2
         hdr.trpt_udp.len = hdr.trpt_ipv4.totalLen - IPV4_HDR_BYTES;
+        hdr.trpt_ipv4.totalLen = (bit<16>)standard_metadata.packet_length + IPV4_HDR_BYTES + UDP_HDR_BYTES + TRPT_HDR_BASE_BYTES;
+        #endif
     }
 
     /**
@@ -328,7 +350,9 @@ control TpsCoreEgress(inout headers hdr,
                     update_trpt_hdr_len_ipv6();
                 }
                 /* Ensure packet is no larger than TRPT_MAX_BYTES */
+                #ifdef BMV2
                 truncate(TRPT_MAX_BYTES);
+                #endif
             }
         }
     }

@@ -29,7 +29,7 @@
         --p4v 16
         --p4runtime-format text
         --p4runtime-file {{ remote_scripts_dir }}/p4/{{ item }}.p4info
-        -o {{ remote_scripts_dir }}/p4/{{ item }}.json
+        -o {{ remote_scripts_dir }}/p4/{{ item }}.json -D BMV2=foo
         {{ remote_tps_dir }}/p4/{{ item }}/{{ item }}.p4
       register: cmd_out
       changed_when: cmd_out is not failed
