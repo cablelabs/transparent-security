@@ -27,7 +27,6 @@ variable "tofino" {
   default = {
     sde_version = "9.2.0"
     ami = "ami-0738bbdc79372f56f"
-//    ami = "ami-067088e7d68b5f05e"
   }
 }
 
