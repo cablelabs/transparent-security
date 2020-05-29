@@ -121,14 +121,14 @@ Controller/Orchestrator node with outside access
 ####
 From the orchestrator node, you can gain access to all other nodes and switch VMs
 by name with user 'ubuntu':
-##### Switches (bf-sde-{version})
-- core
-- aggregate
-- gateway1
-- gateway2
-- gateway3
+##### Switches (with bf-sde-{version} and transparent-security installed into python runtime)
+- core (running core.p4)
+- aggregate (running aggregate.p4)
+- gateway1 (running gateway.p4)
+- gateway2 (running gateway.p4)
+- gateway3 (running gateway.p4)
 
-##### Nodes (vanilla linux)
+##### Nodes (vanilla linux with transparent-security installed into python runtime)
 - inet (to core)
 - analytics_engine (to core)
 - Camera1 (to gateway1)
