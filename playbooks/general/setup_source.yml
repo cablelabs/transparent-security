@@ -23,7 +23,6 @@
 
   tasks:
     - name: install python3-pip
-      become: yes
       apt:
         update_cache: yes
         name:
