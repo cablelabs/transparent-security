@@ -103,89 +103,58 @@ class GatewayController(AbstractController):
                     ' MAC - [%s] with action params - [%s]',
                     device.get('mac'), action_params)
 
-        # TODO - Implement IPv6 learning like IPv4 and remove all inserts
-        #  into data_forward
-        # Add entry for forwarding IPv6 packets
-        ipv6_addr = self.topo['hosts'][sw_info['ipv6_term_host']]['ipv6']
-        logger.info('Adding ipv6 addr [%s] to data forward', ipv6_addr)
-        table_entry = self.p4info_helper.build_table_entry(
-            table_name='{}.data_forward_ipv6_t'.format(self.p4_ingress),
-            match_fields={
-                'hdr.ipv6.dstAddr': (ipv6_addr, 128)
-            },
-            action_name='{}.data_forward'.format(self.p4_ingress),
-            action_params={
-                'dstAddr': north_switch['mac'],
-                'port': sw_link['north_facing_port']
-            })
-        sw.write_table_entry(table_entry)
-
     def set_multicast_group(self, sw, sw_info):
-        mc_group_id = 1
-
-        # TODO/FIXME - Need to add logic to parse the topology to determine
-        #     egress ports being used on the switch.
-        if len(self.topo['switches']) == 1:
-            replicas = [{'egress_port': '1', 'instance': '1'},
-                        {'egress_port': '2', 'instance': '1'}]
-        else:
-            if sw_info['name'] == 'gateway1':
-                replicas = [{'egress_port': '1', 'instance': '1'},
-                            {'egress_port': '2', 'instance': '1'},
-                            {'egress_port': '3', 'instance': '1'},
-                            {'egress_port': '4', 'instance': '1'}]
-            else:
-                replicas = [{'egress_port': '1', 'instance': '1'},
-                            {'egress_port': '2', 'instance': '1'},
-                            {'egress_port': '3', 'instance': '1'}]
-
-        multicast_entry = self.p4info_helper.build_multicast_group_entry(
-            mc_group_id, replicas)
-        logger.info('Build Multicast Entry: %s', multicast_entry)
-        sw.write_multicast_entry(multicast_entry)
+        for host in self.topo['hosts']:
+            if self.topo['hosts'][host]['type'] == 'server':
+                target_host = self.topo['hosts'][host]
         table_entry = self.p4info_helper.build_table_entry(
-            table_name='{}.arp_flood_t'.format(self.p4_ingress),
-            match_fields={'hdr.ethernet.dst_mac': 'ff:ff:ff:ff:ff:ff'},
-            action_name='{}.arp_flood'.format(self.p4_ingress),
+            table_name='{}.mac_lookup_ipv4_t'.format(self.p4_ingress),
+            match_fields={
+                'hdr.ipv4.dstAddr': (target_host['ip'], 32)
+            },
+            action_name='{}.mac_lookup'.format(self.p4_ingress),
             action_params={
-                'ip_srcAddr': sw_info['public_ip'],
-                'srcAddr': sw_info['mac']
+                'dst_mac': target_host['mac']
+            })
+        sw.write_table_entry(table_entry)
+        table_entry = self.p4info_helper.build_table_entry(
+            table_name='{}.mac_lookup_ipv6_t'.format(self.p4_ingress),
+            match_fields={
+                'hdr.ipv6.dstAddr': (target_host['ipv6'], 128)
+            },
+            action_name='{}.mac_lookup'.format(self.p4_ingress),
+            action_params={
+                'dst_mac': target_host['mac']
             })
         sw.write_table_entry(table_entry)
 
-    def add_data_forward(self, sw, sw_info, src_ip, mac, port):
-        logger.info("%s - Check if %s belongs to: %s", sw_info['name'], src_ip,
-                    self.known_devices)
-        if src_ip not in self.known_devices:
+    def add_data_forward(self, sw, sw_info, mac, port):
+        logger.info("%s - Check if %s belongs to: %s",
+                    sw_info['name'], mac, self.known_devices)
+        if sw_info['name'] not in self.known_devices:
+            self.known_devices[sw_info['name']] = []
+        if mac not in self.known_devices[sw_info['name']]:
             logger.info("Adding unique table entry on %s for %s",
-                        sw_info['name'], src_ip)
+                        sw_info['name'], mac)
             table_entry = self.p4info_helper.build_table_entry(
-                table_name='{}.data_forward_ipv4_t'.format(self.p4_ingress),
+                table_name='{}.data_forward_t'.format(self.p4_ingress),
                 match_fields={
-                    'hdr.ipv4.dstAddr': (src_ip, 32)
+                    'hdr.ethernet.dst_mac': mac
                 },
                 action_name='{}.data_forward'.format(self.p4_ingress),
                 action_params={
-                    'dstAddr': mac,
-                    'port': port
+                    'port': port,
+                    'switch_mac': sw_info['mac']
                 })
             sw.write_table_entry(table_entry)
-            table_entry = self.p4info_helper.build_table_entry(
-                table_name='{}.arp_reply_t'.format(self.p4_ingress),
-                match_fields={'hdr.arp.dstAddr': (src_ip, 32)},
-                action_name='{}.arp_reply'.format(self.p4_ingress),
-                action_params={
-                    'srcAddr': sw_info['mac'],
-                    'dstAddr': mac,
-                    'port': port
-                })
-            sw.write_table_entry(table_entry)
-        self.known_devices.add(src_ip)
+            self.known_devices[sw_info['name']].append(mac)
 
     def add_nat_table(self, sw, sw_info, udp_source_port, tcp_source_port, source_ip):
         gateway_public_ip = sw_info['public_ip']
-        logger.info("Adding nat table entries on %s for %s", sw_info['name'], source_ip)
-        logger.info("Check if %s not in %s for %s", udp_source_port, self.nat_udp_ports, sw_info['name'])
+        logger.info("Adding nat table entries on %s for %s",
+                    sw_info['name'], source_ip)
+        logger.info("Check if %s not in %s for %s", udp_source_port,
+                    self.nat_udp_ports, sw_info['name'])
         # NAT Table Entries to handle UDP packets
         if udp_source_port and udp_source_port not in self.nat_udp_ports:
             table_entry = self.p4info_helper.build_table_entry(

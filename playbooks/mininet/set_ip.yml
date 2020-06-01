@@ -22,9 +22,6 @@
     south_switch: "{{ topo_dict.switches.get(item.south_node) }}"
     north_switch: "{{ topo_dict.switches.get(item.north_node) }}"
     intf_name: None
-    dev_ip: None
-    dev_name: None
-    dev_ip_tokens: None
 
 - name: Find north node if south didn't exist
   set_fact:
@@ -51,7 +48,7 @@
     - name: Set public IP for intf {{ intf_name }}
       become: yes
       command: "ip addr add {{ south_switch.public_ip }}/24 dev {{ intf_name }}"
-  when: south_switch.public_ip is defined
+  when: south_switch.public_ip is defined and north_switch
 
 - name: Setup local IPs on the gateway
   block:
@@ -60,10 +57,37 @@
       command: "ip addr add {{ south_facing_ip }}/30 dev {{ intf_name }}"
   when: host and north_switch.public_ip is defined
 
-- name: Set /etc/hosts
+- name: Setup local IP on the core
+  block:
+    - name: Set local IP for core intf {{ intf_name }}
+      become: yes
+      command: "ip addr add {{ south_switch.public_ip }}/24 dev {{ intf_name }}"
+  when: host and south_switch.public_ip is defined
+
+- name: Install ifmetric
   become: yes
-  lineinfile:
-    path: /etc/hosts
-    line: "{{ host.ip }} {{ host.name }}"
-    state: present
-  when: host
+  apt:
+    update_cache: yes
+    name:
+      - ifmetric
+  register: apt_rc
+  retries: 3
+  delay: 10
+  until: apt_rc is not failed
+
+- name: Set route priority
+  become: yes
+  command: "ifmetric {{ intf_name }} 50"
+  register: cmd_out
+  changed_when: cmd_out is not failed
+  retries: 3
+  delay: 5
+
+- name: Set route priority for core-inet link
+  become: yes
+  command: "ifmetric {{ intf_name }} 25"
+  register: cmd_out
+  changed_when: cmd_out is not failed
+  retries: 3
+  delay: 5
+  when: host and south_switch.public_ip is defined

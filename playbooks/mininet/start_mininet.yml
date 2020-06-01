@@ -66,6 +66,14 @@
     - include_tasks: set_ip.yml
       loop: "{{ topo_dict.links }}"
 
+    - name: Set /etc/hosts
+      become: yes
+      lineinfile:
+        path: /etc/hosts
+        line: "{{ item.ip }} {{ item.name }}"
+        state: present
+      loop: "{{ topo_dict.hosts.values() | list }}"
+
     - name: Add entries to ansible inventory at {{ remote_ansible_inventory }}
       lineinfile:
         path: "{{ remote_ansible_inventory }}"

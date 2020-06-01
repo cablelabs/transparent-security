@@ -43,7 +43,7 @@ class AbstractController(object):
         self.load_p4 = load_p4
         self.switches = list()
         self.p4_ingress = p4_ingress
-        self.known_devices = set()
+        self.known_devices = {}
         self.digest_threads = list()
         self.digest_dict = {}
 
@@ -203,15 +203,12 @@ class AbstractController(object):
         for members in digest_data:
             logger.debug("Digest members: %s", members)
             if members.WhichOneof('data') == 'struct':
-                source_ip = decode_ipv4(members.struct.members[0].bitstring)
-                logger.info('Learned IP Address is: %s', source_ip)
-                source_mac = decode_mac(members.struct.members[1].bitstring)
+                source_mac = decode_mac(members.struct.members[0].bitstring)
                 logger.info('Learned MAC Address is: %s', source_mac)
                 ingress_port = int(
-                    members.struct.members[2].bitstring.encode('hex'), 16)
+                    members.struct.members[1].bitstring.encode('hex'), 16)
                 logger.info('Ingress Port is %s', ingress_port)
-                self.add_data_forward(sw, sw_info, source_ip, source_mac,
-                                      ingress_port)
+                self.add_data_forward(sw, sw_info, source_mac, ingress_port)
             else:
                 logger.warn('Digest could not be processed - [%s]',
                             digest_data)
@@ -427,11 +424,21 @@ class AbstractController(object):
         logger.info('Instantiated connection to Tofino switch - [%s]',
                     self.switch_type, name)
 
-    def set_multicast_group(self, switch, sw_info):
-        raise NotImplemented
+    def set_multicast_group(self, sw, sw_info):
+        mc_group_id = 1
+        if sw_info.get('multicast_entries'):
+            multicast_entry = self.p4info_helper.build_multicast_group_entry(
+                mc_group_id, sw_info['multicast_entries'])
+            logger.info('Build Multicast Entry: %s', multicast_entry)
+            sw.write_multicast_entry(multicast_entry)
+            table_entry = self.p4info_helper.build_table_entry(
+                table_name='{}.arp_flood_t'.format(self.p4_ingress),
+                match_fields={'hdr.ethernet.dst_mac': 'ff:ff:ff:ff:ff:ff'},
+                action_name='{}.arp_flood'.format(self.p4_ingress),
+                action_params={})
+            sw.write_table_entry(table_entry)
 
-    def add_data_forward(self, sw, sw_info, source_ip, source_mac,
-                         ingress_port):
+    def add_data_forward(self, sw, sw_info, source_mac, ingress_port):
         raise NotImplemented
 
     def interpret_nat_digest(self, sw, sw_info, digest_data):

@@ -11,38 +11,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
-{{ topo_dict.hosts['Camera1'].name }}:
+{{ topo_dict.switches['gateway1'].name }}:
   - destination: {{ topo_dict.hosts['inet'].ip }}
-    interface: {{ topo_dict.hosts['Camera1'].name }}-eth0
-    packet_count: 15
+    interface: {{ topo_dict.switches['gateway1'].name }}-eth4
+    packet_count: 25
     interval: 3
-{{ topo_dict.hosts['NAS1'].name }}:
+{{ topo_dict.switches['gateway2'].name }}:
   - destination: {{ topo_dict.hosts['inet'].ip }}
-    interface: {{ topo_dict.hosts['NAS1'].name }}-eth0
-    packet_count: 15
+    interface: {{ topo_dict.switches['gateway2'].name }}-eth3
+    packet_count: 25
     interval: 3
-{{ topo_dict.hosts['Game1'].name }}:
+{{ topo_dict.switches['gateway3'].name }}:
   - destination: {{ topo_dict.hosts['inet'].ip }}
-    interface: {{ topo_dict.hosts['Game1'].name }}-eth0
-    packet_count: 15
-    interval: 3
-{{ topo_dict.hosts['Camera2'].name }}:
-  - destination: {{ topo_dict.hosts['inet'].ip }}
-    interface: {{ topo_dict.hosts['Camera2'].name }}-eth0
-    packet_count: 15
-    interval: 3
-{{ topo_dict.hosts['Game2'].name }}:
-  - destination: {{ topo_dict.hosts['inet'].ip }}
-    interface: {{ topo_dict.hosts['Game2'].name }}-eth0
-    packet_count: 15
-    interval: 3
-{{ topo_dict.hosts['Camera3'].name }}:
--   destination: {{ topo_dict.hosts['inet'].ip }}
-    interface: {{ topo_dict.hosts['Camera3'].name }}-eth0
-    packet_count: 15
-    interval: 3
-{{ topo_dict.hosts['Game3'].name }}:
-  - destination: {{ topo_dict.hosts['inet'].ip }}
-    interface: {{ topo_dict.hosts['Game3'].name }}-eth0
-    packet_count: 15
+    interface: {{ topo_dict.switches['gateway3'].name }}-eth3
+    packet_count: 25
     interval: 3

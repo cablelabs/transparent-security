@@ -235,7 +235,6 @@ struct headers {
 }
 
 struct mac_learn_digest {
-    bit<32> src_IP;
     bit<48> src_mac;
     bit<9> ingress_port;
 }
