@@ -31,14 +31,14 @@ class DaemonRunner:
         self.threads = list()
 
     def start_daemons(self):
-        hosts1 = self.mininet.hosts
+        hosts1 = self.mininet.switches
         logger.info('Init mininet with hosts %s', hosts1)
 
         self.mininet.init()
         items = self.mininet.items()
         logger.info('mininet items %s', items)
 
-        hosts2 = self.mininet.hosts
+        hosts2 = self.mininet.switches
         logger.info('Init mininet with hosts %s', hosts2)
 
         # Create Mininet host daemons
@@ -63,7 +63,7 @@ class DaemonRunner:
         """
         logger.info('Creating daemon on %s with conf %s', host_name, dev_conf)
         mn_device = None
-        for device in self.mininet.hosts:
+        for device in self.mininet.switches:
             if device.name == host_name:
                 mn_device = device
 

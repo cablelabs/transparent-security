@@ -97,20 +97,32 @@ class ExerciseTopo(Topo):
                 # ignore externals
                 if s_host is not None:
                     self.addHost(s_host['name'],
-                                 ip=s_host['ip'] + '/24',
+                                 ip=s_host['ip'] + '/30',
                                  mac=s_host['mac'])
-                    self.addLink(s_host['name'], n_switch['name'],
-                                 delay=link['latency'], bw=link['bandwidth'],
-                                 addr1=s_host['mac'],
-                                 addr2=n_switch['mac'])
-                    self.__add_switch_port(n_switch['name'],
-                                           s_host['name'], sp)
-
-                    logger.info("Adding host %s link %s %s to switch %s %s on "
-                                "port %d",
-                                s_host.get('name'), s_host.get('ip'),
-                                s_host.get('mac'), n_switch.get('name'),
-                                n_switch.get('mac'), sp,)
+                    if link.get('south_facing_mac'):
+                        self.addLink(s_host['name'], n_switch['name'],
+                                     delay=link['latency'], bw=link['bandwidth'],
+                                     addr1=s_host['mac'],
+                                     addr2=link.get('south_facing_mac'))
+                        self.__add_switch_port(n_switch['name'],
+                                               s_host['name'], sp)
+                        logger.info("Adding host %s link %s %s to switch %s %s on "
+                                    "port %d",
+                                    s_host.get('name'), s_host.get('ip'),
+                                    s_host.get('mac'), n_switch.get('name'),
+                                    link.get('south_facing_port'), sp,)
+                    else:
+                        self.addLink(s_host['name'], n_switch['name'],
+                                     delay=link['latency'], bw=link['bandwidth'],
+                                     addr1=s_host['mac'],
+                                     addr2=n_switch['mac'])
+                        self.__add_switch_port(n_switch['name'],
+                                               s_host['name'], sp)
+                        logger.info("Adding host %s link %s %s to switch %s %s on "
+                                    "port %d",
+                                    s_host.get('name'), s_host.get('ip'),
+                                    s_host.get('mac'), n_switch.get('name'),
+                                    n_switch['mac'], sp,)
             else:
                 logger.info('Error in link.  At least one port must be '
                             'defined %s', link)
@@ -348,7 +360,7 @@ class ExerciseRunner:
             # static arp entries and default routes
             h.cmd('arp -i %s -s %s %s' % (h_iface.name, sw_ip, sw_iface.mac))
             h.cmd('ethtool --offload %s rx off tx off' % h_iface.name)
-            h.cmd('ip route add %s dev %s' % (sw_ip, h_iface.name))
+            h.cmd('route add default gw %s %s' % (sw_ip, h_iface.name))
             h.cmd('/usr/sbin/sshd -D&')
             h.setDefaultRoute("via %s" % sw_ip)
 

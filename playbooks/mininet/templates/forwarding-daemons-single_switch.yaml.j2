@@ -11,8 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
-{{ topo_dict.hosts['host1'].name }}:
+{{ p4_progs[0] }}:
   - destination: {{ topo_dict.hosts['host2'].ip }}
-    interface: {{ topo_dict.hosts['host1'].name }}-eth0
+    interface: {{ p4_progs[0] }}-eth2
     packet_count: 15
     interval: 3

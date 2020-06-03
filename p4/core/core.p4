@@ -83,16 +83,13 @@ control TpsCoreIngress(inout headers hdr,
     /**
     * Prepares a packet to be forwarded when data_forward tables have a match on dstAddr
     */
-    action data_forward(macAddr_t dstAddr, egressSpec_t port) {
+    action data_forward(egressSpec_t port) {
         standard_metadata.egress_spec = port;
-        hdr.ethernet.src_mac = hdr.ethernet.dst_mac;
-        hdr.ethernet.dst_mac = dstAddr;
-        hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
     }
 
-    table data_forward_ipv4_t {
+    table data_forward_t {
         key = {
-            hdr.ipv4.dstAddr: lpm;
+            hdr.ethernet.dst_mac: exact;
         }
         actions = {
             data_forward;
@@ -102,12 +99,16 @@ control TpsCoreIngress(inout headers hdr,
         default_action = NoAction();
     }
 
-    table data_forward_ipv6_t {
+    action arp_forward(egressSpec_t port) {
+        standard_metadata.egress_spec = port;
+    }
+
+    table arp_forward_t {
         key = {
-            hdr.ipv6.dstAddr: lpm;
+            hdr.ethernet.dst_mac: exact;
         }
         actions = {
-            data_forward;
+            arp_forward;
             NoAction;
         }
         size = TABLE_SIZE;
@@ -136,14 +137,12 @@ control TpsCoreIngress(inout headers hdr,
 
     action generate_learn_notification() {
         digest<mac_learn_digest>((bit<32>) 1024,
-            { hdr.arp.srcAddr,
-              hdr.ethernet.src_mac,
+            { hdr.arp.src_mac,
               standard_metadata.ingress_port
             });
     }
 
-    action arp_flood(macAddr_t srcAddr) {
-        hdr.ethernet.src_mac = srcAddr;
+    action arp_flood() {
         standard_metadata.mcast_grp = 1;
     }
 
@@ -158,23 +157,6 @@ control TpsCoreIngress(inout headers hdr,
         default_action = NoAction();
     }
 
-    action arp_reply(macAddr_t srcAddr, macAddr_t dstAddr, egressSpec_t port) {
-        hdr.ethernet.src_mac = srcAddr;
-        hdr.ethernet.dst_mac = dstAddr;
-        standard_metadata.egress_spec = port;
-    }
-
-    table arp_reply_t {
-        key = {
-            hdr.arp.dstAddr: lpm;
-        }
-        actions = {
-            arp_reply;
-            NoAction;
-        }
-        default_action = NoAction();
-    }
-
     apply {
         if (hdr.arp.isValid()) {
             generate_learn_notification();
@@ -182,18 +164,14 @@ control TpsCoreIngress(inout headers hdr,
                 arp_flood_t.apply();
             }
             else if (hdr.arp.opcode == 2) {
-                arp_reply_t.apply();
+                arp_forward_t.apply();
             }
         } else if (standard_metadata.egress_spec != DROP_PORT) {
             if (IS_NORMAL(standard_metadata)) {
                 data_inspection_t.apply();
                 recirculate_packet();
             } else if (IS_RECIRCULATED(standard_metadata)) {
-                if (hdr.ipv4.isValid()) {
-                    data_forward_ipv4_t.apply();
-                } else if (hdr.ipv6.isValid()) {
-                    data_forward_ipv6_t.apply();
-                }
+                data_forward_t.apply();
                 if (hdr.int_shim.isValid()) {
                     clone_packet_i2e();
                     clear_int();

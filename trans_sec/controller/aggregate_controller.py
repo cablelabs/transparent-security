@@ -47,24 +47,6 @@ class AggregateController(AbstractController):
                 north_link.get('north_facing_port'),
                 north_link.get('south_facing_port'))
 
-            # TODO - Implement IPv6 learning like IPv4 and remove all inserts
-            #  into data_forward
-            # Add IPv6 entry
-            ipv6_addr = self.topo['hosts'][sw_info['ipv6_term_host']]['ipv6']
-            logger.info('Adding ipv6 addr [%s] to data forward', ipv6_addr)
-            table_entry = self.p4info_helper.build_table_entry(
-                table_name='{}.data_forward_ipv6_t'.format(
-                    self.p4_ingress),
-                match_fields={
-                    'hdr.ipv6.dstAddr': (ipv6_addr, 128)
-                },
-                action_name='{}.data_forward'.format(self.p4_ingress),
-                action_params={
-                    'dstAddr': north_node['mac'],
-                    'port': north_link['north_facing_port']
-                })
-            sw.write_table_entry(table_entry)
-
             logger.info('Installed Northbound from port %s to port %s',
                         north_link.get('north_facing_port'),
                         north_link.get('south_facing_port'))
@@ -88,60 +70,19 @@ class AggregateController(AbstractController):
             ' with MAC - [%s] with action params - [%s]',
             self.switch_type, device.get('mac'), action_params)
 
-    def set_multicast_group(self, sw, sw_info):
-        mc_group_id = 1
-
-        # TODO/FIXME - Need to add logic to parse the topology to determine
-        #     egress ports being used on the switch.
-        if len(self.topo['switches']) == 1:
-            replicas = [{'egress_port': '1', 'instance': '1'},
-                        {'egress_port': '2', 'instance': '1'}]
-        else:
-            replicas = [
-                {'egress_port': '1', 'instance': '1'},
-                {'egress_port': '2', 'instance': '1'},
-                {'egress_port': '3', 'instance': '1'},
-                {'egress_port': '4', 'instance': '1'}
-            ]
-
-        multicast_entry = self.p4info_helper.build_multicast_group_entry(
-            mc_group_id, replicas)
-        logger.info('Build Multicast Entry: %s', multicast_entry)
-        sw.write_multicast_entry(multicast_entry)
-        table_entry = self.p4info_helper.build_table_entry(
-            table_name='{}.arp_flood_t'.format(self.p4_ingress),
-            match_fields={'hdr.ethernet.dst_mac': 'ff:ff:ff:ff:ff:ff'},
-            action_name='{}.arp_flood'.format(self.p4_ingress),
-            action_params={
-                'srcAddr': sw_info['mac']
-            })
-        sw.write_table_entry(table_entry)
-
-    def add_data_forward(self, sw, sw_info, src_ip, mac, port):
-        logger.info("Aggregate - Check if %s belongs to: %s", src_ip,
-                    self.known_devices)
-        if src_ip not in self.known_devices:
-            logger.info("Adding unique table entry on %s for %s",
-                        sw_info['name'], src_ip)
+    def add_data_forward(self, sw, sw_info, mac, port):
+        logger.info("Aggregate - Check if %s belongs to: %s", mac, self.known_devices)
+        if sw_info['name'] not in self.known_devices:
+            self.known_devices[sw_info['name']] = []
+        if mac not in self.known_devices[sw_info['name']]:
+            logger.info("Adding unique table entry on %s for %s", sw_info['name'], mac)
             table_entry = self.p4info_helper.build_table_entry(
-                table_name='{}.data_forward_ipv4_t'.format(self.p4_ingress),
+                table_name='{}.data_forward_t'.format(self.p4_ingress),
                 match_fields={
-                    'hdr.ipv4.dstAddr': (src_ip, 32)
+                    'hdr.ethernet.dst_mac': mac
                 },
                 action_name='{}.data_forward'.format(self.p4_ingress),
-                action_params={
-                    'dstAddr': mac,
-                    'port': port
-                })
+                action_params={'port': port}
+                )
             sw.write_table_entry(table_entry)
-            table_entry = self.p4info_helper.build_table_entry(
-                table_name='{}.arp_reply_t'.format(self.p4_ingress),
-                match_fields={'hdr.arp.dstAddr': (src_ip, 32)},
-                action_name='{}.arp_reply'.format(self.p4_ingress),
-                action_params={
-                    'srcAddr': sw_info['mac'],
-                    'dstAddr': mac,
-                    'port': port
-                })
-            sw.write_table_entry(table_entry)
-        self.known_devices.add(src_ip)
+            self.known_devices[sw_info['name']].append(mac)

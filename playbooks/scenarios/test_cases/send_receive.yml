@@ -79,6 +79,7 @@
     sender_ip: "{{ sender.ip if ip_ver == '4' else sender.ipv6 }}"
     receiver_ip: "{{ receiver.ip if ip_ver == '4' else receiver.ipv6 }}"
     int_hdr_tmplt: ../templates/send_int_hdr.yml.j2
+    switch_mac: "{{ dst_mac | default(switch.mac) }}"
   tasks:
     - name: Create sender log directory {{ host_log_dir }}
       file:
@@ -99,7 +100,7 @@
           -y {{ send_delay }} -i {{ interval }} -it {{ loops }} -itd {{ loop_delay }}
           -z {{ sender_intf }} -sa {{ sender_ip }} -r {{ receiver_ip }} -sp {{ send_src_port }}
           -p {{ send_port }} -f {{ sender_log_file }} -c {{ send_packet_count }} -e {{ sender.mac }}
-          -s {{ switch.mac }} -pr {{ send_protocol }} -m '{{ send_msg }}'
+          -s {{ switch_mac }} -pr {{ send_protocol }} -m '{{ send_msg }}'
 
     - debug:
         var: inspection_data
@@ -142,7 +143,6 @@
           grep {{ receiver_ip | ipaddr }} {{ receiver_log_file }}
           | grep 'WARNING'
           | grep {{ send_port }}
-          | grep {{ send_src_port }}
           | wc -l
       when: hops|int == 0
 
@@ -153,7 +153,6 @@
           | grep 'WARNING'
           | grep 'INT Packet data'
           | grep {{ send_port }}
-          | grep {{ send_src_port }}
           | wc -l
       when: hops|int > 0
 

@@ -28,6 +28,7 @@
     rec_host: "{{ remote_rec_host if run_mode == 'remote' else None }}"
     sender: "{{ topo_dict.hosts[remote_send_host] }}"
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
+    dst_mac: "{{ sender['switch_mac'] }}"
     sender_intf: "{{ '%s-eth0' % send_host if run_mode == 'remote' else '%s-eth1' % switch_name }}"
     receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth2' % core_switch_name }}"
     receiver_log_filename: "udp-flood-receiver-{{ rec_host }}-{{ send_protocol }}-1.out"
@@ -36,7 +37,7 @@
     send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 2) }}"
     send_packet_count: 25
     min_received_packet_count: 25
-    max_received_packet_count: 50
+    max_received_packet_count: 25
 
 # Sending 50 packets within a second 1x through gateway 2
 - import_playbook: ../test_cases/send_receive.yml
@@ -53,6 +54,7 @@
     rec_host: "{{ remote_rec_host if run_mode == 'remote' else None }}"
     sender: "{{ topo_dict.hosts[remote_send_host] }}"
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
+    dst_mac: "{{ sender['switch_mac'] }}"
     sender_intf: "{{ '%s-eth0' % send_host if run_mode == 'remote' else '%s-eth1' % switch_name }}"
     receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth2' % core_switch_name }}"
     receiver_log_filename: "udp-flood-receiver-{{ rec_host }}-{{ send_protocol }}-2.out"
@@ -79,6 +81,7 @@
     rec_host: "{{ remote_rec_host if run_mode == 'remote' else None }}"
     sender: "{{ topo_dict.hosts[remote_send_host] }}"
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
+    dst_mac: "{{ sender['switch_mac'] }}"
     sender_intf: "{{ '%s-eth0' % send_host if run_mode == 'remote' else '%s-eth1' % switch_name }}"
     receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth2' % core_switch_name }}"
     receiver_log_filename: "udp-flood-receiver-{{ rec_host }}-{{ send_protocol }}-3.out"
