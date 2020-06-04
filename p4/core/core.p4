@@ -174,7 +174,11 @@ control TpsCoreIngress(inout headers hdr,
                 data_forward_t.apply();
                 if (hdr.int_shim.isValid()) {
                     clone_packet_i2e();
+
+                    # TODO/FIXME - error "In the ALU operation over container B7 in action TpsCoreIngress.clear_int, every write bit does not have a corresponding 1 or 0 read bits."
+                    #ifdef BMV2
                     clear_int();
+                    #endif
                 }
             }
         }
