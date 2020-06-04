@@ -10,30 +10,31 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import socket
 from logging import getLogger
 
 from trans_sec.controller.abstract_controller import AbstractController
+from trans_sec.controller.ddos_sdn_controller import GATEWAY_CTRL_KEY, \
+    CORE_CTRL_KEY
+from trans_sec.p4runtime_lib.bmv2 import CoreSwitch
 
 logger = getLogger('core_controller')
 
 
 class CoreController(AbstractController):
+
+    def __init__(self, platform, p4_build_out, topo, log_dir, load_p4=True):
+        super(self.__class__, self).__init__(
+            platform, p4_build_out, topo, CORE_CTRL_KEY, log_dir, load_p4)
+
     """
     Implementation of the controller for a switch running the core.p4 program
     """
-    def __init__(self, platform, p4_build_out, topo, log_dir, load_p4=True):
-        """
-        Constructor
-        :param platform: the P4 platforms on which the controllers are running
-        :param p4_build_out: p4 artifacts directory
-        :param topo: the topology config dict object
-        :param log_dir: the directory to send the logs
-        """
-        super(self.__class__, self).__init__(
-            platform, p4_build_out, topo, 'core', list(), log_dir, load_p4,
-            'TpsCoreIngress')
-        self.p4_egress = 'TpsCoreEgress'
+    def instantiate_switch(self, sw_info):
+        return CoreSwitch(
+            p4info_helper=self.p4info_helper,
+            sw_info=sw_info,
+            proto_dump_file='{}/{}-switch-controller.log'.format(
+                self.log_dir, sw_info['name']))
 
     def make_rules(self, sw, sw_info, north_facing_links, south_facing_links,
                    add_di):
@@ -52,56 +53,18 @@ class CoreController(AbstractController):
             ae_ip = self.topo['external'][trpt_dict['name']]['ip']
 
         if ae_ip:
-            ae_ip_addr = socket.gethostbyname(ae_ip)
-            logger.info(
-                'Starting telemetry report for INT headers with dst_port '
-                'value of 555 to AE IP [%s]', ae_ip_addr)
-            table_name = '{}.setup_telemetry_rpt_t'.format(self.p4_egress)
-            action_name = '{}.setup_telem_rpt_ipv4'.format(self.p4_egress)
-            match_fields = {
-                'hdr.udp_int.dst_port': 555
-            }
-            action_params = {
-                'ae_ip': ae_ip_addr
-            }
-            table_entry = self.p4info_helper.build_table_entry(
-                table_name=table_name,
-                match_fields=match_fields,
-                action_name=action_name,
-                action_params=action_params)
-            sw.write_table_entry(table_entry)
-
-        logger.info('self.topo - [%s]', self.topo)
-        logger.info('north_facing_links - [%s]', north_facing_links)
-        logger.info('south_facing_links - [%s]', south_facing_links)
-        logger.info('sw_info - [%s]', sw_info)
+            sw.setup_telemetry_rpt(ae_ip)
 
         if add_di:
             for north_link in north_facing_links:
                 if 'l2ptr' in north_link:
-                    self.__make_int_rules(sw, sw_info, north_link,
-                                          south_facing_links)
+                    self.__make_int_rules(sw, sw_info)
 
-    def __make_int_rules(self, sw, sw_info, north_link, south_facing_links):
+    def __make_int_rules(self, sw, sw_info):
         for name, switch in self.topo['switches'].items():
-            if switch.get('type') == 'gateway':
-                action_params = {
-                    'switch_id': sw_info['id'],
-                }
-                table_name = '{}.data_inspection_t'.format(self.p4_ingress)
-                action_name = '{}.data_inspect_packet'.format(self.p4_ingress)
-                match_fields = {'hdr.ethernet.src_mac': switch.get('mac')}
-                logger.info(
-                    'Insert params into table - [%s] for action [%s] ',
-                    'with params [%s] fields [%s] key hdr.ethernet.src_mac [%s]',
-                    table_name, action_name, action_params, match_fields,
-                    switch.get('mac'))
-                table_entry = self.p4info_helper.build_table_entry(
-                    table_name=table_name,
-                    match_fields=match_fields,
-                    action_name=action_name,
-                    action_params=action_params)
-                sw.write_table_entry(table_entry)
+
+            if switch.get('type') == GATEWAY_CTRL_KEY:
+                sw.add_data_inspection(sw_info['id'], switch['mac'])
 
     def make_north_rules(self, sw, sw_info, north_link):
         north_device = self.topo['hosts'].get(north_link['north_node'])
@@ -119,29 +82,3 @@ class CoreController(AbstractController):
             logger.info(
                 'Installed Host %s ipv4 cloning rule on %s',
                 north_device.get('ip'), sw.name)
-
-    def add_data_forward(self, sw, sw_info, mac, port):
-        logger.info("%s - Check if %s belongs to: %s", sw_info['name'], mac, self.known_devices)
-        if sw_info['name'] not in self.known_devices:
-            self.known_devices[sw_info['name']] = []
-        if mac not in self.known_devices[sw_info['name']]:
-            logger.info("Adding unique table entry on %s for %s", sw_info['name'], mac)
-            table_entry = self.p4info_helper.build_table_entry(
-                table_name='{}.data_forward_t'.format(self.p4_ingress),
-                match_fields={
-                    'hdr.ethernet.dst_mac': mac
-                },
-                action_name='{}.data_forward'.format(self.p4_ingress),
-                action_params={'port': port}
-                )
-            sw.write_table_entry(table_entry)
-            table_entry = self.p4info_helper.build_table_entry(
-                table_name='{}.arp_forward_t'.format(self.p4_ingress),
-                match_fields={
-                    'hdr.ethernet.dst_mac': mac
-                },
-                action_name='{}.arp_forward'.format(self.p4_ingress),
-                action_params={'port': port}
-            )
-            sw.write_table_entry(table_entry)
-            self.known_devices[sw_info['name']].append(mac)

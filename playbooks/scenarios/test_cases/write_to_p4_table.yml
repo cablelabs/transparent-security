@@ -25,6 +25,7 @@
     insert_flag: "{{ p4_te_insert | default('True') }}"
     template_file: ../templates/table_entry.yml.j2
     table_action: "{{ p4_table_action }}"
+    ingress_table: "{{ p4_ingress_table_flag | default('True') }}"
   tasks:
     - name: Create config {{ table_entry_config }}
       template:
@@ -36,8 +37,13 @@
       set_fact:
         add_table_entry_cmd: >
           /usr/bin/python {{ remote_tps_dir }}/bin/write_to_p4_table.py
-          -a {{ switch.grpc }} -d {{ switch.id }} -p {{ switch.runtime_p4info }}
-          -tc {{ table_entry_config }} -l {{ log_dir }} -lf {{ log_file }} -i {{ insert_flag }}
+          -s {{ switch.name }}
+          -t {{ topo_file_loc }}
+          -tc {{ table_entry_config }}
+          -l {{ log_dir }}
+          -lf {{ log_file }}
+          -i {{ insert_flag }}
+          -n {{ ingress_table }}
 
     - name: Create log directory {{ log_dir }}
       file:
