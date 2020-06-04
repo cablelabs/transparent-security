@@ -1,5 +1,5 @@
 PyYaml
-scapy
+scapy >=2.4.2
 grpcio
 requests
 urllib3
