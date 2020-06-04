@@ -12,6 +12,8 @@
 # limitations under the License.
 from logging import getLogger
 from trans_sec.controller.abstract_controller import AbstractController
+from trans_sec.controller.ddos_sdn_controller import AGG_CTRL_KEY
+from trans_sec.p4runtime_lib.bmv2 import AggregateSwitch
 
 logger = getLogger('aggregate_controller')
 
@@ -23,9 +25,14 @@ class AggregateController(AbstractController):
     """
     def __init__(self, platform, p4_build_out, topo, log_dir, load_p4=True):
         super(self.__class__, self).__init__(
-            platform, p4_build_out, topo, 'aggregate',
-            ['TpsAggIngress.forwardedPackets'],
-            log_dir, load_p4, 'TpsAggIngress')
+            platform, p4_build_out, topo, AGG_CTRL_KEY, log_dir, load_p4)
+
+    def instantiate_switch(self, sw_info):
+        return AggregateSwitch(
+            p4info_helper=self.p4info_helper,
+            sw_info=sw_info,
+            proto_dump_file='{}/{}-switch-controller.log'.format(
+                self.log_dir, sw_info['name']))
 
     def make_north_rules(self, sw, sw_info, north_link):
         if north_link.get('north_facing_port'):
@@ -52,37 +59,3 @@ class AggregateController(AbstractController):
                         north_link.get('south_facing_port'))
         else:
             logger.info('No north links to install')
-
-    def add_data_inspection(self, sw, device, sw_info):
-        action_params = {
-            'device': device['id'],
-            'switch_id': sw_info['id']
-        }
-        table_entry = self.p4info_helper.build_table_entry(
-            table_name='{}.data_inspection_t'.format(self.p4_ingress),
-            match_fields={'hdr.ethernet.src_mac': device['mac']},
-            action_name='{}.data_inspect_packet'.format(
-                self.p4_ingress),
-            action_params=action_params)
-        sw.write_table_entry(table_entry)
-        logger.info(
-            'Installed Northbound Packet Inspection for device - [%s]'
-            ' with MAC - [%s] with action params - [%s]',
-            self.switch_type, device.get('mac'), action_params)
-
-    def add_data_forward(self, sw, sw_info, mac, port):
-        logger.info("Aggregate - Check if %s belongs to: %s", mac, self.known_devices)
-        if sw_info['name'] not in self.known_devices:
-            self.known_devices[sw_info['name']] = []
-        if mac not in self.known_devices[sw_info['name']]:
-            logger.info("Adding unique table entry on %s for %s", sw_info['name'], mac)
-            table_entry = self.p4info_helper.build_table_entry(
-                table_name='{}.data_forward_t'.format(self.p4_ingress),
-                match_fields={
-                    'hdr.ethernet.dst_mac': mac
-                },
-                action_name='{}.data_forward'.format(self.p4_ingress),
-                action_params={'port': port}
-                )
-            sw.write_table_entry(table_entry)
-            self.known_devices[sw_info['name']].append(mac)

@@ -10,18 +10,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import ipaddress
+from abc import abstractmethod
 from logging import getLogger
-from threading import Thread
-from trans_sec.p4runtime_lib import bmv2, helper, tofino
-from trans_sec.utils.convert import decode_ipv4, decode_mac
+
+import ipaddress
+
+from trans_sec.p4runtime_lib import helper, tofino
 
 logger = getLogger('abstract_controller')
 
 
 class AbstractController(object):
-    def __init__(self, platform, p4_build_out, topo, switch_type, counters,
-                 log_dir, load_p4, p4_ingress):
+    def __init__(self, platform, p4_build_out, topo, switch_type, log_dir,
+                 load_p4):
         """
         Constructor
         :param platform: the platform on which the switches are running
@@ -29,7 +30,6 @@ class AbstractController(object):
         :param p4_build_out: the build artifact directory
         :param topo: the topology config dictionary
         :param switch_type: the type of switch (aggregate|core|gateway)
-        :param counters:
         :param log_dir: the directory to which to write the log entries
         :param load_p4: when True, the forwarding pipeline configuration will
                         be sent to the switch
@@ -37,15 +37,10 @@ class AbstractController(object):
         self.platform = platform
         self.p4_bin_dir = p4_build_out
         self.topo = topo
-        self.counters = counters
         self.switch_type = switch_type
         self.log_dir = log_dir
         self.load_p4 = load_p4
         self.switches = list()
-        self.p4_ingress = p4_ingress
-        self.known_devices = {}
-        self.digest_threads = list()
-        self.digest_dict = {}
 
         if self.platform == 'bmv2':
             p4info_txt = "{0}/{1}.{2}".format(
@@ -62,11 +57,13 @@ class AbstractController(object):
         logger.info('Adding helpers to switch of type - [%s]',
                     self.switch_type)
         self.__add_helpers()
-        self.switch_forwarding()
+        self.__switch_forwarding()
+        for switch in self.switches:
+            switch.start_digest_listeners()
 
     def stop(self):
-        for thread in self.digest_threads:
-            thread.stop()
+        for switch in self.switches:
+            switch.stop_digest_listeners()
 
     def make_rules(self, sw, sw_info, north_facing_links, south_facing_links,
                    add_di):
@@ -116,12 +113,9 @@ class AbstractController(object):
                     (sw.name, south_link.get('south_node')))
 
             if device is not None and add_di:
-                self.add_data_inspection(sw, device, sw_info)
+                sw.add_data_inspection(device['id'], device['mac'])
         else:
             logger.info('No south links to install')
-
-    def add_data_inspection(self, sw, device, sw_info):
-        pass
 
     def __add_helpers(self):
         logger.info('Setting up helpers for [%s]', self.switch_type)
@@ -135,52 +129,6 @@ class AbstractController(object):
                 elif self.platform == 'tofino':
                     self.__setup_tofino_helper(name, switch)
 
-    def reset_all_counters(self, packet_telemetry):
-        logger.info('Resetting counters')
-        for switch_obj in self.switches:
-            switch = packet_telemetry.get_switch_by_name(switch_obj.name)
-            devices = packet_telemetry.get_devices(switch.get('children'))
-            for device in devices:
-                for counter in self.counters:
-                    logger.debug('Resetting counter for device [%s]',
-                                 device.get('device_id'))
-                    switch_obj.reset_counters(
-                        self.p4info_helper.get_counters_id(counter),
-                        device['device_id'])
-
-    def update_all_counters(self, packet_telemetry):
-        logger.info('Updating counters for all switches')
-        counter_ids = list()
-        for counter in self.counters:
-            counter_ids.append(self.p4info_helper.get_counters_id(counter))
-
-        for this_switch in self.switches:
-            switch = packet_telemetry.get_switch_by_name(this_switch.name)
-            if switch is not None:
-                self.__update_counters(
-                    this_switch, counter_ids, packet_telemetry)
-
-    @staticmethod
-    def __update_counters(this_switch, counter_ids, packet_telemetry):
-        logger.info('Updating counters for %s', this_switch)
-        for response in this_switch.read_counters():
-            for entity in response.entities:
-                counter = entity.counter_entry
-                packet_count = counter.data.packet_count
-                for counter_id in counter_ids:
-                    if entity.counter_entry.counter_id == counter_id:
-                        if packet_count > 0:
-                            packet_telemetry.update_device(
-                                counter.index.index,
-                                forwarded=packet_count * 100)
-                            logger.info(
-                                '%s %s %d: %d packets (%d bytes)' % (
-                                    this_switch.name,
-                                    'forwardedPackets',
-                                    counter.index.index,
-                                    counter.data.packet_count,
-                                    counter.data.byte_count))
-
     def make_switch_rules(self, add_di):
         logger.info('Make Rules for controller [%s]', self.switch_type)
         for switch in self.switches:
@@ -190,80 +138,45 @@ class AbstractController(object):
                             south_facing_links=south_links,
                             add_di=add_di)
 
-    def switch_forwarding(self):
+    def __switch_forwarding(self):
         logger.info('Forwarding Rules for controller [%s]', self.switch_type)
         for switch in self.switches:
             logger.info('L2 forwarding rules for %s', switch.name)
-            sw_info, north_links, south_links = self.__get_links(switch.name)
-            self.set_multicast_group(switch, sw_info)
-            self.send_digest_entry(switch, sw_info)
-
-    def interpret_digest(self, sw, sw_info, digest_data):
-        logger.debug("Digest data %s", digest_data)
-        for members in digest_data:
-            logger.debug("Digest members: %s", members)
-            if members.WhichOneof('data') == 'struct':
-                source_mac = decode_mac(members.struct.members[0].bitstring)
-                logger.info('Learned MAC Address is: %s', source_mac)
-                ingress_port = int(
-                    members.struct.members[1].bitstring.encode('hex'), 16)
-                logger.info('Ingress Port is %s', ingress_port)
-                self.add_data_forward(sw, sw_info, source_mac, ingress_port)
-            else:
-                logger.warn('Digest could not be processed - [%s]',
-                            digest_data)
-
-        logger.info('Completed digest processing')
-
-    def receive_digests(self, sw, sw_info):
-        logger.info("Started listening digest thread for %s", sw_info['name'])
-        while True:
-            logger.debug('Requesting digests')
-            digests = sw.digest_list()
-            digest_data = digests.digest.data
-            logger.info('Received digests: [%s]', digests)
-            if str(digests.digest.digest_id) == str(self.digest_dict['mac_learn_digest']):
-                self.interpret_digest(sw, sw_info, digest_data)
-            elif int(digests.digest.digest_id) != 0:
-                self.interpret_nat_digest(sw, sw_info, digest_data)
-
-    def send_digest_entry(self, sw, sw_info):
-        logger.info('Starting Digest thread')
-        digest_daemon = Thread(target=self.receive_digests, args=(sw, sw_info))
-        self.digest_threads.append(digest_daemon)
-        digest_entry, digest_id = self.p4info_helper.build_digest_entry(
-            digest_name="mac_learn_digest")
-        self.digest_dict['mac_learn_digest'] = digest_id
-        sw.write_digest_entry(digest_entry)
-        logger.info('Sent Digest Entry via P4Runtime: [%s] from [%s]',
-                    digest_entry, self.switch_type)
-        if sw_info['type'] == 'gateway':
-            logger.info("Sending NAT digest entry for %s", sw_info['name'])
-            digest_entry, digest_id = self.p4info_helper.build_digest_entry(digest_name="nat_digest")
-            self.digest_dict['nat_digest'] = digest_id
-            sw.write_digest_entry(digest_entry)
-        digest_daemon.start()
+            hosts_topo = self.topo['hosts']
+            logger.debug('Hosts defs - [%s]', hosts_topo)
+            switch.write_multicast_entry(hosts_topo)
 
     def add_attacker(self, attack, host):
-        logger.info('Adding an attack [%s] to host [%s] and switches [%s]',
-                    attack, host, self.switches)
-        ip_addr = ipaddress.ip_address(unicode(attack['src_ip']))
-        logger.info('Attack ip addr - [%s]', ip_addr)
-        logger.debug('Attack ip addr class - [%s]', ip_addr.__class__)
-        if ip_addr.version == 6:
-            logger.debug('Attack is IPv6')
-            proto_key = 'ipv6'
-        else:
-            logger.debug('Attack is IPv4')
-            proto_key = 'ipv4'
-
-        src_addr_key = 'hdr.{}.srcAddr'.format(proto_key)
-        dst_addr_key = 'hdr.{}.dstAddr'.format(proto_key)
-
+        logger.info('Attack received by the controller of type [%s] - [%s]',
+                    self.switch_type, attack)
+        attack_switch = None
         for switch in self.switches:
-            logger.info('Adding the attack to switch - [%s]', switch)
+            di_match_mac = switch.get_data_inspection_src_mac_keys()
+            logger.debug(
+                'Data inspection table keys on device [%s] - [%s]',
+                switch.sw_info['id'], di_match_mac)
+            if attack['src_mac'] in di_match_mac:
+                logger.info('Found source switch - [%s]', switch.name)
+                attack_switch = switch
+        if attack_switch:
+            logger.info('Adding an attack [%s] to host [%s] and switch [%s]',
+                        attack, host, attack_switch.sw_info['name'])
+            ip_addr = ipaddress.ip_address(unicode(attack['src_ip']))
+            logger.info('Attack ip addr - [%s]', ip_addr)
+            logger.debug('Attack ip addr class - [%s]', ip_addr.__class__)
+            if ip_addr.version == 6:
+                logger.debug('Attack is IPv6')
+                proto_key = 'ipv6'
+            else:
+                logger.debug('Attack is IPv4')
+                proto_key = 'ipv4'
+
+            src_addr_key = 'hdr.{}.srcAddr'.format(proto_key)
+            dst_addr_key = 'hdr.{}.dstAddr'.format(proto_key)
+
+            logger.info('Adding the attack to switch - [%s]', attack_switch)
             self.__add_attacker(
-                switch, attack, host, src_addr_key, dst_addr_key)
+                attack_switch, attack, host, src_addr_key, dst_addr_key)
 
     def __add_attacker(self, switch, attack, host, src_addr_key, dst_addr_key):
         logger.info('Attack requested - [%s]', attack)
@@ -279,16 +192,17 @@ class AbstractController(object):
             'data_drop_tcp_ipv{}_t'.format(ip_addr.version),
             'data_drop', src_addr_key, dst_addr_key, 'hdr.tcp.dst_port')
 
-    def __insert_attack_entry(self, switch, attack, host, table_name,
+    @staticmethod
+    def __insert_attack_entry(switch, attack, host, table_name,
                               action_name, src_addr_key, dst_addr_key,
                               dst_port_key):
         logger.info('Adding attack [%s] from host [%s]', attack, host['name'])
         src_ip = ipaddress.ip_address(unicode(attack['src_ip']))
         dst_ip = ipaddress.ip_address(unicode(attack['dst_ip']))
         logger.info('Attack src_ip - [%s], dst_ip - [%s]', src_ip, dst_ip)
-        # TODO - Add back source IP address as a match field after adding mitigation at the Aggregate
-        self.__insert_p4_table_entry(
-            switch=switch,
+        # TODO - Add back source IP address as a match field after adding
+        #  mitigation at the Aggregate
+        switch.insert_p4_table_entry(
             table_name=table_name,
             action_name=action_name,
             match_fields={
@@ -298,28 +212,11 @@ class AbstractController(object):
             },
             action_params={
                 'device': host['id']
-            }
+            },
+            ingress_class=True
          )
         logger.info('%s Dropping TCP Packets from %s',
                     switch.name, attack.get('src_ip'))
-
-    def __insert_p4_table_entry(self, switch, table_name, action_name,
-                                match_fields, action_params):
-
-        logger.info(
-            'Adding to table - [%s], with fields - [%s], and params - [%s]',
-            table_name, match_fields, action_params)
-
-        table_entry = self.p4info_helper.build_table_entry(
-            table_name='{}.{}'.format(self.p4_ingress, table_name),
-            match_fields=match_fields,
-            action_name='{}.{}'.format(self.p4_ingress, action_name),
-            action_params=action_params)
-        logger.debug(
-            'Writing table entry to table [%s], with action name - [%s], '
-            'match fields - [%s], action_params - [%s]',
-            table_name, action_name, match_fields, action_params)
-        switch.write_table_entry(table_entry)
 
     def __get_links(self, switch_name):
         """
@@ -360,12 +257,7 @@ class AbstractController(object):
         """
         logger.info('Adding BMV P4 Info Helper to switch - [%s]', switch)
 
-        new_switch = bmv2.Bmv2SwitchConnection(
-            name=name,
-            address=switch['grpc'],
-            device_id=switch['id'],
-            proto_dump_file='{}/{}-switch-controller.log'.format(
-                self.log_dir, name))
+        new_switch = self.instantiate_switch(self.topo['switches'][name])
         new_switch.master_arbitration_update()
 
         bmv2_json_file_path = "{0}/{1}.json".format(
@@ -375,14 +267,17 @@ class AbstractController(object):
 
         if self.load_p4:
             logger.info('Setting forwarding pipeline config on - [%s]', name)
-            new_switch.set_forwarding_pipeline_config(
-                self.p4info_helper.p4info, device_config)
+            new_switch.set_forwarding_pipeline_config(device_config)
         else:
             logger.warn('Switches should already be configured')
 
         self.switches.append(new_switch)
         logger.info('Instantiated connection to BMV2 switch - [%s]',
                     name)
+
+    @abstractmethod
+    def instantiate_switch(self, sw_info):
+        raise NotImplemented
 
     def __setup_tofino_helper(self, name, switch):
         """
@@ -415,31 +310,10 @@ class AbstractController(object):
 
         if self.load_p4:
             logger.info('Setting forwarding pipeline config on - [%s]', name)
-            new_switch.set_forwarding_pipeline_config(
-                self.p4info_helper.p4info, device_config)
+            new_switch.set_forwarding_pipeline_config(device_config)
         else:
             logger.warn('Switch [%s] should already be configured', name)
 
         self.switches.append(new_switch)
         logger.info('Instantiated connection to Tofino switch - [%s]',
                     self.switch_type, name)
-
-    def set_multicast_group(self, sw, sw_info):
-        mc_group_id = 1
-        if sw_info.get('multicast_entries'):
-            multicast_entry = self.p4info_helper.build_multicast_group_entry(
-                mc_group_id, sw_info['multicast_entries'])
-            logger.info('Build Multicast Entry: %s', multicast_entry)
-            sw.write_multicast_entry(multicast_entry)
-            table_entry = self.p4info_helper.build_table_entry(
-                table_name='{}.arp_flood_t'.format(self.p4_ingress),
-                match_fields={'hdr.ethernet.dst_mac': 'ff:ff:ff:ff:ff:ff'},
-                action_name='{}.arp_flood'.format(self.p4_ingress),
-                action_params={})
-            sw.write_table_entry(table_entry)
-
-    def add_data_forward(self, sw, sw_info, source_mac, ingress_port):
-        raise NotImplemented
-
-    def interpret_nat_digest(self, sw, sw_info, digest_data):
-        raise NotImplemented

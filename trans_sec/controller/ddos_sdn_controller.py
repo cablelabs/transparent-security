@@ -117,7 +117,8 @@ class DdosSdnController:
         Adds a device to perform an attack
         :param attack: dict of attack
         """
-        if GATEWAY_CTRL_KEY in self.controllers:
+        gateway_controller = self.controllers.get(GATEWAY_CTRL_KEY)
+        if gateway_controller:
             logger.info('Attack received - %s', attack)
 
             conditions = {'mac': attack['src_mac']}
@@ -130,8 +131,7 @@ class DdosSdnController:
                 host = host[0]
                 logger.info('Adding attack to gateways')
                 try:
-                    self.controllers.get(GATEWAY_CTRL_KEY).add_attacker(
-                        attack, host)
+                    gateway_controller.add_attacker(attack, host)
                     self.packet_telemetry.register_attack(host['id'])
                 except Exception as e:
                     logger.error(
@@ -145,7 +145,7 @@ class DdosSdnController:
 
     def __main_loop(self):
         """
-        Starts polling thread
+        Starts polling thread/Error adding attacker to host
         """
         logger.info('Starting thread')
         self.running = True

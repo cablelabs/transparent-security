@@ -18,7 +18,8 @@ import sys
 
 import yaml
 
-from trans_sec.p4runtime_lib.bmv2 import Bmv2SwitchConnection
+from trans_sec.p4runtime_lib.bmv2 import (GatewaySwitch, AggregateSwitch,
+                                          CoreSwitch)
 from trans_sec.p4runtime_lib.helper import P4InfoHelper
 
 logger = logging.getLogger('insert_p4_table_entry')
@@ -26,16 +27,15 @@ logger = logging.getLogger('insert_p4_table_entry')
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-a', '--grpc_addr', type=str, required=True,
-                        help='Switch grpc host:port')
-    parser.add_argument('-d', '--dev_id', type=int, required=False, default=0,
-                        help='The device ID (default 0)')
+    parser.add_argument('-s', '--switch-name', required=True,
+                        help='The switch name to control')
+    parser.add_argument('-t', '--topo', required=True,
+                        help='The location to the topology file')
+    parser.add_argument('-n', '--ingress', required=True,
+                        help='The P4 ingress classname')
     parser.add_argument(
         '-i', '--insert', type=str, required=False, default='True',
         help='When true insert record else delete (default "True")')
-    parser.add_argument(
-        '-p', '--p4-info-fpath', type=str, required=False, default=0,
-        help='The file path of the switch associated p4info file')
     parser.add_argument('-tc', '--table-config',
                         help='Table insertion config file',
                         type=str, required=False)
@@ -78,18 +78,29 @@ if __name__ == '__main__':
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
     table_entry_config = read_yaml_file(args.table_config)
+    topo = read_yaml_file(args.topo)
+    sw_info = topo['switches'][args.switch_name]
 
-    logger.info('Connecting to BMV2 Switch #[%s] at [%s] loaded with P4 [%s]',
-                args.dev_id, args.grpc_addr, args.p4_info_fpath)
-    p4info_helper = P4InfoHelper(args.p4_info_fpath)
-    switch = Bmv2SwitchConnection(
-        name='test', address=args.grpc_addr, device_id=args.dev_id)
-    switch.master_arbitration_update()
+    logger.info('Connecting to BMV2 Switch #[%s]', sw_info)
+    p4info_helper = P4InfoHelper(sw_info['runtime_p4info'])
 
     for entry_config in table_entry_config:
         logger.info('Entry config - [%s]', entry_config)
         logger.info('Writing table entry - [%s] for insert - [%s]',
                     entry_config, args.insert)
+
+        switch = None
+        if sw_info['type'] == 'gateway':
+            switch = GatewaySwitch(p4info_helper, sw_info)
+        elif sw_info['type'] == 'aggregate':
+            switch = AggregateSwitch(p4info_helper, sw_info)
+        elif sw_info['type'] == 'core':
+            switch = CoreSwitch(p4info_helper, sw_info)
+
+        if not switch:
+            raise Exception('Switch type of [%s] is not supported',
+                            sw_info['type'])
+        switch.master_arbitration_update()
 
         match_fields = dict()
         if 'match_fields' in entry_config:
