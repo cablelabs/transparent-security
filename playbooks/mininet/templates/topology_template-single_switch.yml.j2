@@ -17,8 +17,8 @@ hosts:
   host1:
     name: host1
     id: 1
-    switch_ip: 10.0.1.254
-    ip: 10.0.1.1
+    switch_ip: 192.168.1.1
+    ip: 192.168.1.2
     ipv6: 0000:0000:0000:0000:0000:0001:0001:0002
     ip_port: any
     mac: 00:00:00:00:01:01
@@ -26,8 +26,8 @@ hosts:
   host2:
     name: host2
     id: 2
-    switch_ip: 10.0.1.254
-    ip: 10.0.1.8
+    switch_ip: 172.32.1.4
+    ip: 172.32.1.5
     ipv6: 0000:0000:0000:0000:0000:0002:0001:0002
     ip_port: any
     mac: 00:00:00:00:05:07
@@ -36,7 +36,7 @@ hosts:
   clone:
     name: clone
     id: 3
-    switch_ip: 10.0.1.254
+    switch_ip: 10.0.1.8
     ip: 10.0.1.9
     ipv6: 0000:0000:0000:0000:0000:0002:0001:0003
     ip_port: any
@@ -50,6 +50,7 @@ switches:
     runtime_p4info: {{ remote_scripts_dir }}/p4/{{ p4_progs[0] }}.p4info
     runtime_json: {{ remote_scripts_dir }}/p4/{{ p4_progs[0] }}.json
     clone_egress: {{ clone_egress_port }}
+    public_ip: 172.32.1.4
     subnet: 10.0.1.0
     type: {{ p4_progs[0] }}
     mac: 00:00:00:01:01:00

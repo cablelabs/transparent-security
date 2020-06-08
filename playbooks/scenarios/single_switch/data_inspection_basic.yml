@@ -35,7 +35,7 @@
     inspection_data: "{{ sr1_data_inspection_int | default(None) }}"
     # TODO/FIXME - TCP appears not to be receiving the ack
     min_received_packet_count: "{{ send_packet_count }}"
-    max_received_packet_count: "{{ send_packet_count if send_protocol == 'UDP' else send_packet_count|int * 2 }}"
+    max_received_packet_count: "{{ send_packet_count if send_protocol == 'UDP' else (send_packet_count|int * 3 + 1) }}"
 
 # Delete table entry to "{{ data_inspection_table }}"
 - import_playbook: ../test_cases/write_to_p4_table.yml
@@ -59,4 +59,4 @@
     inspection_data: "{{ sr2_data_inspection_int | default(None) }}"
     # TODO/FIXME - TCP appears not to be receiving the ack
     min_received_packet_count: "{{ send_packet_count }}"
-    max_received_packet_count: "{{ send_packet_count if send_protocol == 'UDP' else send_packet_count|int * 2 }}"
+    max_received_packet_count: "{{ send_packet_count if send_protocol == 'UDP' else (send_packet_count|int * 3 + 1) }}"

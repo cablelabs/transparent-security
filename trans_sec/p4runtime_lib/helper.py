@@ -266,6 +266,8 @@ class P4InfoHelper(object):
         return pre_entry
 
     def build_digest_entry(self, digest_name):
+        digest_info = {}
+        logger.info("Building digest entry for %s", digest_name)
         digest_entry = p4runtime_pb2.DigestEntry()
         # using name
         digest_entry.digest_id = self.get_digests_id(digest_name)
@@ -273,7 +275,9 @@ class P4InfoHelper(object):
         digest_entry.config.max_timeout_ns = 0
         digest_entry.config.max_list_size = 1
         digest_entry.config.ack_timeout_ns = 0
-        return digest_entry, digest_entry.digest_id
+        digest_info[digest_name] = digest_entry.digest_id
+        logger.info("Digest Entry Information %s", digest_info)
+        return digest_entry, digest_info
 
     def build_multicast_group_entry(self, mc_group_id, replicas):
         mc_entry = p4runtime_pb2.PacketReplicationEngineEntry()
