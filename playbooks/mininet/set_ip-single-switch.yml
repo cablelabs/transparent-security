@@ -18,9 +18,6 @@
     south_facing_port: "{{ item.south_facing_port | default(None) }}"
     north_facing_port: "{{ item.north_facing_port | default(None) }}"
     host: "{{ topo_dict.hosts.get(item.south_node) }}"
-    south_facing_ip: "{{ item.south_facing_ip | default(None) }}"
-    south_switch: "{{ topo_dict.switches.get(item.south_node) }}"
-    north_switch: "{{ topo_dict.switches.get(item.north_node) }}"
     intf_name: None
 
 - name: Find north node if south didn't exist
