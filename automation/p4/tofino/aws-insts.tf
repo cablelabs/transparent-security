@@ -57,7 +57,7 @@ resource "aws_instance" "tps-switch" {
 # Network nodes
 resource "aws_instance" "node" {
   count = var.num_nodes
-  ami = var.host_ami
+  ami = var.tofino.ami
   instance_type = var.node_instance_type
   key_name = aws_key_pair.snaps-mini-pk.key_name
 
