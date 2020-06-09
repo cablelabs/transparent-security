@@ -72,7 +72,7 @@ class GatewaySwitch(Bmv2SwitchConnection):
         self.udp_port_count = 1
 
     def start_digest_listeners(self):
-        digest_entry, digest_id = self.p4info_helper.build_digest_entry(
+        digest_entry, digest_info = self.p4info_helper.build_digest_entry(
             digest_name="nat_digest")
         self.write_digest_entry(digest_entry)
         super(Bmv2SwitchConnection, self).start_digest_listeners()
@@ -81,18 +81,18 @@ class GatewaySwitch(Bmv2SwitchConnection):
         """
         Runnable method for self.digest_thread
         """
-        logger.info("Started listening digest thread for %s",
+        logger.info("Started listening NAT digest thread for %s",
                     self.name)
         while True:
             try:
-                logger.debug('Requesting digests')
+                logger.debug('Requesting NAT digests')
                 digests = self.digest_list()
                 digest_data = digests.digest.data
                 self.interpret_nat_digest(digest_data)
-                logger.debug('Interpreted digest data')
+                logger.debug('Interpreted NAT digest data')
             except Exception as e:
                 logger.error(
-                    'Unexpected error reading digest from [%s] - [%s]',
+                    'Unexpected error reading NAT digest from [%s] - [%s]',
                     self.name, e)
 
     def add_data_inspection(self, dev_id, dev_mac):

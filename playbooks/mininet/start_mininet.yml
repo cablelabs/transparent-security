@@ -63,7 +63,7 @@
       set_fact:
         topo_dict: "{{ lookup('file', topo_file_dest) | from_yaml }}"
 
-    - include_tasks: set_ip.yml
+    - include_tasks: "{{ set_ip_file }}"
       loop: "{{ topo_dict.links }}"
 
     - name: Set /etc/hosts

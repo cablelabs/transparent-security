@@ -73,7 +73,7 @@ class SwitchConnection(object):
 
     def start_digest_listeners(self):
         logger.info('Starting Digest thread')
-        digest_entry, digest_id = self.p4info_helper.build_digest_entry(
+        digest_entry, digest_info = self.p4info_helper.build_digest_entry(
             digest_name="mac_learn_digest")
         self.write_digest_entry(digest_entry)
         self.digest_thread.start()
@@ -117,10 +117,10 @@ class SwitchConnection(object):
             logger.debug("Digest members: %s", members)
             if members.WhichOneof('data') == 'struct':
                 source_mac = decode_mac(members.struct.members[0].bitstring)
-                logger.debug('Digested MAC Address is: %s', source_mac)
+                logger.debug('Digest MAC Address is: %s', source_mac)
                 ingress_port = int(
                     members.struct.members[1].bitstring.encode('hex'), 16)
-                logger.debug('Ingress Port is %s', ingress_port)
+                logger.debug('Digest Ingress Port is %s', ingress_port)
                 self.add_data_forward(source_mac, ingress_port)
             else:
                 logger.warn('Digest could not be processed - [%s]',

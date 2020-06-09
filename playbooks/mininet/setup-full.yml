@@ -23,6 +23,7 @@
       - core
       - aggregate
       - gateway
+    set_ip_file: set_ip-full.yml
     topology_template: templates/topology_template-full.yml.j2
     fwd_daemon_config_template: templates/forwarding-daemons-full.yaml.j2
     load_p4: False

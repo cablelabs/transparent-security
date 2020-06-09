@@ -54,7 +54,7 @@
   block:
     - name: Set local IP for intf {{ intf_name }}
       become: yes
-      command: "ip addr add {{ south_facing_ip }}/30 dev {{ intf_name }}"
+      command: "ip addr add {{ host.switch_ip }}/30 dev {{ intf_name }}"
   when: host and north_switch.public_ip is defined
 
 - name: Setup local IP on the core
