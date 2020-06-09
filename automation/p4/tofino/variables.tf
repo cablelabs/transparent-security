@@ -22,7 +22,6 @@ variable "private_key_file" {default = "~/.ssh/id_rsa"}
 variable "sudo_user" {default = "ubuntu"}
 variable "region" {default = "us-west-2"}
 
-variable "host_ami" {default = "ami-08692d171e3cf02d6"}
 variable "tofino" {
   default = {
     sde_version = "9.2.0"
@@ -59,4 +58,4 @@ variable "service_log_level" {default = "INFO"}
 variable "ae_monitor_intf" {default = "eth0:0"}
 
 variable "setup_nodes_pb" {default = "setup_nodes.yml"}
-variable "scenario_name" {default = "simple"}
+variable "scenario_name" {default = "all"}
