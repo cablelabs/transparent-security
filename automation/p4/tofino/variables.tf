@@ -22,11 +22,11 @@ variable "private_key_file" {default = "~/.ssh/id_rsa"}
 variable "sudo_user" {default = "ubuntu"}
 variable "region" {default = "us-west-2"}
 
-variable "host_ami" {default = "ami-08692d171e3cf02d6"}
 variable "tofino" {
   default = {
     sde_version = "9.2.0"
-    ami = "ami-0738bbdc79372f56f"
+    ami = "ami-0584c2d36652503c3" // new p4-rt build w/ additions
+//    ami = "ami-0738bbdc79372f56f" // old p4-rt build w/o additions
   }
 }
 
@@ -59,4 +59,4 @@ variable "service_log_level" {default = "INFO"}
 variable "ae_monitor_intf" {default = "eth0:0"}
 
 variable "setup_nodes_pb" {default = "setup_nodes.yml"}
-variable "scenario_name" {default = "simple"}
+variable "scenario_name" {default = "all"}
