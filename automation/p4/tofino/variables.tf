@@ -25,7 +25,8 @@ variable "region" {default = "us-west-2"}
 variable "tofino" {
   default = {
     sde_version = "9.2.0"
-    ami = "ami-0738bbdc79372f56f"
+    ami = "ami-0584c2d36652503c3" // new p4-rt build w/ additions
+//    ami = "ami-0738bbdc79372f56f" // old p4-rt build w/o additions
   }
 }
 
