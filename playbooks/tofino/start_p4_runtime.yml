@@ -11,22 +11,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
-
-# Create configured GRE tunnels on the switch VMs
-- hosts: "{{ host_val }}"
-  gather_facts: no
+- hosts: "{{ host_val | default('all') }}"
   become: yes
 
+  gather_facts: no
+
   environment:
-    SDE: "{{ remote_sde_dir }}"
-    SDE_INSTALL: "{{ remote_sde_dir }}/install"
+    SDE: "{{ sde_dir }}"
+    SDE_INSTALL: "{{ sde_dir }}/install"
 
   tasks:
-    - name: Setup DMA
-      command: $SDE/pkgsrc/ptf-modules/ptf-utils/dma_setup.sh
+    - name: Wait a bit - TODO - REMOVE ME
+      pause:
+        seconds: 30
 
-    - name: Setup Tofino Virtual interfaces
-      command: $SDE/pkgsrc/ptf-modules/ptf-utils/veth_setup.sh
-
-    - name: Create bridge for P4Runtime
-      command: "sudo docker network create -d bridge --subnet {{ p4_bridge_subnet }} --gateway 192.168.0.1 dockernet"
+    - name: Startup P4Runtime
+      command: "$SDE/p4runtime_update_config.py -p {{ prog_name }} --grpc-addr {{ p4_bridge_ip }}:{{ grpc_port }}"

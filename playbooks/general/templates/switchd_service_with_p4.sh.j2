@@ -18,10 +18,4 @@
 export SDE=~{{ sudo_user }}/bf-sde-{{ sde_version }}
 export SDE_INSTALL=$SDE/install
 
-$SDE/run_switchd.sh -p {{ prog_name }} -- --p4rt-server 0.0.0.0:{{ grpc_port }}
-{# TODO/FIXME - -r or --background for the log file causes the service to not properly start #}
-{#$SDE/run_switchd.sh -p {{ prog_name }} -r {{ log_file }} -- --p4rt-server 0.0.0.0:{{ grpc_port }}#}
-{#$SDE/run_switchd.sh -p {{ prog_name }} -r {{ log_file }} -- --p4rt-server 0.0.0.0:{{ grpc_port }} --background#}
-{# TODO - This should probably change to skip_p4 and allow switchd and the SDN controller do the rest #}
-{#$SDE/run_switchd.sh -p {{ prog_name }} -r skip_p4 --skip-p4 -- --p4rt-server 0.0.0.0:{{ grpc_port }} --background#}
-{#$SDE_INSTALL/bin/bf_switchd --install-dir $SDE_INSTALL --conf-file $SDE_INSTALL/share/p4/targets/tofino/skip_p4.conf --skip-p4 --p4rt-server 0.0.0.0:{{ grpc_port }} --background#}
+$SDE/run_switchd.sh -p {{ prog_name }} -- --p4rt-server {{ p4_bridge_ip }}:{{ grpc_port }}

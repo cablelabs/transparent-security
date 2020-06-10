@@ -47,4 +47,12 @@
     log_file: "{{ log_dir }}/tofino-switchd.log"
     # TODO/FIXME - Fix the status of the service
     service_status_running: false
+    bridge_ip: "{{ p4_rt_brige_ip }}"
 
+# Start switchd
+- import_playbook: start_p4_runtime.yml
+  vars:
+    host_val: "{{ switches }}"
+    prog_name: "{{ p4_pkg }}"
+    bridge_ip: "{{ p4_rt_brige_ip }}"
+    grpc_port: "50051"
