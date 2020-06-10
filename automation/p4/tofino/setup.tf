@@ -99,6 +99,8 @@ switch_sudo_user=${var.sudo_user}
 host_sudo_user=${var.sudo_user}
 ae_monitor_intf=${var.ae_monitor_intf}
 p4_platform=tofino
+p4_bridge_ip=${var.p4_bridge_ip}
+p4_bridge_subnet=${var.p4_bridge_subnet}
 "\
 EOT
   }
