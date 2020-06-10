@@ -48,4 +48,5 @@
         - "ae_dev_intf={{ ae_dev_intf }}"
         - "ae_monitor_intf={{ ae_monitor_intf }}"
         - "sdn_url=http://{{ sdn_host }}:{{ sdn_port }}"
+        - "clone_egress_port={{ clone_egress_port }}"
         - "scenario_name={{ scenario_name }}"

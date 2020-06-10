@@ -33,6 +33,7 @@ variable "remote_scripts_dir" {default = "/etc/transparent-security"}
 variable "remote_pb_dir" {default = "/home/ubuntu/transparent-security/playbooks"}
 variable "remote_inventory_file" {default = "/home/ubuntu/transparent-security.ini"}
 variable "topo_file" {default = "mininet-sim-topology.yaml"}
+variable "clone_egress_port" {default = "3"}
 variable "sdn_host" {default = "localhost"}
 variable "ae_host" {default = "localhost"}
 variable "sdn_port" {default = "9998"}

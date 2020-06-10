@@ -58,6 +58,7 @@ ae_host=${var.ae_host}
 ae_monitor_intf=${var.ae_monitor_intf}
 sdn_dev_intf=${var.sdn_dev_intf}
 ae_dev_intf=${var.ae_dev_intf}
+clone_egress_port=${var.clone_egress_port}
 scenario_name=${var.scenario_name}
 "\
 EOT

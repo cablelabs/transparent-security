@@ -22,6 +22,8 @@
     p4_progs:
       - core
       - aggregate
+    # TODO - may need a set_ip-lab_trial.yml.j2 file but using full for now
+    set_ip_file: set_ip-full.yml
     topology_template: templates/topology_template-lab_trial.yml.j2
     load_p4: False
 
