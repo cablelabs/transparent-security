@@ -31,7 +31,6 @@
     port_to_wait: "{{ tofino_model_port }}"
     sudo_user: "{{ switch_sudo_user }}"
     prog_name: "{{ p4_pkg }}"
-    wait_timeout: 120
 
 # Start switchd
 - import_playbook: ../general/start_service.yml
@@ -42,17 +41,17 @@
     port_to_wait: "{{ switchd_port }}"
     sudo_user: "{{ switch_sudo_user }}"
     prog_name: "{{ p4_pkg }}"
-    wait_timeout: 120
     srvc_start_pause_time: 30
     log_file: "{{ log_dir }}/tofino-switchd.log"
     # TODO/FIXME - Fix the status of the service
     service_status_running: false
-    bridge_ip: "{{ p4_rt_brige_ip }}"
 
-# Start switchd
-- import_playbook: start_p4_runtime.yml
+# Load P4-RT
+- import_playbook: ../general/start_service.yml
   vars:
     host_val: "{{ switches }}"
+    service_name: tps-tofino-load-p4rt
+    local_srvc_script_tmplt_file: "{{ tps_dir }}/playbooks/general/templates/tofino_p4rt_service.sh.j2"
+    sudo_user: "{{ switch_sudo_user }}"
     prog_name: "{{ p4_pkg }}"
-    bridge_ip: "{{ p4_rt_brige_ip }}"
-    grpc_port: "50051"
+    srvc_start_pause_time: 15

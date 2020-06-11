@@ -17,5 +17,6 @@
 
 export SDE=~{{ sudo_user }}/bf-sde-{{ sde_version }}
 export SDE_INSTALL=$SDE/install
+export host_ip=$(hostname -i)
 
-$SDE/run_switchd.sh -p {{ prog_name }} -- --p4rt-server {{ p4_bridge_ip }}:{{ grpc_port }}
+$SDE/run_switchd.sh -p {{ prog_name }} -- --p4rt-server $host_ip:{{ grpc_port }}
