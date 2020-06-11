@@ -117,8 +117,6 @@
         - "host_sender_intf=eth0:0"
         - "p4_platform={{ p4_platform }}"
         - "host_sudo_user={{ host_sudo_user }}"
-        - "p4_bridge_subnet={{ p4_bridge_subnet }}"
-        - "p4_bridge_ip={{ p4_bridge_ip }}"
 
     - include_tasks: etc_hosts_tasks.yml
       loop: "{{ topo_dict.hosts.keys() | list }}"
