@@ -27,6 +27,3 @@
 
     - name: Setup Tofino Virtual interfaces
       command: $SDE/pkgsrc/ptf-modules/ptf-utils/veth_setup.sh
-
-    - name: Create bridge for P4Runtime
-      command: "sudo docker network create -d bridge --subnet {{ p4_bridge_subnet }} --gateway 192.168.0.1 dockernet"
