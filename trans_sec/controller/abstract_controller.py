@@ -15,7 +15,8 @@ from logging import getLogger
 
 import ipaddress
 
-from trans_sec.p4runtime_lib import helper, tofino
+# from trans_sec.p4runtime_lib import tofino
+from trans_sec.p4runtime_lib import helper
 
 logger = getLogger('abstract_controller')
 
@@ -42,16 +43,14 @@ class AbstractController(object):
         self.load_p4 = load_p4
         self.switches = list()
 
-        if self.platform == 'bmv2':
-            p4info_txt = "{0}/{1}.{2}".format(
-                self.p4_bin_dir, self.switch_type, 'p4info')
-        elif self.platform == 'tofino':
-            p4info_txt = "{0}/{1}.{2}".format(
-                self.p4_bin_dir, self.switch_type, 'p4info.pb.txt')
-        else:
-            raise Exception('Switch type - {} is not supported'.format(
-                            self.switch_type))
-        self.p4info_helper = helper.P4InfoHelper(p4info_txt)
+        for switch_topo in self.topo['switches'].values():
+            if switch_topo['type'] == self.switch_type:
+                p4info_txt = switch_topo['runtime_p4info']
+                self.p4info_helper = helper.P4InfoHelper(p4info_txt)
+                break
+
+        if not self.p4info_helper:
+            raise Exception('Unable to obtain the p4info helper')
 
     def start(self):
         logger.info('Adding helpers to switch of type - [%s]',
@@ -123,11 +122,9 @@ class AbstractController(object):
         for name, switch in self.topo['switches'].items():
             logger.info('Setting up helper for - [%s] of type - [%s]',
                         name, switch.get('type'))
-            if switch['type'] == self.switch_type:
-                if self.platform == 'bmv2':
-                    self.__setup_bmv2_helper(name, switch)
-                elif self.platform == 'tofino':
-                    self.__setup_tofino_helper(name, switch)
+
+            # TODO - Determine if we need a different impl
+            self.__setup_bmv2_helper(name, switch)
 
     def make_switch_rules(self, add_di):
         logger.info('Make Rules for controller [%s]', self.switch_type)
@@ -258,12 +255,11 @@ class AbstractController(object):
         logger.info('Adding BMV P4 Info Helper to switch - [%s]', switch)
 
         new_switch = self.instantiate_switch(self.topo['switches'][name])
+        logger.info('New switch info - [%s]', new_switch.sw_info)
         new_switch.master_arbitration_update()
 
-        bmv2_json_file_path = "{0}/{1}.json".format(
-            self.p4_bin_dir, self.switch_type)
         device_config = new_switch.build_device_config(
-            bmv2_json_file_path=bmv2_json_file_path)
+            bmv2_json_file_path=new_switch.sw_info['runtime_json'])
 
         if self.load_p4:
             logger.info('Setting forwarding pipeline config on - [%s]', name)
@@ -272,48 +268,8 @@ class AbstractController(object):
             logger.warn('Switches should already be configured')
 
         self.switches.append(new_switch)
-        logger.info('Instantiated connection to BMV2 switch - [%s]',
-                    name)
+        logger.info('Instantiated connection to switch - [%s]', name)
 
     @abstractmethod
     def instantiate_switch(self, sw_info):
         raise NotImplemented
-
-    def __setup_tofino_helper(self, name, switch):
-        """
-        Creates the Tofino switch connection and loads the P4 program when
-        self.load_p4 is True
-        :param name: the switch name
-        :param switch: the switch dict object from topology
-        """
-        logger.info('Adding Tofino P4 Info Helper to switch - [%s]', switch)
-
-        new_switch = tofino.TofinoSwitchConnection(
-            name=name,
-            address=switch['grpc'],
-            device_id=switch['id'])
-        new_switch.master_arbitration_update()
-
-        bin_path = "{0}/{1}.tofino/pipe/tofino.bin".format(
-            self.p4_bin_dir, self.switch_type)
-        cxt_json_path = "{0}/{1}.tofino/pipe/context.json".format(
-            self.p4_bin_dir, self.switch_type)
-        device_config = new_switch.build_device_config(
-            prog_name=name,
-            bin_path=bin_path,
-            cxt_json_path=cxt_json_path)
-
-        logger.info(
-            'Loading P4 application to Tofino switch - [%s] with bin - [%s] '
-            'and context - [%s]',
-            name, bin_path, cxt_json_path)
-
-        if self.load_p4:
-            logger.info('Setting forwarding pipeline config on - [%s]', name)
-            new_switch.set_forwarding_pipeline_config(device_config)
-        else:
-            logger.warn('Switch [%s] should already be configured', name)
-
-        self.switches.append(new_switch)
-        logger.info('Instantiated connection to Tofino switch - [%s]',
-                    self.switch_type, name)

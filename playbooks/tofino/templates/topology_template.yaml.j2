@@ -6,7 +6,7 @@ hosts:
     tunnels:
       - host: gateway1
         virt_intf:  {{ node_nic }}:0
-
+    type: webcam
   NAS1:
     name: NAS1
     id: 6
@@ -14,7 +14,7 @@ hosts:
     tunnels:
       - host: gateway1
         virt_intf:  {{ node_nic }}:0
-
+    type: nas
   Game1:
     name: Game1
     id: 7
@@ -22,7 +22,7 @@ hosts:
     tunnels:
       - host: gateway1
         virt_intf:  {{ node_nic }}:0
-
+    type: console
   Camera2:
     name: Camera2
     id: 8
@@ -30,7 +30,7 @@ hosts:
     tunnels:
       - host: gateway2
         virt_intf:  {{ node_nic }}:0
-
+    type: webcam
   Game2:
     name: Game2
     id: 9
@@ -38,7 +38,7 @@ hosts:
     tunnels:
       - host: gateway2
         virt_intf:  {{ node_nic }}:0
-
+    type: console
   Camera3:
     name: Camera3
     id: 10
@@ -46,7 +46,7 @@ hosts:
     tunnels:
       - host: gateway3
         virt_intf:  {{ node_nic }}:0
-
+    type: webcam
   Game3:
     name: Game3
     id: 11
@@ -54,7 +54,7 @@ hosts:
     tunnels:
       - host: gateway3
         virt_intf:  {{ node_nic }}:0
-
+    type: console
   inet:
     name: inet
     id: 12
@@ -62,7 +62,7 @@ hosts:
     tunnels:
       - host: core
         virt_intf:  {{ node_nic }}:0
-
+    type: server
   analytics_engine:
     name: analytics_engine
     id: 13
@@ -70,7 +70,7 @@ hosts:
     tunnels:
       - host: core
         virt_intf:  {{ node_nic }}:0
-
+    type: server
 # TODO - Determine how to properly configure a switch MAC value
 switches:
   gateway1:
@@ -85,7 +85,6 @@ switches:
     tunnels:
       - host: aggregate
         virt_intf:  {{ switch_nic_prfx }}0
-
   gateway2:
     name: gateway2
     id: 0
@@ -98,7 +97,6 @@ switches:
     tunnels:
       - host: aggregate
         virt_intf:  {{ switch_nic_prfx }}0
-
   gateway3:
     name: gateway3
     id: 0
@@ -111,7 +109,6 @@ switches:
     tunnels:
       - host: aggregate
         virt_intf:  {{ switch_nic_prfx }}0
-
   aggregate:
     name: aggregate
     id: 0
@@ -138,7 +135,6 @@ switches:
         virt_intf:  {{ switch_nic_prfx }}3
         bridge_name: br3
         tunnel_name: gre-tun3
-
   core:
     name: core
     id: 0
