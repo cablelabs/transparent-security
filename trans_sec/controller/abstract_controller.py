@@ -15,8 +15,7 @@ from logging import getLogger
 
 import ipaddress
 
-from trans_sec.exceptions import NotFoundError
-from trans_sec.p4runtime_lib import helper
+from trans_sec.p4runtime_lib import helper, tofino
 
 logger = getLogger('abstract_controller')
 
