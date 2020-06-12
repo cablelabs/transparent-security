@@ -45,6 +45,8 @@ class AbstractController(object):
         for switch_topo in self.topo['switches'].values():
             if switch_topo['type'] == self.switch_type:
                 p4info_txt = switch_topo['runtime_p4info']
+                logger.info('Loading p4info_helper with file - [%s]',
+                            p4info_txt)
                 self.p4info_helper = helper.P4InfoHelper(p4info_txt)
                 break
 
@@ -130,8 +132,11 @@ class AbstractController(object):
             logger.info('Setting up helper for - [%s] of type - [%s]',
                         name, switch.get('type'))
 
-            # TODO - Determine if we need a different impl
-            self.__setup_bmv2_helper(name, switch)
+            if switch['type'] == self.switch_type:
+                if self.platform == 'bmv2':
+                    self.__setup_bmv2_helper(name, switch)
+                elif self.platform == 'tofino':
+                    self.__setup_bmv2_helper(name, switch)
 
     def make_switch_rules(self, add_di):
         logger.info('Make Rules for controller [%s]', self.switch_type)
@@ -311,12 +316,17 @@ class AbstractController(object):
         logger.info('New switch info - [%s]', new_switch.sw_info)
         new_switch.master_arbitration_update()
 
-        device_config = new_switch.build_device_config(
-            bmv2_json_file_path=new_switch.sw_info['runtime_json'])
-
         if self.load_p4:
-            logger.info('Setting forwarding pipeline config on - [%s]', name)
-            new_switch.set_forwarding_pipeline_config(device_config)
+            if new_switch.sw_info['runtime_json']:
+                device_config = new_switch.build_device_config(
+                    bmv2_json_file_path=new_switch.sw_info['runtime_json'])
+
+                logger.info('Setting forwarding pipeline config on - [%s]',
+                            name)
+                new_switch.set_forwarding_pipeline_config(device_config)
+            else:
+                raise Exception('Forwarding pipeline cannot be configured')
+
         else:
             logger.warning('Switches should already be configured')
 
