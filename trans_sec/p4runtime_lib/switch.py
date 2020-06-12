@@ -473,7 +473,7 @@ class SwitchConnection(object):
             multicast_entry = self.p4info_helper.build_multicast_group_entry(
                 mc_group_id, mc_entries)
             logger.info('Build Multicast Entry on device [%s]: [%s]',
-                        multicast_entry)
+                        self.grpc_addr, multicast_entry)
 
             request = p4runtime_pb2.WriteRequest()
             request.device_id = self.device_id

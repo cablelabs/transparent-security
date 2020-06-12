@@ -6,6 +6,9 @@ hosts:
     tunnels:
       - host: gateway1
         virt_intf:  {{ node_nic }}:0
+    ipv6: 0000:0000:0000:0000:0000:0001:0001:0002
+    ip_port: any
+    mac: 00:00:00:00:01:01
     type: webcam
   NAS1:
     name: NAS1
@@ -14,6 +17,9 @@ hosts:
     tunnels:
       - host: gateway1
         virt_intf:  {{ node_nic }}:0
+    ipv6: 0000:0000:0000:0000:0000:0001:0001:0003
+    ip_port: any
+    mac: 00:00:00:00:01:02
     type: nas
   Game1:
     name: Game1
@@ -22,6 +28,9 @@ hosts:
     tunnels:
       - host: gateway1
         virt_intf:  {{ node_nic }}:0
+    ipv6: 0000:0000:0000:0000:0000:0001:0001:0004
+    ip_port: any
+    mac: 00:00:00:00:01:03
     type: console
   Camera2:
     name: Camera2
@@ -30,6 +39,10 @@ hosts:
     tunnels:
       - host: gateway2
         virt_intf:  {{ node_nic }}:0
+    switch_mac: 00:00:02:02:01:00
+    ipv6: 0000:0000:0000:0000:0000:0001:0002:0002
+    ip_port: any
+    mac: 00:00:00:00:02:01
     type: webcam
   Game2:
     name: Game2
@@ -38,6 +51,9 @@ hosts:
     tunnels:
       - host: gateway2
         virt_intf:  {{ node_nic }}:0
+    ipv6: 0000:0000:0000:0000:0000:0001:0002:0003
+    ip_port: any
+    mac: 00:00:00:00:02:02
     type: console
   Camera3:
     name: Camera3
@@ -46,6 +62,9 @@ hosts:
     tunnels:
       - host: gateway3
         virt_intf:  {{ node_nic }}:0
+    ipv6: 0000:0000:0000:0000:0000:0001:0003:0002
+    ip_port: any
+    mac: 00:00:00:00:03:01
     type: webcam
   Game3:
     name: Game3
@@ -54,6 +73,9 @@ hosts:
     tunnels:
       - host: gateway3
         virt_intf:  {{ node_nic }}:0
+    ipv6: 0000:0000:0000:0000:0000:0001:0003:0003
+    ip_port: any
+    mac: 00:00:00:00:03:02
     type: console
   inet:
     name: inet
@@ -62,6 +84,9 @@ hosts:
     tunnels:
       - host: core
         virt_intf:  {{ node_nic }}:0
+    ipv6: 0000:0000:0000:0000:0000:0002:0001:0002
+    ip_port: any
+    mac: 00:00:00:00:05:07
     type: server
   analytics_engine:
     name: analytics_engine
@@ -70,6 +95,9 @@ hosts:
     tunnels:
       - host: core
         virt_intf:  {{ node_nic }}:0
+    ipv6: 0000:0000:0000:0000:0000:0002:0001:0003
+    ip_port: any
+    mac: 00:00:00:00:05:08
     type: server
 # TODO - Determine how to properly configure a switch MAC value
 switches:
@@ -77,7 +105,6 @@ switches:
     name: gateway1
     id: 0
     runtime_p4info: {{ remote_scripts_dir }}/p4/gateway.tofino/p4info.pb.txt
-    runtime_json: {{ remote_scripts_dir }}/p4/gateway.tofino/manifest.json
     ip: {{ gateway1_ip }}
     mac: 00:00:00:01:01:00
     grpc: {{ gateway1_ip }}:{{ grpc_port }}
@@ -89,7 +116,6 @@ switches:
     name: gateway2
     id: 0
     runtime_p4info: {{ remote_scripts_dir }}/p4/gateway.tofino/p4info.pb.txt
-    runtime_json: {{ remote_scripts_dir }}/p4/gateway.tofino/manifest.json
     ip: {{ gateway2_ip }}
     mac: 00:00:00:01:02:00
     grpc: {{ gateway2_ip }}:{{ grpc_port }}
@@ -101,7 +127,6 @@ switches:
     name: gateway3
     id: 0
     runtime_p4info: {{ remote_scripts_dir }}/p4/gateway.tofino/p4info.pb.txt
-    runtime_json: {{ remote_scripts_dir }}/p4/gateway.tofino/manifest.json
     ip: {{ gateway3_ip }}
     mac: 00:00:00:01:03:00
     grpc: {{ gateway3_ip }}:{{ grpc_port }}
@@ -113,7 +138,6 @@ switches:
     name: aggregate
     id: 0
     runtime_p4info: {{ remote_scripts_dir }}/p4/aggregate.tofino/p4info.pb.txt
-    runtime_json: {{ remote_scripts_dir }}/p4/aggregate.tofino/manifest.json
     ip: {{ agg_ip }}
     mac: 00:00:00:02:04:00
     grpc: {{ agg_ip }}:{{ grpc_port }}
@@ -139,7 +163,6 @@ switches:
     name: core
     id: 0
     runtime_p4info: {{ remote_scripts_dir }}/p4/core.tofino/p4info.pb.txt
-    runtime_json: {{ remote_scripts_dir }}/p4/core.tofino/manifest.json
     ip: {{ core_ip }}
     mac: 00:00:00:03:05:00
     grpc: {{ core_ip }}:{{ grpc_port }}
