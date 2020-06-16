@@ -98,6 +98,7 @@ srvc_log_level=${var.service_log_level}
 switch_sudo_user=${var.sudo_user}
 host_sudo_user=${var.sudo_user}
 ae_monitor_intf=${var.ae_monitor_intf}
+clone_egress_port=${var.clone_egress_port}
 p4_platform=tofino
 "\
 EOT

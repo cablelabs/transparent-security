@@ -54,8 +54,7 @@ class PacketTelemetry:
         if 0 < len(switch) < 2:
             switch[0]['children'].append(hid)
         else:
-            logging.error('Rutt row raggy! No single switch matched the sid ',
-                          sid)
+            logging.error('No single switch matched the sid - [%s]', sid)
 
         conditions = {'device_id': hid}
         device = filter(

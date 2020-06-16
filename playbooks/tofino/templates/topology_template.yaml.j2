@@ -88,17 +88,6 @@ hosts:
     ip_port: any
     mac: 00:00:00:00:05:07
     type: server
-  analytics_engine:
-    name: analytics_engine
-    id: 13
-    ip: {{ ae_ip }}
-    tunnels:
-      - host: core
-        virt_intf:  {{ node_nic }}:0
-    ipv6: 0000:0000:0000:0000:0000:0002:0001:0003
-    ip_port: any
-    mac: 00:00:00:00:05:08
-    type: server
 # TODO - Determine how to properly configure a switch MAC value
 switches:
   gateway1:
@@ -162,14 +151,28 @@ switches:
   core:
     name: core
     id: 0
+    clone_egress: {{ clone_egress_port }}
     runtime_p4info: {{ remote_scripts_dir }}/p4/core.tofino/p4info.pb.txt
     ip: {{ core_ip }}
     mac: 00:00:00:03:05:00
     grpc: {{ core_ip }}:{{ grpc_port }}
+    telemetry_rpt:
+      type: external
+      name: analytics_engine
     type: core
     tunnels:
       - host: aggregate
         virt_intf:  {{ switch_nic_prfx }}0
+external:
+  analytics_engine:
+    name: analytics_engine
+    id: 13
+    ip: {{ ae_ip }}
+{#    tunnels:#}
+{#      - host: core#}
+{#        virt_intf:  {{ node_nic }}:0#}
+    ip_port: 0
+    mac: 00:00:00:00:05:08
 
 # TODO - This data is somewhat duplicated above but the logic in the controller
 # classes only recognize the structure below. See if this can be changed for
