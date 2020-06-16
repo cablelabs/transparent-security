@@ -57,6 +57,7 @@ variable "node_nic_name" {default = "eth0"}
 variable "switch_nic_prfx" {default = "veth"}
 variable "service_log_level" {default = "DEBUG"}
 variable "ae_monitor_intf" {default = "eth0:0"}
+variable "clone_egress_port" {default = "3"}
 
 variable "setup_nodes_pb" {default = "setup_nodes.yml"}
 variable "scenario_name" {default = "all"}
