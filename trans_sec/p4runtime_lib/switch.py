@@ -74,7 +74,8 @@ class SwitchConnection(object):
         self.digest_thread = Thread(target=self.receive_digests)
 
     def start_digest_listeners(self):
-        logger.info('Starting Digest thread')
+        logger.info('Starting Digest thread for device [%s] named [%s]',
+                    self.grpc_addr, self.name)
         digest_entry, digest_info = self.p4info_helper.build_digest_entry(
             digest_name="mac_learn_digest")
         self.write_digest_entry(digest_entry)
