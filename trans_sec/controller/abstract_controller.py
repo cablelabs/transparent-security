@@ -16,7 +16,7 @@ from logging import getLogger
 import ipaddress
 
 # from trans_sec.p4runtime_lib import tofino
-from trans_sec.p4runtime_lib import helper
+from trans_sec.p4runtime_lib import helper, tofino
 
 logger = getLogger('abstract_controller')
 
@@ -58,20 +58,25 @@ class AbstractController(object):
         logger.info('Adding helpers to switch of type - [%s]',
                     self.switch_type)
         self.__add_helpers()
+
+        logger.info('Switch forwarding start')
         self.__switch_forwarding()
         for switch in self.switches:
+            logger.info('Starting digest listeners on device [%s]',
+                        switch.grpc_addr)
             switch.start_digest_listeners()
 
     def stop(self):
         for switch in self.switches:
+            logger.info('Stopping digest listeners on device [%s]',
+                        switch.grpc_addr)
             switch.stop_digest_listeners()
 
-    def make_rules(self, sw, sw_info, north_facing_links, south_facing_links,
+    def make_rules(self, sw, north_facing_links, south_facing_links,
                    add_di):
         """
         Abstract method
         :param sw: switch object
-        :param sw_info: switch info object
         :param north_facing_links: northbound links
         :param south_facing_links: southbound links
         :param add_di: populate data_inspection tables when true
@@ -79,18 +84,18 @@ class AbstractController(object):
         logger.info('Creating rules for switch type - [%s]', self.switch_type)
         for north_link in north_facing_links:
             logger.info('Creating rules for the north link - [%s]', north_link)
-            self.make_north_rules(sw, sw_info, north_link)
+            self.make_north_rules(sw, north_link)
 
         for south_link in south_facing_links:
             logger.info('Creating rules for the south link - [%s]', south_link)
-            self.make_south_rules(sw, sw_info, south_link, add_di)
+            self.make_south_rules(sw, south_link, add_di)
         logger.debug('Completed creating rules for switch type [%s]',
                      self.switch_type)
 
-    def make_north_rules(self, sw, sw_info, north_link):
+    def make_north_rules(self, sw, north_link):
         raise NotImplemented
 
-    def make_south_rules(self, sw, sw_info, south_link, add_di):
+    def make_south_rules(self, sw, south_link, add_di):
         if south_link.get('south_facing_port'):
             logger.info('Creating south switch rules - [%s]', south_link)
             if self.topo['switches'].get(south_link['south_node']):
@@ -98,7 +103,7 @@ class AbstractController(object):
                 logger.info(
                     'This: %s connects to south switch: %s on physical '
                     'port %s to physical port %s',
-                    sw_info['name'], device['name'],
+                    sw.name, device['name'],
                     str(south_link.get('south_facing_port')),
                     str(south_link.get('north_facing_port')))
             elif self.topo['hosts'].get(south_link['south_node']) is not None:
@@ -106,7 +111,7 @@ class AbstractController(object):
                 logger.info(
                     'This: %s connects to Device: %s on physical '
                     'port %s',
-                    sw_info['name'], device['name'],
+                    sw.name, device['name'],
                     str(south_link.get('south_facing_port')))
             else:
                 raise StandardError(
@@ -134,8 +139,8 @@ class AbstractController(object):
     def make_switch_rules(self, add_di):
         logger.info('Make Rules for controller [%s]', self.switch_type)
         for switch in self.switches:
-            sw_info, north_links, south_links = self.__get_links(switch.name)
-            self.make_rules(sw=switch, sw_info=sw_info,
+            north_links, south_links = self.__get_links(switch.name)
+            self.make_rules(sw=switch,
                             north_facing_links=north_links,
                             south_facing_links=south_links,
                             add_di=add_di)
@@ -162,7 +167,7 @@ class AbstractController(object):
                 attack_switch = switch
         if attack_switch:
             logger.info('Adding an attack [%s] to host [%s] and switch [%s]',
-                        attack, host, attack_switch.sw_info['name'])
+                        attack, host, attack_switch.name)
             ip_addr = ipaddress.ip_address(unicode(attack['src_ip']))
             logger.info('Attack ip addr - [%s]', ip_addr)
             logger.debug('Attack ip addr class - [%s]', ip_addr.__class__)
@@ -237,7 +242,6 @@ class AbstractController(object):
         :return:
         """
         logger.info('Retrieving switch links from topology')
-        sw_info = self.topo['switches'][switch_name]
         conditions = {'south_node': switch_name}
         north_facing_links = filter(
             lambda item: all((item[k] == v for (k, v) in conditions.items())),
@@ -249,7 +253,7 @@ class AbstractController(object):
 
         logger.debug('Links: north - [%s], south - [%s]',
                      north_facing_links, south_facing_links)
-        return sw_info, north_facing_links, south_facing_links
+        return north_facing_links, south_facing_links
 
     def __setup_bmv2_helper(self, name, switch):
         """
@@ -264,16 +268,22 @@ class AbstractController(object):
         new_switch.master_arbitration_update()
 
         if self.load_p4:
-            if new_switch.sw_info['runtime_json']:
+            device_config = None
+            if 'runtime_json' in new_switch.sw_info:
                 device_config = new_switch.build_device_config(
                     bmv2_json_file_path=new_switch.sw_info['runtime_json'])
 
                 logger.info('Setting forwarding pipeline config on - [%s]',
                             name)
-                new_switch.set_forwarding_pipeline_config(device_config)
-            else:
+            elif 'bin_path' in switch and 'cxt_json_path' in switch:
+                # TODO - This is not working see issue #172
+                device_config = tofino.build_device_config(
+                    switch['type'], switch['bin_path'],
+                    switch['cxt_json_path'])
                 raise Exception('Forwarding pipeline cannot be configured')
 
+            if device_config:
+                new_switch.set_forwarding_pipeline_config(device_config)
         else:
             logger.warn('Switches should already be configured')
 

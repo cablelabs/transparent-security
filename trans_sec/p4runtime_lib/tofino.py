@@ -20,31 +20,26 @@ from trans_sec.p4runtime_lib.switch import SwitchConnection
 logger = logging.getLogger('tofino')
 
 
-class TofinoSwitchConnection(SwitchConnection):
-    def build_device_config(self, **kwargs):
-        return self.__build_device_config(**kwargs)
+def build_device_config(prog_name, bin_path, cxt_json_path):
+    """
+    Builds the device config for Tofino
+    """
+    logger.info(
+        'Building device configuration for program - [%s], bin_path - [%s]'
+        ', and cxt_json_path - [%s]', prog_name, bin_path, cxt_json_path)
+    prog_name = prog_name.encode('utf-8')
+    device_config = p4config_pb2.P4DeviceConfig()
+    device_config.reassign = True
+    with open(bin_path, 'rb') as bin_f:
+        with open(cxt_json_path, 'r') as cxt_json_f:
+            device_config.device_data = ""
+            device_config.device_data += struct.pack("<i", len(prog_name))
+            device_config.device_data += prog_name
+            tofino_bin = bin_f.read()
+            device_config.device_data += struct.pack("<i", len(tofino_bin))
+            device_config.device_data += tofino_bin
+            cxt_json = cxt_json_f.read()
+            device_config.device_data += struct.pack("<i", len(cxt_json))
+            device_config.device_data += cxt_json
 
-    @staticmethod
-    def __build_device_config(prog_name, bin_path, cxt_json_path):
-        """
-        Builds the device config for Tofino
-        """
-        logger.info(
-            'Building device configuration for program - [%s], bin_path - [%s]'
-            ', and cxt_json_path - [%s]', prog_name, bin_path, cxt_json_path)
-        prog_name = prog_name.encode('utf-8')
-        device_config = p4config_pb2.P4DeviceConfig()
-        device_config.reassign = True
-        with open(bin_path, 'rb') as bin_f:
-            with open(cxt_json_path, 'r') as cxt_json_f:
-                device_config.device_data = ""
-                device_config.device_data += struct.pack("<i", len(prog_name))
-                device_config.device_data += prog_name
-                tofino_bin = bin_f.read()
-                device_config.device_data += struct.pack("<i", len(tofino_bin))
-                device_config.device_data += tofino_bin
-                cxt_json = cxt_json_f.read()
-                device_config.device_data += struct.pack("<i", len(cxt_json))
-                device_config.device_data += cxt_json
-
-        return device_config
+    return device_config

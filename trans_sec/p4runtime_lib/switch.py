@@ -74,11 +74,14 @@ class SwitchConnection(object):
         self.digest_thread = Thread(target=self.receive_digests)
 
     def start_digest_listeners(self):
-        logger.info('Starting Digest thread for device [%s] named [%s]',
-                    self.grpc_addr, self.name)
+        logger.info(
+            'Starting mac_learn_digest Digest for device [%s] named [%s]',
+            self.grpc_addr, self.name)
         digest_entry, digest_info = self.p4info_helper.build_digest_entry(
             digest_name="mac_learn_digest")
         self.write_digest_entry(digest_entry)
+
+        logger.info('Starting digest threads')
         self.digest_thread.start()
 
     def stop_digest_listeners(self):
@@ -216,8 +219,6 @@ class SwitchConnection(object):
                     self.grpc_addr)
         request = p4runtime_pb2.StreamMessageRequest()
         request.arbitration.device_id = self.device_id
-        request.arbitration.election_id.high = 0
-        request.arbitration.election_id.low = 1
         self.requests_stream.put(request)
 
     def set_forwarding_pipeline_config(self, device_config):
@@ -225,7 +226,6 @@ class SwitchConnection(object):
                     self.grpc_addr)
         logger.debug('P4Info - [%s] ', self.p4info_helper.p4info)
         request = p4runtime_pb2.SetForwardingPipelineConfigRequest()
-        request.election_id.low = 1
         request.device_id = self.device_id
         config = request.config
 
@@ -252,7 +252,6 @@ class SwitchConnection(object):
                     self.grpc_addr, table_entry)
         request = p4runtime_pb2.WriteRequest()
         request.device_id = self.device_id
-        request.election_id.low = 1
         update = request.updates.add()
         update.type = update_type
         update.entity.table_entry.CopyFrom(table_entry)
@@ -331,7 +330,7 @@ class SwitchConnection(object):
                 try:
                     match = table_entry.match.pop()
                 except Exception as e:
-                    logger.warn('No more match items')
+                    logger.warn('No more match items - [%s]', e)
                     break
         logger.info('Table keys from table [%s] on device [%s] - [%s]',
                     table_name, self.grpc_addr, out)
@@ -369,7 +368,6 @@ class SwitchConnection(object):
             self.grpc_addr, pre_entry)
         request = p4runtime_pb2.WriteRequest()
         request.device_id = self.device_id
-        request.election_id.low = 1
         update = request.updates.add()
         update.type = p4runtime_pb2.Update.INSERT
         update.entity.packet_replication_engine_entry.CopyFrom(pre_entry)
@@ -389,7 +387,6 @@ class SwitchConnection(object):
             self.grpc_addr, pre_entry)
         request = p4runtime_pb2.WriteRequest()
         request.device_id = self.device_id
-        request.election_id.low = 1
         update = request.updates.add()
         update.type = p4runtime_pb2.Update.DELETE
         update.entity.packet_replication_engine_entry.CopyFrom(pre_entry)
@@ -428,7 +425,6 @@ class SwitchConnection(object):
                     counter_id, index)
         request = p4runtime_pb2.WriteRequest()
         request.device_id = self.device_id
-        request.election_id.low = 1
         update = request.updates.add()
         update.type = p4runtime_pb2.Update.MODIFY
         counter_entry = p4runtime_pb2.CounterEntry()
@@ -449,7 +445,6 @@ class SwitchConnection(object):
     def write_digest_entry(self, digest_entry):
         request = p4runtime_pb2.WriteRequest()
         request.device_id = self.device_id
-        request.election_id.low = 1
         update = request.updates.add()
         update.type = p4runtime_pb2.Update.INSERT
         update.entity.digest_entry.CopyFrom(digest_entry)
@@ -478,7 +473,6 @@ class SwitchConnection(object):
 
             request = p4runtime_pb2.WriteRequest()
             request.device_id = self.device_id
-            request.election_id.low = 1
             update = request.updates.add()
             update.type = p4runtime_pb2.Update.INSERT
             update.entity.packet_replication_engine_entry.CopyFrom(

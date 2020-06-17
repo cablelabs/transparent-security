@@ -34,12 +34,11 @@ class GatewayController(AbstractController):
             proto_dump_file='{}/{}-switch-controller.log'.format(
                 self.log_dir, sw_info['name']))
 
-    def make_rules(self, sw, sw_info, north_facing_links, south_facing_links,
+    def make_rules(self, sw, north_facing_links, south_facing_links,
                    add_di):
         """
         Overrides the abstract method from super
         :param sw: switch object
-        :param sw_info: switch info object
         :param north_facing_links: northbound links
         :param south_facing_links: southbound links
         :param add_di: when True inserts into the data_inspection_t table
@@ -49,7 +48,7 @@ class GatewayController(AbstractController):
             north_switch = self.topo['hosts'][sw_link['north_node']]
         else:
             north_switch = self.topo['switches'][sw_link['north_node']]
-        logger.info('Gateway: ' + sw_info['name'] +
+        logger.info('Gateway: ' + sw.name +
                     ' connects northbound to northbound switch: ' +
                     north_switch.get('name') +
                     ' on physical port ' +
@@ -59,7 +58,7 @@ class GatewayController(AbstractController):
 
         for device_link in south_facing_links:
             device = self.topo['hosts'].get(device_link['south_node'])
-            logger.info('Gateway: ' + sw_info['name'] +
+            logger.info('Gateway: ' + sw.name +
                         ' connects to Device: ' + device['name'] +
                         ' on physical port ' +
                         str(device_link.get('south_facing_port')) +

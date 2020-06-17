@@ -303,12 +303,15 @@ class SimpleAE(PacketAnalytics):
         logger.debug('Packet data - [%s]', packet.summary())
         ip_pkt = None
         protocol = None
-        if packet[Ether].type == IPV4_TYPE:
-            ip_pkt = IP(_pkt=packet[Ether].payload)
-            protocol = ip_pkt.proto
-        elif packet[Ether].type == IPV6_TYPE:
-            ip_pkt = IPv6(_pkt=packet[Ether].payload)
-            protocol = ip_pkt.nh
+        try:
+            if packet[Ether].type == IPV4_TYPE:
+                ip_pkt = IP(_pkt=packet[Ether].payload)
+                protocol = ip_pkt.proto
+            elif packet[Ether].type == IPV6_TYPE:
+                ip_pkt = IPv6(_pkt=packet[Ether].payload)
+                protocol = ip_pkt.nh
+        except Exception as e:
+            logger.error('Unexpected error processing packet - [%s]', e)
 
         if ip_pkt and protocol and protocol == UDP_PROTO:
             udp_packet = UDP(_pkt=ip_pkt.payload)

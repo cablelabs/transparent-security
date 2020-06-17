@@ -72,11 +72,12 @@ class GatewaySwitch(Bmv2SwitchConnection):
         self.udp_port_count = 1
 
     def start_digest_listeners(self):
-        logger.info('Starting digest listener [%s] on device [%s]',
-                    "nat_digest", self.grpc_addr)
-        digest_entry, digest_info = self.p4info_helper.build_digest_entry(
-            digest_name="nat_digest")
-        self.write_digest_entry(digest_entry)
+        if 'arch' in self.sw_info and self.sw_info.get('arch') == 'tofino':
+            pass
+        else:
+            digest_entry, digest_info = self.p4info_helper.build_digest_entry(
+                digest_name="nat_digest")
+            self.write_digest_entry(digest_entry)
         super(Bmv2SwitchConnection, self).start_digest_listeners()
 
     def receive_nat_digests(self):
@@ -356,8 +357,8 @@ class CoreSwitch(Bmv2SwitchConnection):
 
     def setup_telemetry_rpt(self, ae_ip):
         logger.info(
-            'Setting up telemetry report on core device [%s] with AE IP - [%s]',
-            self.device_id, ae_ip)
+            'Setting up telemetry report on core device [%s] with AE IP'
+            ' - [%s]', self.device_id, ae_ip)
 
         ae_ip_addr = socket.gethostbyname(ae_ip)
         logger.info(

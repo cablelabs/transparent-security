@@ -36,43 +36,59 @@ class CoreController(AbstractController):
             proto_dump_file='{}/{}-switch-controller.log'.format(
                 self.log_dir, sw_info['name']))
 
-    def make_rules(self, sw, sw_info, north_facing_links, south_facing_links,
+    def make_rules(self, sw, north_facing_links, south_facing_links,
                    add_di):
         super(self.__class__, self).make_rules(
-            sw, sw_info, north_facing_links, south_facing_links, add_di)
+            sw, north_facing_links, south_facing_links, add_di)
+
         clone_entry = self.p4info_helper.build_clone_entry(
-            sw_info['clone_egress'])
+            sw.sw_info['clone_egress'])
         sw.write_clone_entries(clone_entry)
         logger.info('Installed clone on %s' % sw.name)
 
         ae_ip = None
-        trpt_dict = sw_info['telemetry_rpt']
-        if trpt_dict['type'] == 'host':
-            ae_ip = self.topo['hosts'][trpt_dict['name']]['ip']
-        elif trpt_dict['type'] == 'external':
-            ae_ip = self.topo['external'][trpt_dict['name']]['ip']
+        trpt_dict = sw.sw_info.get('telemetry_rpt')
+        if trpt_dict:
+            if trpt_dict['type'] == 'host':
+                host_dict = self.topo['hosts'].get(trpt_dict['name'])
+                if host_dict:
+                    ae_ip = host_dict.get('ip')
+            elif trpt_dict['type'] == 'external':
+                ext_dict = self.topo['external'].get(trpt_dict['name'])
+                if ext_dict:
+                    ae_ip = ext_dict.get('ip')
 
-        if ae_ip:
-            sw.setup_telemetry_rpt(ae_ip)
+            if ae_ip:
+                logger.info('Telemetry report to be sent to - [%s]', ae_ip)
+                sw.setup_telemetry_rpt(ae_ip)
+            else:
+                logger.warn('Telemetry report not to be activated '
+                            'Could not obtain IP to ae')
+        else:
+            logger.warn('Telemetry report not configured')
 
         if add_di:
             for north_link in north_facing_links:
                 if 'l2ptr' in north_link:
-                    self.__make_int_rules(sw, sw_info)
+                    self.__make_int_rules(sw)
 
-    def __make_int_rules(self, sw, sw_info):
+        logger.info('Completed rules for device [%s]', sw.sw_info['mac'])
+
+    def __make_int_rules(self, sw):
         for name, switch in self.topo['switches'].items():
-
             if switch.get('type') == GATEWAY_CTRL_KEY:
-                sw.add_data_inspection(sw_info['id'], switch['mac'])
+                logger.info(
+                    'Adding data inspection for packets from device [%s]',
+                    sw.sw_info['mac'])
+                sw.add_data_inspection(sw.sw_info['id'], switch['mac'])
 
-    def make_north_rules(self, sw, sw_info, north_link):
+    def make_north_rules(self, sw, north_link):
         north_device = self.topo['hosts'].get(north_link['north_node'])
         if north_device:
             logger.info(
                 'Core: %s connects to Internet: %s on physical port %s to'
                 ' ip %s:%s',
-                sw_info['name'], north_device['name'],
+                sw.name, north_device['name'],
                 north_link.get('north_facing_port'),
                 north_device.get('ip'), str(north_device.get('ip_port')))
             logger.info(
