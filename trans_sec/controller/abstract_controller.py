@@ -15,6 +15,7 @@ from logging import getLogger
 
 import ipaddress
 
+# from trans_sec.p4runtime_lib import tofino
 from trans_sec.p4runtime_lib import helper, tofino
 
 logger = getLogger('abstract_controller')
@@ -317,16 +318,24 @@ class AbstractController(object):
         new_switch.master_arbitration_update()
 
         if self.load_p4:
-            if new_switch.sw_info['runtime_json']:
+            device_config = None
+            if 'runtime_json' in new_switch.sw_info:
                 device_config = new_switch.build_device_config(
                     bmv2_json_file_path=new_switch.sw_info['runtime_json'])
 
                 logger.info('Setting forwarding pipeline config on - [%s]',
                             name)
+            elif 'bin_path' in switch and 'cxt_json_path' in switch:
+                # TODO - This is not working see issue #172
+                device_config = tofino.build_device_config(
+                    switch['type'], switch['bin_path'],
+                    switch['cxt_json_path'])
+                raise Exception('Forwarding pipeline cannot be configured')
+
+            if device_config:
                 new_switch.set_forwarding_pipeline_config(device_config)
             else:
                 raise Exception('Forwarding pipeline cannot be configured')
-
         else:
             logger.warning('Switches should already be configured')
 
@@ -336,42 +345,3 @@ class AbstractController(object):
     @abstractmethod
     def instantiate_switch(self, sw_info):
         raise NotImplemented
-
-    def __setup_tofino_helper(self, name, switch):
-        """
-        Creates the Tofino switch connection and loads the P4 program when
-        self.load_p4 is True
-        :param name: the switch name
-        :param switch: the switch dict object from topology
-        """
-        logger.info('Adding Tofino P4 Info Helper to switch - [%s]', switch)
-
-        new_switch = tofino.TofinoSwitchConnection(
-            name=name,
-            address=switch['grpc'],
-            device_id=switch['id'])
-        new_switch.master_arbitration_update()
-
-        bin_path = "{0}/{1}.tofino/pipe/tofino.bin".format(
-            self.p4_bin_dir, self.switch_type)
-        cxt_json_path = "{0}/{1}.tofino/pipe/context.json".format(
-            self.p4_bin_dir, self.switch_type)
-        device_config = new_switch.build_device_config(
-            prog_name=name,
-            bin_path=bin_path,
-            cxt_json_path=cxt_json_path)
-
-        logger.info(
-            'Loading P4 application to Tofino switch - [%s] with bin - [%s] '
-            'and context - [%s]',
-            name, bin_path, cxt_json_path)
-
-        if self.load_p4:
-            logger.info('Setting forwarding pipeline config on - [%s]', name)
-            new_switch.set_forwarding_pipeline_config(device_config)
-        else:
-            logger.warn('Switch [%s] should already be configured', name)
-
-        self.switches.append(new_switch)
-        logger.info('Instantiated connection to Tofino switch - [%s]',
-                    self.switch_type, name)

@@ -3,6 +3,7 @@ hosts:
     name: Camera1
     id: 5
     ip: {{ camera1_ip }}
+    switch_mac: 00:00:01:01:01:00
     tunnels:
       - host: gateway1
         virt_intf:  {{ node_nic }}:0
@@ -14,6 +15,7 @@ hosts:
     name: NAS1
     id: 6
     ip: {{ nas1_ip }}
+    switch_mac: 00:00:01:01:02:00
     tunnels:
       - host: gateway1
         virt_intf:  {{ node_nic }}:0
@@ -25,6 +27,7 @@ hosts:
     name: Game1
     id: 7
     ip: {{ game1_ip }}
+    switch_mac: 00:00:01:01:03:00
     tunnels:
       - host: gateway1
         virt_intf:  {{ node_nic }}:0
@@ -36,6 +39,7 @@ hosts:
     name: Camera2
     id: 8
     ip: {{ camera2_ip }}
+    switch_mac: 00:00:02:02:01:00
     tunnels:
       - host: gateway2
         virt_intf:  {{ node_nic }}:0
@@ -48,6 +52,7 @@ hosts:
     name: Game2
     id: 9
     ip: {{ game2_ip }}
+    switch_mac: 00:00:02:02:02:00
     tunnels:
       - host: gateway2
         virt_intf:  {{ node_nic }}:0
@@ -59,6 +64,7 @@ hosts:
     name: Camera3
     id: 10
     ip: {{ camera3_ip }}
+    switch_mac: 00:00:03:03:01:00
     tunnels:
       - host: gateway3
         virt_intf:  {{ node_nic }}:0
@@ -70,6 +76,7 @@ hosts:
     name: Game3
     id: 11
     ip: {{ game3_ip }}
+    switch_mac: 00:00:03:03:02:00
     tunnels:
       - host: gateway3
         virt_intf:  {{ node_nic }}:0
@@ -88,16 +95,32 @@ hosts:
     ip_port: any
     mac: 00:00:00:00:05:07
     type: server
+
+  analytics_engine:
+    name: analytics_engine
+    id: 13
+    ip: {{ ae_ip }}
+    tunnels:
+      - host: core
+        virt_intf:  {{ node_nic }}:0
+    ipv6: 0000:0000:0000:0000:0000:0002:0001:0003
+    ip_port: any
+    mac: 00:00:00:00:05:08
+    type: server
+
 # TODO - Determine how to properly configure a switch MAC value
 switches:
   gateway1:
     name: gateway1
     id: 0
     runtime_p4info: {{ remote_scripts_dir }}/p4/gateway.tofino/p4info.pb.txt
+    tofino_bin: {{ remote_scripts_dir }}/p4/gateway.tofino/pipe/tofino.bin
+    ctx_json: {{ remote_scripts_dir }}/p4/gateway.tofino/pipe/context.json
     ip: {{ gateway1_ip }}
     mac: 00:00:00:01:01:00
     grpc: {{ gateway1_ip }}:{{ grpc_port }}
     type: gateway
+    arch: tofino
     tunnels:
       - host: aggregate
         virt_intf:  {{ switch_nic_prfx }}0
@@ -105,10 +128,13 @@ switches:
     name: gateway2
     id: 0
     runtime_p4info: {{ remote_scripts_dir }}/p4/gateway.tofino/p4info.pb.txt
+    tofino_bin: {{ remote_scripts_dir }}/p4/gateway.tofino/pipe/tofino.bin
+    ctx_json: {{ remote_scripts_dir }}/p4/gateway.tofino/pipe/context.json
     ip: {{ gateway2_ip }}
     mac: 00:00:00:01:02:00
     grpc: {{ gateway2_ip }}:{{ grpc_port }}
     type: gateway
+    arch: tofino
     tunnels:
       - host: aggregate
         virt_intf:  {{ switch_nic_prfx }}0
@@ -116,10 +142,13 @@ switches:
     name: gateway3
     id: 0
     runtime_p4info: {{ remote_scripts_dir }}/p4/gateway.tofino/p4info.pb.txt
+    tofino_bin: {{ remote_scripts_dir }}/p4/gateway.tofino/pipe/tofino.bin
+    ctx_json: {{ remote_scripts_dir }}/p4/gateway.tofino/pipe/context.json
     ip: {{ gateway3_ip }}
     mac: 00:00:00:01:03:00
     grpc: {{ gateway3_ip }}:{{ grpc_port }}
     type: gateway
+    arch: tofino
     tunnels:
       - host: aggregate
         virt_intf:  {{ switch_nic_prfx }}0
@@ -127,10 +156,13 @@ switches:
     name: aggregate
     id: 0
     runtime_p4info: {{ remote_scripts_dir }}/p4/aggregate.tofino/p4info.pb.txt
+    tofino_bin: {{ remote_scripts_dir }}/p4/aggregate.tofino/pipe/tofino.bin
+    ctx_json: {{ remote_scripts_dir }}/p4/aggregate.tofino/pipe/context.json
     ip: {{ agg_ip }}
     mac: 00:00:00:02:04:00
     grpc: {{ agg_ip }}:{{ grpc_port }}
     type: aggregate
+    arch: tofino
     tunnels:
       - host: core
         virt_intf:  {{ switch_nic_prfx }}0
@@ -153,26 +185,29 @@ switches:
     id: 0
     clone_egress: {{ clone_egress_port }}
     runtime_p4info: {{ remote_scripts_dir }}/p4/core.tofino/p4info.pb.txt
+    tofino_bin: {{ remote_scripts_dir }}/p4/core.tofino/pipe/tofino.bin
+    ctx_json: {{ remote_scripts_dir }}/p4/core.tofino/pipe/context.json
     ip: {{ core_ip }}
     mac: 00:00:00:03:05:00
     grpc: {{ core_ip }}:{{ grpc_port }}
     telemetry_rpt:
-      type: external
+      type: host
       name: analytics_engine
     type: core
+    arch: tofino
     tunnels:
       - host: aggregate
         virt_intf:  {{ switch_nic_prfx }}0
-external:
-  analytics_engine:
-    name: analytics_engine
-    id: 13
-    ip: {{ ae_ip }}
+{#external:#}
+{#  analytics_engine:#}
+{#    name: analytics_engine#}
+{#    id: 13#}
+{#    ip: {{ ae_ip }}#}
 {#    tunnels:#}
 {#      - host: core#}
 {#        virt_intf:  {{ node_nic }}:0#}
-    ip_port: 0
-    mac: 00:00:00:00:05:08
+{#    ip_port: 0#}
+{#    mac: 00:00:00:00:05:08#}
 
 # TODO - This data is somewhat duplicated above but the logic in the controller
 # classes only recognize the structure below. See if this can be changed for

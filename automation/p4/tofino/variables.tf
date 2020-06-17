@@ -39,6 +39,7 @@ variable "num_nodes" {default = 9}
 variable "ANSIBLE_CMD" {default = "export ANSIBLE_HOST_KEY_CHECKING=False; ansible-playbook"}
 variable "SETUP_ORCH" {default = "../../../playbooks/tofino/setup_orchestrator.yml"}
 variable "START_SERVICE" {default = "../../../playbooks/general/start_service.yml"}
+variable "remote_scenario_pb_dir" {default = "/home/ubuntu/transparent-security/playbooks/scenarios"}
 
 variable "tunnel_intf" {default = "veth1"}
 variable "remote_pb_dir" {default = "/home/ubuntu/transparent-security/playbooks"}
@@ -60,4 +61,5 @@ variable "ae_monitor_intf" {default = "eth0:0"}
 variable "clone_egress_port" {default = "3"}
 
 variable "setup_nodes_pb" {default = "setup_nodes.yml"}
-variable "scenario_name" {default = "all"}
+variable "scenario_name" {default = "full"}
+variable "test_case" {default = "all"}
