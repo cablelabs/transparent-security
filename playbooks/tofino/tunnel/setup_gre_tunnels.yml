@@ -25,6 +25,10 @@
     - name: Read topology {{ topo_file_loc }}
       set_fact:
         topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
+    - debug:
+        var: topo_file_loc
+    - debug:
+        var: topo_dict
 
     - name: set variables for switch links to run gre_tunnel_tasks.yml
       set_fact:
@@ -47,6 +51,10 @@
     - name: Read topology {{ topo_file_loc }}
       set_fact:
         topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
+    - debug:
+        var: topo_file_loc
+    - debug:
+        var: topo_dict
 
     - name: set variables for host links to run gre_tunnel_tasks.yml
       set_fact:

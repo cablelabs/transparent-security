@@ -29,22 +29,37 @@
     this_host: "{{ topo_dict.switches.get(ansible_host) }}"
   when: not this_host
 
+# TODO/FIXME - remote_host is not defined for single-switch scenarios- look for when: remote_* below
+- debug:
+    var: topo_dict
+- debug:
+    var: item
 - name: set remote_host from switches when not in hosts
   set_fact:
     remote_host: "{{ topo_dict.switches.get(item.host)  }}"
   when: not remote_host
 
+- debug:
+    var: this_host
+- debug:
+    var: remote_host
 - name: retrieve host_ip, remote_ip, and virt_intf values
   set_fact:
     host_ip: "{{ this_host.ip }}"
     remote_ip: "{{ remote_host.ip }}"
+  when: remote_host is defined and remote_host != ""
 
 - name: create virtual nic {{ virt_intf }}
   command: "ifconfig {{ virt_intf }}"
   when: host_type == 'host'
 
+- debug:
+    var: remote_ip
+- debug:
+    var: host_ip
 - name: create connection from {{ tun_name }} to {{ remote_ip }} on host {{ host_ip }}
   command: "ip link add {{ tun_name }} type gretap remote {{ remote_ip }} local {{ host_ip }} ttl 32"
+  when: remote_ip is defined
 
 - name: create bridge {{ br_name }}
   command: "brctl addbr {{ br_name }} {{ host_ip }}"
@@ -55,15 +70,20 @@
 
 - name: create port {{ br_name }} -> {{ tun_name }}
   command: "brctl addif {{ br_name }} {{ tun_name }}"
+  when: remote_ip is defined
 
 - name: set bridge up
   command: "ip link set {{ br_name }} up"
+  when: remote_ip is defined
 
 - name: set gre tunnel up
   command: "ip link set {{ tun_name }} up"
+  when: remote_ip is defined
 
 - name: set {{ virt_intf }} up
   command: "ip link set {{ virt_intf }} up"
+  when: remote_ip is defined
 
 - name: set bridge stp on
   command: "brctl stp {{ br_name }} on"
+  when: remote_ip is defined

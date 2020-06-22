@@ -18,7 +18,7 @@ directory and make changes to adapt the file to your local environment.
 | ec2_region       | Amazon EC2 region                                                                                                                         | string | ec2_region = "us-west-2"                                |
 | public_key_file  | Used to inject into the VM for SSH access with the user'ubuntu' (defaults to ~/.ssh/id_rsa.pub)                                           | string | public_key_file = "~/.ssh/id_rsa.pub"                   |
 | private_key_file | Used to access the VM via SSH with the user 'ubuntu' (defaults to ~/.ssh/id_rsa)                                                          | string | private_key_file = "~/.ssh/id_rsa"                      |
-| env_type         | The type of environment being built (only used for creating the environment)                                                              | string | env_type = "tofino"                                    |
+| env_type         | The type of environment being built (only used for creating the environment)                                                              | string | env_type = "tofino"                                     |
 
 ### Build AMI for running the tofino-model on AWS
 
@@ -102,7 +102,7 @@ variable "tofino" {
 ```bash
 cd transparent-security/automation/p4/tofino
 terraform init
-terraform apply -auto-approve -var-file="/path/to/my-tofino.tfvars -var bf_sde_s3_bucket={bucket name}"
+terraform apply -auto-approve -var-file="/path/to/my-tofino.tfvars -var build_id={your unique ID} -var scenario_name=(full|gateway|aggregate|core)"
 ```
 
 ### SSH into orchestrator/controller machine
@@ -115,20 +115,20 @@ ssh -i { key file } ubuntu@$(terraform output ip)
 
 ### What is deployed
 Controller/Orchestrator node with outside access
-9 network nodes
-5 Tofino switches
 
-####
-From the orchestrator node, you can gain access to all other nodes and switch VMs
-by name with user 'ubuntu':
-##### Switches (with bf-sde-{version} and transparent-security installed into python runtime)
+#### scenario_name=full
+* 1 orchestrator/controller node (Performs deployment and runs SDN controller)
+* 9 network nodes (Standard Linux VMs)
+* 5 Tofino switches (Linux VMs with Tofino Model installed running the P4 programs)
+
+###### Switches (with bf-sde-{version} and transparent-security installed into python runtime)
 - core (running core.p4)
 - aggregate (running aggregate.p4)
 - gateway1 (running gateway.p4)
 - gateway2 (running gateway.p4)
 - gateway3 (running gateway.p4)
 
-##### Nodes (vanilla linux with transparent-security installed into python runtime)
+###### Nodes (vanilla linux with transparent-security installed into python runtime)
 - inet (to core)
 - analytics_engine (to core)
 - Camera1 (to gateway1)
@@ -139,8 +139,25 @@ by name with user 'ubuntu':
 - Camera3 (to gateway3)
 - Game3 (to gateway3)
 
+#### scenario_name=gatweay|aggregate|core
+* 1 orchestrator/controller node
+* 3 network nodes
+* 1 Tofino switch
+
+###### Switches (with bf-sde-{version} and transparent-security installed into python runtime)
+- runs {scenario_name}.p4
+
+###### Nodes (vanilla linux with transparent-security installed into python runtime)
+- host1 (southbound server node)
+- host2 (northbound server node)
+- clone (northbound server node)
+
+#### Accessing the switches and nodes from orchestrator
+From the orchestrator node, you can gain access to all other nodes and switch VMs
+by name with user 'ubuntu':
+
 ```bash
-ssh core
+ssh {switch_name | node_name}
 ```
 
 ### Cleanup the simulation environment
@@ -149,5 +166,5 @@ This will remove the VM and other artifacts created when it was deployed.
 
 ```bash
 # from transparent-security/automation/p4/tofino directory
-terraform destroy -auto-approve -var-file="/path/to/my-tofino.tfvars"
+terraform destroy -auto-approve -var-file="/path/to/my-tofino.tfvars" -var scenario_name="cleanup"
 ```

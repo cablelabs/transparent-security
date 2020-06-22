@@ -1,0 +1,84 @@
+hosts:
+  host1:
+    name: host1
+    id: 1
+    ip: {{ host1_ip }}
+    tunnels:
+      - host: gateway1
+        virt_intf:  {{ node_nic }}:0
+    ipv6: 0000:0000:0000:0000:0000:0001:0001:0002
+    ip_port: any
+    mac: 00:00:00:00:01:01
+    type: webcam
+  host2:
+    name: host2
+    id: 2
+    ip: {{ host2_ip }}
+    tunnels:
+      - host: {{ switch_name }}
+        virt_intf:  {{ node_nic }}:0
+    ipv6: 0000:0000:0000:0000:0000:0002:0001:0002
+    ip_port: any
+    mac: 00:00:00:00:01:02
+    type: server
+{% if p4_prog != 'aggregate' %}
+  clone:
+    name: clone
+    id: 3
+    ip: {{ clone_ip }}
+    tunnels:
+      - host: gateway1
+        virt_intf:  {{ node_nic }}:0
+    ipv6: 0000:0000:0000:0000:0000:0002:0001:0003
+    ip_port: any
+    mac: 00:00:00:00:05:08
+    type: server
+{% endif %}
+# TODO - Determine how to properly configure a switch MAC value
+switches:
+  {{ p4_prog }}:
+    name: {{ p4_prog }}
+    id: 0
+    runtime_p4info: {{ remote_scripts_dir }}/p4/{{ p4_prog }}.tofino/p4info.pb.txt
+    tofino_bin: {{ remote_scripts_dir }}/p4/{{ p4_prog }}.tofino/pipe/tofino.bin
+    ctx_json: {{ remote_scripts_dir }}/p4/{{ p4_prog }}.tofino/pipe/context.json
+    ip: {{ switch_ip }}
+    mac: 00:00:00:01:01:00
+    grpc: {{ switch_ip }}:{{ grpc_port }}
+    type: {{ p4_prog }}
+    arch: tofino
+    tunnels:
+      - host: {{ p4_prog }}
+        virt_intf:  {{ switch_nic_prfx }}0
+    telemetry_rpt:
+      type: host
+      name: clone
+    ipv6_term_host: host2
+{% if p4_prog != 'gateway' %}
+    multicast_entries:
+      - egress_port: 1
+        instance: 1
+      - egress_port: 2
+        instance: 1
+      - egress_port: 3
+        instance: 1
+{% endif %}
+
+links:
+  - north_node: {{ p4_prog }}
+    south_node: host1
+    south_facing_port: 1
+    latency: 0ms
+    bandwidth: null
+  - north_node: host2
+    south_node: {{ p4_prog }}
+    north_facing_port: 2
+    latency: 0ms
+    bandwidth: null
+{% if p4_prog != 'aggregate' %}
+  - north_node: clone
+    south_node: {{ p4_prog }}
+    north_facing_port: 3
+    latency: 0ms
+    bandwidth: null
+{% endif %}
