@@ -40,10 +40,6 @@ def get_args():
                         type=bool, required=False, default=False)
     parser.add_argument('-fc', '--forwarding-config', help='Forwarding config',
                         type=str, required=False)
-    parser.add_argument('-lp', '--load-p4', type=str, required=True,
-                        choices=['True', 'False'],
-                        help='When set, the Exercise class will not attempt '
-                             'to load the P4 program onto the switches')
     return parser.parse_args()
 
 
@@ -89,7 +85,7 @@ if __name__ == '__main__':
         logger.debug('Forwarding config - [%s]', forwarding_yaml)
     exercise = ExerciseRunner(
         topo, args.log_dir, args.pcap_dir, args.switch_json,  forwarding_yaml,
-        args.start_cli, eval(args.load_p4))
+        args.start_cli)
     exercise.run_exercise()
 
     logger.info('Exercise Runner running indefinitely')

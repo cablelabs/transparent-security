@@ -61,8 +61,8 @@ class AppController:
             stderr=subprocess.PIPE)
         stdout, stderr = p.communicate(
             input="register_read %s %d" % (register, idx))
-        reg_val = filter(lambda l: ' %s[%d]' % (register, idx) in l,
-                         stdout.split('\n'))[0].split('= ', 1)[1]
+        reg_val = list(filter(lambda l: ' %s[%d]' % (register, idx) in l,
+                              stdout.split('\n')))[0].split('= ', 1)[1]
         return int(reg_val)
 
     def start(self):

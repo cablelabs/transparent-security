@@ -13,14 +13,12 @@
 # Unit tests for convert.py
 import logging
 import os
-import subprocess
 
 from mininet.cli import CLI
 from mininet.link import TCLink, Intf
 from mininet.net import Mininet
 from mininet.topo import Topo
 
-from trans_sec.controller import simple_controller
 from trans_sec.mininet.daemons import DaemonRunner
 from trans_sec.mininet.p4_mininet import P4Host
 from trans_sec.p4runtime_lib.p4runtime_switch import MininetSwitch
@@ -101,25 +99,27 @@ class ExerciseTopo(Topo):
                                  mac=s_host['mac'])
                     if link.get('south_facing_mac'):
                         self.addLink(s_host['name'], n_switch['name'],
-                                     delay=link['latency'], bw=link['bandwidth'],
+                                     delay=link['latency'],
+                                     bw=link['bandwidth'],
                                      addr1=s_host['mac'],
                                      addr2=link.get('south_facing_mac'))
                         self.__add_switch_port(n_switch['name'],
                                                s_host['name'], sp)
-                        logger.info("Adding host %s link %s %s to switch %s %s on "
-                                    "port %d",
+                        logger.info("Adding host %s link %s %s to switch %s %s"
+                                    " on port %d",
                                     s_host.get('name'), s_host.get('ip'),
                                     s_host.get('mac'), n_switch.get('name'),
                                     link.get('south_facing_port'), sp,)
                     else:
                         self.addLink(s_host['name'], n_switch['name'],
-                                     delay=link['latency'], bw=link['bandwidth'],
+                                     delay=link['latency'],
+                                     bw=link['bandwidth'],
                                      addr1=s_host['mac'],
                                      addr2=n_switch['mac'])
                         self.__add_switch_port(n_switch['name'],
                                                s_host['name'], sp)
-                        logger.info("Adding host %s link %s %s to switch %s %s on "
-                                    "port %d",
+                        logger.info("Adding host %s link %s %s to switch %s %s"
+                                    " on port %d",
                                     s_host.get('name'), s_host.get('ip'),
                                     s_host.get('mac'), n_switch.get('name'),
                                     n_switch['mac'], sp,)
@@ -172,7 +172,7 @@ class ExerciseRunner:
     """
 
     def __init__(self, topo, log_dir, pcap_dir, switch_json,
-                 forwarding_conf=None, start_cli=False, load_p4=True):
+                 forwarding_conf=None, start_cli=False):
         """ Initializes some attributes and reads the topology json. Does not
             actually run the exercise. Use run_exercise() for that.
 
@@ -192,7 +192,6 @@ class ExerciseRunner:
         self.links = topo['links']
         self.forwarding_conf = forwarding_conf
         self.start_cli = start_cli
-        self.load_p4 = load_p4
 
         # Ensure all the needed directories exist and are directories
         for dir_name in [log_dir, pcap_dir]:
@@ -222,11 +221,6 @@ class ExerciseRunner:
 
         logger.info('Programming mininet hosts')
         self.__program_hosts()
-
-        logger.info('Programming mininet switches')
-        if self.load_p4:
-            logger.info('Loading P4 programs on switches')
-            self.__program_switches()
 
         if self.forwarding_conf:
             logger.debug('Starting forwarding daemon with config - [%s]',
@@ -297,52 +291,6 @@ class ExerciseRunner:
                     sw_obj = self.mininet.get(link['south_node'])
                     Intf(external['id'], node=sw_obj)
 
-    def __program_switch_p4runtime(self, sw_dict):
-        """ This method will use P4Runtime to program the switch using the
-            content of the runtime JSON file as input.
-        """
-        sw_name = sw_dict['name']
-        sw_obj = self.mininet.get(sw_name)
-        grpc_port = sw_obj.grpc_port
-        device_id = sw_obj.device_id
-        outfile = '%s/%s-p4rt-exercise.log' % (self.log_dir, sw_name)
-        logger.info('Programming switch - [%s]', sw_dict)
-        simple_controller.program_switch(
-            addr='127.0.0.1:%d' % grpc_port,
-            device_id=device_id,
-            p4info_fpath=sw_dict['runtime_p4info'],
-            bmv2_json_fpath=sw_dict['runtime_json'],
-            proto_dump_fpath=outfile)
-
-    def __program_switch_cli(self, sw_name, sw_dict):
-        """ This method will start up the CLI and use the contents of the
-            command files as input.
-        """
-        cli = 'simple_switch_CLI'
-        # get the port for this particular switch's thrift server
-        sw_obj = self.mininet.get(sw_name)
-        thrift_port = sw_obj.thrift_port
-
-        cli_input_commands = sw_dict['cli_input']
-        logger.info('Configuring switch %s with file %s' % (
-            sw_name, cli_input_commands))
-        with open(cli_input_commands, 'r') as fin:
-            cli_outfile = '%s/%s_cli_output.log' % (self.log_dir, sw_name)
-            with open(cli_outfile, 'w') as cli_file:
-                subprocess.Popen([cli, '--thrift-port', str(thrift_port)],
-                                 stdin=fin, stdout=cli_file)
-
-    def __program_switches(self):
-        """ This method will program each switch using the BMv2 CLI and/or
-            P4Runtime, depending if any command or runtime JSON files were
-            provided for the switches.
-        """
-        for name, sw in self.switches.items():
-            if 'cli_input' in sw:
-                self.__program_switch_cli(sw['name'], sw)
-            if 'runtime_json' in sw:
-                self.__program_switch_p4runtime(sw)
-
     def __program_hosts(self):
         logger.info('Programming hosts with values - [%s]', self.hosts)
         for name, host in self.hosts.items():
@@ -377,7 +325,7 @@ class ExerciseRunner:
             try:
                 h.describe()
             except Exception as e:
-                logger.warn("Ignore exception [%s]", e)
+                logger.warning("Ignore exception [%s]", e)
         logger.info("Starting mininet CLI")
         # Generate a message that will be printed by the Mininet CLI to make
         # interacting with the simple switch a little easier.

@@ -127,8 +127,8 @@ class DdosSdnController:
                 lambda item: all(
                     (item[k] == v for (k, v) in conditions.items())),
                 values)
-            if len(host) != 0:
-                host = host[0]
+            if len(list(host)) != 0:
+                host = list(host)[0]
                 logger.info('Adding attack to gateways')
                 try:
                     gateway_controller.add_attacker(attack, host)
@@ -141,7 +141,7 @@ class DdosSdnController:
                 logger.error('No Device Matches MAC [%s]',
                              attack.get('src_mac'))
         else:
-            logger.warn('No Gateway Controller call')
+            logger.warning('No Gateway Controller call')
 
     def __main_loop(self):
         """

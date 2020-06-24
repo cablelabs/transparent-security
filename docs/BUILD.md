@@ -75,7 +75,7 @@ ansible 2.9.2
 .
 .
 .
-  python version = 2.7.16 (default, Nov  9 2019, 05:55:08) [GCC 4.2.1 Compatible Apple LLVM 11.0.0 (clang-1100.0.32.4) (-macos10.15-objc-s
+  python version = 3.6.8 (default, Nov  9 2019, 05:55:08) [GCC 4.2.1 Compatible Apple LLVM 11.0.0 (clang-1100.0.32.4) (-macos10.15-objc-s
 ```
 
 #### 2.1.2 Install Terraform
@@ -253,7 +253,7 @@ ssh -i ubuntu@$(terraform output ip)
 Sample output -
 
 ```bash
-Welcome to Ubuntu 16.04.5 LTS (GNU/Linux 4.4.0-1075-aws x86_64)
+Welcome to Ubuntu 18.04.5 LTS (GNU/Linux 4.4.0-1075-aws x86_64)
 
  * Documentation:  https://help.ubuntu.com
  * Management:     https://landscape.canonical.com
@@ -372,7 +372,7 @@ detailed explanation of the attack scenario.
 
 ## 6. [Optional] Run mininet simulator on a local VM
 
-For this purpose, we use a Ubuntu 16.04 VirtualBox VM running on the local machine. 
+For this purpose, we use a Ubuntu 18.04 VirtualBox VM running on the local machine. 
 
 ### 6.1. Setup the local VM
 
@@ -395,8 +395,8 @@ sudo visudo
 - Install Python packages
 ```bash
 sudo apt-get update
-sudo apt-get install python2.7 -y
-sudo ln /usr/bin/python2.7 /usr/bin/python
+sudo apt-get install python3.6 -y
+sudo ln /usr/bin/python3.6 /usr/bin/python
 ```
 - Create and inject SSH keys to be able to access the mininet hosts
 ```bash

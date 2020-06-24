@@ -10,11 +10,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
----
-- import_playbook: ../general/setup_source.yml
-  vars:
-    # TODO - fix unit tests and change me back to 'true'
-    python_unit_tests: true
-    p4_bin_dir: /usr/local
-
-- import_playbook: generate_inventory.yml

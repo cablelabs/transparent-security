@@ -29,8 +29,7 @@
 #
 import logging
 import socket
-
-from p4.tmp import p4config_pb2
+from abc import ABC
 
 from trans_sec.p4runtime_lib.switch import SwitchConnection
 from trans_sec.consts import IPV4_TYPE, IPV6_TYPE
@@ -40,19 +39,7 @@ from trans_sec.utils.convert import decode_num, decode_ipv4
 logger = logging.getLogger('bmv2')
 
 
-class Bmv2SwitchConnection(SwitchConnection):
-    def add_data_inspection(self, dev_id, dev_mac):
-        raise NotImplemented
-
-    def build_device_config(self, bmv2_json_file_path=None):
-        logger.info('Building device config for BMV2 with file - [%s]',
-                    bmv2_json_file_path)
-        device_config = p4config_pb2.P4DeviceConfig()
-        device_config.reassign = True
-        with open(bmv2_json_file_path) as f:
-            device_config.device_data = f.read()
-        return device_config
-
+class Bmv2SwitchConnection(SwitchConnection, ABC):
     def write_multicast_entry(self, hosts):
         super(Bmv2SwitchConnection, self).write_multicast_entry(hosts)
         self.write_arp_flood()

@@ -51,8 +51,8 @@ class PacketTelemetry:
         switch = filter(
             lambda item: all((item[k] == v for (k, v) in conditions.items())),
             self.switches)
-        if 0 < len(switch) < 2:
-            switch[0]['children'].append(hid)
+        if 0 < len(list(switch)) < 2:
+            list(switch)[0]['children'].append(hid)
         else:
             logging.error('Rutt row raggy! No single switch matched the sid ',
                           sid)
@@ -61,14 +61,14 @@ class PacketTelemetry:
         device = filter(
             lambda item: all((item[k] == v for (k, v) in conditions.items())),
             self.hosts)
-        if 0 < len(device) < 2:
-            device[0]['parent'] = sid
+        if 0 < len(list(device)) < 2:
+            list(device)[0]['parent'] = sid
         else:
             device = filter(lambda item: all(
                 (item[k] == v for (k, v) in conditions.items())),
                             self.switches)
-            if 0 < len(device) < 2:
-                device[0]['parent'] = sid
+            if 0 < len(list(device)) < 2:
+                list(device)[0]['parent'] = sid
             else:
                 logging.error(
                     'Rutt row raggy!  No device or switch matched the hid '
@@ -92,12 +92,12 @@ class PacketTelemetry:
         device = filter(
             lambda item: all((item[k] == v for (k, v) in conditions.items())),
             self.hosts)
-        if len(device) is 0:
+        if len(list(device)) is 0:
             device = filter(lambda item: all(
                 (item[k] == v for (k, v) in conditions.items())),
                             self.switches)
-        if len(device) is 1:
-            device = device[0]
+        if len(list(device)) is 1:
+            device = list(device)[0]
             if forwarded is not None:
                 device['forwarded'] = forwarded
             if dropped is not None:
@@ -118,7 +118,7 @@ class PacketTelemetry:
         switches = filter(
             lambda item: any((item['device_id'] == v for v in device_id_list)),
             self.switches)
-        return devices + switches
+        return list(devices) + list(switches)
 
     def get_switch_by_name(self, name):
         for switch in self.switches:

@@ -43,7 +43,8 @@ class AppTopo(Topo):
                 sw = link[0] if link[0] != host_name else link[1]
                 sw_num = int(sw[1:])
                 assert sw[0] ==\
-                    's', "Hosts should be connected to switches, not {}".format(str(sw))
+                    's', "Hosts should be connected to switches, "\
+                         "not {}".format(str(sw))
                 host_ip = "10.0.%d.%d" % (sw_num, host_num)
                 host_mac = '00:00:00:00:%02x:%02x' % (sw_num, host_num)
                 delay_key = ''.join([host_name, sw])

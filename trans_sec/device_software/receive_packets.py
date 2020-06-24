@@ -111,7 +111,7 @@ def __log_std_packet(ether_pkt, ip_pkt, ip_proto, pkt_len):
         packetLen=pkt_len,
     )
 
-    logger.warn('Packet data - [%s]', int_data)
+    logger.warning('Packet data - [%s]', int_data)
 
 
 def __log_int_packet(ether_pkt, ip_pkt, int_hops, pkt_len):
@@ -174,7 +174,7 @@ def __log_int_packet(ether_pkt, ip_pkt, int_hops, pkt_len):
         dst_port=tcp_udp_packet.dport,
         packetLen=pkt_len,
     )
-    logger.warn('INT Packet data - [%s]', int_data)
+    logger.warning('INT Packet data - [%s]', int_data)
 
 
 def __get_ip_udp_int_pkt(ip_pkt):
@@ -207,8 +207,8 @@ def __get_ip_udp_int_pkt(ip_pkt):
 
         return trpt_ip_pkt, UDP(_pkt=trpt_ip_pkt.payload)
     else:
-        logger.warn('Invalid INT packet received with dport - [%s]',
-                    udp_pkt.dport)
+        logger.warning('Invalid INT packet received with dport - [%s]',
+                       udp_pkt.dport)
         return None, None
 
 

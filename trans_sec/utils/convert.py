@@ -112,36 +112,16 @@ def encode_num(number, bitwidth):
     if number >= 2 ** bitwidth:
         raise SyntaxError(
             "Number, %d, does not fit in %d bits" % (number, bitwidth))
-    hex_decoder = codecs.getdecoder('hex_codec')
-    return hex_decoder('0' * (bitwidth_bytes * 2 - len(num_str)) + num_str)[0]
+    num_decoded = '0' * (bitwidth_bytes * 2 - len(num_str)) + num_str
+    logger.debug('num_decoded - [%s]', num_decoded)
+    return codecs.decode(num_decoded, 'hex')
 
 
 def decode_num(encoded_number):
-    logger.debug('hex number to decode - [%s]', encoded_number)
-    out = None
-    logger.debug('mac_str - [%s]', encoded_number)
-    tokens = str(encoded_number).split('\\x')
-    tokens.pop(0)
-    for token in tokens:
-        if not out:
-            out = '0x' + token
-        else:
-            out = out + token
-    out = out.replace('/', '')
-    out = out.replace('\'', '')
-    logger.debug('out for out_hex - [%s]', out)
-    out_hex = int(out, 16)
-    logger.debug('decoded number - [%s]', out_hex)
-    return out_hex
-
-    # logger.debug('Num to decode - [%s]', encoded_number)
-    # joined_num = "".join(str(encoded_number).split()[::-1])
-    # logger.debug('joined_num - [%s]', joined_num)
-    # out = hex(joined_num)
-    # return out
-    # hex_decoder = codecs.getdecoder('hex_codec')
-    # decoded = hex_decoder(encoded_number)
-    # return int(decoded)
+    logger.debug('bytes - [%s]', encoded_number)
+    encoded_bytes = codecs.encode(encoded_number, 'hex')
+    logger.debug('encoded_bytes - [%s]', encoded_bytes)
+    return int(encoded_bytes, 16)
 
 
 def encode(x, bitwidth):
@@ -169,16 +149,6 @@ def encode(x, bitwidth):
         else:
             # Assume that the string is already encoded
             logger.debug('Encoding [%s] as a string value', x)
-            encoded_bytes = x
-    elif isinstance(x, unicode):
-        logger.debug('Encoding [%s] as a unicode value', x)
-        t = x.encode('utf-8')
-        if matches_mac(t):
-            encoded_bytes = encode_mac(t)
-        elif matches_ipv4(x):
-            encoded_bytes = encode_ipv4(t)
-        else:
-            # Assume that the string is already encoded
             encoded_bytes = x
     elif type(x) == int:
         logger.debug('Encoding [%s] as a int value', x)

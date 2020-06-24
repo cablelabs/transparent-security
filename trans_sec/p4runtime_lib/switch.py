@@ -27,6 +27,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import codecs
 import logging
 from queue import Queue
 from abc import abstractmethod
@@ -34,6 +35,8 @@ from datetime import datetime
 
 import grpc
 from threading import Thread
+
+from p4.tmp import p4config_pb2
 from p4.v1 import p4runtime_pb2, p4runtime_pb2_grpc
 
 from trans_sec.controller.ddos_sdn_controller import GATEWAY_CTRL_KEY
@@ -53,15 +56,16 @@ class SwitchConnection(object):
         self.p4_ingress = p4_ingress
         self.p4_egress = p4_egress
         self.name = sw_info['name']
+        self.grpc = sw_info['grpc']
         self.device_id = sw_info['id']
-        channel = grpc.insecure_channel(sw_info['grpc'])
+        channel = grpc.insecure_channel(self.grpc)
         if proto_dump_file is not None:
             logger.info('Adding interceptor with file - [%s]', proto_dump_file)
             interceptor = GrpcRequestLogger(proto_dump_file)
             channel = grpc.intercept_channel(channel, interceptor)
 
         logger.info('Creating client stub to channel - [%s] at address - [%s]',
-                    channel, self.sw_info['grpc'])
+                    channel, self.grpc)
         self.client_stub = p4runtime_pb2_grpc.P4RuntimeStub(channel)
         self.requests_stream = IterableQueue()
         self.stream_msg_resp = self.client_stub.StreamChannel(iter(
@@ -118,7 +122,8 @@ class SwitchConnection(object):
                 source_mac = decode_mac(members.struct.members[0].bitstring)
                 logger.debug('Digest MAC Address is: %s', source_mac)
                 ingress_port = int(
-                    members.struct.members[1].bitstring.encode('hex'), 16)
+                    codecs.encode(members.struct.members[1].bitstring, 'hex'),
+                    16)
                 logger.debug('Digest Ingress Port is %s', ingress_port)
                 self.add_data_forward(source_mac, ingress_port)
             else:
@@ -203,9 +208,15 @@ class SwitchConnection(object):
     def add_data_inspection(self, dev_id, dev_mac):
         raise NotImplemented
 
-    @abstractmethod
-    def build_device_config(self, **kwargs):
-        raise NotImplemented
+    def build_device_config(self, bmv2_json_file_path=None):
+        logger.info('Building device config for BMV2 with file - [%s]',
+                    bmv2_json_file_path)
+        device_config = p4config_pb2.P4DeviceConfig()
+        device_config.reassign = True
+        with open(bmv2_json_file_path) as f:
+            file_data = f.read()
+            device_config.device_data = bytes(file_data, 'utf-8')
+        return device_config
 
     def master_arbitration_update(self):
         logger.info('Master arbitration update on switch - [%s]',
@@ -327,7 +338,7 @@ class SwitchConnection(object):
                 try:
                     match = table_entry.match.pop()
                 except Exception as e:
-                    logger.warning('No more match items')
+                    logger.warning('No more match items - [%s]', e)
                     break
         logger.info('Table keys from table [%s] on device [%s] - [%s]',
                     table_name, self.device_id, out)

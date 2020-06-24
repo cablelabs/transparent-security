@@ -279,7 +279,8 @@ class P4InfoHelper(object):
         logger.info("Digest Entry Information %s", digest_info)
         return digest_entry, digest_info
 
-    def build_multicast_group_entry(self, mc_group_id, replicas):
+    @staticmethod
+    def build_multicast_group_entry(mc_group_id, replicas):
         mc_entry = p4runtime_pb2.PacketReplicationEngineEntry()
         mc_entry.multicast_group_entry.multicast_group_id = mc_group_id
         for replica in replicas:
