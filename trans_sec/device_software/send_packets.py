@@ -146,7 +146,7 @@ def __create_packet(args, interface):
     logger.info('Device mac - [%s]', src_mac)
 
     ip_ver = 4
-    ip_addr = ipaddress.ip_address(unicode(args.destination))
+    ip_addr = ipaddress.ip_address(args.destination)
     logger.info('Destination IP addr [%s] ([%s]) type - [%s]',
                 args.destination, args.destination, ip_addr.__class__)
     if isinstance(ip_addr, ipaddress.IPv6Address):

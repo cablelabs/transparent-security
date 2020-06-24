@@ -32,7 +32,7 @@ import socket
 
 from p4.tmp import p4config_pb2
 
-from switch import SwitchConnection
+from trans_sec.p4runtime_lib.switch import SwitchConnection
 from trans_sec.consts import IPV4_TYPE, IPV6_TYPE
 from trans_sec.controller.ddos_sdn_controller import AGG_CTRL_KEY
 from trans_sec.utils.convert import decode_num, decode_ipv4
@@ -266,8 +266,8 @@ class GatewaySwitch(Bmv2SwitchConnection):
                 })
             self.write_table_entry(table_entry)
         else:
-            logger.warn('Target host not found, not setting the '
-                        'multicast group')
+            logger.warning('Target host not found, not setting the '
+                           'multicast group')
 
 
 class AggregateSwitch(Bmv2SwitchConnection):
@@ -354,8 +354,8 @@ class CoreSwitch(Bmv2SwitchConnection):
 
     def setup_telemetry_rpt(self, ae_ip):
         logger.info(
-            'Setting up telemetry report on core device [%s] with AE IP - [%s]',
-            self.device_id, ae_ip)
+            'Setting up telemetry report on core device [%s] with '
+            'AE IP - [%s]', self.device_id, ae_ip)
 
         ae_ip_addr = socket.gethostbyname(ae_ip)
         logger.info(

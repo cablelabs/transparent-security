@@ -27,9 +27,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# noinspection PyCompatibility
 import logging
-from Queue import Queue
+from queue import Queue
 from abc import abstractmethod
 from datetime import datetime
 
@@ -104,14 +103,14 @@ class SwitchConnection(object):
             except Exception as e:
                 logger.error(
                     'Unexpected error reading digest from device [%s] - [%s]',
-                    self.device_id, e.message)
+                    self.device_id, e)
 
     def interpret_digest(self, digest_data):
         logger.debug("Digest data from switch [%s] - [%s]",
                      self.name, digest_data)
 
         if not digest_data or len(digest_data) == 0:
-            logger.warn('No digest data to process')
+            logger.warning('No digest data to process')
             return
         for members in digest_data:
             logger.debug("Digest members: %s", members)
@@ -123,8 +122,8 @@ class SwitchConnection(object):
                 logger.debug('Digest Ingress Port is %s', ingress_port)
                 self.add_data_forward(source_mac, ingress_port)
             else:
-                logger.warn('Digest could not be processed - [%s]',
-                            digest_data)
+                logger.warning('Digest could not be processed - [%s]',
+                               digest_data)
 
         logger.info('Completed digest processing')
 
@@ -328,7 +327,7 @@ class SwitchConnection(object):
                 try:
                     match = table_entry.match.pop()
                 except Exception as e:
-                    logger.warn('No more match items')
+                    logger.warning('No more match items')
                     break
         logger.info('Table keys from table [%s] on device [%s] - [%s]',
                     table_name, self.device_id, out)
@@ -462,7 +461,7 @@ class SwitchConnection(object):
         for item in self.stream_msg_resp:
             logger.debug('Returning digest - [%s]', item)
             return item
-        logger.warn('No digests found on device [%s]', self.device_id)
+        logger.warning('No digests found on device [%s]', self.device_id)
 
     def write_multicast_entry(self, hosts):
         mc_group_id = 1

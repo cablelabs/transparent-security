@@ -22,12 +22,12 @@
     share_dir: "{{ p4_bin_dir | default('') }}"
 
   tasks:
-    - name: install python-pip
+    - name: install python3-pip
       become: yes
       apt:
         update_cache: yes
         name:
-          - python-pip
+          - python3-pip
       register: apt_rc
       retries: 3
       delay: 10
@@ -41,10 +41,11 @@
         dirs: yes
         rsync_opts:
           - "--exclude=.idea"
-          - "--exclude=venv"
+          - "--exclude=venv*"
           - "--exclude=.git/objects/pack"
           - "--exclude=*/.terraform*"
           - "--exclude=*.tfstate"
+          - "--exclude=*.eggs"
 
     - name: install {{ dest_dir }} dependencies into python runtime
       become: yes

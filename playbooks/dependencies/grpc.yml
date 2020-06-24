@@ -28,7 +28,7 @@
       become: yes
       apt:
         name:
-          - python-pip
+          - python3-pip
           - git
           - autoconf
           - automake
@@ -36,6 +36,14 @@
           - curl
           - make
           - g++
+
+    - name: pip install cygrpc and upgrade setuptools
+      become: yes
+      pip:
+        name:
+          - cygrpc
+          - setuptools>=40.3.0
+      when: ubuntu_version == "18"
 
     - name: clone grpc
       git:
@@ -65,7 +73,23 @@
       register: cmd_out
       changed_when: cmd_out is not failed
 
-    - name: install grpcio
-      become: yes
-      pip:
-        name: grpcio
+    - name: Copy Python {{ python_version }} site-packages to dist-packages PI
+      command: "sudo cp -r /home/ubuntu/grpc/src/python/{{ item }} /usr/local/lib/python{{ python_version }}/dist-packages"
+      with_items:
+        - grpcio
+#        - grpcio_channelz
+#        - grpcio_health_checking
+#        - grpcio_reflection
+#        - grpcio_status
+#        - grpcio_testing
+#        - grpcio_tests
+
+#    - name: Install protobuf into python
+#      shell: "cd /home/ubuntu/grpc/src/python/{{ item }}; sudo python setup.py install"
+#      with_items:
+#        - grpcio_channelz
+#        - grpcio_health_checking
+#        - grpcio_reflection
+#        - grpcio_status
+#        - grpcio_testing
+#        - grpcio_tests

@@ -48,17 +48,17 @@ sudo apt install git
 
 #### 2.1.2 Install Python Ansible
 
-* Python 2.7 is installed
-* The python-pip package has been installed
+* Python 3.6+ is installed
+* The python3-pip package has been installed
 * The Python ansible >=2.7.5 package has been installed
 
-Use Python-pip to install ansible >=2.7.5.
+Use python3-pip to install ansible >=2.7.5.
 
 On Ubuntu run:
 
 ```bash
 sudo apt update
-sudo apt install python-pip
+sudo apt install python3-pip
 sudo pip install ansible
 ```
 

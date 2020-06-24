@@ -76,3 +76,10 @@
         chdir: ~/PI
       register: cmd_out
       changed_when: cmd_out is not failed
+
+    - name: Copy Python {{ python_version }} site-packages to dist-packages PI
+      command: "sudo cp -r /home/ubuntu/PI/proto/py_out/{{ item }} /usr/local/lib/python{{ python_version }}/dist-packages"
+      with_items:
+        - p4
+        - gnmi
+        - google

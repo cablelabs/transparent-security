@@ -27,7 +27,7 @@ resource "aws_instance" "transparent-security-mininet-integration" {
   # Used to ensure host is really up before attempting to apply ansible playbooks
   provisioner "remote-exec" {
     inline = [
-      "sudo echo 'transparent-security mininet integration CI' > ~/motd"
+      "sudo echo 'transparent-security mininet integration CI' > ~/motd",
     ]
   }
 

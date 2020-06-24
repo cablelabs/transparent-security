@@ -103,6 +103,7 @@ def extract_int_data(ether_pkt):
     :param ether_pkt: the packet to parse
     :return: dict with choice header fields extracted
     """
+    logger.debug('Extracting packet - [%s]', ether_pkt.summary())
     if ether_pkt.type == IPV4_TYPE:
         ip_pkt = IP(_pkt=ether_pkt.payload)
         logger.debug('IPv4 dst - [%s], src - [%s], proto - [%s]',
@@ -112,7 +113,7 @@ def extract_int_data(ether_pkt):
         logger.debug('IPv6 dst - [%s], src - [%s], nh - [%s]',
                      ip_pkt.dst, ip_pkt.src, ip_pkt.nh)
     else:
-        logger.warn('Unable to process ether type - [%s]', ether_pkt.type)
+        logger.warning('Unable to process ether type - [%s]', ether_pkt.type)
         return None
 
     udp_int_pkt = UDP(_pkt=ip_pkt.payload)
@@ -320,7 +321,7 @@ class SimpleAE(PacketAnalytics):
                 if int_data:
                     return self.__process(int_data)
                 else:
-                    logger.warn('Unable to debug INT data')
+                    logger.warning('Unable to debug INT data')
                     return False
             elif (udp_packet.dport == udp_dport
                   and udp_dport == UDP_TRPT_DST_PORT):
@@ -328,7 +329,7 @@ class SimpleAE(PacketAnalytics):
                 if int_data:
                     return self.__process(int_data)
                 else:
-                    logger.warn('Unable to debug INT data')
+                    logger.warning('Unable to debug INT data')
                     return False
             else:
                 logger.debug(

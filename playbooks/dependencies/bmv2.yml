@@ -14,19 +14,34 @@
 - hosts: all
   gather_facts: no
   tasks:
-    - name: apt update
+    - name: Update cache before installing python3-pip (apt task does not working here)
       become: yes
-      apt:
-        update_cache: yes
+      command: apt update
 
     - name: install packages for behavioral-model
       become: yes
       apt:
+        update_cache: yes
         name:
+          - python3-pip
           - git
           - autoconf
           - automake
+          - cmake
+          - libjudy-dev
+          - libgmp-dev
+          - libpcap-dev
+          - libboost-dev
+          - libboost-test-dev
+          - libboost-program-options-dev
+          - libboost-system-dev
+          - libboost-filesystem-dev
+          - libboost-thread-dev
+          - libevent-dev
           - libtool
+          - flex
+          - bison
+          - pkg-config
           - curl
           - make
           - g++
@@ -45,6 +60,23 @@
       register: cmd_out
       changed_when: cmd_out is not failed
       async: 600
+      ignore_errors: yes
+
+    - name: Upgrade cffi python package for behavioral-model nmpy
+      become: yes
+      pip:
+        name:
+          - cffi==1.5.2
+      when: cmd_out is failed
+
+    - name: Install behavioral-model dependencies
+      command: ./install_deps.sh
+      args:
+        chdir: ~/behavioral-model
+      register: second_out
+      changed_when: second_out is not failed
+      async: 600
+      when: cmd_out is failed
 
 - import_playbook: p4runtime.yml
 

@@ -348,7 +348,7 @@ class ExerciseRunner:
         for name, host in self.hosts.items():
             logger.debug('Programming host - [%s]', host)
             h = self.mininet.get(host['name'])
-            h_iface = h.intfs.values()[0]
+            h_iface = list(h.intfs.values())[0]
             link = h_iface.link
 
             sw_iface = link.intf1 if link.intf1 != h_iface else link.intf2

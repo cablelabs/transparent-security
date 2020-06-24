@@ -49,10 +49,10 @@ class SimpleAETests(unittest.TestCase):
         self.dport = randrange(1000, 8000)
         self.dst_ipv4 = '10.1.0.1'
         self.dst_ipv6 = ipaddress.ip_address(
-            unicode('0000:0000:0000:0000:0000:0001:0000:0001'))
+            '0000:0000:0000:0000:0000:0001:0000:0001')
         self.src_ipv4 = '10.2.0.1'
         self.src_ipv6 = ipaddress.ip_address(
-            unicode('0000:0000:0000:0000:0000:0002:0000:0001'))
+            '0000:0000:0000:0000:0000:0002:0000:0001')
         self.dst_mac = rand_mac()
         self.src_mac = rand_mac()
         # self.orig_mac = rand_mac()
@@ -127,7 +127,7 @@ class SimpleAETests(unittest.TestCase):
                     # udp + telemetry header size
                     len=len(self.int_pkt_ipv4_udp) + 20 + 20) /
                 TelemetryReport(domain_id=consts.TRPT_DOMAIN_ID) /
-                str(self.int_pkt_ipv4_udp)
+                self.int_pkt_ipv4_udp
         )
 
         self.trpt_pkt_ipv4_out_ipv6_in_udp = (
@@ -138,7 +138,7 @@ class SimpleAETests(unittest.TestCase):
                     # udp + telemetry header size
                     len=len(self.int_pkt_ipv4_udp) + 20 + 20) /
                 TelemetryReport(domain_id=consts.TRPT_DOMAIN_ID) /
-                str(self.int_pkt_ipv6_udp)
+                self.int_pkt_ipv6_udp
         )
 
         self.trpt_pkt_ipv4_out_ipv4_in_tcp = (
@@ -149,7 +149,7 @@ class SimpleAETests(unittest.TestCase):
                     # udp + telemetry header size
                     len=len(self.int_pkt_ipv4_udp) + 20 + 20) /
                 TelemetryReport(domain_id=consts.TRPT_DOMAIN_ID) /
-                str(self.int_pkt_ipv4_tcp)
+                self.int_pkt_ipv4_tcp
         )
 
         self.trpt_pkt_ipv4_out_ipv6_in_tcp = (
@@ -160,7 +160,7 @@ class SimpleAETests(unittest.TestCase):
                     # udp + telemetry header size
                     len=len(self.int_pkt_ipv4_udp) + 20 + 20) /
                 TelemetryReport(domain_id=consts.TRPT_DOMAIN_ID) /
-                str(self.int_pkt_ipv6_tcp)
+                self.int_pkt_ipv6_tcp
         )
 
     def test_extract_ipv4_udp_packet(self):
@@ -201,6 +201,8 @@ class SimpleAETests(unittest.TestCase):
         """
         Tests to ensure that an IPv4 UDP single packet will be parsed properly
         """
+        logger.debug('Packet to test - [%s]',
+                     self.trpt_pkt_ipv4_out_ipv4_in_tcp)
         int_data = oinc.extract_trpt_data(
             self.trpt_pkt_ipv4_out_ipv4_in_tcp[UDP])
         self.assertEqual(self.orig_mac, int_data['devMac'])

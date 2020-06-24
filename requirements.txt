@@ -1,13 +1,14 @@
 PyYaml
 scapy
-grpcio
 requests
 urllib3
-logging
 psutil
 anytree
 pydevd
-gevent
+greenlet
+cffi
+cygrpc
+grpcio
 python-dateutil
 flask
 flask_restful

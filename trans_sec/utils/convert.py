@@ -27,6 +27,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import codecs
 import logging
 import math
 import re
@@ -49,11 +50,26 @@ def matches_mac(mac_addr_string):
 
 
 def encode_mac(mac_addr_string):
-    return mac_addr_string.replace(':', '').decode('hex')
+    hex_decoder = codecs.getdecoder('hex_codec')
+    return hex_decoder(mac_addr_string.replace(':', ''))[0]
 
 
 def decode_mac(encoded_mac_addr):
-    return ':'.join(s.encode('hex') for s in encoded_mac_addr)
+    logger.debug('decoding mac - [%s]', encoded_mac_addr)
+    out = None
+    mac_str = str(encoded_mac_addr)
+    logger.debug('mac_str - [%s]', mac_str)
+    tokens = str(mac_str).split('\\x')
+    tokens.pop(0)
+    for token in tokens:
+        if not out:
+            out = token
+        else:
+            out = out + ':' + token
+    out = out.replace('/', '')
+    out = out.replace('\'', '')
+    logger.debug('decoded mac - [%s]', out)
+    return out
 
 
 def matches_ipv4(ip_addr_string):
@@ -90,16 +106,42 @@ def bitwidth_to_bytes(bitwidth):
 
 
 def encode_num(number, bitwidth):
+    logger.info('number to encode [%s] with width [%s]', number, bitwidth)
     bitwidth_bytes = bitwidth_to_bytes(bitwidth)
     num_str = '%x' % number
     if number >= 2 ** bitwidth:
         raise SyntaxError(
             "Number, %d, does not fit in %d bits" % (number, bitwidth))
-    return ('0' * (bitwidth_bytes * 2 - len(num_str)) + num_str).decode('hex')
+    hex_decoder = codecs.getdecoder('hex_codec')
+    return hex_decoder('0' * (bitwidth_bytes * 2 - len(num_str)) + num_str)[0]
 
 
 def decode_num(encoded_number):
-    return int(encoded_number.encode('hex'), 16)
+    logger.debug('hex number to decode - [%s]', encoded_number)
+    out = None
+    logger.debug('mac_str - [%s]', encoded_number)
+    tokens = str(encoded_number).split('\\x')
+    tokens.pop(0)
+    for token in tokens:
+        if not out:
+            out = '0x' + token
+        else:
+            out = out + token
+    out = out.replace('/', '')
+    out = out.replace('\'', '')
+    logger.debug('out for out_hex - [%s]', out)
+    out_hex = int(out, 16)
+    logger.debug('decoded number - [%s]', out_hex)
+    return out_hex
+
+    # logger.debug('Num to decode - [%s]', encoded_number)
+    # joined_num = "".join(str(encoded_number).split()[::-1])
+    # logger.debug('joined_num - [%s]', joined_num)
+    # out = hex(joined_num)
+    # return out
+    # hex_decoder = codecs.getdecoder('hex_codec')
+    # decoded = hex_decoder(encoded_number)
+    # return int(decoded)
 
 
 def encode(x, bitwidth):

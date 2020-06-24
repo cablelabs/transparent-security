@@ -15,6 +15,7 @@ from logging import getLogger
 
 import ipaddress
 
+from trans_sec.exceptions import NotFoundError
 from trans_sec.p4runtime_lib import helper, tofino
 
 logger = getLogger('abstract_controller')
@@ -108,7 +109,8 @@ class AbstractController(object):
                     sw_info['name'], device['name'],
                     str(south_link.get('south_facing_port')))
             else:
-                raise StandardError(
+                raise NotFoundError(
+                    'make south rules',
                     'South Bound Link for %s, %s does not exist in topology' %
                     (sw.name, south_link.get('south_node')))
 
@@ -161,7 +163,7 @@ class AbstractController(object):
         if attack_switch:
             logger.info('Adding an attack [%s] to host [%s] and switch [%s]',
                         attack, host, attack_switch.sw_info['name'])
-            ip_addr = ipaddress.ip_address(unicode(attack['src_ip']))
+            ip_addr = ipaddress.ip_address(attack['src_ip'])
             logger.info('Attack ip addr - [%s]', ip_addr)
             logger.debug('Attack ip addr class - [%s]', ip_addr.__class__)
             if ip_addr.version == 6:
@@ -180,7 +182,7 @@ class AbstractController(object):
 
     def __add_attacker(self, switch, attack, host, src_addr_key, dst_addr_key):
         logger.info('Attack requested - [%s]', attack)
-        ip_addr = ipaddress.ip_address(unicode(attack['src_ip']))
+        ip_addr = ipaddress.ip_address(attack['src_ip'])
         logger.info('Attack from ip_addr - [%s]', ip_addr)
         logger.info('Inserting IPv%s Attack', ip_addr.version)
         self.__insert_attack_entry(
@@ -197,8 +199,8 @@ class AbstractController(object):
                               action_name, src_addr_key, dst_addr_key,
                               dst_port_key):
         logger.info('Adding attack [%s] from host [%s]', attack, host['name'])
-        src_ip = ipaddress.ip_address(unicode(attack['src_ip']))
-        dst_ip = ipaddress.ip_address(unicode(attack['dst_ip']))
+        src_ip = ipaddress.ip_address(attack['src_ip'])
+        dst_ip = ipaddress.ip_address(attack['dst_ip'])
         logger.info('Attack src_ip - [%s], dst_ip - [%s]', src_ip, dst_ip)
         # TODO - Add back source IP address as a match field after adding
         #  mitigation at the Aggregate
@@ -269,7 +271,7 @@ class AbstractController(object):
             logger.info('Setting forwarding pipeline config on - [%s]', name)
             new_switch.set_forwarding_pipeline_config(device_config)
         else:
-            logger.warn('Switches should already be configured')
+            logger.warning('Switches should already be configured')
 
         self.switches.append(new_switch)
         logger.info('Instantiated connection to BMV2 switch - [%s]',
@@ -312,7 +314,7 @@ class AbstractController(object):
             logger.info('Setting forwarding pipeline config on - [%s]', name)
             new_switch.set_forwarding_pipeline_config(device_config)
         else:
-            logger.warn('Switch [%s] should already be configured', name)
+            logger.warning('Switch [%s] should already be configured', name)
 
         self.switches.append(new_switch)
         logger.info('Instantiated connection to Tofino switch - [%s]',
