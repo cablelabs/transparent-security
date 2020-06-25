@@ -14,6 +14,7 @@
 # limitations under the License.
 import argparse
 import logging
+import sys
 
 from scapy.all import bind_layers, sniff
 from scapy.layers.inet import IP, UDP, TCP
@@ -259,7 +260,8 @@ if __name__ == '__main__':
         logging.basicConfig(format=FORMAT, level=numeric_level,
                             filename=args.log_file)
     else:
-        logging.basicConfig(format=FORMAT, level=numeric_level)
+        logging.basicConfig(format=FORMAT, level=numeric_level,
+                            stream=sys.stdout)
 
     logger.info('Logger initialized')
 

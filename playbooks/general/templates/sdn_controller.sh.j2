@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 # Runs the SDN controller for Mininet simulation
-sudo {{ remote_tps_dir }}/bin/sdn_controller.py -l {{ log_level }} \
+{{ remote_tps_dir }}/bin/sdn_controller.py -l {{ log_level }} \
 -t {{ topo_file_loc }} \
 -f {{ log_dir }}/sdn.log \
 -ld {{ log_dir }} \

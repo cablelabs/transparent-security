@@ -25,7 +25,7 @@
     - name: Create clone session entry command
       set_fact:
         add_clone_entry_cmd: >
-          /usr/bin/python {{ remote_tps_dir }}/bin/write_to_clone.py
+          {{ remote_tps_dir }}/bin/write_to_clone.py
           -a {{ switch.grpc }} -d {{ switch.id }} -p {{ switch.runtime_p4info }} -l {{ log_dir }}
           -lf {{ log_file }} -c {{ clone }} -ce {{ switch.clone_egress }}
 

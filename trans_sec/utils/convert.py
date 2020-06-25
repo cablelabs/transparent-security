@@ -66,10 +66,12 @@ def decode_mac(encoded_mac_addr):
             out = token
         else:
             out = out + ':' + token
-    out = out.replace('/', '')
-    out = out.replace('\'', '')
-    logger.debug('decoded mac - [%s]', out)
-    return out
+
+    if out:
+        out = out.replace('/', '')
+        out = out.replace('\'', '')
+        logger.debug('decoded mac - [%s]', out)
+        return out
 
 
 def matches_ipv4(ip_addr_string):

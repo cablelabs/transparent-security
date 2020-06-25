@@ -18,6 +18,26 @@
   gather_facts: no
 
   tasks:
+    - name: Install python-pip
+      become: yes
+      apt:
+        name:
+          - python3-pip
+
+    - name: Install ansible
+      become: yes
+      pip:
+        name:
+          - ansible
+
+    - name: Copy TPS requirements.txt
+      copy:
+        src: ../../requirements.txt
+        dest: ~/tps-py-requirements.txt
+
+    - name: Install TPS Python requirements
+      command: sudo pip install -r ~/tps-py-requirements.txt
+
     - name: Disable unattended-upgrades
       become: yes
       service:

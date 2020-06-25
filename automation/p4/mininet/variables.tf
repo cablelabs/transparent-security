@@ -17,7 +17,7 @@ variable "secret_key" {}
 variable "build_id" {}
 variable "ec2_region" {}
 # Image generated from env-build script for build_env='mininet'
-variable "mininet_ami" {default ="ami-0ffbdcb5556c35e01"}
+variable "mininet_ami" {default ="ami-0572f054b71fc1cdd"}
 
 # Optional Variables
 variable "public_key_file" {default = "~/.ssh/id_rsa.pub"}

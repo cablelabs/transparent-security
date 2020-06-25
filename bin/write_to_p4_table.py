@@ -72,8 +72,7 @@ if __name__ == '__main__':
     args = get_args()
     if args.log_dir and args.log_file:
         log_file = '{}/{}'.format(args.log_dir, args.log_file)
-        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG,
-                            filename=log_file)
+        logging.basicConfig(level=logging.DEBUG, filename=log_file)
     else:
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 

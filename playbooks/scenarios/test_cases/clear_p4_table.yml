@@ -16,7 +16,7 @@
 ---
 - name: Clearing table
   command: |
-    /usr/bin/python3 {{ remote_tps_dir }}/bin/clear_p4_table.py -a {{ switch.grpc }} \
+    {{ remote_tps_dir }}/bin/clear_p4_table.py -a {{ switch.grpc }} \
     -d {{ switch.id }} -n {{ ingress_classname }}.{{ table_name }}
   with_items: "{{ table_names }}"
   register: cmd_out

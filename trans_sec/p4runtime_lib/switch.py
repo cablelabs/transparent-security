@@ -125,12 +125,15 @@ class SwitchConnection(object):
             logger.debug("Digest members: %s", members)
             if members.WhichOneof('data') == 'struct':
                 source_mac = decode_mac(members.struct.members[0].bitstring)
-                logger.debug('Digest MAC Address is: %s', source_mac)
-                ingress_port = int(
-                    codecs.encode(members.struct.members[1].bitstring, 'hex'),
-                    16)
-                logger.debug('Digest Ingress Port is %s', ingress_port)
-                self.add_data_forward(source_mac, ingress_port)
+                if source_mac:
+                    logger.debug('Digest MAC Address is: %s', source_mac)
+                    ingress_port = int(
+                        codecs.encode(members.struct.members[1].bitstring, 'hex'),
+                        16)
+                    logger.debug('Digest Ingress Port is %s', ingress_port)
+                    self.add_data_forward(source_mac, ingress_port)
+                else:
+                    logger.warning('Could not retrieve source_mac from digest')
             else:
                 logger.warning('Digest could not be processed - [%s]',
                                digest_data)
