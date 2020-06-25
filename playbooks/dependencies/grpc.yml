@@ -74,22 +74,4 @@
       changed_when: cmd_out is not failed
 
     - name: Copy Python {{ python_version }} site-packages to dist-packages PI
-      command: "sudo cp -r /home/ubuntu/grpc/src/python/{{ item }} /usr/local/lib/python{{ python_version }}/dist-packages"
-      with_items:
-        - grpcio
-#        - grpcio_channelz
-#        - grpcio_health_checking
-#        - grpcio_reflection
-#        - grpcio_status
-#        - grpcio_testing
-#        - grpcio_tests
-
-#    - name: Install protobuf into python
-#      shell: "cd /home/ubuntu/grpc/src/python/{{ item }}; sudo python setup.py install"
-#      with_items:
-#        - grpcio_channelz
-#        - grpcio_health_checking
-#        - grpcio_reflection
-#        - grpcio_status
-#        - grpcio_testing
-#        - grpcio_tests
+      command: "sudo cp -r /home/ubuntu/grpc/src/python/grpcio /usr/local/lib/python{{ python_version }}/dist-packages"

@@ -58,20 +58,25 @@ class AbstractController(object):
         logger.info('Adding helpers to switch of type - [%s]',
                     self.switch_type)
         self.__add_helpers()
+
+        logger.info('Switch forwarding start')
         self.__switch_forwarding()
         for switch in self.switches:
+            logger.info('Starting digest listeners on device [%s]',
+                        switch.grpc_addr)
             switch.start_digest_listeners()
 
     def stop(self):
         for switch in self.switches:
+            logger.info('Stopping digest listeners on device [%s]',
+                        switch.grpc_addr)
             switch.stop_digest_listeners()
 
-    def make_rules(self, sw, sw_info, north_facing_links, south_facing_links,
+    def make_rules(self, sw, north_facing_links, south_facing_links,
                    add_di):
         """
         Abstract method
         :param sw: switch object
-        :param sw_info: switch info object
         :param north_facing_links: northbound links
         :param south_facing_links: southbound links
         :param add_di: populate data_inspection tables when true
@@ -79,18 +84,18 @@ class AbstractController(object):
         logger.info('Creating rules for switch type - [%s]', self.switch_type)
         for north_link in north_facing_links:
             logger.info('Creating rules for the north link - [%s]', north_link)
-            self.make_north_rules(sw, sw_info, north_link)
+            self.make_north_rules(sw, north_link)
 
         for south_link in south_facing_links:
             logger.info('Creating rules for the south link - [%s]', south_link)
-            self.make_south_rules(sw, sw_info, south_link, add_di)
+            self.make_south_rules(sw, south_link, add_di)
         logger.debug('Completed creating rules for switch type [%s]',
                      self.switch_type)
 
-    def make_north_rules(self, sw, sw_info, north_link):
+    def make_north_rules(self, sw, north_link):
         raise NotImplemented
 
-    def make_south_rules(self, sw, sw_info, south_link, add_di):
+    def make_south_rules(self, sw, south_link, add_di):
         if south_link.get('south_facing_port'):
             logger.info('Creating south switch rules - [%s]', south_link)
             if self.topo['switches'].get(south_link['south_node']):
@@ -98,7 +103,7 @@ class AbstractController(object):
                 logger.info(
                     'This: %s connects to south switch: %s on physical '
                     'port %s to physical port %s',
-                    sw_info['name'], device['name'],
+                    sw.name, device['name'],
                     str(south_link.get('south_facing_port')),
                     str(south_link.get('north_facing_port')))
             elif self.topo['hosts'].get(south_link['south_node']) is not None:
@@ -106,7 +111,7 @@ class AbstractController(object):
                 logger.info(
                     'This: %s connects to Device: %s on physical '
                     'port %s',
-                    sw_info['name'], device['name'],
+                    sw.name, device['name'],
                     str(south_link.get('south_facing_port')))
             else:
                 raise NotFoundError(
@@ -125,6 +130,7 @@ class AbstractController(object):
         for name, switch in self.topo['switches'].items():
             logger.info('Setting up helper for - [%s] of type - [%s]',
                         name, switch.get('type'))
+
             if switch['type'] == self.switch_type:
                 if self.platform == 'bmv2':
                     self.__setup_bmv2_helper(name, switch)
@@ -134,8 +140,8 @@ class AbstractController(object):
     def make_switch_rules(self, add_di):
         logger.info('Make Rules for controller [%s]', self.switch_type)
         for switch in self.switches:
-            sw_info, north_links, south_links = self.__get_links(switch.name)
-            self.make_rules(sw=switch, sw_info=sw_info,
+            north_links, south_links = self.__get_links(switch.name)
+            self.make_rules(sw=switch,
                             north_facing_links=north_links,
                             south_facing_links=south_links,
                             add_di=add_di)
@@ -162,7 +168,7 @@ class AbstractController(object):
                 attack_switch = switch
         if attack_switch:
             logger.info('Adding an attack [%s] to host [%s] and switch [%s]',
-                        attack, host, attack_switch.sw_info['name'])
+                        attack, host, attack_switch.name)
             ip_addr = ipaddress.ip_address(attack['src_ip'])
             logger.info('Attack ip addr - [%s]', ip_addr)
             logger.debug('Attack ip addr class - [%s]', ip_addr.__class__)
@@ -237,7 +243,6 @@ class AbstractController(object):
         :return:
         """
         logger.info('Retrieving switch links from topology')
-        sw_info = self.topo['switches'][switch_name]
         conditions = {'south_node': switch_name}
         north_facing_links = filter(
             lambda item: all((item[k] == v for (k, v) in conditions.items())),
@@ -249,7 +254,7 @@ class AbstractController(object):
 
         logger.debug('Links: north - [%s], south - [%s]',
                      north_facing_links, south_facing_links)
-        return sw_info, north_facing_links, south_facing_links
+        return list(north_facing_links), list(south_facing_links)
 
     def __setup_bmv2_helper(self, name, switch):
         """
@@ -260,6 +265,7 @@ class AbstractController(object):
         logger.info('Adding BMV P4 Info Helper to switch - [%s]', switch)
 
         new_switch = self.instantiate_switch(self.topo['switches'][name])
+        logger.info('New switch info - [%s]', new_switch.sw_info)
         new_switch.master_arbitration_update()
 
         bmv2_json_file_path = "{0}/{1}.json".format(
@@ -274,8 +280,7 @@ class AbstractController(object):
             logger.warning('Switches should already be configured')
 
         self.switches.append(new_switch)
-        logger.info('Instantiated connection to BMV2 switch - [%s]',
-                    name)
+        logger.info('Instantiated connection to switch - [%s]', name)
 
     @abstractmethod
     def instantiate_switch(self, sw_info):

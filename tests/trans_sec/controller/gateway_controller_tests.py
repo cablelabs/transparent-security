@@ -44,3 +44,4 @@ class GatewayControllerTests(unittest.TestCase):
         """
         controller = GatewayController('bmv2', 'config_dir', self.topo, '/tmp')
         self.assertIsNotNone(controller)
+        controller.make_switch_rules(True)

@@ -23,7 +23,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 logger = logging.getLogger('core_switch_tests')
 
 
-class CoreControllerTests(unittest.TestCase):
+class CoreSwitchTests(unittest.TestCase):
     """
     Tests for the CoreController class
     """

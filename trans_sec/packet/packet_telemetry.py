@@ -51,28 +51,49 @@ class PacketTelemetry:
         switch = filter(
             lambda item: all((item[k] == v for (k, v) in conditions.items())),
             self.switches)
-        if 0 < len(list(switch)) < 2:
-            list(switch)[0]['children'].append(hid)
+
+        first_switch = None
+        if len(list(switch)) > 0:
+            # TODO/FIXME - this is pretty terrible logic
+            try:
+                first_switch = list(switch)[0]
+            except Exception as e:
+                logging.error('Unexpected error getting first_switch - [%s]',
+                              e)
+
+        if first_switch and 'children' in first_switch:
+            first_switch['children'].append(hid)
         else:
-            logging.error('Rutt row raggy! No single switch matched the sid ',
-                          sid)
+            logging.error('No single switch matched the sid - [%s]', sid)
 
         conditions = {'device_id': hid}
         device = filter(
             lambda item: all((item[k] == v for (k, v) in conditions.items())),
             self.hosts)
-        if 0 < len(list(device)) < 2:
-            list(device)[0]['parent'] = sid
-        else:
+
+        first_device = None
+        if len(list(device)) > 0:
+            # TODO/FIXME - this is pretty terrible logic
+            try:
+                first_device = next(device)
+            except Exception as e:
+                logging.error('Unexpected error getting first_device - [%s]',
+                              e)
+        if not first_device:
             device = filter(lambda item: all(
                 (item[k] == v for (k, v) in conditions.items())),
                             self.switches)
-            if 0 < len(list(device)) < 2:
-                list(device)[0]['parent'] = sid
-            else:
-                logging.error(
-                    'Rutt row raggy!  No device or switch matched the hid '
-                    '[%s]', hid)
+            # TODO/FIXME - this is pretty terrible logic
+            try:
+                first_device = next(device)
+            except Exception as e:
+                logging.error('Unexpected error getting first_device - [%s]',
+                              e)
+
+        if first_device and 'parent' in first_device:
+            first_device['parent'] = sid
+        else:
+            logging.error('No device or switch matched the hid [%s]', hid)
 
     def reset_total(self):
         self.telemetry['global']['dropped'] = 0

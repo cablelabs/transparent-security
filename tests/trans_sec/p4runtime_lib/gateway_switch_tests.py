@@ -23,7 +23,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 logger = logging.getLogger('gateway_switch_tests')
 
 
-class GatewayControllerTests(unittest.TestCase):
+class GatewaySwitchTests(unittest.TestCase):
     """
     Tests for the CoreController class
     """
