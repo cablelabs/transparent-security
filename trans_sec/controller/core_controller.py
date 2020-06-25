@@ -39,16 +39,18 @@ class CoreController(AbstractController):
     def make_rules(self, sw, north_facing_links, south_facing_links,
                    add_di):
         super(self.__class__, self).make_rules(
-            sw, north_facing_links, south_facing_links, add_di)
+            sw, north_facing_links, south_facing_links, False)
 
+        logger.info('Activating clone on device [%s] to port [%s]',
+                    sw.grpc_addr, sw.sw_info['clone_egress'])
         clone_entry = self.p4info_helper.build_clone_entry(
             sw.sw_info['clone_egress'])
         sw.write_clone_entries(clone_entry)
-        logger.info('Installed clone on %s' % sw.name)
 
         ae_ip = None
         trpt_dict = sw.sw_info.get('telemetry_rpt')
         if trpt_dict:
+            logger.info('Activating Telem Rpt on device [%s]', sw.grpc_addr)
             if trpt_dict['type'] == 'host':
                 host_dict = self.topo['hosts'].get(trpt_dict['name'])
                 if host_dict:
@@ -68,13 +70,14 @@ class CoreController(AbstractController):
             logger.warning('Telemetry report not configured')
 
         if add_di:
-            for north_link in north_facing_links:
-                if 'l2ptr' in north_link:
-                    self.__make_int_rules(sw)
+            self.__make_int_rules(sw)
+        else:
+            logger.info('Not inserting anything to data_inspection_t')
 
         logger.info('Completed rules for device [%s]', sw.sw_info['mac'])
 
     def __make_int_rules(self, sw):
+        logger.info('Search topology for data_inspection_t table entries')
         for name, switch in self.topo['switches'].items():
             if switch.get('type') == GATEWAY_CTRL_KEY:
                 logger.info(

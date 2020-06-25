@@ -122,14 +122,22 @@ class DdosSdnController:
             logger.info('Attack received - %s', attack)
 
             conditions = {'mac': attack['src_mac']}
+            logger.debug('Created conditions - [%s]', conditions)
             values = self.topo.get('hosts').values()
-            host = filter(
+            logger.debug('Creating host with values - [%s]', values)
+            host = list(filter(
                 lambda item: all(
                     (item[k] == v for (k, v) in conditions.items())),
-                values)
-            if len(list(host)) != 0:
-                host = list(host)[0]
-                logger.info('Adding attack to gateways')
+                values))
+
+            logger.debug(
+                'Check the hosts and register the attack with host object '
+                '- [%s]', host)
+            logger.debug('host.__class__ - [%s]', host.__class__)
+            if len(host) > 0:
+                logger.debug('host len is - [%s]', len(host))
+                host = host[0]
+                logger.info('Adding attack to gateways with host - [%s]', host)
                 try:
                     gateway_controller.add_attacker(attack, host)
                     self.packet_telemetry.register_attack(host['id'])
