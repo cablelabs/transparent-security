@@ -128,8 +128,8 @@ class SwitchConnection(object):
                 if source_mac:
                     logger.debug('Digest MAC Address is: %s', source_mac)
                     ingress_port = int(
-                        codecs.encode(members.struct.members[1].bitstring, 'hex'),
-                        16)
+                        codecs.encode(members.struct.members[1].bitstring,
+                                      'hex'), 16)
                     logger.debug('Digest Ingress Port is %s', ingress_port)
                     self.add_data_forward(source_mac, ingress_port)
                 else:
@@ -140,30 +140,48 @@ class SwitchConnection(object):
 
         logger.info('Completed digest processing')
 
-    def insert_p4_table_entry(self, table_name, action_name, match_fields,
-                              action_params, ingress_class=True):
-
-        logger.info(
-            'Adding to table - [%s], with fields - [%s], and params - [%s]',
-            table_name, match_fields, action_params)
-
+    def __get_table_entry(self, table_name, action_name, match_fields,
+                          action_params, ingress_class=True):
         if ingress_class:
             tbl_class = self.p4_ingress
         else:
             tbl_class = self.p4_egress
 
-        table_entry = self.p4info_helper.build_table_entry(
+        return self.p4info_helper.build_table_entry(
             table_name='{}.{}'.format(tbl_class, table_name),
             match_fields=match_fields,
             action_name='{}.{}'.format(tbl_class, action_name),
             action_params=action_params)
+
+    def insert_p4_table_entry(self, table_name, action_name, match_fields,
+                              action_params, ingress_class=True,
+                              election_high=0, election_low=1):
+
+        table_entry = self.__get_table_entry(
+            table_name, action_name, match_fields, action_params,
+            ingress_class)
         logger.debug(
             'Writing table entry to device [%s] table [%s], '
             'with action name - [%s], '
             'match fields - [%s], action_params - [%s]',
             self.grpc_addr, table_name, action_name, match_fields,
             action_params)
-        self.write_table_entry(table_entry)
+        self.write_table_entry(table_entry, election_high, election_low)
+
+    def delete_p4_table_entry(self, table_name, action_name, match_fields,
+                              action_params=None, ingress_class=True,
+                              election_high=0, election_low=1):
+
+        table_entry = self.__get_table_entry(
+            table_name, action_name, match_fields, action_params,
+            ingress_class)
+        logger.debug(
+            'Deleting table entry to device [%s] table [%s], '
+            'with action name - [%s], '
+            'match fields - [%s], action_params - [%s]',
+            self.grpc_addr, table_name, action_name, match_fields,
+            action_params)
+        self.delete_table_entry(table_entry, election_high, election_low)
 
     def add_data_forward(self, source_mac, ingress_port):
         logger.info(
@@ -231,6 +249,8 @@ class SwitchConnection(object):
                     self.grpc_addr)
         request = p4runtime_pb2.StreamMessageRequest()
         request.arbitration.device_id = self.device_id
+        request.arbitration.election_id.high = 0
+        request.arbitration.election_id.low = 1
         self.requests_stream.put(request)
 
     def set_forwarding_pipeline_config(self, device_config):
@@ -238,6 +258,7 @@ class SwitchConnection(object):
                     self.grpc_addr)
         logger.debug('P4Info - [%s] ', self.p4info_helper.p4info)
         request = p4runtime_pb2.SetForwardingPipelineConfigRequest()
+        request.election_id.low = 1
         request.device_id = self.device_id
         config = request.config
 
@@ -253,24 +274,25 @@ class SwitchConnection(object):
         logger.info('Completed SetForwardingPipelineConfig to device - [%s]',
                     request.device_id)
 
-    def write_table_entry(self, table_entry):
-        self.__write_to_table(table_entry, p4runtime_pb2.Update.INSERT)
+    def write_table_entry(self, table_entry, election_high=0, election_low=1):
+        self.__write_to_table(table_entry, p4runtime_pb2.Update.INSERT,
+                              election_high, election_low)
 
-    def delete_table_entry(self, table_entry):
-        self.__write_to_table(table_entry, p4runtime_pb2.Update.DELETE)
+    def delete_table_entry(self, table_entry, election_high=0, election_low=1):
+        self.__write_to_table(table_entry, p4runtime_pb2.Update.DELETE,
+                              election_high, election_low)
 
-    def __write_to_table(self, table_entry, update_type):
-        logger.info('Writing table entry on device [%s] - [%s]',
-                    self.grpc_addr, table_entry)
-        request = p4runtime_pb2.WriteRequest()
-        request.device_id = self.device_id
+    def __write_to_table(self, table_entry, update_type, election_high=0,
+                         election_low=1):
+        logger.info('Writing to table of type [%s] on device [%s] - [%s]',
+                    update_type, self.grpc_addr, table_entry)
+        request = self.__get_write_request(election_high, election_low)
         update = request.updates.add()
         update.type = update_type
         update.entity.table_entry.CopyFrom(table_entry)
         try:
             logger.debug(
-                'Request for writing table entry to device [%s] - [%s]',
-                self.grpc_addr, request)
+                'Table entry to device [%s] - [%s]', self.grpc_addr, request)
             self.client_stub.Write(request)
         except Exception as e:
             logging.error('Error writing table entry to device [%s] - [%s]',
@@ -378,8 +400,7 @@ class SwitchConnection(object):
         logger.info(
             'Packet info for insertion to device [%s] cloning table - %s',
             self.grpc_addr, pre_entry)
-        request = p4runtime_pb2.WriteRequest()
-        request.device_id = self.device_id
+        request = self.__get_write_request()
         update = request.updates.add()
         update.type = p4runtime_pb2.Update.INSERT
         update.entity.packet_replication_engine_entry.CopyFrom(pre_entry)
@@ -397,8 +418,7 @@ class SwitchConnection(object):
         logger.info(
             'Packet info from device [%s] for deleting the clone entry - %s',
             self.grpc_addr, pre_entry)
-        request = p4runtime_pb2.WriteRequest()
-        request.device_id = self.device_id
+        request = self.__get_write_request()
         update = request.updates.add()
         update.type = p4runtime_pb2.Update.DELETE
         update.entity.packet_replication_engine_entry.CopyFrom(pre_entry)
@@ -435,8 +455,7 @@ class SwitchConnection(object):
     def reset_counters(self, counter_id=None, index=None):
         logger.info('Reset counter with ID - [%s] and index - [%s]',
                     counter_id, index)
-        request = p4runtime_pb2.WriteRequest()
-        request.device_id = self.device_id
+        request = self.__get_write_request()
         update = request.updates.add()
         update.type = p4runtime_pb2.Update.MODIFY
         counter_entry = p4runtime_pb2.CounterEntry()
@@ -455,8 +474,7 @@ class SwitchConnection(object):
         self.client_stub.Write(request)
 
     def write_digest_entry(self, digest_entry):
-        request = p4runtime_pb2.WriteRequest()
-        request.device_id = self.device_id
+        request = self.__get_write_request()
         update = request.updates.add()
         update.type = p4runtime_pb2.Update.INSERT
         update.entity.digest_entry.CopyFrom(digest_entry)
@@ -483,8 +501,7 @@ class SwitchConnection(object):
             logger.info('Build Multicast Entry on device [%s]: [%s]',
                         self.grpc_addr, multicast_entry)
 
-            request = p4runtime_pb2.WriteRequest()
-            request.device_id = self.device_id
+            request = self.__get_write_request()
             update = request.updates.add()
             update.type = p4runtime_pb2.Update.INSERT
             update.entity.packet_replication_engine_entry.CopyFrom(
@@ -508,6 +525,13 @@ class SwitchConnection(object):
             action_name='{}.arp_flood'.format(self.p4_ingress),
             action_params={})
         self.write_table_entry(table_entry)
+
+    def __get_write_request(self, high=0, low=1):
+        request = p4runtime_pb2.WriteRequest()
+        request.device_id = self.device_id
+        request.election_id.high = high
+        request.election_id.low = low
+        return request
 
 
 class GrpcRequestLogger(grpc.UnaryUnaryClientInterceptor,

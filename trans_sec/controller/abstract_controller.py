@@ -156,9 +156,7 @@ class AbstractController(object):
             logger.debug('Hosts defs - [%s]', hosts_topo)
             switch.write_multicast_entry(hosts_topo)
 
-    def add_attacker(self, attack, host):
-        logger.info('Attack received by the controller of type [%s] - [%s]',
-                    self.switch_type, attack)
+    def __process_attack(self, attack, host):
         attack_switch = None
         for switch in self.switches:
             di_match_mac = switch.get_data_inspection_src_mac_keys()
@@ -181,14 +179,26 @@ class AbstractController(object):
                 logger.debug('Attack is IPv4')
                 proto_key = 'ipv4'
 
-            src_addr_key = 'hdr.{}.srcAddr'.format(proto_key)
             dst_addr_key = 'hdr.{}.dstAddr'.format(proto_key)
+            return attack_switch, dst_addr_key
+        else:
+            return None
 
-            logger.info('Adding the attack to switch - [%s]', attack_switch)
+    def add_attacker(self, attack, host):
+        logger.info('Attack received by the controller of type [%s] - [%s]',
+                    self.switch_type, attack)
+        attack_switch, dst_addr_key = self.__process_attack(attack, host)
+        if attack_switch and dst_addr_key:
             self.__add_attacker(
-                attack_switch, attack, host, src_addr_key, dst_addr_key)
+                attack_switch, attack, host, dst_addr_key)
 
-    def __add_attacker(self, switch, attack, host, src_addr_key, dst_addr_key):
+    def remove_attacker(self, attack, host):
+        attack_switch, dst_addr_key = self.__process_attack(attack, host)
+        if attack_switch and dst_addr_key:
+            self.__remove_attacker(
+                attack_switch, attack, host, dst_addr_key)
+
+    def __add_attacker(self, switch, attack, host, dst_addr_key):
         logger.info('Attack requested - [%s]', attack)
         ip_addr = ipaddress.ip_address(attack['src_ip'])
         logger.info('Attack from ip_addr - [%s]', ip_addr)
@@ -196,16 +206,29 @@ class AbstractController(object):
         self.__insert_attack_entry(
             switch, attack, host,
             'data_drop_udp_ipv{}_t'.format(ip_addr.version),
-            'data_drop', src_addr_key, dst_addr_key, 'hdr.udp.dst_port')
+            'data_drop', dst_addr_key, 'hdr.udp.dst_port')
         self.__insert_attack_entry(
             switch, attack, host,
             'data_drop_tcp_ipv{}_t'.format(ip_addr.version),
-            'data_drop', src_addr_key, dst_addr_key, 'hdr.tcp.dst_port')
+            'data_drop', dst_addr_key, 'hdr.tcp.dst_port')
+
+    def __remove_attacker(self, switch, attack, host, dst_addr_key):
+        logger.info('Attack requested - [%s]', attack)
+        ip_addr = ipaddress.ip_address(attack['src_ip'])
+        logger.info('Attack from ip_addr - [%s]', ip_addr)
+        logger.info('Inserting IPv%s Attack', ip_addr.version)
+        self.__delete_attack_entry(
+            switch, attack, host,
+            'data_drop_udp_ipv{}_t'.format(ip_addr.version),
+            'data_drop', dst_addr_key, 'hdr.udp.dst_port')
+        self.__delete_attack_entry(
+            switch, attack, host,
+            'data_drop_tcp_ipv{}_t'.format(ip_addr.version),
+            'data_drop', dst_addr_key, 'hdr.tcp.dst_port')
 
     @staticmethod
     def __insert_attack_entry(switch, attack, host, table_name,
-                              action_name, src_addr_key, dst_addr_key,
-                              dst_port_key):
+                              action_name, dst_addr_key, dst_port_key):
         logger.info('Adding attack [%s] from host [%s]', attack, host['name'])
         src_ip = ipaddress.ip_address(attack['src_ip'])
         dst_ip = ipaddress.ip_address(attack['dst_ip'])
@@ -220,11 +243,35 @@ class AbstractController(object):
                 dst_addr_key: str(dst_ip.exploded),
                 dst_port_key: int(attack['dst_port']),
             },
-            action_params={
-                'device': host['id']
-            },
-            ingress_class=True
+            action_params={'device': host['id']},
+            ingress_class=True,
+            # election_high=8,
+            # election_low=9,
          )
+        logger.info('%s Dropping TCP Packets from %s',
+                    switch.name, attack.get('src_ip'))
+
+    @staticmethod
+    def __delete_attack_entry(switch, attack, host, table_name,
+                              action_name, dst_addr_key, dst_port_key):
+        logger.info('Adding attack [%s] from host [%s]', attack, host['name'])
+        src_ip = ipaddress.ip_address(attack['src_ip'])
+        dst_ip = ipaddress.ip_address(attack['dst_ip'])
+        logger.info('Attack src_ip - [%s], dst_ip - [%s]', src_ip, dst_ip)
+        # TODO - Add back source IP address as a match field after adding
+        #  mitigation at the Aggregate
+        switch.delete_p4_table_entry(
+            table_name=table_name,
+            action_name=action_name,
+            match_fields={
+                'hdr.ethernet.src_mac': attack['src_mac'],
+                dst_addr_key: str(dst_ip.exploded),
+                dst_port_key: int(attack['dst_port']),
+            },
+            ingress_class=True,
+            # election_high=8,
+            # election_low=9,
+        )
         logger.info('%s Dropping TCP Packets from %s',
                     switch.name, attack.get('src_ip'))
 

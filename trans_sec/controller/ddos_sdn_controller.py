@@ -112,10 +112,41 @@ class DdosSdnController:
                         'Added Device %s southbound of %s' %
                         (device.get('name'), switch_info.get('name')))
 
+    def remove_attacker(self, attack):
+        """
+        Removes a device to mitigate an attack
+        :param attack: dict of attack
+        """
+        host, gw_controller = self.__get_attack_host(attack)
+        logger.info('Adding attack to gateways with host - [%s]', host)
+        try:
+            gw_controller.remove_attacker(attack, host)
+            self.packet_telemetry.register_attack(host['id'])
+        except Exception as e:
+            logger.error(
+                'Error adding attacker to host - [%s] with error - '
+                '[%s])', host['name'], e)
+
     def add_attacker(self, attack):
         """
-        Adds a device to perform an attack
+        Adds a device to mitigate an attack
         :param attack: dict of attack
+        """
+        host, gw_controller = self.__get_attack_host(attack)
+        logger.info('Adding attack to gateways with host - [%s]', host)
+        try:
+            gw_controller.add_attacker(attack, host)
+            self.packet_telemetry.register_attack(host['id'])
+        except Exception as e:
+            logger.error(
+                'Error adding attacker to host - [%s] with error - '
+                '[%s])', host['name'], e)
+
+    def __get_attack_host(self, attack):
+        """
+        Returns the host value or None
+        :param attack:
+        :return:
         """
         gateway_controller = self.controllers.get(GATEWAY_CTRL_KEY)
         if gateway_controller:
@@ -136,15 +167,7 @@ class DdosSdnController:
             logger.debug('host.__class__ - [%s]', host.__class__)
             if len(host) > 0:
                 logger.debug('host len is - [%s]', len(host))
-                host = host[0]
-                logger.info('Adding attack to gateways with host - [%s]', host)
-                try:
-                    gateway_controller.add_attacker(attack, host)
-                    self.packet_telemetry.register_attack(host['id'])
-                except Exception as e:
-                    logger.error(
-                        'Error adding attacker to host - [%s] with error - '
-                        '[%s])', host['name'], e)
+                return host[0], gateway_controller
             else:
                 logger.error('No Device Matches MAC [%s]',
                              attack.get('src_mac'))
