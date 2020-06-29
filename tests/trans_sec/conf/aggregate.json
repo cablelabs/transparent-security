@@ -1,0 +1,1954 @@
+{
+  "header_types" : [
+    {
+      "name" : "scalars_0",
+      "id" : 0,
+      "fields" : [
+        ["tmp", 48, false],
+        ["tmp_0", 9, false],
+        ["_padding_0", 7, false]
+      ]
+    },
+    {
+      "name" : "standard_metadata",
+      "id" : 1,
+      "fields" : [
+        ["ingress_port", 9, false],
+        ["egress_spec", 9, false],
+        ["egress_port", 9, false],
+        ["instance_type", 32, false],
+        ["packet_length", 32, false],
+        ["enq_timestamp", 32, false],
+        ["enq_qdepth", 19, false],
+        ["deq_timedelta", 32, false],
+        ["deq_qdepth", 19, false],
+        ["ingress_global_timestamp", 48, false],
+        ["egress_global_timestamp", 48, false],
+        ["mcast_grp", 16, false],
+        ["egress_rid", 16, false],
+        ["checksum_error", 1, false],
+        ["parser_error", 32, false],
+        ["priority", 3, false],
+        ["_padding", 3, false]
+      ]
+    },
+    {
+      "name" : "ethernet_t",
+      "id" : 2,
+      "fields" : [
+        ["dst_mac", 48, false],
+        ["src_mac", 48, false],
+        ["etherType", 16, false]
+      ]
+    },
+    {
+      "name" : "ipv4_t",
+      "id" : 3,
+      "fields" : [
+        ["version", 4, false],
+        ["ihl", 4, false],
+        ["diffserv", 8, false],
+        ["totalLen", 16, false],
+        ["identification", 16, false],
+        ["flags", 3, false],
+        ["fragOffset", 13, false],
+        ["ttl", 8, false],
+        ["protocol", 8, false],
+        ["hdrChecksum", 16, false],
+        ["srcAddr", 32, false],
+        ["dstAddr", 32, false]
+      ]
+    },
+    {
+      "name" : "ipv6_t",
+      "id" : 4,
+      "fields" : [
+        ["version", 4, false],
+        ["class", 8, false],
+        ["flow_label", 20, false],
+        ["payload_len", 16, false],
+        ["next_hdr_proto", 8, false],
+        ["hop_limit", 8, false],
+        ["srcAddr", 128, false],
+        ["dstAddr", 128, false]
+      ]
+    },
+    {
+      "name" : "udp_t",
+      "id" : 5,
+      "fields" : [
+        ["src_port", 16, false],
+        ["dst_port", 16, false],
+        ["len", 16, false],
+        ["cksum", 16, false]
+      ]
+    },
+    {
+      "name" : "telem_rpt_t",
+      "id" : 6,
+      "fields" : [
+        ["ver", 4, false],
+        ["hw_id", 6, false],
+        ["sequence_no", 16, false],
+        ["sequence_pad", 6, false],
+        ["node_id", 32, false],
+        ["rep_type", 4, false],
+        ["in_type", 4, false],
+        ["rpt_len", 8, false],
+        ["md_len", 8, false],
+        ["d", 1, false],
+        ["q", 1, false],
+        ["f", 1, false],
+        ["i", 1, false],
+        ["reserved", 4, false],
+        ["rep_md_bit0", 1, false],
+        ["rep_md_bit1", 1, false],
+        ["rep_md_bit2", 1, false],
+        ["rep_md_bit3", 1, false],
+        ["rep_md_bit4", 1, false],
+        ["rep_md_bit5", 1, false],
+        ["rep_md_bit6", 1, false],
+        ["rep_md_bit7", 1, false],
+        ["rep_md_bit8", 1, false],
+        ["rep_md_bit9", 1, false],
+        ["rep_md_bit10", 1, false],
+        ["rep_md_bit11", 1, false],
+        ["rep_md_bit12", 1, false],
+        ["rep_md_bit13", 1, false],
+        ["rep_md_bit14", 1, false],
+        ["rep_md_bit15", 1, false],
+        ["domain_id", 16, false],
+        ["ds_mdb_bit0", 1, false],
+        ["ds_mdb_bit1", 1, false],
+        ["ds_mdb_bit2", 1, false],
+        ["ds_mdb_bit3", 1, false],
+        ["ds_mdb_bit4", 1, false],
+        ["ds_mdb_bit5", 1, false],
+        ["ds_mdb_bit6", 1, false],
+        ["ds_mdb_bit7", 1, false],
+        ["ds_mdb_bit8", 1, false],
+        ["ds_mdb_bit9", 1, false],
+        ["ds_mdb_bit10", 1, false],
+        ["ds_mdb_bit11", 1, false],
+        ["ds_mdb_bit12", 1, false],
+        ["ds_mdb_bit13", 1, false],
+        ["ds_mdb_bit14", 1, false],
+        ["ds_mdb_bit15", 1, false],
+        ["ds_mds_bit0", 1, false],
+        ["ds_mds_bit1", 1, false],
+        ["ds_mds_bit2", 1, false],
+        ["ds_mds_bit3", 1, false],
+        ["ds_mds_bit4", 1, false],
+        ["ds_mds_bit5", 1, false],
+        ["ds_mds_bit6", 1, false],
+        ["ds_mds_bit7", 1, false],
+        ["ds_mds_bit8", 1, false],
+        ["ds_mds_bit9", 1, false],
+        ["ds_mds_bit10", 1, false],
+        ["ds_mds_bit11", 1, false],
+        ["ds_mds_bit12", 1, false],
+        ["ds_mds_bit13", 1, false],
+        ["ds_mds_bit14", 1, false],
+        ["ds_mds_bit15", 1, false],
+        ["var_opt_md", 32, false]
+      ]
+    },
+    {
+      "name" : "int_udp_shim_t",
+      "id" : 7,
+      "fields" : [
+        ["type", 4, false],
+        ["npt", 2, false],
+        ["res1", 2, false],
+        ["length", 8, false],
+        ["res2", 8, false],
+        ["next_proto", 8, false]
+      ]
+    },
+    {
+      "name" : "int_header_t",
+      "id" : 8,
+      "fields" : [
+        ["ver", 4, false],
+        ["res", 2, false],
+        ["d", 1, false],
+        ["e", 1, false],
+        ["m", 1, false],
+        ["reserved", 10, false],
+        ["meta_len", 5, false],
+        ["remaining_hop_cnt", 8, false],
+        ["instr_bit_0", 1, false],
+        ["instr_bit_bal", 15, false],
+        ["domain_id", 16, false],
+        ["ds_instr_0", 1, false],
+        ["ds_instr_bal", 15, false],
+        ["ds_flags_0", 1, false],
+        ["ds_flags_1", 1, false],
+        ["ds_flags_bal", 14, false]
+      ]
+    },
+    {
+      "name" : "int_metadata_t",
+      "id" : 9,
+      "fields" : [
+        ["switch_id", 32, false]
+      ]
+    },
+    {
+      "name" : "source_metadata_t",
+      "id" : 10,
+      "fields" : [
+        ["switch_id", 32, false],
+        ["orig_mac", 48, false],
+        ["reserved", 16, false]
+      ]
+    },
+    {
+      "name" : "arp_t",
+      "id" : 11,
+      "fields" : [
+        ["hwType", 16, false],
+        ["protoType", 16, false],
+        ["hwAddrLen", 8, false],
+        ["protoAddrLen", 8, false],
+        ["opcode", 16, false],
+        ["src_mac", 48, false],
+        ["srcAddr", 32, false],
+        ["dst_mac", 48, false],
+        ["dstAddr", 32, false]
+      ]
+    },
+    {
+      "name" : "tcp_t",
+      "id" : 12,
+      "fields" : [
+        ["src_port", 16, false],
+        ["dst_port", 16, false],
+        ["seq_no", 32, false],
+        ["ack_no", 32, false],
+        ["data_offset", 4, false],
+        ["res", 3, false],
+        ["ecn", 3, false],
+        ["ctrl", 6, false],
+        ["window", 16, false],
+        ["checksum", 16, false],
+        ["urgentPtr", 16, false]
+      ]
+    }
+  ],
+  "headers" : [
+    {
+      "name" : "scalars",
+      "id" : 0,
+      "header_type" : "scalars_0",
+      "metadata" : true,
+      "pi_omit" : true
+    },
+    {
+      "name" : "standard_metadata",
+      "id" : 1,
+      "header_type" : "standard_metadata",
+      "metadata" : true,
+      "pi_omit" : true
+    },
+    {
+      "name" : "trpt_eth",
+      "id" : 2,
+      "header_type" : "ethernet_t",
+      "metadata" : false,
+      "pi_omit" : true
+    },
+    {
+      "name" : "trpt_ipv4",
+      "id" : 3,
+      "header_type" : "ipv4_t",
+      "metadata" : false,
+      "pi_omit" : true
+    },
+    {
+      "name" : "trpt_ipv6",
+      "id" : 4,
+      "header_type" : "ipv6_t",
+      "metadata" : false,
+      "pi_omit" : true
+    },
+    {
+      "name" : "trpt_udp",
+      "id" : 5,
+      "header_type" : "udp_t",
+      "metadata" : false,
+      "pi_omit" : true
+    },
+    {
+      "name" : "trpt_hdr",
+      "id" : 6,
+      "header_type" : "telem_rpt_t",
+      "metadata" : false,
+      "pi_omit" : true
+    },
+    {
+      "name" : "ethernet",
+      "id" : 7,
+      "header_type" : "ethernet_t",
+      "metadata" : false,
+      "pi_omit" : true
+    },
+    {
+      "name" : "ipv4",
+      "id" : 8,
+      "header_type" : "ipv4_t",
+      "metadata" : false,
+      "pi_omit" : true
+    },
+    {
+      "name" : "ipv6",
+      "id" : 9,
+      "header_type" : "ipv6_t",
+      "metadata" : false,
+      "pi_omit" : true
+    },
+    {
+      "name" : "udp_int",
+      "id" : 10,
+      "header_type" : "udp_t",
+      "metadata" : false,
+      "pi_omit" : true
+    },
+    {
+      "name" : "int_shim",
+      "id" : 11,
+      "header_type" : "int_udp_shim_t",
+      "metadata" : false,
+      "pi_omit" : true
+    },
+    {
+      "name" : "int_header",
+      "id" : 12,
+      "header_type" : "int_header_t",
+      "metadata" : false,
+      "pi_omit" : true
+    },
+    {
+      "name" : "int_meta_3",
+      "id" : 13,
+      "header_type" : "int_metadata_t",
+      "metadata" : false,
+      "pi_omit" : true
+    },
+    {
+      "name" : "int_meta_2",
+      "id" : 14,
+      "header_type" : "int_metadata_t",
+      "metadata" : false,
+      "pi_omit" : true
+    },
+    {
+      "name" : "int_meta",
+      "id" : 15,
+      "header_type" : "source_metadata_t",
+      "metadata" : false,
+      "pi_omit" : true
+    },
+    {
+      "name" : "arp",
+      "id" : 16,
+      "header_type" : "arp_t",
+      "metadata" : false,
+      "pi_omit" : true
+    },
+    {
+      "name" : "udp",
+      "id" : 17,
+      "header_type" : "udp_t",
+      "metadata" : false,
+      "pi_omit" : true
+    },
+    {
+      "name" : "tcp",
+      "id" : 18,
+      "header_type" : "tcp_t",
+      "metadata" : false,
+      "pi_omit" : true
+    }
+  ],
+  "header_stacks" : [],
+  "header_union_types" : [],
+  "header_unions" : [],
+  "header_union_stacks" : [],
+  "field_lists" : [],
+  "errors" : [
+    ["NoError", 0],
+    ["PacketTooShort", 1],
+    ["NoMatch", 2],
+    ["StackOutOfBounds", 3],
+    ["HeaderTooShort", 4],
+    ["ParserTimeout", 5],
+    ["ParserInvalidArgument", 6]
+  ],
+  "enums" : [],
+  "parsers" : [
+    {
+      "name" : "parser",
+      "id" : 0,
+      "init_state" : "start",
+      "parse_states" : [
+        {
+          "name" : "start",
+          "id" : 0,
+          "parser_ops" : [
+            {
+              "parameters" : [
+                {
+                  "type" : "regular",
+                  "value" : "ethernet"
+                }
+              ],
+              "op" : "extract"
+            }
+          ],
+          "transitions" : [
+            {
+              "type" : "hexstr",
+              "value" : "0x0806",
+              "mask" : null,
+              "next_state" : "parse_arp"
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x0800",
+              "mask" : null,
+              "next_state" : "parse_ipv4"
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x86dd",
+              "mask" : null,
+              "next_state" : "parse_ipv6"
+            },
+            {
+              "value" : "default",
+              "mask" : null,
+              "next_state" : null
+            }
+          ],
+          "transition_key" : [
+            {
+              "type" : "field",
+              "value" : ["ethernet", "etherType"]
+            }
+          ]
+        },
+        {
+          "name" : "parse_ipv4",
+          "id" : 1,
+          "parser_ops" : [
+            {
+              "parameters" : [
+                {
+                  "type" : "regular",
+                  "value" : "ipv4"
+                }
+              ],
+              "op" : "extract"
+            }
+          ],
+          "transitions" : [
+            {
+              "type" : "hexstr",
+              "value" : "0x11",
+              "mask" : null,
+              "next_state" : "parse_udp_int"
+            },
+            {
+              "value" : "default",
+              "mask" : null,
+              "next_state" : null
+            }
+          ],
+          "transition_key" : [
+            {
+              "type" : "field",
+              "value" : ["ipv4", "protocol"]
+            }
+          ]
+        },
+        {
+          "name" : "parse_ipv6",
+          "id" : 2,
+          "parser_ops" : [
+            {
+              "parameters" : [
+                {
+                  "type" : "regular",
+                  "value" : "ipv6"
+                }
+              ],
+              "op" : "extract"
+            }
+          ],
+          "transitions" : [
+            {
+              "type" : "hexstr",
+              "value" : "0x11",
+              "mask" : null,
+              "next_state" : "parse_udp_int"
+            },
+            {
+              "value" : "default",
+              "mask" : null,
+              "next_state" : null
+            }
+          ],
+          "transition_key" : [
+            {
+              "type" : "field",
+              "value" : ["ipv6", "next_hdr_proto"]
+            }
+          ]
+        },
+        {
+          "name" : "parse_udp_int",
+          "id" : 3,
+          "parser_ops" : [
+            {
+              "parameters" : [
+                {
+                  "type" : "regular",
+                  "value" : "udp_int"
+                }
+              ],
+              "op" : "extract"
+            }
+          ],
+          "transitions" : [
+            {
+              "type" : "hexstr",
+              "value" : "0x0000",
+              "mask" : null,
+              "next_state" : "parse_int_shim"
+            },
+            {
+              "value" : "default",
+              "mask" : null,
+              "next_state" : null
+            }
+          ],
+          "transition_key" : [
+            {
+              "type" : "field",
+              "value" : ["udp_int", "src_port"]
+            }
+          ]
+        },
+        {
+          "name" : "parse_int_shim",
+          "id" : 4,
+          "parser_ops" : [
+            {
+              "parameters" : [
+                {
+                  "type" : "regular",
+                  "value" : "int_shim"
+                }
+              ],
+              "op" : "extract"
+            },
+            {
+              "parameters" : [
+                {
+                  "type" : "regular",
+                  "value" : "int_header"
+                }
+              ],
+              "op" : "extract"
+            }
+          ],
+          "transitions" : [
+            {
+              "value" : "default",
+              "mask" : null,
+              "next_state" : null
+            }
+          ],
+          "transition_key" : []
+        },
+        {
+          "name" : "parse_arp",
+          "id" : 5,
+          "parser_ops" : [
+            {
+              "parameters" : [
+                {
+                  "type" : "regular",
+                  "value" : "arp"
+                }
+              ],
+              "op" : "extract"
+            }
+          ],
+          "transitions" : [
+            {
+              "value" : "default",
+              "mask" : null,
+              "next_state" : null
+            }
+          ],
+          "transition_key" : []
+        }
+      ]
+    }
+  ],
+  "parse_vsets" : [],
+  "deparsers" : [
+    {
+      "name" : "deparser",
+      "id" : 0,
+      "source_info" : {
+        "filename" : "/usr/local/share/p4c/p4include/tps_egress.p4",
+        "line" : 46,
+        "column" : 8,
+        "source_fragment" : "TpsDeparser"
+      },
+      "order" : ["trpt_eth", "trpt_ipv4", "trpt_ipv6", "trpt_udp", "trpt_hdr", "ethernet", "arp", "ipv4", "ipv6", "udp_int", "int_shim", "int_header", "int_meta_3", "int_meta_2", "int_meta", "udp", "tcp"],
+      "primitives" : []
+    }
+  ],
+  "meter_arrays" : [],
+  "counter_arrays" : [
+    {
+      "name" : "TpsAggIngress.forwardedPackets",
+      "id" : 0,
+      "source_info" : {
+        "filename" : "/home/ubuntu/transparent-security/p4/aggregate/aggregate.p4",
+        "line" : 37,
+        "column" : 58,
+        "source_fragment" : "forwardedPackets"
+      },
+      "size" : 15,
+      "is_direct" : false
+    }
+  ],
+  "register_arrays" : [],
+  "calculations" : [
+    {
+      "name" : "calc",
+      "id" : 0,
+      "source_info" : {
+        "filename" : "/usr/local/share/p4c/p4include/tps_checksum.p4",
+        "line" : 59,
+        "column" : 8,
+        "source_fragment" : "update_checksum(hdr.ipv4.isValid(), ..."
+      },
+      "algo" : "csum16",
+      "input" : [
+        {
+          "type" : "field",
+          "value" : ["ipv4", "version"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "ihl"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "diffserv"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "totalLen"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "identification"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "flags"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "fragOffset"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "ttl"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "protocol"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "srcAddr"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "dstAddr"]
+        }
+      ]
+    },
+    {
+      "name" : "calc_0",
+      "id" : 1,
+      "source_info" : {
+        "filename" : "/usr/local/share/p4c/p4include/tps_checksum.p4",
+        "line" : 77,
+        "column" : 8,
+        "source_fragment" : "update_checksum(hdr.trpt_ipv4.isValid(), ..."
+      },
+      "algo" : "csum16",
+      "input" : [
+        {
+          "type" : "field",
+          "value" : ["trpt_ipv4", "version"]
+        },
+        {
+          "type" : "field",
+          "value" : ["trpt_ipv4", "ihl"]
+        },
+        {
+          "type" : "field",
+          "value" : ["trpt_ipv4", "diffserv"]
+        },
+        {
+          "type" : "field",
+          "value" : ["trpt_ipv4", "totalLen"]
+        },
+        {
+          "type" : "field",
+          "value" : ["trpt_ipv4", "identification"]
+        },
+        {
+          "type" : "field",
+          "value" : ["trpt_ipv4", "flags"]
+        },
+        {
+          "type" : "field",
+          "value" : ["trpt_ipv4", "fragOffset"]
+        },
+        {
+          "type" : "field",
+          "value" : ["trpt_ipv4", "ttl"]
+        },
+        {
+          "type" : "field",
+          "value" : ["trpt_ipv4", "protocol"]
+        },
+        {
+          "type" : "field",
+          "value" : ["trpt_ipv4", "srcAddr"]
+        },
+        {
+          "type" : "field",
+          "value" : ["trpt_ipv4", "dstAddr"]
+        }
+      ]
+    },
+    {
+      "name" : "calc_1",
+      "id" : 2,
+      "source_info" : {
+        "filename" : "/usr/local/share/p4c/p4include/tps_checksum.p4",
+        "line" : 95,
+        "column" : 1,
+        "source_fragment" : "update_checksum(hdr.udp.isValid(), ..."
+      },
+      "algo" : "csum16",
+      "input" : [
+        {
+          "type" : "field",
+          "value" : ["udp", "src_port"]
+        },
+        {
+          "type" : "field",
+          "value" : ["udp", "dst_port"]
+        },
+        {
+          "type" : "field",
+          "value" : ["udp", "len"]
+        }
+      ]
+    },
+    {
+      "name" : "calc_2",
+      "id" : 3,
+      "source_info" : {
+        "filename" : "/usr/local/share/p4c/p4include/tps_checksum.p4",
+        "line" : 105,
+        "column" : 1,
+        "source_fragment" : "update_checksum(hdr.udp_int.isValid(), ..."
+      },
+      "algo" : "csum16",
+      "input" : [
+        {
+          "type" : "field",
+          "value" : ["udp_int", "src_port"]
+        },
+        {
+          "type" : "field",
+          "value" : ["udp_int", "dst_port"]
+        },
+        {
+          "type" : "field",
+          "value" : ["udp_int", "len"]
+        }
+      ]
+    },
+    {
+      "name" : "calc_3",
+      "id" : 4,
+      "source_info" : {
+        "filename" : "/usr/local/share/p4c/p4include/tps_checksum.p4",
+        "line" : 115,
+        "column" : 1,
+        "source_fragment" : "update_checksum(hdr.trpt_udp.isValid(), ..."
+      },
+      "algo" : "csum16",
+      "input" : [
+        {
+          "type" : "field",
+          "value" : ["trpt_udp", "src_port"]
+        },
+        {
+          "type" : "field",
+          "value" : ["trpt_udp", "dst_port"]
+        },
+        {
+          "type" : "field",
+          "value" : ["trpt_udp", "len"]
+        }
+      ]
+    },
+    {
+      "name" : "calc_4",
+      "id" : 5,
+      "source_info" : {
+        "filename" : "/usr/local/share/p4c/p4include/tps_checksum.p4",
+        "line" : 23,
+        "column" : 8,
+        "source_fragment" : "verify_checksum(hdr.ipv4.isValid(), ..."
+      },
+      "algo" : "csum16",
+      "input" : [
+        {
+          "type" : "field",
+          "value" : ["ipv4", "version"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "ihl"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "diffserv"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "totalLen"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "identification"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "flags"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "fragOffset"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "ttl"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "protocol"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "srcAddr"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "dstAddr"]
+        }
+      ]
+    },
+    {
+      "name" : "calc_5",
+      "id" : 6,
+      "source_info" : {
+        "filename" : "/usr/local/share/p4c/p4include/tps_checksum.p4",
+        "line" : 41,
+        "column" : 1,
+        "source_fragment" : "verify_checksum(hdr.udp_int.isValid(), ..."
+      },
+      "algo" : "csum16",
+      "input" : [
+        {
+          "type" : "field",
+          "value" : ["udp_int", "src_port"]
+        },
+        {
+          "type" : "field",
+          "value" : ["udp_int", "dst_port"]
+        },
+        {
+          "type" : "field",
+          "value" : ["udp_int", "len"]
+        }
+      ]
+    }
+  ],
+  "learn_lists" : [
+    {
+      "id" : 1,
+      "name" : "mac_learn_digest",
+      "source_info" : {
+        "filename" : "/home/ubuntu/transparent-security/p4/aggregate/aggregate.p4",
+        "line" : 87,
+        "column" : 12,
+        "source_fragment" : "{ hdr.arp.src_mac, ..."
+      },
+      "elements" : [
+        {
+          "type" : "field",
+          "value" : ["scalars", "tmp"]
+        },
+        {
+          "type" : "field",
+          "value" : ["scalars", "tmp_0"]
+        }
+      ]
+    }
+  ],
+  "actions" : [
+    {
+      "name" : "TpsEgress.drop_pkt",
+      "id" : 0,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "mark_to_drop",
+          "parameters" : [
+            {
+              "type" : "header",
+              "value" : "standard_metadata"
+            }
+          ],
+          "source_info" : {
+            "filename" : "/usr/local/share/p4c/p4include/tps_egress.p4",
+            "line" : 30,
+            "column" : 8,
+            "source_fragment" : "mark_to_drop(standard_metadata)"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "NoAction",
+      "id" : 1,
+      "runtime_data" : [],
+      "primitives" : []
+    },
+    {
+      "name" : "NoAction",
+      "id" : 2,
+      "runtime_data" : [],
+      "primitives" : []
+    },
+    {
+      "name" : "NoAction",
+      "id" : 3,
+      "runtime_data" : [],
+      "primitives" : []
+    },
+    {
+      "name" : "TpsAggIngress.data_forward",
+      "id" : 4,
+      "runtime_data" : [
+        {
+          "name" : "port",
+          "bitwidth" : 9
+        }
+      ],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["standard_metadata", "egress_spec"]
+            },
+            {
+              "type" : "runtime_data",
+              "value" : 0
+            }
+          ],
+          "source_info" : {
+            "filename" : "/home/ubuntu/transparent-security/p4/aggregate/aggregate.p4",
+            "line" : 40,
+            "column" : 8,
+            "source_fragment" : "standard_metadata.egress_spec = port"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "TpsAggIngress.data_inspect_packet",
+      "id" : 5,
+      "runtime_data" : [
+        {
+          "name" : "device",
+          "bitwidth" : 32
+        },
+        {
+          "name" : "switch_id",
+          "bitwidth" : 32
+        }
+      ],
+      "primitives" : [
+        {
+          "op" : "add_header",
+          "parameters" : [
+            {
+              "type" : "header",
+              "value" : "int_meta_2"
+            }
+          ],
+          "source_info" : {
+            "filename" : "/home/ubuntu/transparent-security/p4/aggregate/aggregate.p4",
+            "line" : 56,
+            "column" : 8,
+            "source_fragment" : "hdr.int_meta_2.setValid()"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["int_shim", "length"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["int_shim", "length"]
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0x01"
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xff"
+                  }
+                }
+              }
+            }
+          ],
+          "source_info" : {
+            "filename" : "/home/ubuntu/transparent-security/p4/aggregate/aggregate.p4",
+            "line" : 57,
+            "column" : 8,
+            "source_fragment" : "hdr.int_shim.length = hdr.int_shim.length + 1"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["int_header", "remaining_hop_cnt"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["int_header", "remaining_hop_cnt"]
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0xff"
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xff"
+                  }
+                }
+              }
+            }
+          ],
+          "source_info" : {
+            "filename" : "/home/ubuntu/transparent-security/p4/aggregate/aggregate.p4",
+            "line" : 58,
+            "column" : 8,
+            "source_fragment" : "hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt - 1"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["int_meta_2", "switch_id"]
+            },
+            {
+              "type" : "runtime_data",
+              "value" : 1
+            }
+          ],
+          "source_info" : {
+            "filename" : "/home/ubuntu/transparent-security/p4/aggregate/aggregate.p4",
+            "line" : 59,
+            "column" : 8,
+            "source_fragment" : "hdr.int_meta_2.switch_id = switch_id"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["ipv4", "totalLen"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["ipv4", "totalLen"]
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0x0004"
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffff"
+                  }
+                }
+              }
+            }
+          ],
+          "source_info" : {
+            "filename" : "/home/ubuntu/transparent-security/p4/aggregate/aggregate.p4",
+            "line" : 62,
+            "column" : 8,
+            "source_fragment" : "hdr.ipv4.totalLen = hdr.ipv4.totalLen + 4 * 1"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["udp_int", "len"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["udp_int", "len"]
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0x0004"
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffff"
+                  }
+                }
+              }
+            }
+          ],
+          "source_info" : {
+            "filename" : "/home/ubuntu/transparent-security/p4/aggregate/aggregate.p4",
+            "line" : 63,
+            "column" : 8,
+            "source_fragment" : "hdr.udp_int.len = hdr.udp_int.len + 4 * 1"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["ipv6", "payload_len"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["ipv6", "payload_len"]
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0x0004"
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffff"
+                  }
+                }
+              }
+            }
+          ],
+          "source_info" : {
+            "filename" : "/home/ubuntu/transparent-security/p4/aggregate/aggregate.p4",
+            "line" : 64,
+            "column" : 8,
+            "source_fragment" : "hdr.ipv6.payload_len = hdr.ipv6.payload_len + 4 * 1"
+          }
+        },
+        {
+          "op" : "count",
+          "parameters" : [
+            {
+              "type" : "counter_array",
+              "value" : "TpsAggIngress.forwardedPackets"
+            },
+            {
+              "type" : "runtime_data",
+              "value" : 0
+            }
+          ],
+          "source_info" : {
+            "filename" : "/home/ubuntu/transparent-security/p4/aggregate/aggregate.p4",
+            "line" : 66,
+            "column" : 8,
+            "source_fragment" : "forwardedPackets.count(device)"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "TpsAggIngress.generate_learn_notification",
+      "id" : 6,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp"]
+            },
+            {
+              "type" : "field",
+              "value" : ["arp", "src_mac"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "/home/ubuntu/transparent-security/p4/aggregate/aggregate.p4",
+            "line" : 87,
+            "column" : 14,
+            "source_fragment" : "hdr.arp.src_mac"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_0"]
+            },
+            {
+              "type" : "field",
+              "value" : ["standard_metadata", "ingress_port"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "/home/ubuntu/transparent-security/p4/aggregate/aggregate.p4",
+            "line" : 88,
+            "column" : 14,
+            "source_fragment" : "standard_metadata.ingress_port"
+          }
+        },
+        {
+          "op" : "generate_digest",
+          "parameters" : [
+            {
+              "type" : "hexstr",
+              "value" : "0x00000400"
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x1"
+            }
+          ],
+          "source_info" : {
+            "filename" : "/home/ubuntu/transparent-security/p4/aggregate/aggregate.p4",
+            "line" : 86,
+            "column" : 8,
+            "source_fragment" : "digest<mac_learn_digest>((bit<32>) 1024, ..."
+          }
+        }
+      ]
+    },
+    {
+      "name" : "TpsAggIngress.arp_flood",
+      "id" : 7,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["standard_metadata", "mcast_grp"]
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x0001"
+            }
+          ],
+          "source_info" : {
+            "filename" : "/home/ubuntu/transparent-security/p4/aggregate/aggregate.p4",
+            "line" : 93,
+            "column" : 8,
+            "source_fragment" : "standard_metadata.mcast_grp = 1"
+          }
+        }
+      ]
+    }
+  ],
+  "pipelines" : [
+    {
+      "name" : "ingress",
+      "id" : 0,
+      "source_info" : {
+        "filename" : "/home/ubuntu/transparent-security/p4/aggregate/aggregate.p4",
+        "line" : 33,
+        "column" : 8,
+        "source_fragment" : "TpsAggIngress"
+      },
+      "init_table" : "node_2",
+      "tables" : [
+        {
+          "name" : "tbl_generate_learn_notification",
+          "id" : 0,
+          "source_info" : {
+            "filename" : "/home/ubuntu/transparent-security/p4/aggregate/aggregate.p4",
+            "line" : 109,
+            "column" : 12,
+            "source_fragment" : "generate_learn_notification()"
+          },
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [6],
+          "actions" : ["TpsAggIngress.generate_learn_notification"],
+          "base_default_next" : "node_4",
+          "next_tables" : {
+            "TpsAggIngress.generate_learn_notification" : "node_4"
+          },
+          "default_entry" : {
+            "action_id" : 6,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "TpsAggIngress.arp_flood_t",
+          "id" : 1,
+          "source_info" : {
+            "filename" : "/home/ubuntu/transparent-security/p4/aggregate/aggregate.p4",
+            "line" : 96,
+            "column" : 10,
+            "source_fragment" : "arp_flood_t"
+          },
+          "key" : [
+            {
+              "match_type" : "exact",
+              "name" : "hdr.ethernet.dst_mac",
+              "target" : ["ethernet", "dst_mac"],
+              "mask" : null
+            }
+          ],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [7, 3],
+          "actions" : ["TpsAggIngress.arp_flood", "NoAction"],
+          "base_default_next" : null,
+          "next_tables" : {
+            "TpsAggIngress.arp_flood" : null,
+            "NoAction" : null
+          },
+          "default_entry" : {
+            "action_id" : 3,
+            "action_const" : false,
+            "action_data" : [],
+            "action_entry_const" : false
+          }
+        },
+        {
+          "name" : "TpsAggIngress.data_forward_t",
+          "id" : 2,
+          "source_info" : {
+            "filename" : "/home/ubuntu/transparent-security/p4/aggregate/aggregate.p4",
+            "line" : 43,
+            "column" : 10,
+            "source_fragment" : "data_forward_t"
+          },
+          "key" : [
+            {
+              "match_type" : "exact",
+              "name" : "hdr.ethernet.dst_mac",
+              "target" : ["ethernet", "dst_mac"],
+              "mask" : null
+            }
+          ],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [4, 1],
+          "actions" : ["TpsAggIngress.data_forward", "NoAction"],
+          "base_default_next" : null,
+          "next_tables" : {
+            "TpsAggIngress.data_forward" : null,
+            "NoAction" : null
+          },
+          "default_entry" : {
+            "action_id" : 1,
+            "action_const" : false,
+            "action_data" : [],
+            "action_entry_const" : false
+          }
+        },
+        {
+          "name" : "TpsAggIngress.data_inspection_t",
+          "id" : 3,
+          "source_info" : {
+            "filename" : "/home/ubuntu/transparent-security/p4/aggregate/aggregate.p4",
+            "line" : 69,
+            "column" : 10,
+            "source_fragment" : "data_inspection_t"
+          },
+          "key" : [
+            {
+              "match_type" : "exact",
+              "name" : "hdr.ethernet.src_mac",
+              "target" : ["ethernet", "src_mac"],
+              "mask" : null
+            }
+          ],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [5, 2],
+          "actions" : ["TpsAggIngress.data_inspect_packet", "NoAction"],
+          "base_default_next" : "TpsAggIngress.data_forward_t",
+          "next_tables" : {
+            "TpsAggIngress.data_inspect_packet" : "TpsAggIngress.data_forward_t",
+            "NoAction" : "TpsAggIngress.data_forward_t"
+          },
+          "default_entry" : {
+            "action_id" : 2,
+            "action_const" : false,
+            "action_data" : [],
+            "action_entry_const" : false
+          }
+        }
+      ],
+      "action_profiles" : [],
+      "conditionals" : [
+        {
+          "name" : "node_2",
+          "id" : 0,
+          "source_info" : {
+            "filename" : "/home/ubuntu/transparent-security/p4/aggregate/aggregate.p4",
+            "line" : 108,
+            "column" : 12,
+            "source_fragment" : "hdr.arp.isValid()"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "d2b",
+              "left" : null,
+              "right" : {
+                "type" : "field",
+                "value" : ["arp", "$valid$"]
+              }
+            }
+          },
+          "true_next" : "tbl_generate_learn_notification",
+          "false_next" : "node_8"
+        },
+        {
+          "name" : "node_4",
+          "id" : 1,
+          "source_info" : {
+            "filename" : "/home/ubuntu/transparent-security/p4/aggregate/aggregate.p4",
+            "line" : 110,
+            "column" : 16,
+            "source_fragment" : "hdr.arp.opcode == 1"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "==",
+              "left" : {
+                "type" : "field",
+                "value" : ["arp", "opcode"]
+              },
+              "right" : {
+                "type" : "hexstr",
+                "value" : "0x0001"
+              }
+            }
+          },
+          "true_next" : "TpsAggIngress.arp_flood_t",
+          "false_next" : "node_6"
+        },
+        {
+          "name" : "node_6",
+          "id" : 2,
+          "source_info" : {
+            "filename" : "/home/ubuntu/transparent-security/p4/aggregate/aggregate.p4",
+            "line" : 112,
+            "column" : 23,
+            "source_fragment" : "hdr.arp.opcode == 2"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "==",
+              "left" : {
+                "type" : "field",
+                "value" : ["arp", "opcode"]
+              },
+              "right" : {
+                "type" : "hexstr",
+                "value" : "0x0002"
+              }
+            }
+          },
+          "false_next" : null,
+          "true_next" : "TpsAggIngress.data_forward_t"
+        },
+        {
+          "name" : "node_8",
+          "id" : 3,
+          "source_info" : {
+            "filename" : "/home/ubuntu/transparent-security/p4/aggregate/aggregate.p4",
+            "line" : 115,
+            "column" : 19,
+            "source_fragment" : "standard_metadata.egress_spec != DROP_PORT"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "!=",
+              "left" : {
+                "type" : "field",
+                "value" : ["standard_metadata", "egress_spec"]
+              },
+              "right" : {
+                "type" : "hexstr",
+                "value" : "0x01ff"
+              }
+            }
+          },
+          "false_next" : null,
+          "true_next" : "TpsAggIngress.data_inspection_t"
+        }
+      ]
+    },
+    {
+      "name" : "egress",
+      "id" : 1,
+      "source_info" : {
+        "filename" : "/usr/local/share/p4c/p4include/tps_egress.p4",
+        "line" : 25,
+        "column" : 8,
+        "source_fragment" : "TpsEgress"
+      },
+      "init_table" : "node_13",
+      "tables" : [
+        {
+          "name" : "tbl_drop_pkt",
+          "id" : 4,
+          "source_info" : {
+            "filename" : "/usr/local/share/p4c/p4include/tps_egress.p4",
+            "line" : 36,
+            "column" : 16,
+            "source_fragment" : "drop_pkt()"
+          },
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [0],
+          "actions" : ["TpsEgress.drop_pkt"],
+          "base_default_next" : null,
+          "next_tables" : {
+            "TpsEgress.drop_pkt" : null
+          },
+          "default_entry" : {
+            "action_id" : 0,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        }
+      ],
+      "action_profiles" : [],
+      "conditionals" : [
+        {
+          "name" : "node_13",
+          "id" : 4,
+          "source_info" : {
+            "filename" : "/usr/local/share/p4c/p4include/tps_egress.p4",
+            "line" : 34,
+            "column" : 12,
+            "source_fragment" : "standard_metadata.instance_type == BMV2_V1MODEL_INSTANCE_TYPE_REPLICATION"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "==",
+              "left" : {
+                "type" : "field",
+                "value" : ["standard_metadata", "instance_type"]
+              },
+              "right" : {
+                "type" : "hexstr",
+                "value" : "0x00000005"
+              }
+            }
+          },
+          "false_next" : null,
+          "true_next" : "node_14"
+        },
+        {
+          "name" : "node_14",
+          "id" : 5,
+          "source_info" : {
+            "filename" : "/usr/local/share/p4c/p4include/tps_egress.p4",
+            "line" : 35,
+            "column" : 16,
+            "source_fragment" : "standard_metadata.egress_port == standard_metadata.ingress_port"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "==",
+              "left" : {
+                "type" : "field",
+                "value" : ["standard_metadata", "egress_port"]
+              },
+              "right" : {
+                "type" : "field",
+                "value" : ["standard_metadata", "ingress_port"]
+              }
+            }
+          },
+          "false_next" : null,
+          "true_next" : "tbl_drop_pkt"
+        }
+      ]
+    }
+  ],
+  "checksums" : [
+    {
+      "name" : "cksum_0",
+      "id" : 0,
+      "source_info" : {
+        "filename" : "/usr/local/share/p4c/p4include/tps_checksum.p4",
+        "line" : 59,
+        "column" : 8,
+        "source_fragment" : "update_checksum(hdr.ipv4.isValid(), ..."
+      },
+      "target" : ["ipv4", "hdrChecksum"],
+      "type" : "generic",
+      "calculation" : "calc",
+      "verify" : false,
+      "update" : true,
+      "if_cond" : {
+        "type" : "expression",
+        "value" : {
+          "op" : "d2b",
+          "left" : null,
+          "right" : {
+            "type" : "field",
+            "value" : ["ipv4", "$valid$"]
+          }
+        }
+      }
+    },
+    {
+      "name" : "cksum_1",
+      "id" : 1,
+      "source_info" : {
+        "filename" : "/usr/local/share/p4c/p4include/tps_checksum.p4",
+        "line" : 77,
+        "column" : 8,
+        "source_fragment" : "update_checksum(hdr.trpt_ipv4.isValid(), ..."
+      },
+      "target" : ["trpt_ipv4", "hdrChecksum"],
+      "type" : "generic",
+      "calculation" : "calc_0",
+      "verify" : false,
+      "update" : true,
+      "if_cond" : {
+        "type" : "expression",
+        "value" : {
+          "op" : "d2b",
+          "left" : null,
+          "right" : {
+            "type" : "field",
+            "value" : ["trpt_ipv4", "$valid$"]
+          }
+        }
+      }
+    },
+    {
+      "name" : "cksum_2",
+      "id" : 2,
+      "source_info" : {
+        "filename" : "/usr/local/share/p4c/p4include/tps_checksum.p4",
+        "line" : 95,
+        "column" : 1,
+        "source_fragment" : "update_checksum(hdr.udp.isValid(), ..."
+      },
+      "target" : ["udp", "cksum"],
+      "type" : "generic",
+      "calculation" : "calc_1",
+      "verify" : false,
+      "update" : true,
+      "if_cond" : {
+        "type" : "expression",
+        "value" : {
+          "op" : "d2b",
+          "left" : null,
+          "right" : {
+            "type" : "field",
+            "value" : ["udp", "$valid$"]
+          }
+        }
+      }
+    },
+    {
+      "name" : "cksum_3",
+      "id" : 3,
+      "source_info" : {
+        "filename" : "/usr/local/share/p4c/p4include/tps_checksum.p4",
+        "line" : 105,
+        "column" : 1,
+        "source_fragment" : "update_checksum(hdr.udp_int.isValid(), ..."
+      },
+      "target" : ["udp_int", "cksum"],
+      "type" : "generic",
+      "calculation" : "calc_2",
+      "verify" : false,
+      "update" : true,
+      "if_cond" : {
+        "type" : "expression",
+        "value" : {
+          "op" : "d2b",
+          "left" : null,
+          "right" : {
+            "type" : "field",
+            "value" : ["udp_int", "$valid$"]
+          }
+        }
+      }
+    },
+    {
+      "name" : "cksum_4",
+      "id" : 4,
+      "source_info" : {
+        "filename" : "/usr/local/share/p4c/p4include/tps_checksum.p4",
+        "line" : 115,
+        "column" : 1,
+        "source_fragment" : "update_checksum(hdr.trpt_udp.isValid(), ..."
+      },
+      "target" : ["trpt_udp", "cksum"],
+      "type" : "generic",
+      "calculation" : "calc_3",
+      "verify" : false,
+      "update" : true,
+      "if_cond" : {
+        "type" : "expression",
+        "value" : {
+          "op" : "d2b",
+          "left" : null,
+          "right" : {
+            "type" : "field",
+            "value" : ["trpt_udp", "$valid$"]
+          }
+        }
+      }
+    },
+    {
+      "name" : "cksum_5",
+      "id" : 5,
+      "source_info" : {
+        "filename" : "/usr/local/share/p4c/p4include/tps_checksum.p4",
+        "line" : 23,
+        "column" : 8,
+        "source_fragment" : "verify_checksum(hdr.ipv4.isValid(), ..."
+      },
+      "target" : ["ipv4", "hdrChecksum"],
+      "type" : "generic",
+      "calculation" : "calc_4",
+      "verify" : true,
+      "update" : false,
+      "if_cond" : {
+        "type" : "expression",
+        "value" : {
+          "op" : "d2b",
+          "left" : null,
+          "right" : {
+            "type" : "field",
+            "value" : ["ipv4", "$valid$"]
+          }
+        }
+      }
+    },
+    {
+      "name" : "cksum_6",
+      "id" : 6,
+      "source_info" : {
+        "filename" : "/usr/local/share/p4c/p4include/tps_checksum.p4",
+        "line" : 41,
+        "column" : 1,
+        "source_fragment" : "verify_checksum(hdr.udp_int.isValid(), ..."
+      },
+      "target" : ["udp_int", "cksum"],
+      "type" : "generic",
+      "calculation" : "calc_5",
+      "verify" : true,
+      "update" : false,
+      "if_cond" : {
+        "type" : "expression",
+        "value" : {
+          "op" : "d2b",
+          "left" : null,
+          "right" : {
+            "type" : "field",
+            "value" : ["udp_int", "$valid$"]
+          }
+        }
+      }
+    }
+  ],
+  "force_arith" : [],
+  "extern_instances" : [],
+  "field_aliases" : [
+    [
+      "queueing_metadata.enq_timestamp",
+      ["standard_metadata", "enq_timestamp"]
+    ],
+    [
+      "queueing_metadata.enq_qdepth",
+      ["standard_metadata", "enq_qdepth"]
+    ],
+    [
+      "queueing_metadata.deq_timedelta",
+      ["standard_metadata", "deq_timedelta"]
+    ],
+    [
+      "queueing_metadata.deq_qdepth",
+      ["standard_metadata", "deq_qdepth"]
+    ],
+    [
+      "intrinsic_metadata.ingress_global_timestamp",
+      ["standard_metadata", "ingress_global_timestamp"]
+    ],
+    [
+      "intrinsic_metadata.egress_global_timestamp",
+      ["standard_metadata", "egress_global_timestamp"]
+    ],
+    [
+      "intrinsic_metadata.mcast_grp",
+      ["standard_metadata", "mcast_grp"]
+    ],
+    [
+      "intrinsic_metadata.egress_rid",
+      ["standard_metadata", "egress_rid"]
+    ],
+    [
+      "intrinsic_metadata.priority",
+      ["standard_metadata", "priority"]
+    ]
+  ],
+  "program" : "/home/ubuntu/transparent-security/p4/aggregate/aggregate.p4",
+  "__meta__" : {
+    "version" : [2, 18],
+    "compiler" : "https://github.com/p4lang/p4c"
+  }
+}

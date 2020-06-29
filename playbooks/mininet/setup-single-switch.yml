@@ -24,7 +24,6 @@
     set_ip_file: set_ip-single-switch.yml
     topology_template: "templates/topology_template-single_switch.yml.j2"
     fwd_daemon_config_template: templates/forwarding-daemons-single_switch.yaml.j2
-    load_p4: False
 
 - import_playbook: ../general/start_service.yml
   vars:

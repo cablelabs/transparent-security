@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 # Copyright (c) 2019 Cable Television Laboratories, Inc.
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,10 +40,6 @@ def get_args():
                         type=bool, required=False, default=False)
     parser.add_argument('-fc', '--forwarding-config', help='Forwarding config',
                         type=str, required=False)
-    parser.add_argument('-lp', '--load-p4', type=str, required=True,
-                        choices=['True', 'False'],
-                        help='When set, the Exercise class will not attempt '
-                             'to load the P4 program onto the switches')
     return parser.parse_args()
 
 
@@ -67,9 +63,12 @@ def read_yaml_file(config_file_path):
 
 if __name__ == '__main__':
     args = get_args()
-    log_file = '{}/{}'.format(args.log_dir, args.log_file)
-    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG,
-                        filename=log_file)
+
+    if args.log_file:
+        log_file = '{}/{}'.format(args.log_dir, args.log_file)
+        logging.basicConfig(level=logging.DEBUG, filename=log_file)
+    else:
+        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
     topo_file = args.topo
     if topo_file.endswith('json'):
@@ -86,7 +85,7 @@ if __name__ == '__main__':
         logger.debug('Forwarding config - [%s]', forwarding_yaml)
     exercise = ExerciseRunner(
         topo, args.log_dir, args.pcap_dir, args.switch_json,  forwarding_yaml,
-        args.start_cli, eval(args.load_p4))
+        args.start_cli)
     exercise.run_exercise()
 
     logger.info('Exercise Runner running indefinitely')

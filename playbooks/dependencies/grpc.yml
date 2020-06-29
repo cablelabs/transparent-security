@@ -28,7 +28,7 @@
       become: yes
       apt:
         name:
-          - python-pip
+          - python3-pip
           - git
           - autoconf
           - automake
@@ -36,6 +36,14 @@
           - curl
           - make
           - g++
+
+    - name: pip install cygrpc and upgrade setuptools
+      become: yes
+      pip:
+        name:
+          - cygrpc
+          - setuptools>=40.3.0
+      when: ubuntu_version == "18"
 
     - name: clone grpc
       git:
@@ -65,7 +73,5 @@
       register: cmd_out
       changed_when: cmd_out is not failed
 
-    - name: install grpcio
-      become: yes
-      pip:
-        name: grpcio
+    - name: Copy Python {{ python_version }} site-packages to dist-packages PI
+      command: "sudo cp -r /home/ubuntu/grpc/src/python/grpcio /usr/local/lib/python{{ python_version }}/dist-packages"

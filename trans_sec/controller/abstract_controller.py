@@ -15,6 +15,7 @@ from logging import getLogger
 
 import ipaddress
 
+from trans_sec.exceptions import NotFoundError
 from trans_sec.p4runtime_lib import helper, tofino
 
 logger = getLogger('abstract_controller')
@@ -57,20 +58,25 @@ class AbstractController(object):
         logger.info('Adding helpers to switch of type - [%s]',
                     self.switch_type)
         self.__add_helpers()
+
+        logger.info('Switch forwarding start')
         self.__switch_forwarding()
         for switch in self.switches:
+            logger.info('Starting digest listeners on device [%s]',
+                        switch.grpc_addr)
             switch.start_digest_listeners()
 
     def stop(self):
         for switch in self.switches:
+            logger.info('Stopping digest listeners on device [%s]',
+                        switch.grpc_addr)
             switch.stop_digest_listeners()
 
-    def make_rules(self, sw, sw_info, north_facing_links, south_facing_links,
+    def make_rules(self, sw, north_facing_links, south_facing_links,
                    add_di):
         """
         Abstract method
         :param sw: switch object
-        :param sw_info: switch info object
         :param north_facing_links: northbound links
         :param south_facing_links: southbound links
         :param add_di: populate data_inspection tables when true
@@ -78,18 +84,18 @@ class AbstractController(object):
         logger.info('Creating rules for switch type - [%s]', self.switch_type)
         for north_link in north_facing_links:
             logger.info('Creating rules for the north link - [%s]', north_link)
-            self.make_north_rules(sw, sw_info, north_link)
+            self.make_north_rules(sw, north_link)
 
         for south_link in south_facing_links:
             logger.info('Creating rules for the south link - [%s]', south_link)
-            self.make_south_rules(sw, sw_info, south_link, add_di)
+            self.make_south_rules(sw, south_link, add_di)
         logger.debug('Completed creating rules for switch type [%s]',
                      self.switch_type)
 
-    def make_north_rules(self, sw, sw_info, north_link):
+    def make_north_rules(self, sw, north_link):
         raise NotImplemented
 
-    def make_south_rules(self, sw, sw_info, south_link, add_di):
+    def make_south_rules(self, sw, south_link, add_di):
         if south_link.get('south_facing_port'):
             logger.info('Creating south switch rules - [%s]', south_link)
             if self.topo['switches'].get(south_link['south_node']):
@@ -97,7 +103,7 @@ class AbstractController(object):
                 logger.info(
                     'This: %s connects to south switch: %s on physical '
                     'port %s to physical port %s',
-                    sw_info['name'], device['name'],
+                    sw.name, device['name'],
                     str(south_link.get('south_facing_port')),
                     str(south_link.get('north_facing_port')))
             elif self.topo['hosts'].get(south_link['south_node']) is not None:
@@ -105,14 +111,17 @@ class AbstractController(object):
                 logger.info(
                     'This: %s connects to Device: %s on physical '
                     'port %s',
-                    sw_info['name'], device['name'],
+                    sw.name, device['name'],
                     str(south_link.get('south_facing_port')))
             else:
-                raise StandardError(
+                raise NotFoundError(
+                    'make south rules',
                     'South Bound Link for %s, %s does not exist in topology' %
                     (sw.name, south_link.get('south_node')))
 
             if device is not None and add_di:
+                logger.info('Adding inspection to mac [%s] on device [%s]',
+                            device['mac'], sw.grpc_addr)
                 sw.add_data_inspection(device['id'], device['mac'])
         else:
             logger.info('No south links to install')
@@ -123,6 +132,7 @@ class AbstractController(object):
         for name, switch in self.topo['switches'].items():
             logger.info('Setting up helper for - [%s] of type - [%s]',
                         name, switch.get('type'))
+
             if switch['type'] == self.switch_type:
                 if self.platform == 'bmv2':
                     self.__setup_bmv2_helper(name, switch)
@@ -132,8 +142,8 @@ class AbstractController(object):
     def make_switch_rules(self, add_di):
         logger.info('Make Rules for controller [%s]', self.switch_type)
         for switch in self.switches:
-            sw_info, north_links, south_links = self.__get_links(switch.name)
-            self.make_rules(sw=switch, sw_info=sw_info,
+            north_links, south_links = self.__get_links(switch.name)
+            self.make_rules(sw=switch,
                             north_facing_links=north_links,
                             south_facing_links=south_links,
                             add_di=add_di)
@@ -146,9 +156,7 @@ class AbstractController(object):
             logger.debug('Hosts defs - [%s]', hosts_topo)
             switch.write_multicast_entry(hosts_topo)
 
-    def add_attacker(self, attack, host):
-        logger.info('Attack received by the controller of type [%s] - [%s]',
-                    self.switch_type, attack)
+    def __process_attack(self, attack, host):
         attack_switch = None
         for switch in self.switches:
             di_match_mac = switch.get_data_inspection_src_mac_keys()
@@ -160,8 +168,8 @@ class AbstractController(object):
                 attack_switch = switch
         if attack_switch:
             logger.info('Adding an attack [%s] to host [%s] and switch [%s]',
-                        attack, host, attack_switch.sw_info['name'])
-            ip_addr = ipaddress.ip_address(unicode(attack['src_ip']))
+                        attack, host, attack_switch.name)
+            ip_addr = ipaddress.ip_address(attack['src_ip'])
             logger.info('Attack ip addr - [%s]', ip_addr)
             logger.debug('Attack ip addr class - [%s]', ip_addr.__class__)
             if ip_addr.version == 6:
@@ -171,34 +179,59 @@ class AbstractController(object):
                 logger.debug('Attack is IPv4')
                 proto_key = 'ipv4'
 
-            src_addr_key = 'hdr.{}.srcAddr'.format(proto_key)
             dst_addr_key = 'hdr.{}.dstAddr'.format(proto_key)
+            return attack_switch, dst_addr_key
+        else:
+            return None
 
-            logger.info('Adding the attack to switch - [%s]', attack_switch)
+    def add_attacker(self, attack, host):
+        logger.info('Attack received by the controller of type [%s] - [%s]',
+                    self.switch_type, attack)
+        attack_switch, dst_addr_key = self.__process_attack(attack, host)
+        if attack_switch and dst_addr_key:
             self.__add_attacker(
-                attack_switch, attack, host, src_addr_key, dst_addr_key)
+                attack_switch, attack, host, dst_addr_key)
 
-    def __add_attacker(self, switch, attack, host, src_addr_key, dst_addr_key):
+    def remove_attacker(self, attack, host):
+        attack_switch, dst_addr_key = self.__process_attack(attack, host)
+        if attack_switch and dst_addr_key:
+            self.__remove_attacker(
+                attack_switch, attack, host, dst_addr_key)
+
+    def __add_attacker(self, switch, attack, host, dst_addr_key):
         logger.info('Attack requested - [%s]', attack)
-        ip_addr = ipaddress.ip_address(unicode(attack['src_ip']))
+        ip_addr = ipaddress.ip_address(attack['src_ip'])
         logger.info('Attack from ip_addr - [%s]', ip_addr)
         logger.info('Inserting IPv%s Attack', ip_addr.version)
         self.__insert_attack_entry(
             switch, attack, host,
             'data_drop_udp_ipv{}_t'.format(ip_addr.version),
-            'data_drop', src_addr_key, dst_addr_key, 'hdr.udp.dst_port')
+            'data_drop', dst_addr_key, 'hdr.udp.dst_port')
         self.__insert_attack_entry(
             switch, attack, host,
             'data_drop_tcp_ipv{}_t'.format(ip_addr.version),
-            'data_drop', src_addr_key, dst_addr_key, 'hdr.tcp.dst_port')
+            'data_drop', dst_addr_key, 'hdr.tcp.dst_port')
+
+    def __remove_attacker(self, switch, attack, host, dst_addr_key):
+        logger.info('Attack requested - [%s]', attack)
+        ip_addr = ipaddress.ip_address(attack['src_ip'])
+        logger.info('Attack from ip_addr - [%s]', ip_addr)
+        logger.info('Inserting IPv%s Attack', ip_addr.version)
+        self.__delete_attack_entry(
+            switch, attack, host,
+            'data_drop_udp_ipv{}_t'.format(ip_addr.version),
+            'data_drop', dst_addr_key, 'hdr.udp.dst_port')
+        self.__delete_attack_entry(
+            switch, attack, host,
+            'data_drop_tcp_ipv{}_t'.format(ip_addr.version),
+            'data_drop', dst_addr_key, 'hdr.tcp.dst_port')
 
     @staticmethod
     def __insert_attack_entry(switch, attack, host, table_name,
-                              action_name, src_addr_key, dst_addr_key,
-                              dst_port_key):
+                              action_name, dst_addr_key, dst_port_key):
         logger.info('Adding attack [%s] from host [%s]', attack, host['name'])
-        src_ip = ipaddress.ip_address(unicode(attack['src_ip']))
-        dst_ip = ipaddress.ip_address(unicode(attack['dst_ip']))
+        src_ip = ipaddress.ip_address(attack['src_ip'])
+        dst_ip = ipaddress.ip_address(attack['dst_ip'])
         logger.info('Attack src_ip - [%s], dst_ip - [%s]', src_ip, dst_ip)
         # TODO - Add back source IP address as a match field after adding
         #  mitigation at the Aggregate
@@ -210,11 +243,35 @@ class AbstractController(object):
                 dst_addr_key: str(dst_ip.exploded),
                 dst_port_key: int(attack['dst_port']),
             },
-            action_params={
-                'device': host['id']
-            },
-            ingress_class=True
+            action_params={'device': host['id']},
+            ingress_class=True,
+            # election_high=8,
+            # election_low=9,
          )
+        logger.info('%s Dropping TCP Packets from %s',
+                    switch.name, attack.get('src_ip'))
+
+    @staticmethod
+    def __delete_attack_entry(switch, attack, host, table_name,
+                              action_name, dst_addr_key, dst_port_key):
+        logger.info('Adding attack [%s] from host [%s]', attack, host['name'])
+        src_ip = ipaddress.ip_address(attack['src_ip'])
+        dst_ip = ipaddress.ip_address(attack['dst_ip'])
+        logger.info('Attack src_ip - [%s], dst_ip - [%s]', src_ip, dst_ip)
+        # TODO - Add back source IP address as a match field after adding
+        #  mitigation at the Aggregate
+        switch.delete_p4_table_entry(
+            table_name=table_name,
+            action_name=action_name,
+            match_fields={
+                'hdr.ethernet.src_mac': attack['src_mac'],
+                dst_addr_key: str(dst_ip.exploded),
+                dst_port_key: int(attack['dst_port']),
+            },
+            ingress_class=True,
+            # election_high=8,
+            # election_low=9,
+        )
         logger.info('%s Dropping TCP Packets from %s',
                     switch.name, attack.get('src_ip'))
 
@@ -235,7 +292,6 @@ class AbstractController(object):
         :return:
         """
         logger.info('Retrieving switch links from topology')
-        sw_info = self.topo['switches'][switch_name]
         conditions = {'south_node': switch_name}
         north_facing_links = filter(
             lambda item: all((item[k] == v for (k, v) in conditions.items())),
@@ -247,7 +303,7 @@ class AbstractController(object):
 
         logger.debug('Links: north - [%s], south - [%s]',
                      north_facing_links, south_facing_links)
-        return sw_info, north_facing_links, south_facing_links
+        return list(north_facing_links), list(south_facing_links)
 
     def __setup_bmv2_helper(self, name, switch):
         """
@@ -258,6 +314,7 @@ class AbstractController(object):
         logger.info('Adding BMV P4 Info Helper to switch - [%s]', switch)
 
         new_switch = self.instantiate_switch(self.topo['switches'][name])
+        logger.info('New switch info - [%s]', new_switch.sw_info)
         new_switch.master_arbitration_update()
 
         bmv2_json_file_path = "{0}/{1}.json".format(
@@ -269,11 +326,10 @@ class AbstractController(object):
             logger.info('Setting forwarding pipeline config on - [%s]', name)
             new_switch.set_forwarding_pipeline_config(device_config)
         else:
-            logger.warn('Switches should already be configured')
+            logger.warning('Switches should already be configured')
 
         self.switches.append(new_switch)
-        logger.info('Instantiated connection to BMV2 switch - [%s]',
-                    name)
+        logger.info('Instantiated connection to switch - [%s]', name)
 
     @abstractmethod
     def instantiate_switch(self, sw_info):
@@ -312,7 +368,7 @@ class AbstractController(object):
             logger.info('Setting forwarding pipeline config on - [%s]', name)
             new_switch.set_forwarding_pipeline_config(device_config)
         else:
-            logger.warn('Switch [%s] should already be configured', name)
+            logger.warning('Switch [%s] should already be configured', name)
 
         self.switches.append(new_switch)
         logger.info('Instantiated connection to Tofino switch - [%s]',

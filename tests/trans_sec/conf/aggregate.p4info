@@ -1,0 +1,170 @@
+pkg_info {
+  arch: "v1model"
+}
+tables {
+  preamble {
+    id: 33582161
+    name: "TpsAggIngress.data_forward_t"
+    alias: "data_forward_t"
+  }
+  match_fields {
+    id: 1
+    name: "hdr.ethernet.dst_mac"
+    bitwidth: 48
+    match_type: EXACT
+  }
+  action_refs {
+    id: 16796377
+  }
+  action_refs {
+    id: 16800567
+  }
+  size: 1024
+}
+tables {
+  preamble {
+    id: 33605098
+    name: "TpsAggIngress.data_inspection_t"
+    alias: "data_inspection_t"
+  }
+  match_fields {
+    id: 1
+    name: "hdr.ethernet.src_mac"
+    bitwidth: 48
+    match_type: EXACT
+  }
+  action_refs {
+    id: 16778955
+  }
+  action_refs {
+    id: 16800567
+  }
+  size: 1024
+}
+tables {
+  preamble {
+    id: 33562407
+    name: "TpsAggIngress.arp_flood_t"
+    alias: "arp_flood_t"
+  }
+  match_fields {
+    id: 1
+    name: "hdr.ethernet.dst_mac"
+    bitwidth: 48
+    match_type: EXACT
+  }
+  action_refs {
+    id: 16801798
+  }
+  action_refs {
+    id: 16800567
+  }
+  size: 1024
+}
+actions {
+  preamble {
+    id: 16800567
+    name: "NoAction"
+    alias: "NoAction"
+  }
+}
+actions {
+  preamble {
+    id: 16796377
+    name: "TpsAggIngress.data_forward"
+    alias: "data_forward"
+  }
+  params {
+    id: 1
+    name: "port"
+    bitwidth: 9
+  }
+}
+actions {
+  preamble {
+    id: 16778955
+    name: "TpsAggIngress.data_inspect_packet"
+    alias: "data_inspect_packet"
+  }
+  params {
+    id: 1
+    name: "device"
+    bitwidth: 32
+  }
+  params {
+    id: 2
+    name: "switch_id"
+    bitwidth: 32
+  }
+}
+actions {
+  preamble {
+    id: 16793914
+    name: "TpsAggIngress.generate_learn_notification"
+    alias: "generate_learn_notification"
+  }
+}
+actions {
+  preamble {
+    id: 16801798
+    name: "TpsAggIngress.arp_flood"
+    alias: "arp_flood"
+  }
+}
+actions {
+  preamble {
+    id: 16823718
+    name: "TpsEgress.drop_pkt"
+    alias: "drop_pkt"
+  }
+}
+counters {
+  preamble {
+    id: 302000607
+    name: "TpsAggIngress.forwardedPackets"
+    alias: "forwardedPackets"
+  }
+  spec {
+    unit: BOTH
+  }
+  size: 15
+}
+digests {
+  preamble {
+    id: 385897023
+    name: "mac_learn_digest"
+    alias: "mac_learn_digest"
+  }
+  type_spec {
+    struct {
+      name: "mac_learn_digest"
+    }
+  }
+}
+type_info {
+  structs {
+    key: "mac_learn_digest"
+    value {
+      members {
+        name: "src_mac"
+        type_spec {
+          bitstring {
+            bit {
+              bitwidth: 48
+            }
+          }
+        }
+      }
+      members {
+        name: "ingress_port"
+        type_spec {
+          bitstring {
+            bit {
+              bitwidth: 9
+            }
+          }
+        }
+      }
+    }
+  }
+}

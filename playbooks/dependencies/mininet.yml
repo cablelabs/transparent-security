@@ -16,18 +16,21 @@
   gather_facts: no
 
   tasks:
-    - name: apt update
+    - name: Update cache before installing python3-pip (apt task does not working here)
       become: yes
-      apt:
-        update_cache: yes
-      retries: 3
+      command: apt update
 
     - name: apt install packages for mininet
       become: yes
       apt:
+        update_cache: yes
         name:
-          - python-pip
+          - python3-pip
           - git
+
+    - name: Link /usr/bin/pip to /usr/bin/pip3
+      become: yes
+      command: sudo ln -s /usr/bin/pip3 /usr/bin/pip
 
     - name: pip install setuptools
       become: yes

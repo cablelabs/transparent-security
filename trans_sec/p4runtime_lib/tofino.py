@@ -12,6 +12,7 @@
 # limitations under the License.
 import logging
 import struct
+from abc import ABC
 
 from p4.tmp import p4config_pb2
 
@@ -20,7 +21,7 @@ from trans_sec.p4runtime_lib.switch import SwitchConnection
 logger = logging.getLogger('tofino')
 
 
-class TofinoSwitchConnection(SwitchConnection):
+class TofinoSwitchConnection(SwitchConnection, ABC):
     def build_device_config(self, **kwargs):
         return self.__build_device_config(**kwargs)
 

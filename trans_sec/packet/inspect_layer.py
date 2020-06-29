@@ -15,7 +15,6 @@ from scapy.all import Packet, ShortEnumField, UDP_SERVICES, ShortField, \
 from scapy import fields
 
 import trans_sec.consts
-from trans_sec import consts
 
 
 class IntShim(Packet):

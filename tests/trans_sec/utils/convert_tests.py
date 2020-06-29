@@ -12,11 +12,15 @@
 # limitations under the License.
 # Unit tests for convert.py
 import logging
+import sys
 import unittest
 
 import ipaddress
 
 from trans_sec.utils import convert
+
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+logger = logging.getLogger('covert_test')
 
 
 class ConvertTests(unittest.TestCase):
@@ -31,22 +35,28 @@ class ConvertTests(unittest.TestCase):
         logging.basicConfig(level=logging.DEBUG)
         mac = "aa:bb:cc:dd:ee:ff"
         enc_mac = convert.encode_mac(mac)
-        self.assertEquals('\xaa\xbb\xcc\xdd\xee\xff', enc_mac)
+        conv_mac = str(b'\xaa\xbb\xcc\xdd\xee\xff')
+        logger.debug('enc_mac - [%s]', enc_mac)
+        logger.debug('enc_mac.__class__ - [%s]', enc_mac.__class__)
+        logger.debug('conv_mac - [%s]', conv_mac)
+        logger.debug('conv_mac.__class__ - [%s]', conv_mac.__class__)
+        self.assertEqual(conv_mac, str(enc_mac))
         dec_mac = convert.decode_mac(enc_mac)
-        self.assertEquals(mac, dec_mac)
+        self.assertEqual(mac, str(dec_mac))
 
         ip = "10.0.0.1"
         enc_ip = convert.encode_ipv4(ip)
-        self.assertEquals(enc_ip, '\x0a\x00\x00\x01')
+        self.assertEqual(b'\x0a\x00\x00\x01', enc_ip)
         dec_ip = convert.decode_ipv4(enc_ip)
-        self.assertEquals(ip, dec_ip)
+        self.assertEqual(ip, dec_ip)
 
         num = 1337
         byte_len = 5
         enc_num = convert.encode_num(num, byte_len * 8)
-        self.assertEquals(enc_num, '\x00\x00\x00\x05\x39')
+        logger.debug('enc_num - [%s]', enc_num)
+        self.assertEqual(b'\x00\x00\x00\x05\x39', enc_num)
         dec_num = convert.decode_num(enc_num)
-        self.assertEquals(num, dec_num)
+        self.assertEqual(num, dec_num)
 
         self.assertTrue(convert.matches_ipv4('10.0.0.1'))
         self.assertFalse(convert.matches_ipv4('10.0.0.1.5'))
@@ -58,22 +68,22 @@ class ConvertTests(unittest.TestCase):
         self.assertTrue(convert.matches_ipv6(ipv6))
         self.assertTrue(convert.encode(ipv6, 128), enc_ipv6)
         dec_ipv6 = convert.decode_ipv6(enc_ipv6)
-        ipv6_addr = ipaddress.ip_address(unicode(ipv6))
-        self.assertEquals(str(ipv6_addr), dec_ipv6)
+        ipv6_addr = ipaddress.ip_address(ipv6)
+        self.assertEqual(str(ipv6_addr), dec_ipv6)
 
         ipv6b = '0:0:0:0:0:1:1:2'
         enc_ipv6b = convert.encode_ipv6(ipv6b)
         self.assertTrue(convert.matches_ipv6(ipv6b))
         self.assertTrue(convert.encode(ipv6b, 128), enc_ipv6b)
         dec_ipv6b = convert.decode_ipv6(enc_ipv6b)
-        ipv6b_addr = ipaddress.ip_address(unicode(ipv6b))
-        self.assertEquals(str(ipv6b_addr), dec_ipv6b)
+        ipv6b_addr = ipaddress.ip_address(ipv6b)
+        self.assertEqual(str(ipv6b_addr), dec_ipv6b)
 
-        self.assertEquals(convert.encode(mac, 6 * 8), enc_mac)
-        self.assertEquals(convert.encode(ip, 4 * 8), enc_ip)
-        self.assertEquals(convert.encode(num, 5 * 8), enc_num)
-        self.assertEquals(convert.encode((num,), 5 * 8), enc_num)
-        self.assertEquals(convert.encode([num], 5 * 8), enc_num)
+        self.assertEqual(convert.encode(mac, 6 * 8), enc_mac)
+        self.assertEqual(convert.encode(ip, 4 * 8), enc_ip)
+        self.assertEqual(convert.encode(num, 5 * 8), enc_num)
+        self.assertEqual(convert.encode((num,), 5 * 8), enc_num)
+        self.assertEqual(convert.encode([num], 5 * 8), enc_num)
 
         num = 256
         try:

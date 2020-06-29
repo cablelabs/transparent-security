@@ -29,10 +29,9 @@
 #
 import logging
 import socket
+from abc import ABC
 
-from p4.tmp import p4config_pb2
-
-from switch import SwitchConnection
+from trans_sec.p4runtime_lib.switch import SwitchConnection
 from trans_sec.consts import IPV4_TYPE, IPV6_TYPE
 from trans_sec.controller.ddos_sdn_controller import AGG_CTRL_KEY
 from trans_sec.utils.convert import decode_num, decode_ipv4
@@ -40,19 +39,7 @@ from trans_sec.utils.convert import decode_num, decode_ipv4
 logger = logging.getLogger('bmv2')
 
 
-class Bmv2SwitchConnection(SwitchConnection):
-    def add_data_inspection(self, dev_id, dev_mac):
-        raise NotImplemented
-
-    def build_device_config(self, bmv2_json_file_path=None):
-        logger.info('Building device config for BMV2 with file - [%s]',
-                    bmv2_json_file_path)
-        device_config = p4config_pb2.P4DeviceConfig()
-        device_config.reassign = True
-        with open(bmv2_json_file_path) as f:
-            device_config.device_data = f.read()
-        return device_config
-
+class Bmv2SwitchConnection(SwitchConnection, ABC):
     def write_multicast_entry(self, hosts):
         super(Bmv2SwitchConnection, self).write_multicast_entry(hosts)
         self.write_arp_flood()
@@ -266,8 +253,8 @@ class GatewaySwitch(Bmv2SwitchConnection):
                 })
             self.write_table_entry(table_entry)
         else:
-            logger.warn('Target host not found, not setting the '
-                        'multicast group')
+            logger.warning('Target host not found, not setting the '
+                           'multicast group')
 
 
 class AggregateSwitch(Bmv2SwitchConnection):
@@ -354,8 +341,8 @@ class CoreSwitch(Bmv2SwitchConnection):
 
     def setup_telemetry_rpt(self, ae_ip):
         logger.info(
-            'Setting up telemetry report on core device [%s] with AE IP - [%s]',
-            self.device_id, ae_ip)
+            'Setting up telemetry report on core device [%s] with '
+            'AE IP - [%s]', self.device_id, ae_ip)
 
         ae_ip_addr = socket.gethostbyname(ae_ip)
         logger.info(

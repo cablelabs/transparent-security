@@ -28,7 +28,7 @@
       apt:
         name:
           - git
-          - python-pip
+          - python3-pip
           - g++
           - automake
           - libtool

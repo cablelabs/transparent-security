@@ -35,9 +35,12 @@
     sender_log_filename: "udp-flood-sender-{{ send_host }}-{{ send_protocol }}-1.out"
     send_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 1) }}"
     send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 2) }}"
-    send_packet_count: 25
-    min_received_packet_count: 25
-    max_received_packet_count: 25
+    send_packet_count: 150
+    min_received_packet_count: 99
+    max_received_packet_count: 150
+    send_loops: 2
+    send_loop_delay: 5
+    sdn_host_port: "{{ sdn_ip }}:{{ sdn_port }}"
 
 # Sending 50 packets within a second 1x through gateway 2
 - import_playbook: ../test_cases/send_receive.yml
@@ -61,9 +64,12 @@
     sender_log_filename: "udp-flood-sender-{{ send_host }}-{{ send_protocol }}-2.out"
     send_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 3) }}"
     send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 4) }}"
-    send_packet_count: 50
-    min_received_packet_count: 50
-    max_received_packet_count: 50
+    send_packet_count: 150
+    min_received_packet_count: 99
+    max_received_packet_count: 150
+    send_loops: 2
+    send_loop_delay: 5
+    sdn_host_port: "{{ sdn_ip }}:{{ sdn_port }}"
 
 # Sending 150 packets within a second 2x through gateway 3.
 # The second set should be dropped else this will fail
@@ -93,19 +99,4 @@
     max_received_packet_count: 150
     send_loops: 2
     send_loop_delay: 5
-
-# Clear all gateway data_drop tables.
-- import_playbook: ../test_cases/clear_p4_table_entries.yml
-  vars:
-    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-    p4_switches:
-      - "{{ topo_dict.switches.gateway1 }}"
-      - "{{ topo_dict.switches.gateway2 }}"
-      - "{{ topo_dict.switches.gateway3 }}"
-    p4_classname: TpsGwIngress
-    p4_table_names:
-      - data_drop_udp_ipv4_t
-      - data_drop_udp_ipv6_t
-      - data_drop_tcp_ipv4_t
-      - data_drop_tcp_ipv6_t
-    p4_te_log_dir: "{{ host_log_dir }}"
+    sdn_host_port: "{{ sdn_ip }}:{{ sdn_port }}"

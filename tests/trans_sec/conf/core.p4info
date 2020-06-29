@@ -1,0 +1,304 @@
+pkg_info {
+  arch: "v1model"
+}
+tables {
+  preamble {
+    id: 33600146
+    name: "TpsCoreIngress.data_inspection_t"
+    alias: "data_inspection_t"
+  }
+  match_fields {
+    id: 1
+    name: "hdr.ethernet.src_mac"
+    bitwidth: 48
+    match_type: EXACT
+  }
+  action_refs {
+    id: 16809428
+  }
+  action_refs {
+    id: 16800567
+  }
+  size: 1024
+}
+tables {
+  preamble {
+    id: 33605068
+    name: "TpsCoreIngress.data_forward_t"
+    alias: "data_forward_t"
+  }
+  match_fields {
+    id: 1
+    name: "hdr.ethernet.dst_mac"
+    bitwidth: 48
+    match_type: EXACT
+  }
+  action_refs {
+    id: 16784882
+  }
+  action_refs {
+    id: 16800567
+  }
+  size: 1024
+}
+tables {
+  preamble {
+    id: 33595861
+    name: "TpsCoreIngress.arp_forward_t"
+    alias: "arp_forward_t"
+  }
+  match_fields {
+    id: 1
+    name: "hdr.ethernet.dst_mac"
+    bitwidth: 48
+    match_type: EXACT
+  }
+  action_refs {
+    id: 16784744
+  }
+  action_refs {
+    id: 16800567
+  }
+  size: 1024
+}
+tables {
+  preamble {
+    id: 33558836
+    name: "TpsCoreIngress.arp_flood_t"
+    alias: "arp_flood_t"
+  }
+  match_fields {
+    id: 1
+    name: "hdr.ethernet.dst_mac"
+    bitwidth: 48
+    match_type: EXACT
+  }
+  action_refs {
+    id: 16789209
+  }
+  action_refs {
+    id: 16800567
+  }
+  size: 1024
+}
+tables {
+  preamble {
+    id: 33558538
+    name: "TpsCoreEgress.setup_telemetry_rpt_t"
+    alias: "setup_telemetry_rpt_t"
+  }
+  match_fields {
+    id: 1
+    name: "hdr.udp_int.dst_port"
+    bitwidth: 16
+    match_type: EXACT
+  }
+  action_refs {
+    id: 16833852
+  }
+  action_refs {
+    id: 16778981
+  }
+  action_refs {
+    id: 16840132
+  }
+  size: 1024
+}
+actions {
+  preamble {
+    id: 16800567
+    name: "NoAction"
+    alias: "NoAction"
+  }
+}
+actions {
+  preamble {
+    id: 16820271
+    name: "TpsCoreIngress.recirculate_packet"
+    alias: "recirculate_packet"
+  }
+}
+actions {
+  preamble {
+    id: 16800078
+    name: "TpsCoreIngress.clone_packet_i2e"
+    alias: "clone_packet_i2e"
+  }
+}
+actions {
+  preamble {
+    id: 16809428
+    name: "TpsCoreIngress.data_inspect_packet"
+    alias: "data_inspect_packet"
+  }
+  params {
+    id: 1
+    name: "switch_id"
+    bitwidth: 32
+  }
+}
+actions {
+  preamble {
+    id: 16784882
+    name: "TpsCoreIngress.data_forward"
+    alias: "data_forward"
+  }
+  params {
+    id: 1
+    name: "port"
+    bitwidth: 9
+  }
+}
+actions {
+  preamble {
+    id: 16784744
+    name: "TpsCoreIngress.arp_forward"
+    alias: "arp_forward"
+  }
+  params {
+    id: 1
+    name: "port"
+    bitwidth: 9
+  }
+}
+actions {
+  preamble {
+    id: 16830708
+    name: "TpsCoreIngress.clear_int"
+    alias: "clear_int"
+  }
+}
+actions {
+  preamble {
+    id: 16812836
+    name: "TpsCoreIngress.generate_learn_notification"
+    alias: "generate_learn_notification"
+  }
+}
+actions {
+  preamble {
+    id: 16789209
+    name: "TpsCoreIngress.arp_flood"
+    alias: "arp_flood"
+  }
+}
+actions {
+  preamble {
+    id: 16840132
+    name: "TpsCoreEgress.control_drop"
+    alias: "control_drop"
+  }
+}
+actions {
+  preamble {
+    id: 16811450
+    name: "TpsCoreEgress.init_telem_rpt"
+    alias: "init_telem_rpt"
+  }
+}
+actions {
+  preamble {
+    id: 16803936
+    name: "TpsCoreEgress.set_telem_rpt_in_type_ipv4"
+    alias: "set_telem_rpt_in_type_ipv4"
+  }
+}
+actions {
+  preamble {
+    id: 16806337
+    name: "TpsCoreEgress.set_telem_rpt_in_type_ipv6"
+    alias: "set_telem_rpt_in_type_ipv6"
+  }
+}
+actions {
+  preamble {
+    id: 16833852
+    name: "TpsCoreEgress.setup_telem_rpt_ipv4"
+    alias: "setup_telem_rpt_ipv4"
+  }
+  params {
+    id: 1
+    name: "ae_ip"
+    bitwidth: 32
+  }
+}
+actions {
+  preamble {
+    id: 16778981
+    name: "TpsCoreEgress.setup_telem_rpt_ipv6"
+    alias: "setup_telem_rpt_ipv6"
+  }
+  params {
+    id: 1
+    name: "ae_ip"
+    bitwidth: 128
+  }
+}
+actions {
+  preamble {
+    id: 16811578
+    name: "TpsCoreEgress.update_trpt_hdr_len_ipv4"
+    alias: "update_trpt_hdr_len_ipv4"
+  }
+}
+actions {
+  preamble {
+    id: 16830225
+    name: "TpsCoreEgress.update_trpt_hdr_len_ipv6"
+    alias: "update_trpt_hdr_len_ipv6"
+  }
+}
+registers {
+  preamble {
+    id: 369140959
+    name: "TpsCoreEgress.trpt_pkts"
+    alias: "trpt_pkts"
+  }
+  type_spec {
+    bitstring {
+      bit {
+        bitwidth: 16
+      }
+    }
+  }
+  size: 1
+}
+digests {
+  preamble {
+    id: 385897023
+    name: "mac_learn_digest"
+    alias: "mac_learn_digest"
+  }
+  type_spec {
+    struct {
+      name: "mac_learn_digest"
+    }
+  }
+}
+type_info {
+  structs {
+    key: "mac_learn_digest"
+    value {
+      members {
+        name: "src_mac"
+        type_spec {
+          bitstring {
+            bit {
+              bitwidth: 48
+            }
+          }
+        }
+      }
+      members {
+        name: "ingress_port"
+        type_spec {
+          bitstring {
+            bit {
+              bitwidth: 9
+            }
+          }
+        }
+      }
+    }
+  }
+}

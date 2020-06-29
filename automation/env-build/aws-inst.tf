@@ -12,8 +12,20 @@
 # limitations under the License.
 
 # AWS EC2 Instance
+
+locals {
+  py3 = [
+    "sudo update-alternatives --install /usr/bin/python python /usr/bin/python${var.python_version} 0",
+  ]
+  py2 = [
+    "sudo apt-get update",
+    "sudo apt-get install python2.7 -y",
+    "sudo update-alternatives --install /usr/bin/python python /usr/bin/python2.7 0",
+  ]
+  inline_scripts = var.env_type == "tofino" ? local.py2 : local.py3
+}
 resource "aws_instance" "transparent-security-build-img" {
-  ami = var.base_ami
+  ami = var.ubuntu_version == "18" ? var.base_18_ami : var.base_16_ami
   instance_type = var.instance_type
   key_name = aws_key_pair.transparent-security-mini-pk.key_name
 
@@ -26,11 +38,7 @@ resource "aws_instance" "transparent-security-build-img" {
 
   # Used to ensure host is really up before attempting to apply ansible playbooks
   provisioner "remote-exec" {
-    inline = [
-      "sudo apt-get update",
-      "sudo apt-get install python2.7 -y",
-      "sudo ln /usr/bin/python2.7 /usr/bin/python"
-    ]
+    inline = local.inline_scripts
 
     # Remote connection info for remote-exec
     connection {
@@ -68,6 +76,8 @@ bm_version=${var.bm_version}
 bf_sde_version=${var.bf_sde_version}
 bf_sde_s3_bucket=${var.bf_sde_s3_bucket}
 remote_scripts_dir=${var.remote_scripts_dir}
+python_version=${var.python_version}
+ubuntu_version=${var.ubuntu_version}
 "\
 EOT
   }

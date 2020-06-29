@@ -25,10 +25,11 @@ http_server = Flask('sdn_controller_api_server')
 
 
 class SDNControllerServer:
-    def __init__(self, sdn_controller, port=9998):
+    def __init__(self, sdn_controller, port=9998, host='0.0.0.0'):
         self.sdn_controller = sdn_controller
         self.port = port
-        self.thread = threading.Thread(target=self.flask_thread, args=(port,))
+        self.host = host
+        self.thread = threading.Thread(target=self.flask_thread)
         self.api = Api(http_server)
         self.server_start = None
 
@@ -37,18 +38,21 @@ class SDNControllerServer:
         self.api.add_resource(
             Attack, '/attack',
             resource_class_kwargs={'sdn_controller': self.sdn_controller})
+        self.api.add_resource(
+            StopAttack, '/stopAttack',
+            resource_class_kwargs={'sdn_controller': self.sdn_controller})
         self.api.add_resource(Shutdown, '/shutdown')
 
-    @staticmethod
-    def stop():
+    def stop(self):
         try:
-            requests.post(url='http://127.0.0.1:9998/shutdown')
+            requests.post(url='http://{}:{}/shutdown'.format(
+                self.host, self.port))
         except Exception as e:
-            logger.warn('Trouble shutting down HTTP server - [%s]', e)
+            logger.warning('Trouble shutting down HTTP server - [%s]', e)
 
-    def flask_thread(self, port):
-        logger.info('Starting server on port [%s]', port)
-        self.server_start = http_server.run(port=port)
+    def flask_thread(self):
+        logger.info('Starting server on port [%s]', self.port)
+        self.server_start = http_server.run(host=self.host, port=self.port)
 
 
 class Attack(Resource):
@@ -68,6 +72,26 @@ class Attack(Resource):
 
         logger.info('Attack args - [%s]', args)
         self.sdn_controller.add_attacker(args)
+        return json.dumps({"success": True}), 201
+
+
+class StopAttack(Resource):
+    def __init__(self, **kwargs):
+        self.sdn_controller = kwargs['sdn_controller']
+
+    def post(self):
+        logger.info('Attacker to remove')
+        parser = reqparse.RequestParser()
+        parser.add_argument('src_mac', type=str)
+        parser.add_argument('src_ip', type=str)
+        parser.add_argument('dst_ip', type=str)
+        parser.add_argument('dst_port', type=str)
+        parser.add_argument('packet_size', type=str)
+        parser.add_argument('attack_type', type=str)
+        args = parser.parse_args()
+
+        logger.info('Attack args - [%s]', args)
+        self.sdn_controller.remove_attacker(args)
         return json.dumps({"success": True}), 201
 
 

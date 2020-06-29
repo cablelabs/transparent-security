@@ -82,9 +82,10 @@
       register: cmd_out
       changed_when: cmd_out is not failed
 
-    - name: install python built dependencies
-      command: sudo python setup.py install
-      args:
-        chdir: ~/protobuf/python
-      register: cmd_out
-      changed_when: cmd_out is not failed
+    - name: Install protobuf into python
+      shell: "cd /home/ubuntu/protobuf/python/; sudo python setup.py install"
+
+    - name: Copy Python {{ python_version }} protobuf to dist-packages PI
+      command: "sudo cp -r /home/ubuntu/protobuf/python/{{ item }} /usr/local/lib/python{{ python_version }}/dist-packages"
+      with_items:
+        - google

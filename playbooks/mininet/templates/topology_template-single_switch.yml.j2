@@ -54,7 +54,7 @@ switches:
     subnet: 10.0.1.0
     type: {{ p4_progs[0] }}
     mac: 00:00:00:01:01:00
-    grpc: 127.0.0.1:50051
+    grpc: {{ mn_host_ip }}:50051
     telemetry_rpt:
       type: host
       name: clone

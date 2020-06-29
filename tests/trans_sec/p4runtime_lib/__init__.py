@@ -10,16 +10,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# integration test case where one host creates a packet sniffer and another
-# sends packets. The validation routine counts the number received via the
-# receiver's log file
----
-- name: Clearing table
-  command: |
-    /usr/bin/python3 {{ remote_tps_dir }}/bin/clear_p4_table.py -a {{ switch.grpc }} \
-    -d {{ switch.id }} -n {{ ingress_classname }}.{{ table_name }}
-  with_items: "{{ table_names }}"
-  register: cmd_out
-  changed_when: cmd_out is not failed
-  loop_control:
-    loop_var: table_name

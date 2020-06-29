@@ -27,6 +27,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import codecs
 import logging
 import math
 import re
@@ -49,11 +50,28 @@ def matches_mac(mac_addr_string):
 
 
 def encode_mac(mac_addr_string):
-    return mac_addr_string.replace(':', '').decode('hex')
+    hex_decoder = codecs.getdecoder('hex_codec')
+    return hex_decoder(mac_addr_string.replace(':', ''))[0]
 
 
 def decode_mac(encoded_mac_addr):
-    return ':'.join(s.encode('hex') for s in encoded_mac_addr)
+    logger.debug('decoding mac - [%s]', encoded_mac_addr)
+    out = None
+    mac_str = str(encoded_mac_addr)
+    logger.debug('mac_str - [%s]', mac_str)
+    tokens = str(mac_str).split('\\x')
+    tokens.pop(0)
+    for token in tokens:
+        if not out:
+            out = token
+        else:
+            out = out + ':' + token
+
+    if out:
+        out = out.replace('/', '')
+        out = out.replace('\'', '')
+        logger.debug('decoded mac - [%s]', out)
+        return out
 
 
 def matches_ipv4(ip_addr_string):
@@ -90,16 +108,22 @@ def bitwidth_to_bytes(bitwidth):
 
 
 def encode_num(number, bitwidth):
+    logger.info('number to encode [%s] with width [%s]', number, bitwidth)
     bitwidth_bytes = bitwidth_to_bytes(bitwidth)
     num_str = '%x' % number
     if number >= 2 ** bitwidth:
         raise SyntaxError(
             "Number, %d, does not fit in %d bits" % (number, bitwidth))
-    return ('0' * (bitwidth_bytes * 2 - len(num_str)) + num_str).decode('hex')
+    num_decoded = '0' * (bitwidth_bytes * 2 - len(num_str)) + num_str
+    logger.debug('num_decoded - [%s]', num_decoded)
+    return codecs.decode(num_decoded, 'hex')
 
 
 def decode_num(encoded_number):
-    return int(encoded_number.encode('hex'), 16)
+    logger.debug('bytes - [%s]', encoded_number)
+    encoded_bytes = codecs.encode(encoded_number, 'hex')
+    logger.debug('encoded_bytes - [%s]', encoded_bytes)
+    return int(encoded_bytes, 16)
 
 
 def encode(x, bitwidth):
@@ -127,16 +151,6 @@ def encode(x, bitwidth):
         else:
             # Assume that the string is already encoded
             logger.debug('Encoding [%s] as a string value', x)
-            encoded_bytes = x
-    elif isinstance(x, unicode):
-        logger.debug('Encoding [%s] as a unicode value', x)
-        t = x.encode('utf-8')
-        if matches_mac(t):
-            encoded_bytes = encode_mac(t)
-        elif matches_ipv4(x):
-            encoded_bytes = encode_ipv4(t)
-        else:
-            # Assume that the string is already encoded
             encoded_bytes = x
     elif type(x) == int:
         logger.debug('Encoding [%s] as a int value', x)

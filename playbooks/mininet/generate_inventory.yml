@@ -42,6 +42,7 @@
         - "remote_ansible_inventory={{ remote_inventory_file }}"
         - "topo_file_loc={{ topo_file }}"
         - "forwarding_conf_file={{ forwarding_daemon_file }}"
+        - "mn_host_ip={{ mn_host }}"
         - "sdn_ip={{ sdn_host }}"
         - "sdn_port={{ sdn_port }}"
         - "ae_ip={{ ae_host }}"

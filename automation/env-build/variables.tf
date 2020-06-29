@@ -27,11 +27,12 @@ variable "create_ami" {default = "yes"}
 variable "public_key_file" {default = "~/.ssh/id_rsa.pub"}
 variable "private_key_file" {default = "~/.ssh/id_rsa"}
 variable "sudo_user" {default = "ubuntu"}
-
+variable "ubuntu_version" {default = "18"}
+variable "python_version" {default = "3.6"}
 # ubuntu 16
-variable "base_ami" {default = "ami-08692d171e3cf02d6"}
+variable "base_16_ami" {default = "ami-08692d171e3cf02d6"}
 # ubuntu 18
-//variable "base_ami" {default = "ami-06f2f779464715dc5"}
+variable "base_18_ami" {default = "ami-06f2f779464715dc5"}
 variable "instance_type" {default = "t2.2xlarge"}
 variable "run_tests" {default = "yes"}
 

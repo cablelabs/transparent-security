@@ -1,0 +1,617 @@
+pkg_info {
+  arch: "v1model"
+}
+tables {
+  preamble {
+    id: 33564393
+    name: "TpsGwIngress.data_forward_t"
+    alias: "data_forward_t"
+  }
+  match_fields {
+    id: 1
+    name: "hdr.ethernet.dst_mac"
+    bitwidth: 48
+    match_type: EXACT
+  }
+  action_refs {
+    id: 16778740
+  }
+  action_refs {
+    id: 16800567
+  }
+  size: 1024
+}
+tables {
+  preamble {
+    id: 33619757
+    name: "TpsGwIngress.data_inspection_t"
+    alias: "data_inspection_t"
+  }
+  match_fields {
+    id: 1
+    name: "hdr.ethernet.src_mac"
+    bitwidth: 48
+    match_type: EXACT
+  }
+  match_fields {
+    id: 2
+    name: "hdr.ethernet.etherType"
+    bitwidth: 16
+    match_type: EXACT
+  }
+  action_refs {
+    id: 16799362
+  }
+  action_refs {
+    id: 16781175
+  }
+  action_refs {
+    id: 16800567
+  }
+  size: 1024
+}
+tables {
+  preamble {
+    id: 33555205
+    name: "TpsGwIngress.data_drop_udp_ipv4_t"
+    alias: "data_drop_udp_ipv4_t"
+  }
+  match_fields {
+    id: 1
+    name: "hdr.ethernet.src_mac"
+    bitwidth: 48
+    match_type: EXACT
+  }
+  match_fields {
+    id: 2
+    name: "hdr.ipv4.dstAddr"
+    bitwidth: 32
+    match_type: EXACT
+  }
+  match_fields {
+    id: 3
+    name: "hdr.udp.dst_port"
+    bitwidth: 16
+    match_type: EXACT
+  }
+  action_refs {
+    id: 16779039
+  }
+  action_refs {
+    id: 16800567
+  }
+  size: 1024
+}
+tables {
+  preamble {
+    id: 33559802
+    name: "TpsGwIngress.data_drop_udp_ipv6_t"
+    alias: "data_drop_udp_ipv6_t"
+  }
+  match_fields {
+    id: 1
+    name: "hdr.ethernet.src_mac"
+    bitwidth: 48
+    match_type: EXACT
+  }
+  match_fields {
+    id: 2
+    name: "hdr.ipv6.dstAddr"
+    bitwidth: 128
+    match_type: EXACT
+  }
+  match_fields {
+    id: 3
+    name: "hdr.udp.dst_port"
+    bitwidth: 16
+    match_type: EXACT
+  }
+  action_refs {
+    id: 16779039
+  }
+  action_refs {
+    id: 16800567
+  }
+  size: 1024
+}
+tables {
+  preamble {
+    id: 33605549
+    name: "TpsGwIngress.data_drop_tcp_ipv4_t"
+    alias: "data_drop_tcp_ipv4_t"
+  }
+  match_fields {
+    id: 1
+    name: "hdr.ethernet.src_mac"
+    bitwidth: 48
+    match_type: EXACT
+  }
+  match_fields {
+    id: 2
+    name: "hdr.ipv4.dstAddr"
+    bitwidth: 32
+    match_type: EXACT
+  }
+  match_fields {
+    id: 3
+    name: "hdr.tcp.dst_port"
+    bitwidth: 16
+    match_type: EXACT
+  }
+  action_refs {
+    id: 16779039
+  }
+  action_refs {
+    id: 16800567
+  }
+  size: 1024
+}
+tables {
+  preamble {
+    id: 33613724
+    name: "TpsGwIngress.data_drop_tcp_ipv6_t"
+    alias: "data_drop_tcp_ipv6_t"
+  }
+  match_fields {
+    id: 1
+    name: "hdr.ethernet.src_mac"
+    bitwidth: 48
+    match_type: EXACT
+  }
+  match_fields {
+    id: 2
+    name: "hdr.ipv6.dstAddr"
+    bitwidth: 128
+    match_type: EXACT
+  }
+  match_fields {
+    id: 3
+    name: "hdr.tcp.dst_port"
+    bitwidth: 16
+    match_type: EXACT
+  }
+  action_refs {
+    id: 16779039
+  }
+  action_refs {
+    id: 16800567
+  }
+  size: 1024
+}
+tables {
+  preamble {
+    id: 33587268
+    name: "TpsGwIngress.udp_global_to_local_t"
+    alias: "udp_global_to_local_t"
+  }
+  match_fields {
+    id: 1
+    name: "hdr.udp.dst_port"
+    bitwidth: 16
+    match_type: EXACT
+  }
+  match_fields {
+    id: 2
+    name: "hdr.ipv4.dstAddr"
+    bitwidth: 32
+    match_type: LPM
+  }
+  action_refs {
+    id: 16798120
+  }
+  action_refs {
+    id: 16800567
+  }
+  size: 1024
+}
+tables {
+  preamble {
+    id: 33598666
+    name: "TpsGwIngress.tcp_global_to_local_t"
+    alias: "tcp_global_to_local_t"
+  }
+  match_fields {
+    id: 1
+    name: "hdr.tcp.dst_port"
+    bitwidth: 16
+    match_type: EXACT
+  }
+  match_fields {
+    id: 2
+    name: "hdr.ipv4.dstAddr"
+    bitwidth: 32
+    match_type: LPM
+  }
+  action_refs {
+    id: 16817480
+  }
+  action_refs {
+    id: 16800567
+  }
+  size: 1024
+}
+tables {
+  preamble {
+    id: 33607491
+    name: "TpsGwIngress.udp_local_to_global_t"
+    alias: "udp_local_to_global_t"
+  }
+  match_fields {
+    id: 1
+    name: "hdr.udp.src_port"
+    bitwidth: 16
+    match_type: EXACT
+  }
+  match_fields {
+    id: 2
+    name: "hdr.ipv4.srcAddr"
+    bitwidth: 32
+    match_type: LPM
+  }
+  action_refs {
+    id: 16803569
+  }
+  action_refs {
+    id: 16800567
+  }
+  size: 1024
+}
+tables {
+  preamble {
+    id: 33560979
+    name: "TpsGwIngress.tcp_local_to_global_t"
+    alias: "tcp_local_to_global_t"
+  }
+  match_fields {
+    id: 1
+    name: "hdr.tcp.src_port"
+    bitwidth: 16
+    match_type: EXACT
+  }
+  match_fields {
+    id: 2
+    name: "hdr.ipv4.srcAddr"
+    bitwidth: 32
+    match_type: LPM
+  }
+  action_refs {
+    id: 16835561
+  }
+  action_refs {
+    id: 16800567
+  }
+  size: 1024
+}
+tables {
+  preamble {
+    id: 33575984
+    name: "TpsGwIngress.mac_lookup_ipv4_t"
+    alias: "mac_lookup_ipv4_t"
+  }
+  match_fields {
+    id: 1
+    name: "hdr.ipv4.dstAddr"
+    bitwidth: 32
+    match_type: LPM
+  }
+  action_refs {
+    id: 16799706
+  }
+  action_refs {
+    id: 16800567
+  }
+  size: 1024
+}
+tables {
+  preamble {
+    id: 33599866
+    name: "TpsGwIngress.mac_lookup_ipv6_t"
+    alias: "mac_lookup_ipv6_t"
+  }
+  match_fields {
+    id: 1
+    name: "hdr.ipv6.dstAddr"
+    bitwidth: 128
+    match_type: LPM
+  }
+  action_refs {
+    id: 16799706
+  }
+  action_refs {
+    id: 16800567
+  }
+  size: 1024
+}
+actions {
+  preamble {
+    id: 16800567
+    name: "NoAction"
+    alias: "NoAction"
+  }
+}
+actions {
+  preamble {
+    id: 16778740
+    name: "TpsGwIngress.data_forward"
+    alias: "data_forward"
+  }
+  params {
+    id: 1
+    name: "port"
+    bitwidth: 9
+  }
+  params {
+    id: 2
+    name: "switch_mac"
+    bitwidth: 48
+  }
+}
+actions {
+  preamble {
+    id: 16799362
+    name: "TpsGwIngress.data_inspect_packet_ipv4"
+    alias: "data_inspect_packet_ipv4"
+  }
+  params {
+    id: 1
+    name: "device"
+    bitwidth: 32
+  }
+  params {
+    id: 2
+    name: "switch_id"
+    bitwidth: 32
+  }
+}
+actions {
+  preamble {
+    id: 16781175
+    name: "TpsGwIngress.data_inspect_packet_ipv6"
+    alias: "data_inspect_packet_ipv6"
+  }
+  params {
+    id: 1
+    name: "device"
+    bitwidth: 32
+  }
+  params {
+    id: 2
+    name: "switch_id"
+    bitwidth: 32
+  }
+}
+actions {
+  preamble {
+    id: 16785980
+    name: "TpsGwIngress.insert_udp_int_for_udp"
+    alias: "insert_udp_int_for_udp"
+  }
+}
+actions {
+  preamble {
+    id: 16820474
+    name: "TpsGwIngress.insert_udp_int_for_tcp"
+    alias: "insert_udp_int_for_tcp"
+  }
+}
+actions {
+  preamble {
+    id: 16779039
+    name: "TpsGwIngress.data_drop"
+    alias: "data_drop"
+  }
+  params {
+    id: 1
+    name: "device"
+    bitwidth: 32
+  }
+}
+actions {
+  preamble {
+    id: 16797710
+    name: "TpsGwIngress.generate_learn_notification"
+    alias: "generate_learn_notification"
+  }
+}
+actions {
+  preamble {
+    id: 16835467
+    name: "TpsGwIngress.nat_learn_notification"
+    alias: "nat_learn_notification"
+  }
+}
+actions {
+  preamble {
+    id: 16798120
+    name: "TpsGwIngress.udp_global_to_local"
+    alias: "udp_global_to_local"
+  }
+  params {
+    id: 1
+    name: "dst_port"
+    bitwidth: 16
+  }
+  params {
+    id: 2
+    name: "ip_dstAddr"
+    bitwidth: 32
+  }
+}
+actions {
+  preamble {
+    id: 16817480
+    name: "TpsGwIngress.tcp_global_to_local"
+    alias: "tcp_global_to_local"
+  }
+  params {
+    id: 1
+    name: "dst_port"
+    bitwidth: 16
+  }
+  params {
+    id: 2
+    name: "ip_dstAddr"
+    bitwidth: 32
+  }
+}
+actions {
+  preamble {
+    id: 16803569
+    name: "TpsGwIngress.udp_local_to_global"
+    alias: "udp_local_to_global"
+  }
+  params {
+    id: 1
+    name: "src_port"
+    bitwidth: 16
+  }
+  params {
+    id: 2
+    name: "ip_srcAddr"
+    bitwidth: 32
+  }
+}
+actions {
+  preamble {
+    id: 16835561
+    name: "TpsGwIngress.tcp_local_to_global"
+    alias: "tcp_local_to_global"
+  }
+  params {
+    id: 1
+    name: "src_port"
+    bitwidth: 16
+  }
+  params {
+    id: 2
+    name: "ip_srcAddr"
+    bitwidth: 32
+  }
+}
+actions {
+  preamble {
+    id: 16799706
+    name: "TpsGwIngress.mac_lookup"
+    alias: "mac_lookup"
+  }
+  params {
+    id: 1
+    name: "dst_mac"
+    bitwidth: 48
+  }
+}
+actions {
+  preamble {
+    id: 16823718
+    name: "TpsEgress.drop_pkt"
+    alias: "drop_pkt"
+  }
+}
+counters {
+  preamble {
+    id: 302014974
+    name: "TpsGwIngress.forwardedPackets"
+    alias: "forwardedPackets"
+  }
+  spec {
+    unit: BOTH
+  }
+  size: 15
+}
+counters {
+  preamble {
+    id: 302030405
+    name: "TpsGwIngress.droppedPackets"
+    alias: "droppedPackets"
+  }
+  spec {
+    unit: BOTH
+  }
+  size: 15
+}
+digests {
+  preamble {
+    id: 385897023
+    name: "mac_learn_digest"
+    alias: "mac_learn_digest"
+  }
+  type_spec {
+    struct {
+      name: "mac_learn_digest"
+    }
+  }
+}
+digests {
+  preamble {
+    id: 385940029
+    name: "nat_digest"
+    alias: "nat_digest"
+  }
+  type_spec {
+    struct {
+      name: "nat_digest"
+    }
+  }
+}
+type_info {
+  structs {
+    key: "mac_learn_digest"
+    value {
+      members {
+        name: "src_mac"
+        type_spec {
+          bitstring {
+            bit {
+              bitwidth: 48
+            }
+          }
+        }
+      }
+      members {
+        name: "ingress_port"
+        type_spec {
+          bitstring {
+            bit {
+              bitwidth: 9
+            }
+          }
+        }
+      }
+    }
+  }
+  structs {
+    key: "nat_digest"
+    value {
+      members {
+        name: "udp_src_port"
+        type_spec {
+          bitstring {
+            bit {
+              bitwidth: 16
+            }
+          }
+        }
+      }
+      members {
+        name: "tcp_src_port"
+        type_spec {
+          bitstring {
+            bit {
+              bitwidth: 16
+            }
+          }
+        }
+      }
+      members {
+        name: "local_ip"
+        type_spec {
+          bitstring {
+            bit {
+              bitwidth: 32
+            }
+          }
+        }
+      }
+    }
+  }
+}

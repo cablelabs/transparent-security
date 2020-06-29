@@ -41,3 +41,11 @@
         chdir: "{{ remote_scripts_dir }}/p4runtime-shell"
       register: cmd_out
       changed_when: cmd_out is not failed
+
+    - name: install p4runtime-shell dependencies into python3 runtime
+      command: "sudo pip install -r {{ remote_scripts_dir }}/p4runtime-shell/requirements.txt"
+      register: cmd_out
+      changed_when: cmd_out is not failed
+
+    - name: Copy p4runtime_sh Python {{ python_version }} dist-packages PI
+      command: "sudo cp -r /etc/transparent-security/p4runtime-shell/p4runtime_sh /usr/local/lib/python{{ python_version }}/dist-packages"

@@ -103,7 +103,7 @@ switches:
     public_ip: 172.32.1.1
     type: gateway
     mac: 00:00:00:02:01:00
-    grpc: 127.0.0.1:50053
+    grpc: {{ mn_host_ip }}:50053
     ipv6_term_host: inet
   gateway2:
     name: gateway2
@@ -113,7 +113,7 @@ switches:
     public_ip: 172.32.1.2
     type: gateway
     mac: 00:00:00:02:02:00
-    grpc: 127.0.0.1:50054
+    grpc: {{ mn_host_ip }}:50054
     ipv6_term_host: inet
   gateway3:
     name: gateway3
@@ -123,7 +123,7 @@ switches:
     public_ip: 172.32.1.3
     type: gateway
     mac: 00:00:00:02:03:00
-    grpc: 127.0.0.1:50055
+    grpc: {{ mn_host_ip }}:50055
     ipv6_term_host: inet
   aggregate:
     name: aggregate
@@ -132,7 +132,7 @@ switches:
     runtime_json: {{ remote_scripts_dir }}/p4/aggregate.json
     type: aggregate
     mac: 00:00:00:02:04:00
-    grpc: 127.0.0.1:50051
+    grpc: {{ mn_host_ip }}:50051
     ipv6_term_host: inet
     multicast_entries:
       - egress_port: 1
@@ -155,7 +155,7 @@ switches:
       name: analytics_engine
     type: core
     mac: 00:00:00:03:05:00
-    grpc: 127.0.0.1:50052
+    grpc: {{ mn_host_ip }}:50052
     ipv6_term_host: inet
     multicast_entries:
       - egress_port: 1
