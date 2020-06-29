@@ -54,6 +54,7 @@ switches:
       type: host
       name: clone
     ipv6_term_host: host2
+{# TODO/FIXME - having p4runtime exceptions with 'single_switch' but not 'full' #}
 {% if p4_prog != 'gateway' %}
     multicast_entries:
       - egress_port: 1

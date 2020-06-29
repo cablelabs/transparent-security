@@ -180,6 +180,15 @@ switches:
         virt_intf:  {{ switch_nic_prfx }}3
         bridge_name: br3
         tunnel_name: gre-tun3
+    multicast_entries:
+      - egress_port: 1
+        instance: 1
+      - egress_port: 2
+        instance: 1
+      - egress_port: 3
+        instance: 1
+      - egress_port: 4
+        instance: 1
   core:
     name: core
     id: 0
@@ -198,6 +207,12 @@ switches:
     tunnels:
       - host: aggregate
         virt_intf:  {{ switch_nic_prfx }}0
+    multicast_entries:
+      - egress_port: 1
+        instance: 1
+      - egress_port: 2
+        instance: 1
+
 {#external:#}
 {#  analytics_engine:#}
 {#    name: analytics_engine#}
