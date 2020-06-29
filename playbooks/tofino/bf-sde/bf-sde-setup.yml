@@ -14,12 +14,16 @@
 - hosts: all
 
   tasks:
+    - name: Update cache before installing python3-pip (apt task does not working here)
+      become: yes
+      command: apt update
+
     - name: Install apt dependencies
       become: yes
       apt:
         update_cache: yes
         name:
-          - python-pip
+          - python3-pip
 
     - name: install boto3
       become: yes

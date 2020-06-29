@@ -19,6 +19,6 @@ export SDE=~{{ sudo_user }}/bf-sde-{{ sde_version }}
 export SDE_INSTALL=$SDE/install
 export host_ip=$(hostname -i)
 
-$SDE/p4runtime_update_config.py -p {{ prog_name }} --grpc-addr $host_ip:{{ grpc_port }} &> /var/log/transparent-security/p4rt-update.log
+python2.7 $SDE/p4runtime_update_config.py -p {{ prog_name }} --grpc-addr $host_ip:{{ grpc_port }} &> /var/log/transparent-security/p4rt-update.log
 
 while true; do sleep 1; done

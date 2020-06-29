@@ -25,41 +25,45 @@
   tasks:
     - name: install bf-sde with P4 Runtime Profile
       command: >
-        python $SDE/p4studio_build/p4studio_build.py
+        /usr/bin/python2.7 $SDE/p4studio_build/p4studio_build.py
         --use-profile $SDE/p4studio_build/profiles/p4_runtime_profile.yaml
       async: 10800
       poll: 15
 
-    - name: Copy build python libs to runtime
+    - name: Copy build python libs to Python {{ python_version }} runtime
       become: yes
+      shell: >
+        sudo cp -r
+        $SDE_INSTALL/lib/python3.4/*
+        /usr/local/lib/python{{ python_version }}/dist-packages/
+
+    - name: Copy built python tofino libs to Python {{ python_version }} runtime
+      shell: >
+        sudo cp -r
+        $SDE_INSTALL/lib/python2.7/site-packages/*
+        /usr/local/lib/python{{ python_version }}/dist-packages/
+
+    - name: Copy built python tofino libs to Python {{ python_version }} runtime
       shell: >
         sudo cp -r
         $SDE_INSTALL/lib/python2.7/site-packages/*
         /usr/local/lib/python2.7/dist-packages/
 
-    - name: Copy build python tofino libs to runtime
-      shell: >
-        sudo cp -r
-        $SDE_INSTALL/lib/python2.7/site-packages/tofino/*
-        /usr/local/lib/python2.7/dist-packages/
-
-    - name: Remove tofino directory
-      become: yes
-      file:
-        path: $SDE_INSTALL/lib/python2.7/site-packages/tofino
-        state: absent
-
     - name: Copy examples python libs to runtime
       shell: >
         sudo cp -r
         $SDE/pkgsrc/p4-examples/p4_16_programs/*
-        /usr/local/lib/python2.7/dist-packages/
+        /usr/local/lib/python{{ python_version }}/dist-packages/
 
     - name: Create top-level __init__.py for BF-SDE Python packages missing them in the default Python runtime
       become: yes
       file:
-        path: "/usr/local/lib/python2.7/dist-packages/{{ item }}/__init__.py"
+        path: "/usr/local/lib/python{{ python_version }}/dist-packages/{{ item }}/__init__.py"
         state: touch
       with_items:
         - p4testutils
         - tofino_pd_api
+
+    - name: Set python version {{ python_version }} as the default runtime
+      become: yes
+      command: "sudo update-alternatives --install /usr/bin/python python /usr/bin/python{{ python_version }} 0"

@@ -19,11 +19,11 @@ locals {
   ]
   py2 = [
     "sudo apt-get update",
-    "sudo apt-get install python2.7 -y",
-    "sudo update-alternatives --install /usr/bin/python python /usr/bin/python2.7 0",
+    "sudo apt-get install python2.7 aptitude -y",
   ]
   inline_scripts = var.env_type == "tofino" ? local.py2 : local.py3
 }
+
 resource "aws_instance" "transparent-security-build-img" {
   ami = var.ubuntu_version == "18" ? var.base_18_ami : var.base_16_ami
   instance_type = var.instance_type

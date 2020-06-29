@@ -15,8 +15,8 @@ from logging import getLogger
 
 import ipaddress
 
-# from trans_sec.p4runtime_lib import tofino
-from trans_sec.p4runtime_lib import helper, tofino
+from trans_sec.exceptions import NotFoundError
+from trans_sec.p4runtime_lib import helper
 
 logger = getLogger('abstract_controller')
 
@@ -318,20 +318,7 @@ class AbstractController(object):
         new_switch.master_arbitration_update()
 
         if self.load_p4:
-            device_config = None
-            if 'runtime_json' in new_switch.sw_info:
-                device_config = new_switch.build_device_config(
-                    bmv2_json_file_path=new_switch.sw_info['runtime_json'])
-
-                logger.info('Setting forwarding pipeline config on - [%s]',
-                            name)
-            elif 'bin_path' in switch and 'cxt_json_path' in switch:
-                # TODO - This is not working see issue #172
-                device_config = tofino.build_device_config(
-                    switch['type'], switch['bin_path'],
-                    switch['cxt_json_path'])
-                raise Exception('Forwarding pipeline cannot be configured')
-
+            device_config = new_switch.build_device_config()
             if device_config:
                 new_switch.set_forwarding_pipeline_config(device_config)
             else:

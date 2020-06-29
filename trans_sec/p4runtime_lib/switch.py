@@ -29,6 +29,7 @@
 #
 import codecs
 import logging
+import struct
 from queue import Queue
 from abc import abstractmethod
 from datetime import datetime
@@ -234,14 +235,48 @@ class SwitchConnection(object):
     def add_data_inspection(self, dev_id, dev_mac):
         raise NotImplemented
 
-    def build_device_config(self, bmv2_json_file_path=None):
-        logger.info('Building device [%s] config for BMV2 with file - [%s]',
-                    self.grpc_addr, bmv2_json_file_path)
+    def build_device_config(self):
+        if self.sw_info['type'] == 'tofino':
+            return self.__build_device_config_tofino()
+        else:
+            return self.__build_device_config_bmv2()
+
+    def __build_device_config_bmv2(self):
+        runtime_json = self.sw_info['runtime_json']
+        logger.info('Building device [%s] config with file - [%s]',
+                    self.grpc_addr, runtime_json)
+
         device_config = p4config_pb2.P4DeviceConfig()
         device_config.reassign = True
-        with open(bmv2_json_file_path) as f:
+        with open(runtime_json) as f:
             file_data = f.read()
             device_config.device_data = bytes(file_data, 'utf-8')
+        return device_config
+
+    def __build_device_config_tofino(self):
+        """
+        Builds the device config for Tofino
+        """
+        prog_name = self.sw_info['type']
+        bin_path = self.sw_info['bin_path']
+        cxt_json_path = self.sw_info['cxt_json_path']
+        logger.info(
+            'Building device configuration for program - [%s], bin_path - [%s]'
+            ', and cxt_json_path - [%s]', prog_name, bin_path, cxt_json_path)
+        prog_name = prog_name.encode('utf-8')
+        device_config = p4config_pb2.P4DeviceConfig()
+        device_config.reassign = True
+        with open(bin_path, 'rb') as bin_f:
+            with open(cxt_json_path, 'r') as cxt_json_f:
+                device_config.device_data = ""
+                device_config.device_data += struct.pack("<i", len(prog_name))
+                device_config.device_data += prog_name
+                tofino_bin = bin_f.read()
+                device_config.device_data += struct.pack("<i", len(tofino_bin))
+                device_config.device_data += tofino_bin
+                cxt_json = cxt_json_f.read()
+                device_config.device_data += struct.pack("<i", len(cxt_json))
+                device_config.device_data += cxt_json
         return device_config
 
     def master_arbitration_update(self):

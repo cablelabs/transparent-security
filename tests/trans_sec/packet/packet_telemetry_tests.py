@@ -10,11 +10,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import json
 import logging
 import sys
 import unittest
 import pkg_resources
+import yaml
 
 from trans_sec.packet.packet_telemetry import PacketTelemetry
 
@@ -30,9 +30,9 @@ class PacketTelemetryTests(unittest.TestCase):
     def setUp(self):
         # Parse topology file and store into object
         topo_file = pkg_resources.resource_filename(
-            'tests.trans_sec.conf', 'test_topology.json')
+            'tests.trans_sec.conf', 'test_topology.yaml')
         with open(topo_file, 'r') as f:
-            self.topo = json.load(f)
+            self.topo = yaml.safe_load(f)
             logger.info("Opened file - %s" % f.name)
 
         self.packet_telemetry = PacketTelemetry()
