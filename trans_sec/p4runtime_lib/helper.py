@@ -270,7 +270,10 @@ class P4InfoHelper(object):
         logger.info("Building digest entry for %s", digest_name)
         digest_entry = p4runtime_pb2.DigestEntry()
         # using name
+        # TODO/FIXME - This appears to be broken on Tofino see issue #175
+        logger.debug('Before getting digest ID')
         digest_entry.digest_id = self.get_digests_id(digest_name)
+        logger.debug('After getting digest ID')
         # using id directly
         digest_entry.config.max_timeout_ns = 0
         digest_entry.config.max_list_size = 1

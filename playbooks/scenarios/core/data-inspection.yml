@@ -22,13 +22,11 @@
     switch: "{{ topo_dict.switches.core }}"
     remote_send_host: host1
     remote_rec_host: clone
-    send_host: "{{ remote_send_host if run_mode == 'remote' else None }}"
-    rec_host: "{{ remote_rec_host if run_mode == 'remote' else None }}"
+    send_host: "{{ remote_send_host }}"
+    rec_host: "{{ remote_rec_host }}"
     sender: "{{ topo_dict.hosts[remote_send_host] }}"
-    sender_intf: "{{ '%s-eth0' % send_host if run_mode == 'remote' else '%s-eth1' % switch.name }}"
     send_sw_port: "{{ topo_dict.links[0].south_facing_port }}"
     receiver: "{{ topo_dict.hosts.host2 }}"
-    receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth3' % switch.name }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
     data_inspection_table_action:
       control_name: TpsCoreIngress
@@ -60,13 +58,11 @@
     switch: "{{ topo_dict.switches.core }}"
     remote_send_host: host1
     remote_rec_host: host2
-    send_host: "{{ remote_send_host if run_mode == 'remote' else None }}"
-    rec_host: "{{ remote_rec_host if run_mode == 'remote' else None }}"
+    send_host: "{{ remote_send_host }}"
+    rec_host: "{{ remote_rec_host }}"
     sender: "{{ topo_dict.hosts[remote_send_host] }}"
-    sender_intf: "{{ '%s-eth0' % send_host if run_mode == 'remote' else '%s-eth1' % switch.name }}"
     send_sw_port: "{{ topo_dict.links[0].south_facing_port }}"
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
-    receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth2' % switch.name }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
     data_inspection_table_action:
       control_name: TpsCoreIngress

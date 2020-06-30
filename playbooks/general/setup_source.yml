@@ -12,8 +12,8 @@
 # limitations under the License.
 ---
 - hosts: "{{ host_val | default('all') }}"
-
   gather_facts: no
+  become: yes
 
   vars:
     orig_src_dir: "{{ trans_sec_source_dir | default('../../..') }}/"
@@ -23,7 +23,6 @@
 
   tasks:
     - name: install python3-pip
-      become: yes
       apt:
         update_cache: yes
         name:
@@ -34,6 +33,7 @@
       until: apt_rc is not failed
 
     - name: Copy local transparent-security source from {{ orig_src_dir }} to remote {{ dest_dir }} directory
+      become: no
       synchronize:
         # Top-level source directory relative to this directory
         src: "{{ orig_src_dir }}"
@@ -48,7 +48,6 @@
           - "--exclude=*.eggs"
 
     - name: install {{ dest_dir }} dependencies into python runtime
-      become: yes
       command: "pip install -r {{ dest_dir }}/requirements.txt"
       register: cmd_out
       changed_when: cmd_out is not failed
@@ -57,7 +56,6 @@
       delay: 5
 
     - name: install {{ dest_dir }} into python runtime
-      become: yes
       command: "pip install -e {{ dest_dir }}"
       register: cmd_out
       changed_when: cmd_out is not failed
@@ -66,15 +64,14 @@
       delay: 5
 
     - name: run python unit tests
-      become: yes
       command: python setup.py test
       args:
         chdir: "{{ dest_dir }}"
       when: run_tests
 
     - name: Copy TPS P4 includes from {{ dest_dir }}/p4/include/* to {{ share_dir }}/share/p4c/p4include/
-      become: yes
-      shell: "cp {{ dest_dir }}/p4/include/*.p4 {{ share_dir }}/share/p4c/p4include/"
+      shell: >
+        cp {{ dest_dir }}/p4/include/*.p4 {{ share_dir }}/share/p4c/p4include
       register: cmd_out
       changed_when: cmd_out is not failed
       when: share_dir|length > 0

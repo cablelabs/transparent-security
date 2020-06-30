@@ -46,6 +46,7 @@ class CoreController(AbstractController):
         clone_entry = self.p4info_helper.build_clone_entry(
             sw.sw_info['clone_egress'])
         sw.write_clone_entries(clone_entry)
+        logger.info('Installed clone on %s' % sw.name)
 
         ae_ip = None
         trpt_dict = sw.sw_info.get('telemetry_rpt')

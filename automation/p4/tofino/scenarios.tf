@@ -11,13 +11,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-resource "null_resource" "transparent-security-run-senario-tests" {
+resource "null_resource" "transparent-security-run-scenario-tests" {
   depends_on = [null_resource.tps-tofino-setup-nodes]
 
   provisioner "remote-exec" {
     inline = [
       "sudo pip install ansible",
-      "${var.ANSIBLE_CMD} -i ${var.remote_inventory_file} ${var.remote_pb_dir}/scenarios/${var.scenario_name}.yml",
+      "${var.ANSIBLE_CMD} -i ${var.remote_inventory_file} ${var.remote_scenario_pb_dir}/${var.scenario_name}/${var.test_case}.yml --extra-vars='node_interface=eth0'",
     ]
   }
 

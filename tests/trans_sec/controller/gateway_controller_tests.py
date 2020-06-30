@@ -11,11 +11,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # Unit tests for convert.py
-import json
 import logging
 import mock
 import pkg_resources
 import unittest
+
+import yaml
 
 from trans_sec.controller.gateway_controller import GatewayController
 
@@ -29,9 +30,9 @@ class GatewayControllerTests(unittest.TestCase):
     def setUp(self):
         # Parse topology file and store into object
         topo_file = pkg_resources.resource_filename(
-            'tests.trans_sec.conf', 'test_topology.json')
+            'tests.trans_sec.conf', 'test_topology.yaml')
         with open(topo_file, 'r') as f:
-            self.topo = json.load(f)
+            self.topo = yaml.load(f)
             logger.info("Opened file - %s" % f.name)
 
     @mock.patch('trans_sec.p4runtime_lib.helper.P4InfoHelper',

@@ -364,8 +364,7 @@ Note - The transparent-security.ini refers to the inventory file on the remote m
 - To use the sample scenario provided by CableLabs, run the following command on the remote VM -
 ```bash
 export ANSIBLE_HOST_KEY_CHECKING=False
-# run_mode denotes whether to run the tests on the localhost (faster packet generation) or directly on the mininet hosts (more accurate architecture but slow)
-ansible-playbook -u ubuntu -i transparent-security.ini transparent-security/playbooks/scenarios/full/all.yml --extra-vars="run_mode=<'remote'|'local')>
+ansible-playbook -u ubuntu -i transparent-security.ini transparent-security/playbooks/scenarios/full/all.yml
 ```
 Note - Refer the Wiki page [Attack Scenario](https://github.com/cablelabs/transparent-security/wiki/2.-Attack-Scenario) for a 
 detailed explanation of the attack scenario.
@@ -455,8 +454,7 @@ Note - The transparent-security.ini refers to the inventory file on the remote m
 - To use the sample scenario provided by CableLabs, run the following command on the remote VM -
 ```bash
 export ANSIBLE_HOST_KEY_CHECKING=False
-# run_mode denotes whether to run the tests on the localhost (faster packet generation) or directly on the mininet hosts (more accurate architecture but slow)
-ansible-playbook -u ubuntu -i transparent-security.ini transparent-security/playbooks/scenarios/full/all.yml --extra-vars="run_mode=<'remote'|'local')>
+ansible-playbook -u ubuntu -i transparent-security.ini transparent-security/playbooks/scenarios/full/all.yml
 ```
 Note - Refer the Wiki page [Attack Scenario](https://github.com/cablelabs/transparent-security/wiki/2.-Attack-Scenario) for a 
 detailed explanation of the attack scenario.

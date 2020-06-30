@@ -13,20 +13,28 @@
 
 locals {
   sdn_ip = aws_instance.orchestrator.private_ip
-  core_switch_ip = aws_instance.tps-switch.0.private_ip
-  agg_switch_ip = aws_instance.tps-switch.1.private_ip
-  gateway_1_ip = aws_instance.tps-switch.2.private_ip
-  gateway_2_ip = aws_instance.tps-switch.3.private_ip
-  gateway_3_ip = aws_instance.tps-switch.4.private_ip
-  camera_1_ip = aws_instance.node.0.private_ip
-  nas_1_ip = aws_instance.node.1.private_ip
-  game_1_ip = aws_instance.node.2.private_ip
-  camera_2_ip = aws_instance.node.3.private_ip
-  game_2_ip = aws_instance.node.4.private_ip
-  camera_3_ip = aws_instance.node.5.private_ip
-  game_3_ip = aws_instance.node.6.private_ip
-  inet_ip = aws_instance.node.7.private_ip
-  ae_ip = aws_instance.node.8.private_ip
+
+  # For "full" scenario
+  core_switch_ip = var.scenario_name == "full" ? aws_instance.tps-switch.0.private_ip: "n/a"
+  agg_switch_ip = var.scenario_name == "full" ? aws_instance.tps-switch.1.private_ip: "n/a"
+  gateway_1_ip = var.scenario_name == "full" ? aws_instance.tps-switch.2.private_ip: "n/a"
+  gateway_2_ip = var.scenario_name == "full" ? aws_instance.tps-switch.3.private_ip: "n/a"
+  gateway_3_ip = var.scenario_name == "full" ? aws_instance.tps-switch.4.private_ip: "n/a"
+  camera_1_ip = var.scenario_name == "full" ? aws_instance.node.0.private_ip: "n/a"
+  nas_1_ip = var.scenario_name == "full" ? aws_instance.node.1.private_ip: "n/a"
+  game_1_ip = var.scenario_name == "full" ? aws_instance.node.2.private_ip: "n/a"
+  camera_2_ip = var.scenario_name == "full" ? aws_instance.node.3.private_ip: "n/a"
+  game_2_ip = var.scenario_name == "full" ? aws_instance.node.4.private_ip: "n/a"
+  camera_3_ip = var.scenario_name == "full" ? aws_instance.node.5.private_ip: "n/a"
+  game_3_ip = var.scenario_name == "full" ? aws_instance.node.6.private_ip: "n/a"
+  inet_ip = var.scenario_name == "full" ? aws_instance.node.7.private_ip: "n/a"
+  ae_ip = var.scenario_name == "full" ? aws_instance.node.8.private_ip: "n/a"
+
+  # For single-switch tests
+  switch_ip = var.scenario_name == "full" ? "n/a" : aws_instance.tps-switch.0.private_ip
+  host1_ip = var.scenario_name == "full" ? "n/a" : aws_instance.node.0.private_ip
+  host2_ip = var.scenario_name == "full" ? "n/a" : aws_instance.node.1.private_ip
+  clone_ip = var.scenario_name == "full" ? "n/a" : aws_instance.node.2.private_ip
 }
 
 ########
@@ -51,7 +59,8 @@ EOT
   }
 }
 
-resource "null_resource" "tps-sim-setup-orch" {
+resource "null_resource" "tps-sim-setup-orch-full" {
+  count = var.scenario_name == "full" ? 1 : 0
   depends_on = [
     aws_instance.tps-switch,
     aws_instance.node,
@@ -61,7 +70,7 @@ resource "null_resource" "tps-sim-setup-orch" {
     command = <<EOT
 ${var.ANSIBLE_CMD} -u ${var.sudo_user} \
 -i ${aws_instance.orchestrator.public_ip}, \
-${var.SETUP_ORCH} \
+${var.SETUP_ORCH_FULL} \
 --key-file ${var.private_key_file} \
 --extra-vars "\
 core_ip=${local.core_switch_ip}
@@ -98,19 +107,72 @@ srvc_log_level=${var.service_log_level}
 switch_sudo_user=${var.sudo_user}
 host_sudo_user=${var.sudo_user}
 ae_monitor_intf=${var.ae_monitor_intf}
+clone_egress_port=${var.clone_egress_port}
 p4_platform=tofino
 "\
 EOT
   }
 }
 
+resource "null_resource" "tps-sim-setup-orch-single-switch" {
+  count = var.scenario_name == "full" ? 0 : 1
+  depends_on = [
+    aws_instance.tps-switch,
+    aws_instance.node,
+    null_resource.tps-tofino-orch-key-setup,
+  ]
+  provisioner "local-exec" {
+    command = <<EOT
+${var.ANSIBLE_CMD} -u ${var.sudo_user} \
+-i ${aws_instance.orchestrator.public_ip}, \
+${var.SETUP_ORCH_SINGLE_SWITCH} \
+--key-file ${var.private_key_file} \
+--extra-vars "\
+scenario_name=${var.scenario_name}
+host1_ip=${local.host1_ip}
+host2_ip=${local.host2_ip}
+clone_ip=${local.clone_ip}
+switch_ip=${local.switch_ip}
+topo_file_loc=${var.topo_file_loc}
+sde_version=${var.tofino.sde_version}
+sde_dir=/home/${var.sudo_user}/bf-sde-${var.tofino.sde_version}
+remote_scripts_dir=${var.remote_scripts_dir}
+switchd_port=${var.switchd_port}
+sdn_port=${var.sdn_port}
+tofino_model_port=${var.tofino_model_start_port}
+switchd_port=${var.switchd_port}
+grpc_port=${var.grpc_port}
+sdn_ip=${aws_instance.orchestrator.private_ip}
+trans_sec_dir=${var.remote_tps_dir}
+remote_ansible_inventory=${var.remote_inventory_file}
+node_nic=${var.node_nic_name}
+switch_nic_prfx=${var.switch_nic_prfx}
+srvc_log_dir=${var.remote_srvc_log_dir}
+srvc_log_level=${var.service_log_level}
+switch_sudo_user=${var.sudo_user}
+host_sudo_user=${var.sudo_user}
+ae_monitor_intf=${var.ae_monitor_intf}
+clone_egress_port=${var.clone_egress_port}
+p4_platform=tofino
+"\
+EOT
+  }
+}
+
+locals {
+  setup_pb = var.scenario_name == "full" ? "setup_nodes-full.yml" : "setup_nodes-single_switch.yml"
+}
+
 resource "null_resource" "tps-tofino-setup-nodes" {
-  depends_on = [null_resource.tps-sim-setup-orch]
+  depends_on = [
+    null_resource.tps-sim-setup-orch-full,
+    null_resource.tps-sim-setup-orch-single-switch
+  ]
 
   provisioner "remote-exec" {
     inline = [
       "sudo pip install ansible",
-      "${var.ANSIBLE_CMD} -i ${var.remote_inventory_file} ${var.remote_pb_dir}/tofino/${var.setup_nodes_pb}"
+      "${var.ANSIBLE_CMD} -i ${var.remote_inventory_file} ${var.remote_pb_dir}/tofino/${local.setup_pb} --extra-vars='scenario_name=${var.scenario_name}'"
     ]
   }
 

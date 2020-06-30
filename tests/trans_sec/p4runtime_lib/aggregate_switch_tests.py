@@ -41,12 +41,15 @@ class AggregateSwitchTests(unittest.TestCase):
 
     @mock.patch('trans_sec.p4runtime_lib.helper.P4InfoHelper',
                 return_value=mock.Mock())
-    def test_build_device_config(self, m1):
+    @mock.patch(
+        'trans_sec.p4runtime_lib.switch.SwitchConnection.build_device_config',
+        return_value=mock.Mock())
+    def test_build_device_config(self, m1, m2):
         """
         Tests constructor for class CoreController
         """
 
         switch = AggregateSwitch(p4info_helper=m1, sw_info=self.sw_info)
 
-        device_conf = switch.build_device_config(self.p4_json)
+        device_conf = switch.build_device_config()
         self.assertIsNotNone(device_conf)

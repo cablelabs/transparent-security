@@ -38,6 +38,7 @@
   set_fact:
     host_ip: "{{ this_host.ip }}"
     remote_ip: "{{ remote_host.ip }}"
+  when: remote_host is defined and remote_host != ""
 
 - name: create virtual nic {{ virt_intf }}
   command: "ifconfig {{ virt_intf }}"
@@ -45,6 +46,7 @@
 
 - name: create connection from {{ tun_name }} to {{ remote_ip }} on host {{ host_ip }}
   command: "ip link add {{ tun_name }} type gretap remote {{ remote_ip }} local {{ host_ip }} ttl 32"
+  when: remote_ip is defined
 
 - name: create bridge {{ br_name }}
   command: "brctl addbr {{ br_name }} {{ host_ip }}"
@@ -55,15 +57,20 @@
 
 - name: create port {{ br_name }} -> {{ tun_name }}
   command: "brctl addif {{ br_name }} {{ tun_name }}"
+  when: remote_ip is defined
 
 - name: set bridge up
   command: "ip link set {{ br_name }} up"
+  when: remote_ip is defined
 
 - name: set gre tunnel up
   command: "ip link set {{ tun_name }} up"
+  when: remote_ip is defined
 
 - name: set {{ virt_intf }} up
   command: "ip link set {{ virt_intf }} up"
+  when: remote_ip is defined
 
 - name: set bridge stp on
   command: "brctl stp {{ br_name }} on"
+  when: remote_ip is defined

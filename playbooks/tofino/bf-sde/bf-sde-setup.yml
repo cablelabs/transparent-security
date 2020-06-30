@@ -14,12 +14,16 @@
 - hosts: all
 
   tasks:
+    - name: Update cache before installing python3-pip (apt task does not working here)
+      become: yes
+      command: apt update
+
     - name: Install apt dependencies
       become: yes
       apt:
         update_cache: yes
         name:
-          - python-pip
+          - python3-pip
 
     - name: install boto3
       become: yes
@@ -65,12 +69,6 @@
       file:
         path: "{{ install_dir }}/tools"
         state: directory
-
-    - name: Copy p4_build.sh
-      copy:
-        src: ./templates/p4_build.sh
-        dest: "{{ install_dir }}/tools/p4_build.sh"
-        mode: 0775
 
     - name: Copy env setup script
       copy:

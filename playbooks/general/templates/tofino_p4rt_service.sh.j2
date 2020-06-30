@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # Copyright (c) 2019 Cable Television Laboratories, Inc.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -10,17 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
----
-- hosts: "{{ host_val }}"
+#
+# Runs the Tofino switchd service
 
-  gather_facts: no
+export SDE=~{{ sudo_user }}/bf-sde-{{ sde_version }}
+export SDE_INSTALL=$SDE/install
+export host_ip=$(hostname -i)
 
-  environment:
-    SDE: "{{ sde_dir }}"
-    SDE_INSTALL: "{{ sde_dir }}/install"
+python2.7 $SDE/p4runtime_update_config.py -p {{ prog_name }} --grpc-addr $host_ip:{{ grpc_port }} &> /var/log/transparent-security/p4rt-update.log
 
-  tasks:
-    - name: Compile P4 program {{ p4_prog }}
-      command: "{{ bf_tools_dir }}/p4_build.sh {{ remote_tps_dir }}/p4/{{ package }}/{{ program }}"
-      environment:
-        SDE: "{{ remote_sde_dir }}"
+while true; do sleep 1; done
