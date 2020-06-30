@@ -13,7 +13,8 @@
 # Simple scenario where packets are sent through 3 devices and only the last
 # one will be demonstrating dropped packets
 ---
-# Sending 25 packets within a second 1x through gateway 1
+# Sending 150 packets within a second 2x through gateway 1.
+# The second set should be dropped else this will fail
 - import_playbook: ../test_cases/send_receive.yml
   vars:
     send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
@@ -24,13 +25,11 @@
     remote_send_host: Camera1
     remote_rec_host: inet
     switch: "{{ topo_dict.switches[switch_name] }}"
-    send_host: "{{ remote_send_host if run_mode == 'remote' else None }}"
-    rec_host: "{{ remote_rec_host if run_mode == 'remote' else None }}"
+    send_host: "{{ remote_send_host }}"
+    rec_host: "{{ remote_rec_host }}"
     sender: "{{ topo_dict.hosts[remote_send_host] }}"
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     dst_mac: "{{ sender['switch_mac'] }}"
-    sender_intf: "{{ '%s-eth0' % send_host if run_mode == 'remote' else '%s-eth1' % switch_name }}"
-    receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth2' % core_switch_name }}"
     receiver_log_filename: "udp-flood-receiver-{{ rec_host }}-{{ send_protocol }}-1.out"
     sender_log_filename: "udp-flood-sender-{{ send_host }}-{{ send_protocol }}-1.out"
     send_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 1) }}"
@@ -42,7 +41,8 @@
     send_loop_delay: 5
     sdn_host_port: "{{ sdn_ip }}:{{ sdn_port }}"
 
-# Sending 50 packets within a second 1x through gateway 2
+# Sending 150 packets within a second 2x through gateway 2.
+# The second set should be dropped else this will fail
 - import_playbook: ../test_cases/send_receive.yml
   vars:
     send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
@@ -53,13 +53,11 @@
     remote_send_host: Camera2
     remote_rec_host: inet
     switch: "{{ topo_dict.switches[switch_name] }}"
-    send_host: "{{ remote_send_host if run_mode == 'remote' else None }}"
-    rec_host: "{{ remote_rec_host if run_mode == 'remote' else None }}"
+    send_host: "{{ remote_send_host }}"
+    rec_host: "{{ remote_rec_host }}"
     sender: "{{ topo_dict.hosts[remote_send_host] }}"
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     dst_mac: "{{ sender['switch_mac'] }}"
-    sender_intf: "{{ '%s-eth0' % send_host if run_mode == 'remote' else '%s-eth1' % switch_name }}"
-    receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth2' % core_switch_name }}"
     receiver_log_filename: "udp-flood-receiver-{{ rec_host }}-{{ send_protocol }}-2.out"
     sender_log_filename: "udp-flood-sender-{{ send_host }}-{{ send_protocol }}-2.out"
     send_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 3) }}"
@@ -83,13 +81,11 @@
     remote_send_host: Camera3
     remote_rec_host: inet
     switch: "{{ topo_dict.switches[switch_name] }}"
-    send_host: "{{ remote_send_host if run_mode == 'remote' else None }}"
-    rec_host: "{{ remote_rec_host if run_mode == 'remote' else None }}"
+    send_host: "{{ remote_send_host }}"
+    rec_host: "{{ remote_rec_host }}"
     sender: "{{ topo_dict.hosts[remote_send_host] }}"
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     dst_mac: "{{ sender['switch_mac'] }}"
-    sender_intf: "{{ '%s-eth0' % send_host if run_mode == 'remote' else '%s-eth1' % switch_name }}"
-    receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth2' % core_switch_name }}"
     receiver_log_filename: "udp-flood-receiver-{{ rec_host }}-{{ send_protocol }}-3.out"
     sender_log_filename: "udp-flood-sender-{{ send_host }}-{{ send_protocol }}-3.out"
     send_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 5) }}"

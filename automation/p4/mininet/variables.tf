@@ -55,8 +55,5 @@ variable "remote_scenario_pb_dir" {default = "/home/ubuntu/transparent-security/
 # Also supports "gateway", "aggregate", and "core"
 variable "scenario_name" {default = "full"}
 
-# Any other value will run the tests in local mode
-variable "test_run_mode" {default = "remote"}
-
 # Default test case that will execute the playbook located at ../../../playbooks/scenarios/<scenario_name>-<test_case>.yml
 variable "test_case" {default = "all"}
