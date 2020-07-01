@@ -25,7 +25,6 @@ hosts:
     ip_port: any
     mac: 00:00:00:00:01:02
     type: server
-{% if p4_prog != 'aggregate' %}
   clone:
     name: clone
     id: 3
@@ -40,7 +39,6 @@ hosts:
     ip_port: any
     mac: 00:00:00:00:05:08
     type: server
-{% endif %}
 # TODO - Determine how to properly configure a switch MAC value
 switches:
   {{ p4_prog }}:

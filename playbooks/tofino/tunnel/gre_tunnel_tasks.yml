@@ -13,6 +13,10 @@
 #
 # see https://community.hetzner.com/tutorials/linux-setup-gre-tunnel
 ---
+- name: Processing item value
+  debug:
+    var: item
+
 - name: install dependecies
   apt:
     name:
@@ -30,13 +34,21 @@
     this_host: "{{ topo_dict.switches.get(ansible_host) }}"
   when: not this_host
 
+- name: item.host value
+  set_fact:
+    item_host: item.host
+- name: Retrieve switch from topology
+  set_fact:
+    switch: "{{ topo_dict.switches.get(item_host) }}"
+
 - name: set remote_host from switches when not in hosts
   set_fact:
     remote_host: "{{ topo_dict.switches.get(item.host)  }}"
   when: not remote_host
 
-- name: create connection from {{ item.tunnel_name }} from {{ host.ip }} to {{ remote_host.ip }}
-  command: "ip tunnel add {{ item.tunnel_name }} mode gre local {{ host.ip }} remote {{ remote_host.ip }} ttl 255"
+- name: create connection from {{ item.tunnel_name }} from {{ this_host.ip }} to {{ remote_host.ip }}
+  command: "ip tunnel add {{ item.tunnel_name }} mode gre local {{ this_host.ip }} remote {{ remote_host.ip }} ttl 255"
+  when: remote_host is defined and remote_host != ""
 
 - name: stop bridge {{ item.bridge_name }}
   command: "ip link set dev {{ item.bridge_name }} down"
@@ -46,24 +58,24 @@
   command: "brctl delbr {{ item.bridge_name }}"
   ignore_errors: yes
 
-- name: create bridge {{ item.bridge_name }} to {{ host.ip }}
-  command: "brctl addbr {{ item.bridge_name }} {{ host.ip }}"
+- name: create bridge {{ item.bridge_name }} to {{ this_host.ip }}
+  command: "brctl addbr {{ item.bridge_name }} {{ this_host.ip }}"
 
 # TODO - determine why adding the bridge to the virtual interface is causing networking to fail
-- name: create port {{ item.bridge_name }} -> {{ item.virt_intf }}
-  command: "brctl addif {{ item.bridge_name }} {{ item.virt_intf }}"
+#- name: create port {{ item.bridge_name }} -> {{ item.virt_intf }}
+#  command: "brctl addif {{ item.bridge_name }} {{ item.virt_intf }}"
 
-- name: create port {{ item.bridge_name }} -> {{ item.tunnel_name }}
-  command: "brctl addif {{ item.bridge_name }} {{ item.tunnel_name }}"
+#- name: create port {{ item.bridge_name }} -> {{ item.tunnel_name }}
+#  command: "brctl addif {{ item.bridge_name }} {{ item.tunnel_name }}"
 
-- name: set bridge up
+- name: set bridge up - {{ item.bridge_name }}
   command: "ip link set {{ item.bridge_name }} up"
 
-- name: set gre tunnel up
+- name: set gre tunnel up - {{ item.tunnel_name }}
   command: "ip link set {{ item.tunnel_name }} up"
 
 - name: set {{ item.virt_intf }} up
   command: "ip link set {{ item.virt_intf }} up"
 
-- name: set bridge stp on
+- name: set bridge stp on - {{ item.bridge_name }}
   command: "brctl stp {{ item.bridge_name }} on"
