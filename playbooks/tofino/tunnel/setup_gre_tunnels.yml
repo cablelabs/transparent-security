@@ -23,6 +23,8 @@
       modprobe:
         name: ip_gre
         state: absent
+      async: 10
+      ignore_errors: yes
 
     - name: install ip_gre module
       modprobe:
@@ -38,30 +40,18 @@
       set_fact:
         topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
 
-    - name: set variables for switch links to run gre_tunnel_tasks.yml
-      set_fact:
-        switch: "{{ topo_dict.switches.get(ansible_host) }}"
-    - debug:
-        var: switch
-
     - name: Retrieve host from topology
       set_fact:
         host: "{{ topo_dict.hosts.get(ansible_host) }}"
-    - name: The host
-      debug:
-        var: host
-
-    - include_tasks: gre_tunnel_tasks.yml
-      loop: "{{ host.tunnels | list }}"
-      when: host is defined
 
     - name: Retrieve switch from topology
       set_fact:
         switch: "{{ topo_dict.switches.get(ansible_host) }}"
-    - name: The switch
-      debug:
-        var: switch
+
+    - include_tasks: gre_tunnel_tasks.yml
+      loop: "{{ host.tunnels | list }}"
+      when: host is defined and host != ""
 
     - include_tasks: gre_tunnel_tasks.yml
       loop: "{{ switch.tunnels | list }}"
-      when: switch is defined
+      when: switch is defined and switch != ""
