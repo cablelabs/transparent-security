@@ -10,19 +10,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# see https://community.hetzner.com/tutorials/linux-setup-gre-tunnel
 ---
 - name: install dependecies
   apt:
     name:
       - bridge-utils
+      - iptables
+      - iproute2
 
 - name: extract data
   set_fact:
     this_host: "{{ topo_dict.hosts.get(ansible_host) }}"
     remote_host: "{{ topo_dict.hosts.get(item.host) }}"
-    virt_intf: "{{ item.virt_intf }}"
-    br_name: "{{ item.bridge_name | default('br0') }}"
-    tun_name: "{{ item.tunnel_name | default('gre-tun0') }}"
 
 - name: set this_host from switches when not in hosts
   set_fact:
@@ -34,43 +35,35 @@
     remote_host: "{{ topo_dict.switches.get(item.host)  }}"
   when: not remote_host
 
-- name: retrieve host_ip, remote_ip, and virt_intf values
-  set_fact:
-    host_ip: "{{ this_host.ip }}"
-    remote_ip: "{{ remote_host.ip }}"
-  when: remote_host is defined and remote_host != ""
+- name: create connection from {{ item.tunnel_name }} from {{ host.ip }} to {{ remote_host.ip }}
+  command: "ip tunnel add {{ item.tunnel_name }} mode gre local {{ host.ip }} remote {{ remote_host.ip }} ttl 255"
 
-- name: create virtual nic {{ virt_intf }}
-  command: "ifconfig {{ virt_intf }}"
-  when: host_type == 'host'
+- name: stop bridge {{ item.bridge_name }}
+  command: "ip link set dev {{ item.bridge_name }} down"
+  ignore_errors: yes
 
-- name: create connection from {{ tun_name }} to {{ remote_ip }} on host {{ host_ip }}
-  command: "ip link add {{ tun_name }} type gretap remote {{ remote_ip }} local {{ host_ip }} ttl 32"
-  when: remote_ip is defined
+- name: delete bridge {{ item.bridge_name }}
+  command: "brctl delbr {{ item.bridge_name }}"
+  ignore_errors: yes
 
-- name: create bridge {{ br_name }}
-  command: "brctl addbr {{ br_name }} {{ host_ip }}"
+- name: create bridge {{ item.bridge_name }} to {{ host.ip }}
+  command: "brctl addbr {{ item.bridge_name }} {{ host.ip }}"
 
 # TODO - determine why adding the bridge to the virtual interface is causing networking to fail
-#- name: create port {{ br_name }} -> {{ virt_intf }}
-#  command: "brctl addif {{ br_name }} {{ virt_intf }}"
+- name: create port {{ item.bridge_name }} -> {{ item.virt_intf }}
+  command: "brctl addif {{ item.bridge_name }} {{ item.virt_intf }}"
 
-- name: create port {{ br_name }} -> {{ tun_name }}
-  command: "brctl addif {{ br_name }} {{ tun_name }}"
-  when: remote_ip is defined
+- name: create port {{ item.bridge_name }} -> {{ item.tunnel_name }}
+  command: "brctl addif {{ item.bridge_name }} {{ item.tunnel_name }}"
 
 - name: set bridge up
-  command: "ip link set {{ br_name }} up"
-  when: remote_ip is defined
+  command: "ip link set {{ item.bridge_name }} up"
 
 - name: set gre tunnel up
-  command: "ip link set {{ tun_name }} up"
-  when: remote_ip is defined
+  command: "ip link set {{ item.tunnel_name }} up"
 
-- name: set {{ virt_intf }} up
-  command: "ip link set {{ virt_intf }} up"
-  when: remote_ip is defined
+- name: set {{ item.virt_intf }} up
+  command: "ip link set {{ item.virt_intf }} up"
 
 - name: set bridge stp on
-  command: "brctl stp {{ br_name }} on"
-  when: remote_ip is defined
+  command: "brctl stp {{ item.bridge_name }} on"

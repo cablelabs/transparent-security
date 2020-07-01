@@ -4,8 +4,10 @@ hosts:
     id: 1
     ip: {{ host1_ip }}
     tunnels:
-      - host: gateway1
-        virt_intf:  {{ node_nic }}:0
+      - host: {{ switch_name }}
+        tunnel_name:  {{ switch_name }}-tun1
+        bridge_name: {{ switch_name }}-br1
+        virt_intf:  {{ node_nic }}
     ipv6: 0000:0000:0000:0000:0000:0001:0001:0002
     ip_port: any
     mac: 00:00:00:00:01:01
@@ -16,7 +18,9 @@ hosts:
     ip: {{ host2_ip }}
     tunnels:
       - host: {{ switch_name }}
-        virt_intf:  {{ node_nic }}:0
+        tunnel_name: {{ switch_name }}-tun1
+        bridge_name: {{ switch_name }}-br1
+        virt_intf:  {{  node_nic }}
     ipv6: 0000:0000:0000:0000:0000:0002:0001:0002
     ip_port: any
     mac: 00:00:00:00:01:02
@@ -27,8 +31,11 @@ hosts:
     id: 3
     ip: {{ clone_ip }}
     tunnels:
-      - host: gateway1
-        virt_intf:  {{ node_nic }}:0
+      - host: {{ switch_name }}
+        tunnel_name: {{ switch_name }}-tun1
+        bridge_name: {{ switch_name }}-br1
+{#    # TODO - create virtual interface on hosts only (switches will have them created by tofino)#}
+        virt_intf:  {{ node_nic }}
     ipv6: 0000:0000:0000:0000:0000:0002:0001:0003
     ip_port: any
     mac: 00:00:00:00:05:08
@@ -48,8 +55,18 @@ switches:
     type: {{ p4_prog }}
     arch: tofino
     tunnels:
-      - host: {{ p4_prog }}
-        virt_intf:  {{ switch_nic_prfx }}0
+      - host: host1
+        tunnel_name:  host1-tun1
+        bridge_name: host1-br1
+        virt_intf:  veth1
+      - host: host2
+        tunnel_name:  host2-tun1
+        bridge_name: host2-br1
+        virt_intf:  veth2
+      - host: clone
+        tunnel_name:  clone-tun1
+        bridge_name: clone-br1
+        virt_intf:  veth3
     telemetry_rpt:
       type: host
       name: clone
