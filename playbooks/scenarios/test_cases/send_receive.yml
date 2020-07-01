@@ -15,7 +15,7 @@
 # receiver's log file
 ---
 # Create packet sniffer
-- hosts: "{{ 'localhost' if not rec_host or rec_host|length == 0 else rec_host }}"
+- hosts: "{{ rec_host }}"
   gather_facts: no
   vars:
     receive_timeout: "{{ receiver_timeout_seconds | default(60) }}"
@@ -25,13 +25,12 @@
     receiver_log_file: "{{ host_log_dir }}/{{ receiver_log_filename }}"
   tasks:
     - debug:
-        msg: "Expected INT hops to receive {{ hops }}"
+        msg: "Start packet sniffing. Expected INT hops to receive {{ hops }}"
 
     - name: Create receiver log directory {{ host_log_dir }}
       file:
         path: "{{ host_log_dir }}"
         state: directory
-        mode: 0777
 
     - name: Delete {{ receiver_log_file }}
       file:
@@ -42,12 +41,11 @@
       file:
         path: "{{ receiver_log_file }}"
         state: touch
-        mode: 0777
 
     - name: Create receive packets command
       set_fact:
         receive_cmd: >
-          sudo {{ remote_tps_dir }}/trans_sec/device_software/receive_packets.py
+          {{ remote_tps_dir }}/trans_sec/device_software/receive_packets.py
           -i {{ receiver_intf }} -f {{ receiver_log_file }} -d {{ receive_timeout }} -ih {{ hops }}
 
     - debug:
@@ -57,13 +55,14 @@
         Receive and log packets from "{{ receiver.name }}" logged at {{ receiver_log_file }}
         with async timeout {{ receive_timeout }} for potentially {{ send_packet_count }} packets
       command: "{{ receive_cmd }}"
+      become: yes
       register: cmd_out
       changed_when: cmd_out is not failed
       async: "{{ receive_timeout }}"
       poll: 0
 
 # Generate packets from the sender
-- hosts: "{{ 'localhost' if not send_host or send_host|length == 0 else send_host }}"
+- hosts: "{{ send_host }}"
   gather_facts: no
   vars:
     send_packet_count: "{{ send_packet_count | default(1) }}"
@@ -83,29 +82,27 @@
     int_hdr_tmplt: ../templates/send_int_hdr.yml.j2
     switch_mac: "{{ dst_mac | default(switch.mac) }}"
   tasks:
+    - debug:
+        msg: "Generating packets"
+
     - name: Create sender log directory {{ host_log_dir }}
       file:
         path: "{{ host_log_dir }}"
         state: directory
-        mode: 0777
 
     - name: Create sender log file {{ sender_log_file }}
       file:
         path: "{{ sender_log_file }}"
         state: touch
-        mode: 0777
 
     - name: Create send command
       set_fact:
         send_cmd: >-
-          sudo {{ remote_tps_dir }}/trans_sec/device_software/send_packets.py
+          {{ remote_tps_dir }}/trans_sec/device_software/send_packets.py
           -y {{ send_delay }} -i {{ interval }} -it {{ loops }} -itd {{ loop_delay }}
           -z {{ sender_intf }} -sa {{ sender_ip }} -r {{ receiver_ip }} -sp {{ send_src_port }}
           -p {{ send_port }} -f {{ sender_log_file }} -c {{ send_packet_count }} -e {{ sender.mac }}
           -s {{ switch_mac }} -pr {{ send_protocol }} -m '{{ send_msg }}'
-
-    - debug:
-        var: inspection_data
 
     - name: Configure for Sending INT Packets
       block:
@@ -122,13 +119,14 @@
       when: inspection_data is defined and inspection_data|length != 0
 
     - name: Sending packets with command {{ send_cmd }}
+      become: yes
       command: "{{ send_cmd }}"
       register: cmd_out
       changed_when: cmd_out is not failed
       async: 180
 
 # Validate sent packets were received
-- hosts: localhost
+- hosts: "{{ rec_host }}"
   gather_facts: no
   vars:
     min_packet_count: "{{ min_received_packet_count | default(send_packet_count) | int }}"
@@ -139,6 +137,9 @@
     sender_ip: "{{ sender.ip if ip_ver == '4' else sender.ipv6 }}"
     receiver_ip: "{{ receiver.ip if ip_ver == '4' else receiver.ipv6 }}"
   tasks:
+    - debug:
+        msg: "Validating packets received"
+
     - name: Create log count command for non-INT packets
       set_fact:
         count_cmd: >
@@ -172,7 +173,7 @@
         msg: "{{ max_packet_count }} < {{ packet_count }} or {{ min_packet_count }} > {{ packet_count }}"
       when: min_packet_count|int > packet_count|int or max_packet_count|int < packet_count|int
 
-    - name: Call SDN to stop the attack
+    - name: Call http://{{ sdn_host_port }}/stopAttack
       uri:
         url: "http://{{ sdn_host_port }}/stopAttack"
         method: POST

@@ -35,7 +35,6 @@ variable "remote_inventory_file" {default = "/home/ubuntu/transparent-security.i
 variable "topo_file" {default = "mininet-sim-topology.yaml"}
 variable "forwarding_daemon_file" {default = "forwarding-daemons.yml"}
 variable "clone_egress_port" {default = "3"}
-variable "sdn_host" {default = "localhost"}
 variable "ae_host" {default = "localhost"}
 variable "sdn_port" {default = "9998"}
 variable "sdn_dev_intf" {default = "lo"} # TODO - verify if this is correct???

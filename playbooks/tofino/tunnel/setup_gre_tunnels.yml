@@ -13,14 +13,26 @@
 ---
 
 # Create configured GRE tunnels on the switch VMs
-- hosts: switches
+- hosts:
+    - switches
+    - hosts
   gather_facts: no
   become: yes
   tasks:
-    - name: copy local {{ topo_file_loc }} to {{ topo_file_loc }}
-      copy:
-        src: "{{ topo_file_loc }}"
-        dest: "{{ topo_file_loc }}"
+    - name: uninstall ip_gre module
+      modprobe:
+        name: ip_gre
+        state: absent
+
+    - name: install ip_gre module
+      modprobe:
+        name: ip_gre
+        state: present
+
+    - name: install ip_gre module
+      lineinfile:
+        path: /etc/sysctl.conf
+        line: "net.ipv4.ip_forward=1"
 
     - name: Read topology {{ topo_file_loc }}
       set_fact:
@@ -29,30 +41,27 @@
     - name: set variables for switch links to run gre_tunnel_tasks.yml
       set_fact:
         switch: "{{ topo_dict.switches.get(ansible_host) }}"
-        host_type: switch
+    - debug:
+        var: switch
 
-    - include_tasks: gre_tunnel_tasks.yml
-      loop: "{{ switch.tunnels | list }}"
-
-# Create configured GRE tunnels on the host VMs to the switches
-- hosts: hosts
-  gather_facts: no
-  become: yes
-  tasks:
-    - name: copy local {{ topo_file_loc }} to {{ topo_file_loc }}
-      copy:
-        src: "{{ topo_file_loc }}"
-        dest: "{{ topo_file_loc }}"
-
-    - name: Read topology {{ topo_file_loc }}
-      set_fact:
-        topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-
-    - name: set variables for host links to run gre_tunnel_tasks.yml
+    - name: Retrieve host from topology
       set_fact:
         host: "{{ topo_dict.hosts.get(ansible_host) }}"
-        host_ip: "{{ topo_dict.hosts.get(ansible_host).ip }}"
-        host_type: host
+    - name: The host
+      debug:
+        var: host
 
     - include_tasks: gre_tunnel_tasks.yml
       loop: "{{ host.tunnels | list }}"
+      when: host is defined
+
+    - name: Retrieve switch from topology
+      set_fact:
+        switch: "{{ topo_dict.switches.get(ansible_host) }}"
+    - name: The switch
+      debug:
+        var: switch
+
+    - include_tasks: gre_tunnel_tasks.yml
+      loop: "{{ switch.tunnels | list }}"
+      when: switch is defined
