@@ -47,35 +47,15 @@
   when: not remote_host
 
 - name: create connection from {{ item.tunnel_name }} from {{ this_host.ip }} to {{ remote_host.ip }}
-  command: "ip tunnel add {{ item.tunnel_name }} mode gre local {{ this_host.ip }} remote {{ remote_host.ip }} ttl 255"
+  command: "ip link add {{ item.tunnel_name }} type gretap local {{ this_host.ip }} remote {{ remote_host.ip }}"
   when: remote_host is defined and remote_host != ""
 
 - name: stop bridge {{ item.bridge_name }}
   command: "ip link set dev {{ item.bridge_name }} down"
   ignore_errors: yes
 
-- name: delete bridge {{ item.bridge_name }}
-  command: "brctl delbr {{ item.bridge_name }}"
-  ignore_errors: yes
-
-- name: create bridge {{ item.bridge_name }} to {{ this_host.ip }}
-  command: "brctl addbr {{ item.bridge_name }} {{ this_host.ip }}"
-
-# TODO - determine why adding the bridge to the virtual interface is causing networking to fail
-#- name: create port {{ item.bridge_name }} -> {{ item.virt_intf }}
-#  command: "brctl addif {{ item.bridge_name }} {{ item.virt_intf }}"
-
-#- name: create port {{ item.bridge_name }} -> {{ item.tunnel_name }}
-#  command: "brctl addif {{ item.bridge_name }} {{ item.tunnel_name }}"
-
-- name: set bridge up - {{ item.bridge_name }}
-  command: "ip link set {{ item.bridge_name }} up"
+- include_tasks: gre_bridge_tasks.yml
+  when: item.virt_intf is defined
 
 - name: set gre tunnel up - {{ item.tunnel_name }}
   command: "ip link set {{ item.tunnel_name }} up"
-
-- name: set {{ item.virt_intf }} up
-  command: "ip link set {{ item.virt_intf }} up"
-
-- name: set bridge stp on - {{ item.bridge_name }}
-  command: "brctl stp {{ item.bridge_name }} on"
