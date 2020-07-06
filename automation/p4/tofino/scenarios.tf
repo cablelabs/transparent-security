@@ -17,7 +17,7 @@ resource "null_resource" "transparent-security-run-scenario-tests" {
   provisioner "remote-exec" {
     inline = [
       "sudo pip install ansible",
-      "${var.ANSIBLE_CMD} -i ${var.remote_inventory_file} ${var.remote_scenario_pb_dir}/${var.scenario_name}/${var.test_case}.yml --extra-vars='node_interface=${var.node_nic_name}'",
+      "${var.ANSIBLE_CMD} -i ${var.remote_inventory_file} ${var.remote_scenario_pb_dir}/${var.scenario_name}/${var.test_case}.yml",
     ]
   }
 
