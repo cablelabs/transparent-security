@@ -152,7 +152,7 @@ switches:
     public_ip: 172.32.1.4
     telemetry_rpt:
       type: external
-      name: analytics_engine
+      name: ae
     type: core
     mac: 00:00:00:03:05:00
     grpc: {{ mn_host_ip }}:50052
@@ -163,7 +163,7 @@ switches:
       - egress_port: 2
         instance: 1
 external:
-  analytics_engine:
+  ae:
     name: ae
     id: {{ ae_dev_intf }}
     ip: {{ ae_ip }}
@@ -253,7 +253,7 @@ links:
     north_facing_port: 2
     latency: 0ms
     bandwidth: null
-  - north_node: analytics_engine
+  - north_node: ae
     south_node: core
     north_facing_port: 3
     latency: 0ms

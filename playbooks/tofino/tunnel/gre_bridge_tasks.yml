@@ -13,19 +13,22 @@
 #
 # see https://community.hetzner.com/tutorials/linux-setup-gre-tunnel
 ---
-- name: delete bridge {{ item.bridge_name }}
-  command: "brctl delbr {{ item.bridge_name }}"
+- name: stop bridge {{ item.bridge_name }}
+  command: "ip link set dev {{ item.bridge_name }} down"
   ignore_errors: yes
 
-- name: create bridge {{ item.bridge_name }} to {{ this_host.ip }}
-  command: "brctl addbr {{ item.bridge_name }}"
+- name: delete bridge {{ item.host }}-br
+  command: "brctl delbr {{ item.host }}-br"
+  ignore_errors: yes
 
-- name: create port {{ item.bridge_name }} -> {{ item.tunnel_name }}
-  command: "brctl addif {{ item.bridge_name }} {{ item.tunnel_name }}"
+- name: create bridge {{ item.host }}-br
+  command: "brctl addbr {{ item.host }}-br"
 
-# TODO - determine why adding the bridge to the virtual interface is causing networking to fail
-- name: create port {{ item.bridge_name }} -> {{ item.virt_intf }}
-  command: "brctl addif {{ item.bridge_name }} {{ item.virt_intf }}"
+- name: create port {{ item.host }}-br -> {{ item.host }}-tun
+  command: "brctl addif {{ item.host }}-br {{ item.host }}-tun"
 
-- name: set bridge up - {{ item.bridge_name }}
-  command: "ip link set {{ item.bridge_name }} up"
+- name: create port {{ item.host }}-br -> {{ item.virt_intf }}
+  command: "brctl addif {{ item.host }}-br {{ item.virt_intf }}"
+
+- name: set bridge up - {{ item.host }}-br
+  command: "ip link set {{ item.host }}-br up"

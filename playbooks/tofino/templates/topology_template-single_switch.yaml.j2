@@ -5,7 +5,6 @@ hosts:
     ip: {{ host1_ip }}
     tunnels:
       - host: {{ switch_name }}
-        tunnel_name:  {{ switch_name }}-tun
     ipv6: 0000:0000:0000:0000:0000:0001:0001:0002
     ip_port: any
     mac: 00:00:00:00:01:01
@@ -16,7 +15,6 @@ hosts:
     ip: {{ host2_ip }}
     tunnels:
       - host: {{ switch_name }}
-        tunnel_name: {{ switch_name }}-tun
     ipv6: 0000:0000:0000:0000:0000:0002:0001:0002
     ip_port: any
     mac: 00:00:00:00:01:02
@@ -27,7 +25,6 @@ hosts:
     ip: {{ clone_ip }}
     tunnels:
       - host: {{ switch_name }}
-        tunnel_name: {{ switch_name }}-tun
     ipv6: 0000:0000:0000:0000:0000:0002:0001:0003
     ip_port: any
     mac: 00:00:00:00:05:08
@@ -47,16 +44,10 @@ switches:
     arch: tofino
     tunnels:
       - host: host1
-        tunnel_name:  host1-tun
-        bridge_name:  host1-br
         virt_intf:  veth1
       - host: host2
-        tunnel_name:  host2-tun
-        bridge_name:  host2-br
         virt_intf:  veth2
       - host: clone
-        tunnel_name:  clone-tun
-        bridge_name:  clone-br
         virt_intf:  veth3
     telemetry_rpt:
       type: host
