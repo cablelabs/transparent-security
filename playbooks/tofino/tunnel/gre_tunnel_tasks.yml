@@ -46,16 +46,23 @@
     remote_host: "{{ topo_dict.switches.get(item.host)  }}"
   when: not remote_host
 
-- name: create connection from {{ item.tunnel_name }} from {{ this_host.ip }} to {{ remote_host.ip }}
-  command: "ip link add {{ item.tunnel_name }} type gretap local {{ this_host.ip }} remote {{ remote_host.ip }}"
+- name: set remote_host from switches when not in hosts
+  set_fact:
+    gre_tunnel_cmd: >
+      ip link add {{ item.host }}-tun type gretap local {{ this_host.ip }}
+      remote {{ remote_host.ip }}
   when: remote_host is defined and remote_host != ""
 
-- name: stop bridge {{ item.bridge_name }}
-  command: "ip link set dev {{ item.bridge_name }} down"
-  ignore_errors: yes
+- debug:
+    var: gre_tunnel_cmd
+  when: remote_host is defined and remote_host != ""
+
+- name: Create GRE tunnel from {{ item.host }} from {{ this_host.ip }} to {{ remote_host.ip }}
+  command: "{{ gre_tunnel_cmd }}"
+  when: gre_tunnel_cmd is defined
 
 - include_tasks: gre_bridge_tasks.yml
   when: item.virt_intf is defined
 
-- name: set gre tunnel up - {{ item.tunnel_name }}
-  command: "ip link set {{ item.tunnel_name }} up"
+- name: set gre tunnel up - {{ item.host }}-tun
+  command: "ip link set {{ item.host }}-tun up"
