@@ -29,6 +29,7 @@
     rec_host: "{{ remote_rec_host }}"
     sender: "{{ topo_dict.hosts[remote_send_host] }}"
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
+    switch_egress_intf: eth4
     dst_mac: "{{ sender['switch_mac'] }}"
     receiver_log_filename: "udp-flood-receiver-{{ rec_host }}-{{ send_protocol }}-1.out"
     sender_log_filename: "udp-flood-sender-{{ send_host }}-{{ send_protocol }}-1.out"
@@ -57,6 +58,7 @@
     rec_host: "{{ remote_rec_host }}"
     sender: "{{ topo_dict.hosts[remote_send_host] }}"
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
+    switch_egress_intf: eth3
     dst_mac: "{{ sender['switch_mac'] }}"
     receiver_log_filename: "udp-flood-receiver-{{ rec_host }}-{{ send_protocol }}-2.out"
     sender_log_filename: "udp-flood-sender-{{ send_host }}-{{ send_protocol }}-2.out"
@@ -85,6 +87,7 @@
     rec_host: "{{ remote_rec_host }}"
     sender: "{{ topo_dict.hosts[remote_send_host] }}"
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
+    switch_egress_intf: eth3
     dst_mac: "{{ sender['switch_mac'] }}"
     receiver_log_filename: "udp-flood-receiver-{{ rec_host }}-{{ send_protocol }}-3.out"
     sender_log_filename: "udp-flood-sender-{{ send_host }}-{{ send_protocol }}-3.out"

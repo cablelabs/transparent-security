@@ -1,0 +1,50 @@
+# Copyright (c) 2019 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+- name: Set node facts
+  set_fact:
+    north_node: "{{ item.north_node | default(None) }}"
+    south_node: "{{ item.south_node | default(None) }}"
+    south_facing_port: "{{ item.south_facing_port | default(None) }}"
+    north_facing_port: "{{ item.north_facing_port | default(None) }}"
+    host: "{{ topo_dict.hosts.get(item.south_node) }}"
+    south_switch: "{{ topo_dict.switches.get(item.south_node) }}"
+    north_switch: "{{ topo_dict.switches.get(item.north_node) }}"
+    north_facing_ip: "{{ item.north_facing_ip | default(None) }}"
+    south_facing_ip: "{{ item.south_facing_ip | default(None) }}"
+    intf_name: None
+
+- name: Find north node if south didn't exist
+  set_fact:
+    host: "{{ topo_dict.hosts.get(item.north_node) }}"
+  when: not host
+
+- name: Determine interface name for south_facing_port
+  set_fact:
+    intf_name: "{{ north_node | default('') }}-eth{{ south_facing_port | default('') }}"
+  when: south_facing_port and not north_facing_port
+
+- name: Determine interface name for north_facing_port
+  set_fact:
+    intf_name: "{{ south_node | default('') }}-eth{{ north_facing_port | default('') }}"
+  when: north_facing_port and not south_facing_port
+
+- name: Set north-facing IP on the core - {{ intf_name }}
+  become: yes
+  command: "ip addr add {{ north_facing_ip }}/30 dev {{ intf_name }}"
+  when: host and south_switch and north_facing_ip is defined
+
+- name: Setup south-facing IP on the aggregate - {{ intf_name }}
+  become: yes
+  command: "ip addr add {{ south_facing_ip }}/30 dev {{ intf_name }}"
+  when: host and north_switch and south_facing_ip is defined

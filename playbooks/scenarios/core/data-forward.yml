@@ -14,7 +14,7 @@
 # one will be demonstrating dropped packets
 ---
 # Basic Data Forward scenario for sending standard packets to egress port
-- import_playbook: ../single_switch/data_forward_basic.yml
+- import_playbook: ../general/data_forward_basic.yml
   vars:
     send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
     ip_version: "{{ scenario_send_ip_version | default(4) }}"
@@ -28,9 +28,10 @@
     send_sw_port: "{{ topo_dict.links[0].south_facing_port }}"
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
+    dst_mac: "{{ receiver['mac'] }}"
 
 # Basic Data Forward scenario for INT packets to egress port
-- import_playbook: ../single_switch/data_forward_basic.yml
+- import_playbook: ../general/data_forward_basic.yml
   vars:
     send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
     ip_version: "{{ scenario_send_ip_version | default(4) }}"
@@ -44,6 +45,7 @@
     send_sw_port: "{{ topo_dict.links[0].south_facing_port }}"
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
+    dst_mac: "{{ receiver['mac'] }}"
     sr_data_inspection_int:
       - switch_id: 1002
       - switch_id: 1001
@@ -51,7 +53,7 @@
     sr_rec_int_hops: 0
 
 # Basic Data Forward scenario for INT packets to clone port
-- import_playbook: ../single_switch/data_forward_basic.yml
+- import_playbook: ../general/data_forward_basic.yml
   vars:
     send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
     ip_version: "{{ scenario_send_ip_version | default(4) }}"
@@ -65,6 +67,7 @@
     send_sw_port: "{{ topo_dict.links[0].south_facing_port }}"
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
+    dst_mac: "{{ receiver['mac'] }}"
     sr_data_inspection_int:
       - switch_id: 1002
       - switch_id: 1001

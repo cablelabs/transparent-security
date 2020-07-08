@@ -92,7 +92,7 @@ hosts:
     ipv6: 0000:0000:0000:0000:0000:0002:0001:0002
     ip_port: any
     mac: 00:00:00:00:05:07
-    type: server
+    type: target-server
 switches:
 # TODO - Determine why changes to the ID in any of the switch id values causes a GRPC exception in the SDN controller upon startup
   gateway1:
@@ -105,6 +105,15 @@ switches:
     mac: 00:00:00:02:01:00
     grpc: {{ mn_host_ip }}:50053
     ipv6_term_host: inet
+    multicast_entries:
+      - egress_port: 1
+        instance: 1
+      - egress_port: 2
+        instance: 1
+      - egress_port: 3
+        instance: 1
+      - egress_port: 4
+        instance: 1
   gateway2:
     name: gateway2
     id: 3
@@ -115,6 +124,13 @@ switches:
     mac: 00:00:00:02:02:00
     grpc: {{ mn_host_ip }}:50054
     ipv6_term_host: inet
+    multicast_entries:
+      - egress_port: 1
+        instance: 1
+      - egress_port: 2
+        instance: 1
+      - egress_port: 3
+        instance: 1
   gateway3:
     name: gateway3
     id: 4
@@ -125,6 +141,13 @@ switches:
     mac: 00:00:00:02:03:00
     grpc: {{ mn_host_ip }}:50055
     ipv6_term_host: inet
+    multicast_entries:
+      - egress_port: 1
+        instance: 1
+      - egress_port: 2
+        instance: 1
+      - egress_port: 3
+        instance: 1
   aggregate:
     name: aggregate
     id: 0
