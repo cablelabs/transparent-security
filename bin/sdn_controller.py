@@ -145,5 +145,6 @@ def main():
     logger.debug('Add data inspection - [%s]', bool(args.add_di))
     sdn_controller.start(args.add_di)
 
+
 if __name__ == '__main__':
     main()
