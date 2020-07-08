@@ -19,7 +19,6 @@ from mininet.link import TCLink, Intf
 from mininet.net import Mininet
 from mininet.topo import Topo
 
-from trans_sec.mininet.daemons import DaemonRunner
 from trans_sec.mininet.p4_mininet import P4Host
 from trans_sec.p4runtime_lib.p4runtime_switch import MininetSwitch
 
@@ -95,7 +94,7 @@ class ExerciseTopo(Topo):
                 # ignore externals
                 if s_host is not None:
                     self.addHost(s_host['name'],
-                                 ip=s_host['ip'] + '/30',
+                                 ip=s_host['ip'] + '/24',
                                  mac=s_host['mac'])
                     if link.get('south_facing_mac'):
                         self.addLink(s_host['name'], n_switch['name'],
@@ -171,8 +170,7 @@ class ExerciseRunner:
             mininet : Mininet object // The mininet instance
     """
 
-    def __init__(self, topo, log_dir, pcap_dir, switch_json,
-                 forwarding_conf=None, start_cli=False):
+    def __init__(self, topo, log_dir, pcap_dir, switch_json, start_cli=False):
         """ Initializes some attributes and reads the topology json. Does not
             actually run the exercise. Use run_exercise() for that.
 
@@ -190,7 +188,6 @@ class ExerciseRunner:
         self.switches = topo['switches']
         self.external = topo.get('external')
         self.links = topo['links']
-        self.forwarding_conf = forwarding_conf
         self.start_cli = start_cli
 
         # Ensure all the needed directories exist and are directories
@@ -221,13 +218,6 @@ class ExerciseRunner:
 
         logger.info('Programming mininet hosts')
         self.__program_hosts()
-
-        if self.forwarding_conf:
-            logger.debug('Starting forwarding daemon with config - [%s]',
-                         self.forwarding_conf)
-            self.fwd_runner = DaemonRunner(self.mininet, self.forwarding_conf,
-                                           self.log_dir)
-            self.fwd_runner.start_daemons()
 
         if self.start_cli:
             logger.info('Starting mininet CLI')

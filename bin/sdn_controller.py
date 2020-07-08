@@ -66,7 +66,8 @@ def get_args():
                         help='When set, the controller will not attempt to '
                              'load the P4 program onto the switches')
     parser.add_argument('-ct', '--controller-type', type=str, required=True,
-                        choices=['gateway', 'aggregate', 'core', 'full'],
+                        choices=['gateway', 'aggregate', 'core', 'full',
+                                 'lab_trial'],
                         help='When not set, all controllers will attempt to '
                              'start')
     return parser.parse_args()
@@ -109,21 +110,26 @@ def main():
         'Starting SDN Controller with topology - [%s] and load_p4 flag - [%s]',
         topo, eval(args.load_p4))
     controllers = dict()
-    if args.controller_type == 'gateway' or args.controller_type == 'full':
+    if (args.controller_type == 'gateway'
+            or args.controller_type == 'full'):
         controllers[GATEWAY_CTRL_KEY] = GatewayController(
             platform=args.platform,
             p4_build_out=args.switch_config_dir,
             topo=topo,
             log_dir=args.log_dir,
             load_p4=eval(args.load_p4))
-    if args.controller_type == 'aggregate' or args.controller_type == 'full':
+    if (args.controller_type == 'aggregate'
+            or args.controller_type == 'lab_trial'
+            or args.controller_type == 'full'):
         controllers[AGG_CTRL_KEY] = AggregateController(
             platform=args.platform,
             p4_build_out=args.switch_config_dir,
             topo=topo,
             log_dir=args.log_dir,
             load_p4=eval(args.load_p4))
-    if args.controller_type == 'core' or args.controller_type == 'full':
+    if (args.controller_type == 'core'
+            or args.controller_type == 'lab_trial'
+            or args.controller_type == 'full'):
         controllers[CORE_CTRL_KEY] = CoreController(
             platform=args.platform,
             p4_build_out=args.switch_config_dir,
@@ -138,15 +144,6 @@ def main():
 
     logger.debug('Add data inspection - [%s]', bool(args.add_di))
     sdn_controller.start(args.add_di)
-    # try:
-    #     sdn_controller.start()
-    # except Exception as e:
-    #     logger.error(
-    #         'Unexpected error running the SDN controller - [%s] - [%s]',
-    #         e.message, e.__class__)
-    #     sdn_controller.stop()
-    #     raise e
-
 
 if __name__ == '__main__':
     main()

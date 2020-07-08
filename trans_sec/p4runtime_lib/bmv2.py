@@ -231,7 +231,7 @@ class GatewaySwitch(Bmv2SwitchConnection):
 
         for host in hosts.values():
             logger.debug('Switch Host def - [%s]', host)
-            if host['type'] == 'server':
+            if host['type'] == 'target-server':
                 target_host = host
 
         if target_host:

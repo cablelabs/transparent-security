@@ -22,25 +22,6 @@
     p4_progs: "{{ p4_progs }}"
     share_dir: /usr/local
 
-- hosts: "{{ host_val | default('all') }}"
-  gather_facts: no
-  become: yes
-
-  vars:
-    topo_dict: "{{ lookup('file', topo_file_loc) | from_yaml }}"
-    fwd_packet_count: "{{ fwd_daemon_packet_count | default(15) }}"
-    fwd_packet_interval: "{{ fwd_daemon_packet_interval | default(3) }}"
-    fwd_config_tmplt: "{{ fwd_daemon_config_template }}"
-
-  tasks:
-    - name: Create forwarding configuration
-      template:
-        src: "{{ fwd_config_tmplt }}"
-        dest: "{{ forwarding_conf_file }}"
-      vars:
-        packet_count: "{{ fwd_packet_count | default(15) }}"
-        packet_interval: "{{ fwd_packet_interval | default(3) }}"
-
 - import_playbook: ../general/start_service.yml
   vars:
     host_val: localhost

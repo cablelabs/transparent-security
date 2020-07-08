@@ -14,8 +14,28 @@
 # sends packets. The validation routine counts the number received via the
 # receiver's log file
 ---
+
+# Learn routes
+- hosts: "{{ ping_host | default('localhost') }}"
+  gather_facts: no
+  vars:
+    ip_ver: "{{ ip_version | default('4') }}"
+    # TODO - Change me after IPv6 discovery works
+    #    receiver_ip: "{{ receiver.ip if ip_ver == '4' else receiver.ipv6 }}"
+    receiver_ip: "{{ receiver.ip }}"
+    sender_intf: "{{ switch_name | default(send_host) }}-{{ switch_egress_intf | default('eth0') }}"
+  tasks:
+    - name: Ping to {{ receiver_ip }} on {{ send_intf }}
+      command: "ping {{ receiver_ip }} -I {{ sender_intf }} -c 3 -i .5"
+      register: ping_out
+      failed_when: ping_out.rc > 1
+
+    - name: Wait a bit for discovery
+      pause:
+        seconds: 10
+
 # Create packet sniffer
-- hosts: "{{ 'localhost' if not rec_host or rec_host|length == 0 else rec_host }}"
+- hosts: "{{ rec_host }}"
   gather_facts: no
   vars:
     receive_timeout: "{{ receiver_timeout_seconds | default(60) }}"
@@ -63,7 +83,7 @@
       poll: 0
 
 # Generate packets from the sender
-- hosts: "{{ 'localhost' if not send_host or send_host|length == 0 else send_host }}"
+- hosts: "{{ send_host }}"
   gather_facts: no
   vars:
     send_packet_count: "{{ send_packet_count | default(1) }}"

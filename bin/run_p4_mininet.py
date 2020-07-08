@@ -38,8 +38,6 @@ def get_args():
                         default=None)
     parser.add_argument('-d', '--daemon', help='Run device daemon on hosts.',
                         type=bool, required=False, default=False)
-    parser.add_argument('-fc', '--forwarding-config', help='Forwarding config',
-                        type=str, required=False)
     return parser.parse_args()
 
 
@@ -77,15 +75,8 @@ if __name__ == '__main__':
     else:
         topo = read_yaml_file(topo_file)
 
-    forwarding_yaml = None
-    if args.forwarding_config:
-        logger.info('Parsing forwarding config file - [%s]',
-                    args.forwarding_config)
-        forwarding_yaml = read_yaml_file(args.forwarding_config)
-        logger.debug('Forwarding config - [%s]', forwarding_yaml)
     exercise = ExerciseRunner(
-        topo, args.log_dir, args.pcap_dir, args.switch_json,  forwarding_yaml,
-        args.start_cli)
+        topo, args.log_dir, args.pcap_dir, args.switch_json, args.start_cli)
     exercise.run_exercise()
 
     logger.info('Exercise Runner running indefinitely')

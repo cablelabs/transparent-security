@@ -52,7 +52,6 @@ host_log_dir=${var.host_log_dir}
 remote_tps_dir=${var.remote_tps_dir}
 remote_scripts_dir=${var.remote_scripts_dir}
 topo_file_loc=${var.remote_scripts_dir}/${var.topo_file}
-forwarding_daemon_file=${var.remote_scripts_dir}/${var.forwarding_daemon_file}
 mn_host=${aws_instance.transparent-security-mininet-integration.private_ip}
 sdn_host=${var.sdn_host}
 sdn_port=${var.sdn_port}
@@ -82,7 +81,7 @@ EOT
 }
 
 locals {
-  setup_pb = var.scenario_name == "full" ? "setup-full.yml" : "setup-single-switch.yml"
+  setup_pb = var.scenario_name == "full" || var.scenario_name == "lab_trial" ? "setup-${var.scenario_name}.yml" : "setup-single_switch.yml"
 }
 
 resource "null_resource" "transparent-security-start-sim" {

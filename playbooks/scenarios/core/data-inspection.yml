@@ -28,6 +28,7 @@
     send_sw_port: "{{ topo_dict.links[0].south_facing_port }}"
     receiver: "{{ topo_dict.hosts.host2 }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
+    dst_mac: "{{ receiver['mac'] }}"
     data_inspection_table_action:
       control_name: TpsCoreIngress
       table_name: data_inspection_t
@@ -64,6 +65,7 @@
     send_sw_port: "{{ topo_dict.links[0].south_facing_port }}"
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
+    dst_mac: "{{ receiver['mac'] }}"
     data_inspection_table_action:
       control_name: TpsCoreIngress
       table_name: data_inspection_t
