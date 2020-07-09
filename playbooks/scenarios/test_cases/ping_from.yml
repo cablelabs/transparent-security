@@ -17,7 +17,8 @@
 # Please note that the sender and receiver should not have any more than a single
 # tunnel configured on the topology
 
-- set_fact:
+- name: Create ping command
+  set_fact:
     command: "ping {{ ip }} -I {{ intf }} -c {{ count }} -i {{ interval }}"
 - debug:
     var: command
