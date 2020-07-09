@@ -10,29 +10,37 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# integration test case where one host creates a packet sniffer and another
+
+# Integration test case where one host creates a packet sniffer and another
 # sends packets. The validation routine counts the number received via the
 # receiver's log file
----
+# Please note that the sender and receiver should not have any more than a single
+# tunnel configured on the topology
 
-# Learn routes
-- hosts: "{{ ping_host | default('localhost') }}"
+# Forwarding Path Discovery
+- hosts: "{{ send_host }}"
   gather_facts: no
   vars:
-    ip_ver: "{{ ip_version | default('4') }}"
     # TODO - Change me after IPv6 discovery works
-    #    receiver_ip: "{{ receiver.ip if ip_ver == '4' else receiver.ipv6 }}"
+#    ip_ver: "{{ ip_version | default('4') }}"
+#    receiver_ip: "{{ receiver.ip if ip_ver == '4' else receiver.ipv6 }}"
     receiver_ip: "{{ receiver.ip }}"
-    sender_intf: "{{ switch_name | default(send_host) }}-{{ switch_egress_intf | default('eth0') }}"
+    sender_intf: "{% if sender.tunnels is defined %}{{ sender.tunnels[0].host }}-tun{% else %}{{ '%s-eth0' % send_host }}{% endif %}"
+    discover_path: "{{ discover_fwd_path | default(False) }}"
+    ping_packet_count: "{{ ping_count | default('3') }}"
+    ping_packet_interval: "{{ ping_interval | default('.5') }}"
+    ping_packet_pause: "{{ pause_time | default('2') }}"
   tasks:
-    - name: Ping to {{ receiver_ip }} on {{ send_intf }}
-      command: "ping {{ receiver_ip }} -I {{ sender_intf }} -c 3 -i .5"
-      register: ping_out
-      failed_when: ping_out.rc > 1
-
-    - name: Wait a bit for discovery
-      pause:
-        seconds: 10
+    - debug:
+        var: sender.tunnels
+    - include_tasks: ping_from.yml
+      vars:
+        ip: "{{ receiver_ip }}"
+        intf: "{{ sender_intf }}"
+        count: "{{ ping_packet_count }}"
+        interval: "{{ ping_packet_interval }}"
+        pause: "{{ ping_packet_pause }}"
+      when: discover_path|bool
 
 # Create packet sniffer
 - hosts: "{{ rec_host }}"
@@ -41,7 +49,7 @@
     receive_timeout: "{{ receiver_timeout_seconds | default(60) }}"
     hops: "{{ int_hops | default(0) }}"
     ip_ver: "{{ ip_version | default('4') }}"
-    receiver_intf: "{% if receiver.tunnels is defined %}{{ receiver.tunnels[0].tunnel_name }}{% else %}{{ '%s-eth0' % rec_host }}{% endif %}"
+    receiver_intf: "{% if receiver.tunnels is defined %}{{ receiver.tunnels[0].host }}-tun{% else %}{{ '%s-eth0' % rec_host }}{% endif %}"
     receiver_log_file: "{{ host_log_dir }}/{{ receiver_log_filename }}"
   tasks:
     - debug:
@@ -92,7 +100,7 @@
     loops: "{{ send_loops | default(1) }}"
     loop_delay: "{{ send_loop_delay | default(0) }}"
     hops: "{{ int_hops | default(0) }}"
-    sender_intf: "{% if sender.tunnels is defined %}{{ sender.tunnels[0].tunnel_name }}{% else %}{{ '%s-eth0' % send_host }}{% endif %}"
+    sender_intf: "{% if sender.tunnels is defined %}{{ sender.tunnels[0].host }}-tun{% else %}{{ '%s-eth0' % send_host }}{% endif %}"
     sender_log_file: "{{ host_log_dir }}/{{ sender_log_filename }}"
     protocol: "{{ send_protocol | default('UDP') }}"
     int_hdr_df: "{{ host_log_dir }}/send_int_data-ip-{{ ip_ver }}-proto-{{ protocol }}-ih-{{ hops }}.yml"

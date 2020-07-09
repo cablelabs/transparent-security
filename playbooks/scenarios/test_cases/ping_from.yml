@@ -10,19 +10,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
----
-- name: Set /etc/hosts from hosts
-  become: yes
-  lineinfile:
-    path: /etc/hosts
-    line: "{{ topo_dict.hosts.get(item).get('public_ip') }} {{ item }}"
-    state: present
-  when: topo_dict.hosts.get(item) and topo_dict.hosts.get(item).public_ip is defined
 
-- name: Set /etc/hosts from switches
-  become: yes
-  lineinfile:
-    path: /etc/hosts
-    line: "{{ topo_dict.switches.get(item).get('ip') }} {{ item }}"
-    state: present
-  when: topo_dict.switches.get(item) and topo_dict.switches.get(item).ip is defined
+# Integration test case where one host creates a packet sniffer and another
+# sends packets. The validation routine counts the number received via the
+# receiver's log file
+# Please note that the sender and receiver should not have any more than a single
+# tunnel configured on the topology
+
+- set_fact:
+    command: "ping {{ ip }} -I {{ intf }} -c {{ count }} -i {{ interval }}"
+- debug:
+    var: command
+
+- name: Ping
+  command: "{{ command }}"
+  register: ping_out
+  failed_when: ping_out.rc > 1
+
+- name: Wait a bit for discovery
+  pause:
+    seconds: "{{ pause }}"

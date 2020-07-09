@@ -29,6 +29,9 @@
     this_host: "{{ topo_dict.hosts.get(ansible_host) }}"
     remote_host: "{{ topo_dict.hosts.get(item.host) }}"
 
+- debug:
+    var: remote_host
+
 - name: set this_host from switches when not in hosts
   set_fact:
     this_host: "{{ topo_dict.switches.get(ansible_host) }}"
@@ -61,8 +64,53 @@
   command: "{{ gre_tunnel_cmd }}"
   when: gre_tunnel_cmd is defined
 
-- include_tasks: gre_bridge_tasks.yml
+# Setup Bridge when required
+- name: stop bridge {{ item.bridge_name }}
+  command: "ip link set {{ item.host }}-br down"
+  ignore_errors: yes
   when: item.virt_intf is defined
+
+- name: delete bridge {{ item.host }}-br
+  command: "brctl delbr {{ item.host }}-br"
+  ignore_errors: yes
+  when: item.virt_intf is defined
+
+- name: create bridge {{ item.host }}-br
+  command: "brctl addbr {{ item.host }}-br"
+  when: item.virt_intf is defined
+
+- name: create port {{ item.host }}-br -> {{ item.host }}-tun
+  command: "brctl addif {{ item.host }}-br {{ item.host }}-tun"
+  when: item.virt_intf is defined
+
+- name: create port {{ item.host }}-br -> {{ item.virt_intf }}
+  command: "brctl addif {{ item.host }}-br {{ item.virt_intf }}"
+  when: item.virt_intf is defined
+
+- name: set bridge up - {{ item.host }}-br
+  command: "ip link set {{ item.host }}-br up"
+  when: item.virt_intf is defined
+
+- name: set MAC {{ this_host.mac }} on virtual interface {{ item.virt_intf }}
+  command: "ip link set dev {{ item.virt_intf }} address {{ this_host.mac }}"
+  when: item.virt_intf is defined
+
+- name: set IP {{ this_host.ip }}/24 on tunnel {{ item.host }}-br
+  command: "ip addr add {{ this_host.ip }}/24 dev {{ item.host }}-br"
+  when: item.virt_intf is defined
+
+# Configure tunnel when no bridge
+- name: set MAC {{ this_host.mac }} on tunnel {{ item.host }}-tun
+  command: "ip link set dev {{ item.host }}-tun address {{ this_host.mac }}"
+  when: item.virt_intf is not defined
+
+- name: set IP {{ this_host.ip }}/24 on tunnel {{ item.host }}-tun
+  command: "ip addr add {{ this_host.ip }}/24 dev {{ item.host }}-tun"
+  when: item.virt_intf is not defined
 
 - name: set gre tunnel up - {{ item.host }}-tun
   command: "ip link set {{ item.host }}-tun up"
+
+- name: add IP {{ this_host.ip }} to host routes
+  command: "ip route add {{ this_host.ip }} dev {{ item.host }}-tun"
+  when: item.virt_intf is not defined

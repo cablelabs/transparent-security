@@ -48,6 +48,9 @@
       set_fact:
         switch: "{{ topo_dict.switches.get(ansible_host) }}"
 
+    - set_fact:
+        this_host: "{{ topo_dict.hosts.get(ansible_host) }}"
+
     - include_tasks: gre_tunnel_tasks.yml
       loop: "{{ host.tunnels | list }}"
       when: host is defined and host != ""

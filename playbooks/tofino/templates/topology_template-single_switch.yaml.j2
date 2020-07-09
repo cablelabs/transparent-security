@@ -2,7 +2,8 @@ hosts:
   host1:
     name: host1
     id: 1
-    ip: {{ host1_ip }}
+    ip: 192.168.1.2
+    public_ip: {{ host1_ip }}
     tunnels:
       - host: {{ switch_name }}
     ipv6: 0000:0000:0000:0000:0000:0001:0001:0002
@@ -12,7 +13,8 @@ hosts:
   host2:
     name: host2
     id: 2
-    ip: {{ host2_ip }}
+    ip: 192.168.2.2
+    public_ip: {{ host2_ip }}
     tunnels:
       - host: {{ switch_name }}
     ipv6: 0000:0000:0000:0000:0000:0002:0001:0002
@@ -22,7 +24,8 @@ hosts:
   clone:
     name: clone
     id: 3
-    ip: {{ clone_ip }}
+    ip: 192.168.3.2
+    public_ip: {{ clone_ip }}
     tunnels:
       - host: {{ switch_name }}
     ipv6: 0000:0000:0000:0000:0000:0002:0001:0003

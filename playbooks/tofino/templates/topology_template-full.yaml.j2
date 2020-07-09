@@ -2,7 +2,8 @@ hosts:
   Camera1:
     name: Camera1
     id: 5
-    ip: {{ camera1_ip }}
+    ip: 192.168.1.2
+    public_ip: {{ camera1_ip }}
     switch_mac: 00:00:01:01:01:00
     tunnels:
       - host: gateway1
@@ -13,7 +14,8 @@ hosts:
   NAS1:
     name: NAS1
     id: 6
-    ip: {{ nas1_ip }}
+    ip: 192.168.1.6
+    public_ip: {{ nas1_ip }}
     switch_mac: 00:00:01:01:02:00
     tunnels:
       - host: gateway1
@@ -24,7 +26,8 @@ hosts:
   Game1:
     name: Game1
     id: 7
-    ip: {{ game1_ip }}
+    ip: 192.168.1.10
+    public_ip: {{ game1_ip }}
     switch_mac: 00:00:01:01:03:00
     tunnels:
       - host: gateway1
@@ -35,7 +38,8 @@ hosts:
   Camera2:
     name: Camera2
     id: 8
-    ip: {{ camera2_ip }}
+    ip: 192.168.2.2
+    public_ip: {{ camera2_ip }}
     switch_mac: 00:00:02:02:01:00
     tunnels:
       - host: gateway2
@@ -47,7 +51,8 @@ hosts:
   Game2:
     name: Game2
     id: 9
-    ip: {{ game2_ip }}
+    ip: 192.168.2.6
+    public_ip: {{ game2_ip }}
     switch_mac: 00:00:02:02:02:00
     tunnels:
       - host: gateway2
@@ -58,7 +63,8 @@ hosts:
   Camera3:
     name: Camera3
     id: 10
-    ip: {{ camera3_ip }}
+    ip: 192.168.3.2
+    public_ip: {{ camera3_ip }}
     switch_mac: 00:00:03:03:01:00
     tunnels:
       - host: gateway3
@@ -69,7 +75,8 @@ hosts:
   Game3:
     name: Game3
     id: 11
-    ip: {{ game3_ip }}
+    ip: 192.168.3.6
+    public_ip: {{ game3_ip }}
     switch_mac: 00:00:03:03:02:00
     tunnels:
       - host: gateway3
@@ -80,7 +87,8 @@ hosts:
   inet:
     name: inet
     id: 12
-    ip: {{ inet_ip }}
+    ip: 192.168.4.2
+    public_ip: {{ inet_ip }}
     tunnels:
       - host: core
     ipv6: 0000:0000:0000:0000:0000:0002:0001:0002
@@ -91,7 +99,8 @@ hosts:
   ae:
     name: ae
     id: 13
-    ip: {{ ae_ip }}
+    ip: 192.168.4.6
+    public_ip: {{ ae_ip }}
     tunnels:
       - host: core
     ipv6: 0000:0000:0000:0000:0000:0002:0001:0003
