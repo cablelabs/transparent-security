@@ -2,7 +2,8 @@
 - hosts: "{{ host }}"
   gather_facts: no
   tasks:
-    - set_fact:
+    - name: Read in topology
+      set_fact:
         topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
 
     - name: Ping inet host

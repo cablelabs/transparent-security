@@ -48,7 +48,8 @@
       set_fact:
         switch: "{{ topo_dict.switches.get(ansible_host) }}"
 
-    - set_fact:
+    - name: Retrieve this_host from topology
+      set_fact:
         this_host: "{{ topo_dict.hosts.get(ansible_host) }}"
 
     - include_tasks: gre_tunnel_tasks.yml
