@@ -29,7 +29,7 @@
     discover_path: "{{ discover_fwd_path | default(False) }}"
     ping_packet_count: "{{ ping_count | default('3') }}"
     ping_packet_interval: "{{ ping_interval | default('.5') }}"
-    ping_packet_pause: "{{ pause_time | default('2') }}"
+    ping_packet_pause: "{{ discovery_pause_time | default('1') }}"
   tasks:
     - debug:
         var: sender.tunnels
@@ -39,7 +39,7 @@
         intf: "{{ sender_intf }}"
         count: "{{ ping_packet_count }}"
         interval: "{{ ping_packet_interval }}"
-        pause: "{{ ping_packet_pause }}"
+        pause_time: "{{ ping_packet_pause }}"
       when: discover_path|bool
 
 # Create packet sniffer

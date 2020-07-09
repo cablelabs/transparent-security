@@ -12,5 +12,5 @@
         intf: "{{ item }}"
         count: 3
         interval: .5
-        pause: 5
+        pause_time: 0
       loop: "{{ interfaces }}"

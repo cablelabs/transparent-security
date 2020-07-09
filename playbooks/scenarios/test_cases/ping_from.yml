@@ -17,17 +17,11 @@
 # Please note that the sender and receiver should not have any more than a single
 # tunnel configured on the topology
 
-- name: Create ping command
-  set_fact:
-    command: "ping {{ ip }} -I {{ intf }} -c {{ count }} -i {{ interval }}"
-- debug:
-    var: command
-
-- name: Ping
-  command: "{{ command }}"
+- name: Ping {{ ip }} via {{ intf }}
+  command: "ping {{ ip }} -I {{ intf }} -c {{ count }} -i {{ interval }}"
   register: ping_out
   failed_when: ping_out.rc > 1
 
 - name: Wait a bit for discovery
   pause:
-    seconds: "{{ pause }}"
+    seconds: "{{ pause_time }}"
