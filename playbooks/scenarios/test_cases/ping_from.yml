@@ -21,6 +21,8 @@
   command: "ping {{ ip }} -I {{ intf }} -c {{ count }} -i {{ interval }}"
   register: ping_out
   failed_when: ping_out.rc > 1
+  tags:
+    - skip_ansible_lint
 
 - name: Wait a bit for discovery
   pause:
