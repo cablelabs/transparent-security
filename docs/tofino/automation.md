@@ -130,7 +130,7 @@ Controller/Orchestrator node with outside access
 
 ###### Nodes (vanilla linux with transparent-security installed into python runtime)
 - inet (to core)
-- analytics_engine (to core)
+- ae (to core)
 - Camera1 (to gateway1)
 - Game1 (to gateway1)
 - NAS1 (to gateway1)

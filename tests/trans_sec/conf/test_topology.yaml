@@ -119,8 +119,8 @@ switches:
     mac: 00:90:fb:62:c4:a9
     grpc: 10.197.1.21:50052
 external:
-  analytics_engine:
-    name: analytics_engine
+  ae:
+    name: ae
     id: enp2s0
     ip: 10.197.123.11
     ip_port: 9999
@@ -201,7 +201,7 @@ links:
   latency: 0ms
   bandwidth:
   l2ptr: 53261
-- north_node: analytics_engine
+- north_node: ae
   south_node: Core
   north_facing_port: 2
   latency: 0ms

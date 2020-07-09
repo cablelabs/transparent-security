@@ -2,10 +2,10 @@ hosts:
   host1:
     name: host1
     id: 1
-    ip: {{ host1_ip }}
+    ip: 192.168.1.2
+    public_ip: {{ host1_ip }}
     tunnels:
-      - host: gateway1
-        virt_intf:  {{ node_nic }}:0
+      - host: {{ switch_name }}
     ipv6: 0000:0000:0000:0000:0000:0001:0001:0002
     ip_port: any
     mac: 00:00:00:00:01:01
@@ -13,27 +13,25 @@ hosts:
   host2:
     name: host2
     id: 2
-    ip: {{ host2_ip }}
+    ip: 192.168.2.2
+    public_ip: {{ host2_ip }}
     tunnels:
       - host: {{ switch_name }}
-        virt_intf:  {{ node_nic }}:0
     ipv6: 0000:0000:0000:0000:0000:0002:0001:0002
     ip_port: any
     mac: 00:00:00:00:01:02
     type: server
-{% if p4_prog != 'aggregate' %}
   clone:
     name: clone
     id: 3
-    ip: {{ clone_ip }}
+    ip: 192.168.3.2
+    public_ip: {{ clone_ip }}
     tunnels:
-      - host: gateway1
-        virt_intf:  {{ node_nic }}:0
+      - host: {{ switch_name }}
     ipv6: 0000:0000:0000:0000:0000:0002:0001:0003
     ip_port: any
     mac: 00:00:00:00:05:08
     type: server
-{% endif %}
 # TODO - Determine how to properly configure a switch MAC value
 switches:
   {{ p4_prog }}:
@@ -48,8 +46,12 @@ switches:
     type: {{ p4_prog }}
     arch: tofino
     tunnels:
-      - host: {{ p4_prog }}
-        virt_intf:  {{ switch_nic_prfx }}0
+      - host: host1
+        virt_intf:  veth1
+      - host: host2
+        virt_intf:  veth2
+      - host: clone
+        virt_intf:  veth3
     telemetry_rpt:
       type: host
       name: clone

@@ -84,11 +84,10 @@
 # Start AE
 - import_playbook: ../general/start_service.yml
   vars:
-    host_val: analytics_engine
+    host_val: ae
     service_name: tps-tofino-ae
     local_srvc_script_tmplt_file: "{{ tps_dir }}/playbooks/general/templates/ae_service.sh.j2"
     srvc_type: SIMPLE
     sdn_url: "http://{{ sdn_ip }}:{{ sdn_port }}"
     monitor_intf: "{{ ae_monitor_intf }}"
     remote_tps_dir: "{{ tps_dir }}"
-    log_dir: "{{ srvc_log_dir }}"

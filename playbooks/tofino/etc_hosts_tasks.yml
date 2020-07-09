@@ -15,9 +15,9 @@
   become: yes
   lineinfile:
     path: /etc/hosts
-    line: "{{ topo_dict.hosts.get(item).get('ip') }} {{ item }}"
+    line: "{{ topo_dict.hosts.get(item).get('public_ip') }} {{ item }}"
     state: present
-  when: topo_dict.hosts.get(item) and topo_dict.hosts.get(item).ip is defined
+  when: topo_dict.hosts.get(item) and topo_dict.hosts.get(item).public_ip is defined
 
 - name: Set /etc/hosts from switches
   become: yes

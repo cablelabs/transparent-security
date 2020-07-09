@@ -49,7 +49,6 @@
       file:
         path: "{{ log_dir }}"
         state: directory
-        mode: 0777
 
     - name: Adding requested table entry with command [{{ add_table_entry_cmd }}]
       command: "{{ add_table_entry_cmd }}"

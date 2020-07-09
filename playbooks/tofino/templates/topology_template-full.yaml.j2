@@ -2,11 +2,11 @@ hosts:
   Camera1:
     name: Camera1
     id: 5
-    ip: {{ camera1_ip }}
+    ip: 192.168.1.2
+    public_ip: {{ camera1_ip }}
     switch_mac: 00:00:01:01:01:00
     tunnels:
       - host: gateway1
-        virt_intf:  {{ node_nic }}:0
     ipv6: 0000:0000:0000:0000:0000:0001:0001:0002
     ip_port: any
     mac: 00:00:00:00:01:01
@@ -14,11 +14,11 @@ hosts:
   NAS1:
     name: NAS1
     id: 6
-    ip: {{ nas1_ip }}
+    ip: 192.168.1.6
+    public_ip: {{ nas1_ip }}
     switch_mac: 00:00:01:01:02:00
     tunnels:
       - host: gateway1
-        virt_intf:  {{ node_nic }}:0
     ipv6: 0000:0000:0000:0000:0000:0001:0001:0003
     ip_port: any
     mac: 00:00:00:00:01:02
@@ -26,11 +26,11 @@ hosts:
   Game1:
     name: Game1
     id: 7
-    ip: {{ game1_ip }}
+    ip: 192.168.1.10
+    public_ip: {{ game1_ip }}
     switch_mac: 00:00:01:01:03:00
     tunnels:
       - host: gateway1
-        virt_intf:  {{ node_nic }}:0
     ipv6: 0000:0000:0000:0000:0000:0001:0001:0004
     ip_port: any
     mac: 00:00:00:00:01:03
@@ -38,11 +38,11 @@ hosts:
   Camera2:
     name: Camera2
     id: 8
-    ip: {{ camera2_ip }}
+    ip: 192.168.2.2
+    public_ip: {{ camera2_ip }}
     switch_mac: 00:00:02:02:01:00
     tunnels:
       - host: gateway2
-        virt_intf:  {{ node_nic }}:0
     switch_mac: 00:00:02:02:01:00
     ipv6: 0000:0000:0000:0000:0000:0001:0002:0002
     ip_port: any
@@ -51,11 +51,11 @@ hosts:
   Game2:
     name: Game2
     id: 9
-    ip: {{ game2_ip }}
+    ip: 192.168.2.6
+    public_ip: {{ game2_ip }}
     switch_mac: 00:00:02:02:02:00
     tunnels:
       - host: gateway2
-        virt_intf:  {{ node_nic }}:0
     ipv6: 0000:0000:0000:0000:0000:0001:0002:0003
     ip_port: any
     mac: 00:00:00:00:02:02
@@ -63,11 +63,11 @@ hosts:
   Camera3:
     name: Camera3
     id: 10
-    ip: {{ camera3_ip }}
+    ip: 192.168.3.2
+    public_ip: {{ camera3_ip }}
     switch_mac: 00:00:03:03:01:00
     tunnels:
       - host: gateway3
-        virt_intf:  {{ node_nic }}:0
     ipv6: 0000:0000:0000:0000:0000:0001:0003:0002
     ip_port: any
     mac: 00:00:00:00:03:01
@@ -75,11 +75,11 @@ hosts:
   Game3:
     name: Game3
     id: 11
-    ip: {{ game3_ip }}
+    ip: 192.168.3.6
+    public_ip: {{ game3_ip }}
     switch_mac: 00:00:03:03:02:00
     tunnels:
       - host: gateway3
-        virt_intf:  {{ node_nic }}:0
     ipv6: 0000:0000:0000:0000:0000:0001:0003:0003
     ip_port: any
     mac: 00:00:00:00:03:02
@@ -87,22 +87,22 @@ hosts:
   inet:
     name: inet
     id: 12
-    ip: {{ inet_ip }}
+    ip: 192.168.4.2
+    public_ip: {{ inet_ip }}
     tunnels:
       - host: core
-        virt_intf:  {{ node_nic }}:0
     ipv6: 0000:0000:0000:0000:0000:0002:0001:0002
     ip_port: any
     mac: 00:00:00:00:05:07
     type: server
 
-  analytics_engine:
-    name: analytics_engine
+  ae:
+    name: ae
     id: 13
-    ip: {{ ae_ip }}
+    ip: 192.168.4.6
+    public_ip: {{ ae_ip }}
     tunnels:
       - host: core
-        virt_intf:  {{ node_nic }}:0
     ipv6: 0000:0000:0000:0000:0000:0002:0001:0003
     ip_port: any
     mac: 00:00:00:00:05:08
@@ -122,8 +122,14 @@ switches:
     type: gateway
     arch: tofino
     tunnels:
+      - host: Camera1
+        virt_intf:  veth1
+      - host: NAS1
+        virt_intf:  veth2
+      - host: Game1
+        virt_intf:  veth3
       - host: aggregate
-        virt_intf:  {{ switch_nic_prfx }}0
+        virt_intf:  veth4
   gateway2:
     name: gateway2
     id: 0
@@ -136,8 +142,12 @@ switches:
     type: gateway
     arch: tofino
     tunnels:
+      - host: Camera2
+        virt_intf:  veth1
+      - host: Game2
+        virt_intf:  veth2
       - host: aggregate
-        virt_intf:  {{ switch_nic_prfx }}0
+        virt_intf:  veth3
   gateway3:
     name: gateway3
     id: 0
@@ -150,8 +160,12 @@ switches:
     type: gateway
     arch: tofino
     tunnels:
+      - host: Camera3
+        virt_intf:  veth1
+      - host: Game3
+        virt_intf:  veth2
       - host: aggregate
-        virt_intf:  {{ switch_nic_prfx }}0
+        virt_intf:  veth3
   aggregate:
     name: aggregate
     id: 0
@@ -164,22 +178,14 @@ switches:
     type: aggregate
     arch: tofino
     tunnels:
-      - host: core
-        virt_intf:  {{ switch_nic_prfx }}0
-        bridge_name: br0
-        tunnel_name: gre-tun0
       - host: gateway1
-        virt_intf:  {{ switch_nic_prfx }}1
-        bridge_name: br1
-        tunnel_name: gre-tun1
+        virt_intf:  veth1
       - host: gateway2
-        virt_intf:  {{ switch_nic_prfx }}2
-        bridge_name: br2
-        tunnel_name: gre-tun2
+        virt_intf:  veth2
       - host: gateway3
-        virt_intf:  {{ switch_nic_prfx }}3
-        bridge_name: br3
-        tunnel_name: gre-tun3
+        virt_intf:  veth3
+      - host: core
+        virt_intf:  veth4
     multicast_entries:
       - egress_port: 1
         instance: 1
@@ -201,12 +207,16 @@ switches:
     grpc: {{ core_ip }}:{{ grpc_port }}
     telemetry_rpt:
       type: host
-      name: analytics_engine
+      name: ae
     type: core
     arch: tofino
     tunnels:
       - host: aggregate
-        virt_intf:  {{ switch_nic_prfx }}0
+        virt_intf:  veth1
+      - host: inet
+        virt_intf:  veth2
+      - host: ae
+        virt_intf:  veth3
     multicast_entries:
       - egress_port: 1
         instance: 1
@@ -214,8 +224,8 @@ switches:
         instance: 1
 
 {#external:#}
-{#  analytics_engine:#}
-{#    name: analytics_engine#}
+{#  ae:#}
+{#    name: ae#}
 {#    id: 13#}
 {#    ip: {{ ae_ip }}#}
 {#    tunnels:#}
@@ -292,7 +302,7 @@ links:
     north_facing_port: 2
     latency: 0ms
     bandwidth: null
-  - north_node: analytics_engine
+  - north_node: ae
     south_node: core
     north_facing_port: 3
     latency: 0ms

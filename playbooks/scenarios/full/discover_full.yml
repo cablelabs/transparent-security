@@ -1,0 +1,17 @@
+---
+- hosts: "{{ host }}"
+  gather_facts: no
+  tasks:
+    - name: Read in topology
+      set_fact:
+        topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
+
+    - name: Ping inet host
+      include_tasks: ../test_cases/ping_from.yml
+      vars:
+        ip: "{{ topo_dict.hosts['inet'].ip }}"
+        intf: "{{ item }}"
+        count: 3
+        interval: .5
+        pause_time: 0
+      loop: "{{ interfaces }}"

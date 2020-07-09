@@ -33,7 +33,6 @@
       file:
         path: "{{ log_dir }}"
         state: directory
-        mode: 0777
 
     - name: Build clone entry with command [{{ add_clone_entry_cmd }}]
       command: "{{ add_clone_entry_cmd }}"
