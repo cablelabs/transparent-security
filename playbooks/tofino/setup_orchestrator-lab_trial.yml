@@ -13,4 +13,4 @@
 ---
 - import_playbook: setup_orchestrator.yml
   vars:
-    topology_template: templates/topology_template-single_switch.yaml.j2
+    topology_template: topology_template-lab_trial.yaml.j2

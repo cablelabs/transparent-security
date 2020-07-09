@@ -23,7 +23,7 @@
       - core
       - aggregate
     set_ip_file: set_ip-lab_trial.yml
-    topology_template: templates/topology_template-lab_trial.yml.j2
+    topology_template: templates/topology_template-lab_trial.yaml.j2
     load_p4: False
 
 - import_playbook: ../general/start_service.yml
