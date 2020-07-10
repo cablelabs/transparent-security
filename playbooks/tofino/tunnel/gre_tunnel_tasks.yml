@@ -50,11 +50,31 @@
     remote_host: "{{ topo_dict.switches.get(item.host)  }}"
   when: not remote_host
 
+- name: Retrieve the local IP
+  set_fact:
+    local_ip: "{{ this_host.public_ip }}"
+  when: this_host.public_ip is defined
+
+- name: Determine the local IP when initial retrieval was skipped
+  set_fact:
+    local_ip: "{{ this_host.ip }}"
+  when: local_ip is not defined
+
+- name: Retrieve the remote IP
+  set_fact:
+    remote_ip: "{{ remote_host.public_ip }}"
+  when: remote_host.public_ip is defined
+
+- name: Determine the remote IP when initial retrieval was skipped
+  set_fact:
+    remote_ip: "{{ remote_host.ip }}"
+  when: remote_ip is not defined
+
 - name: Create GRE tunnel command
   set_fact:
     gre_tunnel_cmd: >
-      ip link add {{ item.host }}-tun type gretap local {{ this_host.ip }}
-      remote {{ remote_host.ip }}
+      ip link add {{ item.host }}-tun type gretap local {{ local_ip }}
+      remote {{ remote_ip }}
   when: remote_host is defined and remote_host != ""
 
 - name: Show the GRE tunnel command
