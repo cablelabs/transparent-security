@@ -41,7 +41,7 @@ resource "aws_instance" "orchestrator" {
 
 # Tofino Model Switch Instances
 resource "aws_instance" "tps-switch" {
-  count = var.scenario_name == "full" ? var.num_switches_full : var.num_switches_single
+  count = var.scenario_name == "full" ? var.num_switches_full : var.scenario_name == "lab_trial" ? var.num_switches_lab_trial : var.num_switches_single
   ami = var.tofino.ami
   instance_type = var.switch_instance_type
   key_name = aws_key_pair.snaps-mini-pk.key_name
@@ -56,7 +56,7 @@ resource "aws_instance" "tps-switch" {
 
 # Network nodes
 resource "aws_instance" "node" {
-  count = var.scenario_name == "full" ? var.num_nodes_full : var.num_nodes_single
+  count = var.scenario_name == "full" ? var.num_nodes_full : var.scenario_name == "lab_trial" ? var.num_nodes_lab_trial : var.num_nodes_single
 
   ami = var.tofino.ami
   instance_type = var.node_instance_type

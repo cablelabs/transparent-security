@@ -1,0 +1,82 @@
+# Copyright (c) 2019 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+- import_playbook: ../general/setup_source.yml
+  vars:
+    host_val: switches
+    trans_sec_source_dir: "{{ tps_dir }}"
+    trans_sec_dest_dir: "/home/{{ host_sudo_user }}/transparent-security"
+    p4_bin_dir: "{{ sde_dir }}/install"
+    python_unit_tests: false
+
+# TODO/FIXME - Call setup_tofino_switch playbook so it can run in parallel
+
+# Start tofino-model and tofino-switchd on the core switch
+- import_playbook: setup_tofino_switch.yml
+  vars:
+    switches:
+      - core
+    p4_pkg: core
+    p4_prog: core.p4
+
+# Start tofino-model and tofino-switchd on the aggregate switch
+- import_playbook: setup_tofino_switch.yml
+  vars:
+    switches:
+      - aggregate
+    p4_pkg: aggregate
+    p4_prog: aggregate.p4
+
+# Setup GRE Tunnels
+- import_playbook: tunnel/setup_gre_tunnels.yml
+
+# Setup source on the nodes for packet testing
+- import_playbook: ../general/setup_source.yml
+  vars:
+    host_val: hosts
+    trans_sec_source_dir: "{{ tps_dir }}"
+    trans_sec_dest_dir: "/home/{{ host_sudo_user }}/transparent-security"
+    python_unit_tests: false
+
+# Compile P4 programs for the SDN Controller
+- import_playbook: compile_p4.yml
+  vars:
+    host_val: controller
+    p4_progs:
+      - core
+      - aggregate
+    remote_tps_dir: "{{ tps_dir }}"
+
+# Start SDN Controller
+- import_playbook: ../general/start_service.yml
+  vars:
+    host_val: controller
+    service_name: tps-tofino-sdn
+    scenario_name: full
+    local_srvc_script_tmplt_file: "{{ tps_dir }}/playbooks/general/templates/sdn_controller.sh.j2"
+    port_to_wait: "{{ sdn_port }}"
+    wait_timeout: 120
+    remote_tps_dir: "{{ tps_dir }}"
+    load_p4: False
+    add_data_inspection: True
+
+# Start AE
+- import_playbook: ../general/start_service.yml
+  vars:
+    host_val: ae
+    service_name: tps-tofino-ae
+    local_srvc_script_tmplt_file: "{{ tps_dir }}/playbooks/general/templates/ae_service.sh.j2"
+    srvc_type: SIMPLE
+    sdn_url: "http://{{ sdn_ip }}:{{ sdn_port }}"
+    monitor_intf: "{{ ae_monitor_intf }}"
+    remote_tps_dir: "{{ tps_dir }}"

@@ -24,7 +24,7 @@
       - iptables
       - iproute2
 
-- name: extract data
+- name: extract this_host and remote_host (item_host) from topology
   set_fact:
     this_host: "{{ topo_dict.hosts.get(ansible_host) }}"
     remote_host: "{{ topo_dict.hosts.get(item.host) }}"
@@ -50,11 +50,31 @@
     remote_host: "{{ topo_dict.switches.get(item.host)  }}"
   when: not remote_host
 
-- name: set remote_host from switches when not in hosts
+- name: Retrieve the local IP
+  set_fact:
+    local_ip: "{{ this_host.public_ip }}"
+  when: this_host.public_ip is defined
+
+- name: Determine the local IP when initial retrieval was skipped
+  set_fact:
+    local_ip: "{{ this_host.ip }}"
+  when: local_ip is not defined
+
+- name: Retrieve the remote IP
+  set_fact:
+    remote_ip: "{{ remote_host.public_ip }}"
+  when: remote_host.public_ip is defined
+
+- name: Determine the remote IP when initial retrieval was skipped
+  set_fact:
+    remote_ip: "{{ remote_host.ip }}"
+  when: remote_ip is not defined
+
+- name: Create GRE tunnel command
   set_fact:
     gre_tunnel_cmd: >
-      ip link add {{ item.host }}-tun type gretap local {{ this_host.ip }}
-      remote {{ remote_host.ip }}
+      ip link add {{ item.host }}-tun type gretap local {{ local_ip }}
+      remote {{ remote_ip }}
   when: remote_host is defined and remote_host != ""
 
 - name: Show the GRE tunnel command
@@ -62,7 +82,7 @@
     var: gre_tunnel_cmd
   when: remote_host is defined and remote_host != ""
 
-- name: Create GRE tunnel from {{ item.host }} from {{ this_host.ip }} to {{ remote_host.ip }}
+- name: Create GRE tunnel
   command: "{{ gre_tunnel_cmd }}"
   when: gre_tunnel_cmd is defined
 
@@ -91,14 +111,6 @@
 
 - name: set bridge up - {{ item.host }}-br
   command: "ip link set {{ item.host }}-br up"
-  when: item.virt_intf is defined
-
-- name: set MAC {{ this_host.mac }} on virtual interface {{ item.virt_intf }}
-  command: "ip link set dev {{ item.virt_intf }} address {{ this_host.mac }}"
-  when: item.virt_intf is defined
-
-- name: set IP {{ this_host.ip }}/24 on tunnel {{ item.host }}-br
-  command: "ip addr add {{ this_host.ip }}/24 dev {{ item.host }}-br"
   when: item.virt_intf is defined
 
 # Configure tunnel when no bridge

@@ -1,0 +1,129 @@
+# Copyright (c) 2020 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+- import_playbook: ../general/setup_source.yml
+  vars:
+    python_unit_tests: false
+    p4_bin_dir: "{{ sde_dir }}/install"
+
+- hosts: all
+  gather_facts: no
+  vars:
+    local_topology: /tmp/tofino-topology.yaml
+  tasks:
+    - name: Apply template to topology configuration file {{ topology_template }}
+      become: yes
+      template:
+        src: "{{ topology_template }}"
+        dest: "{{ topo_file_loc }}"
+      vars:
+        p4_prog: "{{ scenario_name }}"
+        switch_name: "{{ scenario_name }}"
+
+    - name: Fetch topology {{ topo_file_loc }}
+      fetch:
+        src: "{{ topo_file_loc }}"
+        dest: "{{ local_topology }}"
+        flat: yes
+
+    - name: Read topology
+      set_fact:
+        topo_dict: "{{ lookup('file','{{ local_topology }}') | from_yaml }}"
+
+    - name: Delete old ansible inventory file {{ remote_ansible_inventory }}
+      file:
+        path: "{{ remote_ansible_inventory }}"
+        state: absent
+
+    - name: Create ansible inventory file {{ remote_ansible_inventory }}
+      file:
+        path: "{{ remote_ansible_inventory }}"
+        state: touch
+
+    - name: Create 'hosts' ansible inventory type {{ remote_ansible_inventory }}
+      lineinfile:
+        path: "{{ remote_ansible_inventory }}"
+        line: "[controller]"
+        state: present
+
+    - name: Add localhost to {{ remote_ansible_inventory }}
+      lineinfile:
+        path: "{{ remote_ansible_inventory }}"
+        line: "localhost"
+        state: present
+
+    - name: Create 'hosts' ansible inventory type {{ remote_ansible_inventory }}
+      lineinfile:
+        path: "{{ remote_ansible_inventory }}"
+        line: "[hosts]"
+        state: present
+
+    - name: Add host entries to ansible inventory at {{ remote_ansible_inventory }}
+      lineinfile:
+        path: "{{ remote_ansible_inventory }}"
+        line: "{{ item }}"
+        state: present
+      loop: "{{ topo_dict.hosts.keys() | list }}"
+
+    - name: Create 'switches' ansible inventory type {{ remote_ansible_inventory }}
+      lineinfile:
+        path: "{{ remote_ansible_inventory }}"
+        line: "[switches]"
+        state: present
+
+    - name: Add host entries to ansible inventory at {{ remote_ansible_inventory }}
+      lineinfile:
+        path: "{{ remote_ansible_inventory }}"
+        line: "{{ item }}"
+        state: present
+      loop: "{{ topo_dict.switches.keys() | list }}"
+
+    - name: Create inventory variables heading at {{ remote_ansible_inventory }}
+      lineinfile:
+        path: "{{ remote_ansible_inventory }}"
+        line: "[all:vars]"
+        state: present
+
+    - name: Add host entries to ansible inventory at {{ remote_ansible_inventory }}
+      lineinfile:
+        path: "{{ remote_ansible_inventory }}"
+        line: "{{ item }}"
+        state: present
+      loop:
+        - "scenario_name={{ scenario_name }}"
+        - "topo_file_loc={{ topo_file_loc }}"
+        - "tps_dir={{ trans_sec_dir }}"
+        - "remote_tps_dir={{ trans_sec_dir }}"
+        - "remote_scripts_dir={{ remote_scripts_dir }}"
+        - "srvc_log_dir={{ srvc_log_dir }}"
+        - "log_dir={{ srvc_log_dir }}"
+        - "host_log_dir=/home/{{ switch_sudo_user }}"
+        - "log_level={{ srvc_log_level }}"
+        - "sde_dir={{ sde_dir }}"
+        - "sde_version={{ sde_version }}"
+        - "switch_sudo_user={{ switch_sudo_user }}"
+        - "switchd_port={{ switchd_port }}"
+        - "sdn_port={{ sdn_port }}"
+        - "sdn_ip={{ sdn_ip }}"
+        - "tofino_model_port={{ tofino_model_port }}"
+        - "grpc_port={{ grpc_port }}"
+        - "ae_monitor_intf={{ ae_monitor_intf }}"
+        - "host_sender_intf=eth0:0"
+        - "p4_platform={{ p4_platform }}"
+        - "host_sudo_user={{ host_sudo_user }}"
+
+    - include_tasks: etc_hosts_tasks.yml
+      loop: "{{ topo_dict.hosts.keys() | list }}"
+
+    - include_tasks: etc_hosts_tasks.yml
+      loop: "{{ topo_dict.switches.keys() | list }}"
