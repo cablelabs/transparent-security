@@ -17,7 +17,6 @@ hosts:
   host1:
     name: host1
     id: 2
-    switch_ip: 192.168.1.1
     ip: 192.168.1.2
     public_ip: {{ host1_ip }}
     tunnels:
@@ -29,7 +28,6 @@ hosts:
   host2:
     name: host2
     id: 3
-    switch_ip: 192.168.1.5
     ip: 192.168.1.6
     public_ip: {{ host2_ip }}
     tunnels:
@@ -41,7 +39,6 @@ hosts:
   inet:
     name: inet
     id: 4
-    switch_ip: 192.168.1.9
     ip: 192.168.1.10
     public_ip: {{ inet_ip }}
     tunnels:

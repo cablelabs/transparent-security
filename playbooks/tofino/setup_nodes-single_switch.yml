@@ -26,6 +26,8 @@
       - "{{ scenario_name }}"
     p4_pkg: "{{ scenario_name }}"
     p4_prog: "{{ scenario_name }}.p4"
+    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
+    tunnels: "{{ topo_dict.switches[scenario_name].tunnels }}"
 
 # Setup GRE Tunnels
 - import_playbook: tunnel/setup_gre_tunnels.yml

@@ -1,0 +1,11 @@
+{
+    "PortToVeth": [
+{% for tunnel in tunnels %}
+        {
+            "device_port": "{{ tunnel.switch_port }}",
+            "veth1": {{ tunnel.virt_in_intf }},
+            "veth2": {{ tunnel.virt_out_intf }},
+        },
+{% endfor %}
+    ]
+}

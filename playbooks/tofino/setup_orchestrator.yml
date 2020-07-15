@@ -107,7 +107,7 @@
         - "remote_scripts_dir={{ remote_scripts_dir }}"
         - "srvc_log_dir={{ srvc_log_dir }}"
         - "log_dir={{ srvc_log_dir }}"
-        - "host_log_dir=/home/{{ switch_sudo_user }}"
+        - "host_log_dir=/home/{{ switch_sudo_user }}/tps-logs"
         - "log_level={{ srvc_log_level }}"
         - "sde_dir={{ sde_dir }}"
         - "sde_version={{ sde_version }}"

@@ -28,6 +28,8 @@
       - core
     p4_pkg: core
     p4_prog: core.p4
+    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
+    tunnels: "{{ topo_dict.switches['core'].tunnels }}"
 
 # Start tofino-model and tofino-switchd on the aggregate switch
 - import_playbook: setup_tofino_switch.yml
@@ -36,6 +38,8 @@
       - aggregate
     p4_pkg: aggregate
     p4_prog: aggregate.p4
+    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
+    tunnels: "{{ topo_dict.switches['aggregate'].tunnels }}"
 
 # Setup GRE Tunnels
 - import_playbook: tunnel/setup_gre_tunnels.yml

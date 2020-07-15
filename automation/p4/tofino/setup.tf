@@ -36,11 +36,27 @@ locals {
 
   # For single-switch scenario
   switch_ip = var.scenario_name == "full" ? "n/a" : aws_instance.tps-switch.0.private_ip
+  switch_tun1_ip = var.scenario_name == "full" ? "n/a" : aws_network_interface.switch_tun_1.0.private_ip
+  switch_tun1_mac = var.scenario_name == "full" ? "n/a" : aws_network_interface.switch_tun_1.0.mac_address
+  switch_tun2_ip = var.scenario_name == "full" ? "n/a" : aws_network_interface.switch_tun_2.0.private_ip
+  switch_tun2_mac = var.scenario_name == "full" ? "n/a" : aws_network_interface.switch_tun_2.0.mac_address
   clone_ip = var.scenario_name == "full" ? "n/a" : aws_instance.node.2.private_ip
+  clone_tun1_ip = var.scenario_name == "full" ? "n/a" : aws_network_interface.node_tun_1.2.private_ip
+  clone_tun1_mac = var.scenario_name == "full" ? "n/a" : aws_network_interface.node_tun_1.2.mac_address
+  clone_tun2_ip = var.scenario_name == "full" ? "n/a" : aws_network_interface.node_tun_2.2.private_ip
+  clone_tun2_mac = var.scenario_name == "full" ? "n/a" : aws_network_interface.node_tun_2.2.mac_address
 
   # For single_switch & lab_trial scenarios
   host1_ip = var.scenario_name == "full" ? "n/a" : aws_instance.node.0.private_ip
+  host1_tun1_ip = var.scenario_name == "full" ? "n/a" : aws_network_interface.node_tun_1.0.private_ip
+  host1_tun1_mac = var.scenario_name == "full" ? "n/a" : aws_network_interface.node_tun_1.0.mac_address
+  host1_tun2_ip = var.scenario_name == "full" ? "n/a" : aws_network_interface.node_tun_2.0.private_ip
+  host1_tun2_mac = var.scenario_name == "full" ? "n/a" : aws_network_interface.node_tun_2.0.mac_address
   host2_ip = var.scenario_name == "full" ? "n/a" : aws_instance.node.1.private_ip
+  host2_tun1_ip = var.scenario_name == "full" ? "n/a" : aws_network_interface.node_tun_1.1.private_ip
+  host2_tun1_mac = var.scenario_name == "full" ? "n/a" : aws_network_interface.node_tun_1.1.mac_address
+  host2_tun2_ip = var.scenario_name == "full" ? "n/a" : aws_network_interface.node_tun_2.1.private_ip
+  host2_tun2_mac = var.scenario_name == "full" ? "n/a" : aws_network_interface.node_tun_2.1.mac_address
 }
 
 ########
@@ -56,7 +72,14 @@ resource "null_resource" "tps-tofino-sim-setup" {
 
 // Setup private key on the orchestrator so it can have ssh access into the switch and node VMs
 resource "null_resource" "tps-tofino-orch-key-setup" {
-  depends_on = [aws_instance.orchestrator, null_resource.tps-tofino-sim-setup]
+  depends_on = [
+    aws_instance.orchestrator,
+    null_resource.tps-tofino-sim-setup,
+    aws_network_interface.node_tun_1,
+//    aws_network_interface.node_tun_2,
+    aws_network_interface.switch_tun_1,
+//    aws_network_interface.switch_tun_2,
+  ]
   provisioner "local-exec" {
     command = <<EOT
 scp -o StrictHostKeyChecking=no ${var.private_key_file} ${var.sudo_user}@${aws_instance.orchestrator.public_ip}:~/.ssh/id_rsa"
@@ -136,9 +159,25 @@ ${var.SETUP_ORCH_SINGLE_SWITCH} \
 --extra-vars "\
 scenario_name=${var.scenario_name}
 host1_ip=${local.host1_ip}
+host1_tun1_ip=${local.host1_tun1_ip}
+host1_tun1_mac=${local.host1_tun1_mac}
+host1_tun2_ip=${local.host1_tun2_ip}
+host1_tun2_mac=${local.host1_tun2_mac}
 host2_ip=${local.host2_ip}
+host2_tun1_ip=${local.host2_tun1_ip}
+host2_tun1_mac=${local.host2_tun1_mac}
+host2_tun2_ip=${local.host2_tun2_ip}
+host2_tun2_mac=${local.host2_tun2_mac}
 clone_ip=${local.clone_ip}
+clone_tun1_ip=${local.clone_tun1_ip}
+clone_tun1_mac=${local.clone_tun1_mac}
+clone_tun2_ip=${local.clone_tun2_ip}
+clone_tun2_mac=${local.clone_tun2_mac}
 switch_ip=${local.switch_ip}
+switch_tun1_ip=${local.switch_tun1_ip}
+switch_tun1_mac=${local.switch_tun1_mac}
+switch_tun2_ip=${local.switch_tun2_ip}
+switch_tun2_mac=${local.switch_tun2_mac}
 topo_file_loc=${var.topo_file_loc}
 sde_version=${var.tofino.sde_version}
 sde_dir=/home/${var.sudo_user}/bf-sde-${var.tofino.sde_version}

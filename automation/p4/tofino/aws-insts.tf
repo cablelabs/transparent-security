@@ -39,9 +39,16 @@ resource "aws_instance" "orchestrator" {
   }
 }
 
+# Determine switch and node count
+locals {
+  switch_count = var.scenario_name == "full" ? var.num_switches_full : var.scenario_name == "lab_trial" ? var.num_switches_lab_trial : var.num_switches_single
+  node_count = var.scenario_name == "full" ? var.num_nodes_full : var.scenario_name == "lab_trial" ? var.num_nodes_lab_trial : var.num_nodes_single
+}
+
 # Tofino Model Switch Instances
 resource "aws_instance" "tps-switch" {
-  count = var.scenario_name == "full" ? var.num_switches_full : var.scenario_name == "lab_trial" ? var.num_switches_lab_trial : var.num_switches_single
+  count = local.switch_count
+  availability_zone = var.availability_zone
   ami = var.tofino.ami
   instance_type = var.switch_instance_type
   key_name = aws_key_pair.snaps-mini-pk.key_name
@@ -54,10 +61,69 @@ resource "aws_instance" "tps-switch" {
   associate_public_ip_address = false
 }
 
+# Third octet of the subnet IPv4 value
+resource "random_integer" "tunnel_subnet_3" {
+  min = 50
+  max = 254
+}
+
+# Create subnets for the GRE tunnels
+resource "aws_subnet" "tunnel_1_subnet" {
+  availability_zone = var.availability_zone
+  cidr_block = "${var.vpc_subnet_prfx}.${random_integer.tunnel_subnet_3.result}.0/24"
+  vpc_id = var.vpc_id
+}
+
+resource "aws_subnet" "tunnel_2_subnet" {
+  availability_zone = var.availability_zone
+  cidr_block = "${var.vpc_subnet_prfx}.${random_integer.tunnel_subnet_3.result + 1}.0/24"
+  vpc_id = var.vpc_id
+}
+
+locals {
+  switch_inst_ids = tolist([
+    for switch_inst in aws_instance.tps-switch: {
+      id = switch_inst.id
+    }
+  ])
+}
+
+resource "aws_network_interface" "switch_tun_1" {
+  depends_on = [aws_instance.tps-switch, aws_subnet.tunnel_1_subnet]
+  count = local.switch_count
+  subnet_id = aws_subnet.tunnel_1_subnet.id
+  security_groups = [aws_security_group.tps-internal.id]
+  tags = {
+    Name = "tps-switch-tun1-${var.build_id}"
+  }
+  attachment {
+    device_index = 1
+    instance = aws_instance.tps-switch[count.index].id
+  }
+}
+
+resource "aws_network_interface" "switch_tun_2" {
+  depends_on = [
+    aws_instance.tps-switch,
+    aws_subnet.tunnel_2_subnet,
+    aws_network_interface.switch_tun_1
+  ]
+  count = local.switch_count
+  subnet_id = aws_subnet.tunnel_2_subnet.id
+  security_groups = [aws_security_group.tps-internal.id]
+  tags = {
+    Name = "tps-switch-tun2-${var.build_id}"
+  }
+  attachment {
+    device_index = 2
+    instance = aws_instance.tps-switch[count.index].id
+  }
+}
+
 # Network nodes
 resource "aws_instance" "node" {
-  count = var.scenario_name == "full" ? var.num_nodes_full : var.scenario_name == "lab_trial" ? var.num_nodes_lab_trial : var.num_nodes_single
-
+  count = local.node_count
+  availability_zone = var.availability_zone
   ami = var.tofino.ami
   instance_type = var.node_instance_type
   key_name = aws_key_pair.snaps-mini-pk.key_name
@@ -68,4 +134,36 @@ resource "aws_instance" "node" {
 
   security_groups = [aws_security_group.tps.name]
   associate_public_ip_address = false
+}
+
+resource "aws_network_interface" "node_tun_1" {
+  depends_on = [aws_instance.node, aws_subnet.tunnel_1_subnet]
+  count = local.node_count
+  subnet_id = aws_subnet.tunnel_1_subnet.id
+  security_groups = [aws_security_group.tps-internal.id]
+  tags = {
+    Name = "tps-node-tun1-${var.build_id}"
+  }
+  attachment {
+    device_index = 1
+    instance = aws_instance.node[count.index].id
+  }
+}
+
+resource "aws_network_interface" "node_tun_2" {
+  depends_on = [
+    aws_instance.node,
+    aws_subnet.tunnel_2_subnet,
+    aws_network_interface.node_tun_1
+  ]
+  count = local.node_count
+  subnet_id = aws_subnet.tunnel_2_subnet.id
+  security_groups = [aws_security_group.tps-internal.id]
+  tags = {
+    Name = "tps-node-tun2-${var.build_id}"
+  }
+  attachment {
+    device_index = 2
+    instance = aws_instance.node[count.index].id
+  }
 }

@@ -15,12 +15,15 @@
 variable "access_key" {}
 variable "secret_key" {}
 variable "build_id" {}
+variable "vpc_id" {default = "vpc-fd820f9b"}
+variable "vpc_subnet_prfx" {default = "172.31"}
 
 # Optional Variables
 variable "public_key_file" {default = "~/.ssh/id_rsa.pub"}
 variable "private_key_file" {default = "~/.ssh/id_rsa"}
 variable "sudo_user" {default = "ubuntu"}
 variable "region" {default = "us-west-2"}
+variable "availability_zone" {default = "us-west-2a"}
 
 variable "tofino" {
   default = {
@@ -30,8 +33,8 @@ variable "tofino" {
 }
 
 variable "switch_instance_type" {default = "t2.2xlarge"}
-variable "orch_instance_type" {default = "t2.medium"}
-variable "node_instance_type" {default = "t2.micro"}
+variable "orch_instance_type" {default = "t2.large"}
+variable "node_instance_type" {default = "t2.small"}
 variable "num_switches_full" {default = 5}
 variable "num_switches_single" {default = 1}
 variable "num_switches_lab_trial" {default = 2}
@@ -62,7 +65,7 @@ variable "switchd_port" {default = "50052"}
 variable "sdn_port" {default = "9998"}
 variable "switch_nic_prfx" {default = "veth"}
 variable "service_log_level" {default = "DEBUG"}
-variable "ae_monitor_intf" {default = "eth0:0"}
+variable "ae_monitor_intf" {default = "core-tun"}
 variable "clone_egress_port" {default = "3"}
 
 variable "setup_nodes_pb" {default = "setup_nodes.yml"}
