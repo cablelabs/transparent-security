@@ -50,10 +50,6 @@
     remote_host: "{{ topo_dict.switches.get(item.host)  }}"
   when: not remote_host
 
-- debug:
-    var: this_host
-- debug:
-    var: remote_host
 - name: Retrieve the local IP
   set_fact:
     local_tun1_ip: "{{ this_host.tun1_ip }}"
@@ -137,7 +133,7 @@
 
 - name: Add ingress port {{ item.virt_out_intf }} to {{ item.host }}-br2
   command: "brctl addif {{ item.host }}-br2 {{ item.virt_out_intf }}"
-  when: item.switch_port is defined
+  when: item.switch_port is defined and item.virt_in_intf != item.virt_out_intf
 
 # Bridge host tunnels
 - name: set IP {{ this_host.ip }}/24 on {{ item.host }}-br1

@@ -69,6 +69,8 @@
     - debug:
         var: tun2_ip
 
+    # TODO - The associated MAC address is now available and should be used to
+    #  determine the interface on which to add this IP address
     - name: delete IP {{ tun1_ip }}/24 on eth1 for tunnel 1 if exists
       command: "ip addr del {{ tun1_ip }}/24 dev eth1"
       ignore_errors: yes

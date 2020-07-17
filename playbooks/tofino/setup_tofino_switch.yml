@@ -31,8 +31,9 @@
     port_to_wait: "{{ tofino_model_port }}"
     sudo_user: "{{ switch_sudo_user }}"
     prog_name: "{{ p4_pkg }}"
-    additional_tmplt_file: "{{ tps_dir }}/playbooks/general/templates/tofino-model-veth-port-mapping.json.j2"
+    additional_tmplt_file: "{{ tps_dir }}/playbooks/tofino/templates/tofino-model-veth-port-mapping.json.j2"
     additional_tmplt_out_file: "{{ remote_scripts_dir }}/port-mapping.json"
+
 # Start switchd
 - import_playbook: ../general/start_service.yml
   vars:

@@ -39,6 +39,9 @@ def get_args():
     parser.add_argument('-tc', '--table-config',
                         help='Table insertion config file',
                         type=str, required=False)
+    parser.add_argument('-e', '--election-id',
+                        help='Table insertion config file',
+                        type=int, required=False, default=0)
     parser.add_argument('-l', '--log-dir', type=str, required=False,
                         default=None)
     parser.add_argument('-lf', '--log-file', type=str, required=False,
@@ -106,7 +109,7 @@ if __name__ == '__main__':
             logger.info('Match fields obj - [%s]',
                         entry_config['match_fields'])
             for key, value in entry_config['match_fields'].items():
-                if isinstance(value, list):
+                if isinstance(value, list) or isinstance(value, tuple):
                     logger.debug('Match fields list - [%s]', value)
                     match_fields[key] = (value[0], value[1])
                 else:
@@ -114,6 +117,8 @@ if __name__ == '__main__':
                     match_fields[key] = value
 
         if args.insert == 'True':
+            entries = switch.get_match_values(entry_config['table_name'])
+            logger.info('Existing table entries - {}'.format(entries))
             logger.info(
                 'Entry configuration for table entry - [%s] and match fields '
                 '- [%s]', entry_config, match_fields)
@@ -128,7 +133,9 @@ if __name__ == '__main__':
                 'match fields - [%s], action_params - [%s]',
                 entry_config['table_name'], entry_config.get('action_name'),
                 match_fields, entry_config.get('action_params'))
-            switch.write_table_entry(table_entry)
+            switch.write_table_entry(table_entry,
+                                     election_high=args.election_id,
+                                     election_low=args.election_id + 1)
         else:
             table_entry = p4info_helper.build_table_entry(
                 table_name=entry_config['table_name'],

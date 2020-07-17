@@ -134,7 +134,7 @@ def encode(x, bitwidth):
     bitwidth_bytes = bitwidth_to_bytes(bitwidth)
     is_ipv6 = False
     if (type(x) == list or type(x) == tuple) and len(x) == 1:
-        x = x[0]
+        x = list(x)[0]
     if isinstance(x, str):
         logger.info('Converting string value - [%s]', x)
         if matches_mac(x):

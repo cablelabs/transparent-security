@@ -42,7 +42,6 @@
           -tc {{ table_entry_config }}
           -l {{ log_dir }}
           -lf {{ log_file }}
-          -i {{ insert_flag }}
           -n {{ ingress_table }}
 
     - name: Create log directory {{ log_dir }}
@@ -50,7 +49,16 @@
         path: "{{ log_dir }}"
         state: directory
 
-    - name: Adding requested table entry with command [{{ add_table_entry_cmd }}]
-      command: "{{ add_table_entry_cmd }}"
+    - name: Applying requested table entry with command [{{ add_table_entry_cmd }}]
+      command: "{{ add_table_entry_cmd }} -i {{ insert_flag }}"
       register: cmd_out
       changed_when: cmd_out is not failed
+      ignore_errors: yes
+
+    - name: Deleting requested table entry with command [{{ add_table_entry_cmd }}] and election-id 2
+      command: "{{ add_table_entry_cmd }} -i False"
+      when: cmd_out is failed and insert_flag == "True"
+
+    - name: Try table entry with command [{{ add_table_entry_cmd }}] with election-id 2
+      command: "{{ add_table_entry_cmd }} -e 2 -i {{ insert_flag }}"
+      when: cmd_out is failed

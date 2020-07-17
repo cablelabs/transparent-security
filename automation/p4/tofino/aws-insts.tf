@@ -63,8 +63,8 @@ resource "aws_instance" "tps-switch" {
 
 # Third octet of the subnet IPv4 value
 resource "random_integer" "tunnel_subnet_3" {
-  min = 50
-  max = 254
+  min = 100
+  max = 220
 }
 
 # Create subnets for the GRE tunnels
