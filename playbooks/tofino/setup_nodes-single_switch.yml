@@ -17,7 +17,16 @@
     trans_sec_source_dir: "{{ tps_dir }}"
     trans_sec_dest_dir: "/home/{{ host_sudo_user }}/transparent-security"
     p4_bin_dir: "{{ sde_dir }}/install"
-    python_unit_tests: false
+    python_unit_tests: true
+
+# Create virtual interfaces on switches
+- import_playbook: setup_virt_eth.yml
+  vars:
+    host_val: switches
+    remote_sde_dir: "{{ sde_dir }}"
+
+# Setup GRE Tunnels
+- import_playbook: tunnel/setup_gre_tunnels.yml
 
 # Start tofino-model and tofino-switchd on the core switch
 - import_playbook: setup_tofino_switch.yml
@@ -28,9 +37,6 @@
     p4_prog: "{{ scenario_name }}.p4"
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     tunnels: "{{ topo_dict.switches[scenario_name].tunnels }}"
-
-# Setup GRE Tunnels
-- import_playbook: tunnel/setup_gre_tunnels.yml
 
 # Setup source on the nodes for packet testing
 - import_playbook: ../general/setup_source.yml

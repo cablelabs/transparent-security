@@ -11,11 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
-- import_playbook: setup_virt_eth.yml
-  vars:
-    host_val: "{{ switches }}"
-    remote_sde_dir: "{{ sde_dir }}"
-
 - import_playbook: compile_p4.yml
   vars:
     host_val: "{{ switches }}"

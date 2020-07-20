@@ -63,16 +63,16 @@ switches:
     arch: tofino
     tunnels:
       - host: host1
-        virt_in_intf:  veth0
-        virt_out_intf:  veth1
+        virt_in_intf:  2
+        virt_out_intf:  3
         switch_port: 1
       - host: host2
-        virt_in_intf:  veth4
-        virt_out_intf:  veth5
+        virt_in_intf:  4
+        virt_out_intf:  5
         switch_port: 2
       - host: clone
-        virt_in_intf:  veth6
-        virt_out_intf:  veth7
+        virt_in_intf:  6
+        virt_out_intf:  7
         switch_port: 3
     telemetry_rpt:
       type: host

@@ -49,7 +49,7 @@
     receive_timeout: "{{ receiver_timeout_seconds | default(60) }}"
     hops: "{{ int_hops | default(0) }}"
     ip_ver: "{{ ip_version | default('4') }}"
-    receiver_intf: "{% if receiver.tunnels is defined %}{{ receiver.tunnels[0].host }}-br1{% else %}{{ '%s-eth0' % rec_host }}{% endif %}"
+    receiver_intf: "{% if receiver.tunnels is defined %}{{ receiver.tunnels[0].host }}-br2{% else %}{{ '%s-eth0' % rec_host }}{% endif %}"
     receiver_log_file: "{{ host_log_dir }}/{{ receiver_log_filename }}"
   tasks:
     - debug:

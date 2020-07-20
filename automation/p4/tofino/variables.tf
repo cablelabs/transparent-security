@@ -33,7 +33,7 @@ variable "tofino" {
 }
 
 variable "switch_instance_type" {default = "t2.2xlarge"}
-variable "orch_instance_type" {default = "t2.large"}
+variable "orch_instance_type" {default = "t2.2xlarge"}
 variable "node_instance_type" {default = "t2.small"}
 variable "num_switches_full" {default = 5}
 variable "num_switches_single" {default = 1}
