@@ -21,6 +21,7 @@
     p4_table_action: "{{ data_forward_table_action }}"
     p4_te_log_dir: "{{ host_log_dir }}"
     p4_te_log_file: "df-write-data-forward-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
+    execute_insert: "{{ write_data_forward | default(False) }}"
 
 ## Sending UDP packets expect all to be received
 - import_playbook: ../test_cases/send_receive.yml
@@ -32,7 +33,6 @@
     send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 5) }}"
     send_packet_count: "{{ '%s' % 100 | random(seed=now|int + 6) }}"
     inspection_data: "{{ sr_data_inspection_int | default(None) }}"
-    discover_fwd_path: False
     max_received_packet_count: "{{ send_packet_count if send_protocol == 'UDP' else send_packet_count|int*2 }}"
 
 # Delete table entry from "{{ data_forward_table }}"
@@ -44,3 +44,4 @@
     p4_te_log_dir: "{{ host_log_dir }}"
     p4_te_log_file: "df-write-data-forward-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
     p4_te_insert: False
+    execute_insert: "{{ write_data_forward | default(False) }}"

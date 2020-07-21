@@ -18,25 +18,45 @@
   vars:
     scenario_send_protocol: UDP
     scenario_send_ip_version: 4
-    skip_write_tbl_call: False
+    write_data_forward: True
+    discover_fwd_path: False
 
 # Data Forward scenarios for UDP and IPv6
 - import_playbook: data-forward.yml
   vars:
     scenario_send_protocol: UDP
     scenario_send_ip_version: 6
-    skip_write_tbl_call: False
+    write_data_forward: True
+    discover_fwd_path: False
 
 # Data Inspection scenarios for UDP and IPv4
 - import_playbook: data-inspection.yml
   vars:
     scenario_send_protocol: UDP
     scenario_send_ip_version: 4
-    skip_write_tbl_call: False
+    write_data_forward: True
+    discover_fwd_path: False
 
 # Data Inspection scenarios for UDP and IPv6
 - import_playbook: data-inspection.yml
   vars:
     scenario_send_protocol: UDP
     scenario_send_ip_version: 6
-    skip_write_tbl_call: False
+    write_data_forward: True
+    discover_fwd_path: False
+
+## Data Drop scenarios for UDP and IPv4
+#- import_playbook: data-drop.yml
+#  vars:
+#    scenario_send_protocol: UDP
+#    scenario_send_ip_version: 4
+#    write_data_forward: True
+#    discover_fwd_path: False
+#
+## Data Inspection scenarios for UDP and IPv6
+#- import_playbook: data-drop.yml
+#  vars:
+#    scenario_send_protocol: UDP
+#    scenario_send_ip_version: 6
+#    write_data_forward: True
+#    discover_fwd_path: False

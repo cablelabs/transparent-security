@@ -26,7 +26,7 @@
 #    receiver_ip: "{{ receiver.ip if ip_ver == '4' else receiver.ipv6 }}"
     receiver_ip: "{{ receiver.ip }}"
     sender_intf: "{% if sender.tunnels is defined %}{{ sender.tunnels[0].host }}-br1{% else %}{{ '%s-eth0' % send_host }}{% endif %}"
-    discover_path: "{{ discover_fwd_path | default(False) }}"
+    discover_path: "{{ discover_fwd_path | default(True) }}"
     ping_packet_count: "{{ ping_count | default('3') }}"
     ping_packet_interval: "{{ ping_interval | default('.5') }}"
     ping_packet_pause: "{{ discovery_pause_time | default('1') }}"

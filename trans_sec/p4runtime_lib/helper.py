@@ -133,10 +133,10 @@ class P4InfoHelper(object):
         if match_type == p4info_pb2.MatchField.EXACT:
             logger.info('Encoding for EXACT matches')
             exact = p4runtime_match.exact
-            if isinstance(value, str):
-                exact.value = encode(value, bit_width)
+            if isinstance(value, list) or isinstance(value, tuple):
+                exact.value = encode(value[0], bit_width)
             else:
-                exact.value = encode(list(value)[0], bit_width)
+                exact.value = encode(value, bit_width)
         elif match_type == p4info_pb2.MatchField.LPM:
             logger.info('Encoding for LPM matches')
             lpm = p4runtime_match.lpm
