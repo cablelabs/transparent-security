@@ -65,4 +65,4 @@
     wait_timeout: 120
     remote_tps_dir: "{{ tps_dir }}"
     load_p4: False
-    add_data_inspection: True
+    add_data_inspection: False
