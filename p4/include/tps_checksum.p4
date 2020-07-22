@@ -18,7 +18,14 @@
 ************   C H E C K S U M    V E R I F I C A T I O N   *************
 *************************************************************************/
 
-control TpsVerifyChecksum(inout headers hdr, inout metadata meta) {
+control TpsVerifyChecksum(inout headers hdr,
+#ifdef BMV2
+                          inout metadata meta) {
+#endif
+#ifdef TOFINO
+                          inout ingress_intrinsic_metadata_for_deparser_t meta) {
+#endif
+
     apply {
 #ifdef BMV2
         verify_checksum(hdr.ipv4.isValid(),
@@ -56,7 +63,14 @@ control TpsVerifyChecksum(inout headers hdr, inout metadata meta) {
 *************   C H E C K S U M    C O M P U T A T I O N   **************
 *************************************************************************/
 
-control TpsComputeChecksum(inout headers  hdr, inout metadata meta) {
+control TpsComputeChecksum(inout headers  hdr,
+#ifdef BMV2
+                           inout metadata meta) {
+#endif
+#ifdef TOFINO
+                           inout ingress_intrinsic_metadata_for_deparser_t meta) {
+#endif
+
     apply {
 #ifdef BMV2
         update_checksum(hdr.ipv4.isValid(),
