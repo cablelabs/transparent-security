@@ -52,6 +52,7 @@ switches:
     runtime_p4info: {{ remote_scripts_dir }}/p4/{{ p4_prog }}.tofino/p4info.pb.txt
     tofino_bin: {{ remote_scripts_dir }}/p4/{{ p4_prog }}.tofino/pipe/tofino.bin
     ctx_json: {{ remote_scripts_dir }}/p4/{{ p4_prog }}.tofino/pipe/context.json
+    clone_egress: 3
     ip: {{ switch_ip }}
     tun1_ip: {{ switch_tun1_ip }}
     tun1_mac: {{ switch_tun1_mac }}

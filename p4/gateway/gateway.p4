@@ -31,8 +31,15 @@
 *************************************************************************/
 
 control TpsGwIngress(inout headers hdr,
+#ifdef BMV2
                      inout metadata meta,
+#endif
+#ifdef TOFINO
+                     inout ingress_intrinsic_metadata_for_deparser_t meta,
+#endif
                      inout standard_metadata_t standard_metadata) {
+
+    // TODO/FIXME - so this works for both BMV2 & TOFINO
     #ifdef BMV2
     counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) forwardedPackets;
     counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) droppedPackets;

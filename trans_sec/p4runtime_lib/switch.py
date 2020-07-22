@@ -77,20 +77,28 @@ class SwitchConnection(object):
         self.digest_thread = Thread(target=self.receive_digests)
 
     def start_digest_listeners(self):
-        logger.info(
-            'Starting mac_learn_digest Digest for device [%s] named [%s]',
-            self.grpc_addr, self.name)
-        digest_entry, digest_info = self.p4info_helper.build_digest_entry(
-            digest_name="mac_learn_digest")
-        self.write_digest_entry(digest_entry)
+        if 'arch' in self.sw_info and self.sw_info['arch'] == 'tofino':
+            logger.info('Tofino currently not supporting digests')
+            pass
+        else:
+            logger.info(
+                'Starting mac_learn_digest Digest for device [%s] named [%s]',
+                self.grpc_addr, self.name)
+            digest_entry, digest_info = self.p4info_helper.build_digest_entry(
+                digest_name="mac_learn_digest")
+            self.write_digest_entry(digest_entry)
 
-        logger.info('Starting digest threads')
-        self.digest_thread.start()
+            logger.info('Starting digest threads')
+            self.digest_thread.start()
 
     def stop_digest_listeners(self):
-        self.requests_stream.close()
-        self.stream_msg_resp.cancel()
-        self.digest_thread.join()
+        if 'arch' in self.sw_info and self.sw_info['arch'] == 'tofino':
+            logger.info('Tofino currently not supporting digests')
+            pass
+        else:
+            self.requests_stream.close()
+            self.stream_msg_resp.cancel()
+            self.digest_thread.join()
 
     def receive_digests(self):
         """
