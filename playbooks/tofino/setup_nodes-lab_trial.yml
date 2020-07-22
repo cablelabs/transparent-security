@@ -19,8 +19,16 @@
     p4_bin_dir: "{{ sde_dir }}/install"
     python_unit_tests: false
 
-# TODO/FIXME - Call setup_tofino_switch playbook so it can run in parallel
+# Create virtual interfaces on switches
+- import_playbook: setup_virt_eth.yml
+  vars:
+    host_val: switches
+    remote_sde_dir: "{{ sde_dir }}"
 
+# Setup GRE Tunnels
+- import_playbook: tunnel/setup_gre_tunnels.yml
+
+# TODO/FIXME - Call setup_tofino_switch playbook so it can run in parallel
 # Start tofino-model and tofino-switchd on the core switch
 - import_playbook: setup_tofino_switch.yml
   vars:
@@ -28,6 +36,8 @@
       - core
     p4_pkg: core
     p4_prog: core.p4
+    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
+    tunnels: "{{ topo_dict.switches['core'].tunnels }}"
 
 # Start tofino-model and tofino-switchd on the aggregate switch
 - import_playbook: setup_tofino_switch.yml
@@ -36,9 +46,8 @@
       - aggregate
     p4_pkg: aggregate
     p4_prog: aggregate.p4
-
-# Setup GRE Tunnels
-- import_playbook: tunnel/setup_gre_tunnels.yml
+    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
+    tunnels: "{{ topo_dict.switches['aggregate'].tunnels }}"
 
 # Setup source on the nodes for packet testing
 - import_playbook: ../general/setup_source.yml

@@ -50,81 +50,198 @@
     remote_host: "{{ topo_dict.switches.get(item.host)  }}"
   when: not remote_host
 
-- name: Retrieve the local IP
+- name: Set tunnel facts
   set_fact:
-    local_ip: "{{ this_host.public_ip }}"
-  when: this_host.public_ip is defined
+    local_tun1_ip: "{{ this_host.tun1_ip }}"
+    local_tun2_ip: "{{ this_host.tun2_ip }}"
+    remote_tun1_ip: "{{ remote_host.tun1_ip }}"
+    remote_tun2_ip: "{{ remote_host.tun2_ip }}"
+    tunnel1: "{{ item.host }}-tun1"
+    tunnel2: "{{ item.host }}-tun2"
 
-- name: Determine the local IP when initial retrieval was skipped
+- name: Create GRE tunnel 1 command
   set_fact:
-    local_ip: "{{ this_host.ip }}"
-  when: local_ip is not defined
-
-- name: Retrieve the remote IP
-  set_fact:
-    remote_ip: "{{ remote_host.public_ip }}"
-  when: remote_host.public_ip is defined
-
-- name: Determine the remote IP when initial retrieval was skipped
-  set_fact:
-    remote_ip: "{{ remote_host.ip }}"
-  when: remote_ip is not defined
-
-- name: Create GRE tunnel command
-  set_fact:
-    gre_tunnel_cmd: >
-      ip link add {{ item.host }}-tun type gretap local {{ local_ip }}
-      remote {{ remote_ip }}
+    gre_tunnel1_cmd: >
+      ip link add {{ tunnel1 }} type gretap local {{ local_tun1_ip }}
+      remote {{ remote_tun1_ip }}
   when: remote_host is defined and remote_host != ""
 
-- name: Show the GRE tunnel command
+- name: Show the GRE tunnel 1 command
   debug:
-    var: gre_tunnel_cmd
+    var: gre_tunnel1_cmd
   when: remote_host is defined and remote_host != ""
 
-- name: Create GRE tunnel
-  command: "{{ gre_tunnel_cmd }}"
-  when: gre_tunnel_cmd is defined
+- name: Create GRE tunnel1
+  command: "{{ gre_tunnel1_cmd }}"
+  when: gre_tunnel1_cmd is defined
 
-# Setup Bridge when required
-- name: stop bridge {{ item.bridge_name }}
-  command: "ip link set {{ item.host }}-br down"
+- name: Create GRE tunnel 2 command
+  set_fact:
+    gre_tunnel2_cmd: >
+      ip link add {{ tunnel2 }} type gretap local {{ local_tun2_ip }}
+      remote {{ remote_tun2_ip }}
+  when: remote_host is defined and remote_host != ""
+
+- name: Show the GRE tunnel 2 command
+  debug:
+    var: gre_tunnel2_cmd
+  when: remote_host is defined and remote_host != ""
+
+- name: Create GRE tunnel2
+  command: "{{ gre_tunnel2_cmd }}"
+  when: gre_tunnel2_cmd is defined
+
+# Setup Bridge 1 on nodes and switches
+- name: Set bridge facts
+  set_fact:
+    bridge1: "{{ item.host }}-br1"
+    bridge2: "{{ item.host }}-br2"
+
+- name: stop bridge {{ bridge1 }}
+  command: "ip link set {{ bridge1 }} down"
   ignore_errors: yes
-  when: item.virt_intf is defined
 
-- name: delete bridge {{ item.host }}-br
-  command: "brctl delbr {{ item.host }}-br"
+- name: delete bridge {{ bridge1 }}
+  command: "brctl delbr {{ bridge1 }}"
   ignore_errors: yes
-  when: item.virt_intf is defined
 
-- name: create bridge {{ item.host }}-br
-  command: "brctl addbr {{ item.host }}-br"
-  when: item.virt_intf is defined
+- name: create bridge {{ bridge1 }}
+  command: "brctl addbr {{ bridge1 }}"
 
-- name: create port {{ item.host }}-br -> {{ item.host }}-tun
-  command: "brctl addif {{ item.host }}-br {{ item.host }}-tun"
-  when: item.virt_intf is defined
+# Setup Bridge 2 on switches
+- name: stop bridge 2 {{ item.bridge_name }}
+  command: "ip link set {{ bridge2 }} down"
+  ignore_errors: yes
 
-- name: create port {{ item.host }}-br -> {{ item.virt_intf }}
-  command: "brctl addif {{ item.host }}-br {{ item.virt_intf }}"
-  when: item.virt_intf is defined
+- name: delete bridge 2 {{ bridge2 }}
+  command: "brctl delbr {{ bridge2 }}"
+  ignore_errors: yes
 
-- name: set bridge up - {{ item.host }}-br
-  command: "ip link set {{ item.host }}-br up"
-  when: item.virt_intf is defined
+- name: create bridge 2 {{ bridge2 }}
+  command: "brctl addbr {{ bridge2 }}"
 
-# Configure tunnel when no bridge
-- name: set MAC {{ this_host.mac }} on tunnel {{ item.host }}-tun
-  command: "ip link set dev {{ item.host }}-tun address {{ this_host.mac }}"
-  when: item.virt_intf is not defined
+# bring up tunnels
+- name: set gre tunnel 1 up - {{ tunnel1 }}
+  command: "ip link set {{ tunnel1 }} up"
 
-- name: set IP {{ this_host.ip }}/24 on tunnel {{ item.host }}-tun
-  command: "ip addr add {{ this_host.ip }}/24 dev {{ item.host }}-tun"
-  when: item.virt_intf is not defined
+- name: set gre tunnel 2 up - {{ tunnel2 }}
+  command: "ip link set {{ tunnel2 }} up"
 
-- name: set gre tunnel up - {{ item.host }}-tun
-  command: "ip link set {{ item.host }}-tun up"
+# bring up bridges
+- name: set bridge up - {{ bridge1 }}
+  command: "ip link set {{ bridge1 }} up"
 
-- name: add IP {{ this_host.ip }} to host routes
-  command: "ip route add {{ this_host.ip }} dev {{ item.host }}-tun"
-  when: item.virt_intf is not defined
+- name: set bridge up - {{ bridge2 }}
+  command: "ip link set {{ bridge2 }} up"
+
+# Add interfaces to tunnels
+- name: Add switch ingress port veth{{ item.virt_in_intf }} to {{ bridge1 }}
+  command: "brctl addif {{ bridge1 }} veth{{ item.virt_in_intf }}"
+  when: item.switch_port is defined
+
+- name: create port {{ bridge1 }} -> {{ tunnel1 }}
+  command: "brctl addif {{ bridge1 }} {{ tunnel1 }}"
+
+- name: Add ingress port veth{{ item.virt_out_intf }} to {{ bridge2 }}
+  command: "brctl addif {{ bridge2 }} veth{{ item.virt_out_intf }}"
+  when: item.switch_port is defined
+
+- name: create port {{ bridge2 }} -> {{ tunnel2 }}
+  command: "brctl addif {{ bridge2 }} {{ tunnel2 }}"
+
+#- name: Setup host communication port
+#  set_fact:
+#    mirrored_host_intf: "{{ this_host.name }}-eth0"
+#
+#- name: Delete final output port {{ mirrored_host_intf }} if exists
+#  command: "ip link del {{ mirrored_host_intf }} type dummy"
+#  when: item.switch_port is not defined
+#  ignore_errors: yes
+#
+#- name: Create final output port {{ mirrored_host_intf }}
+#  command: "ip link add {{ mirrored_host_intf }} type dummy"
+#  when: item.switch_port is not defined
+#
+#- name: Set IP {{ this_host.ip }}/24 on {{ mirrored_host_intf }}
+#  command: "ip addr add {{ this_host.ip }}/24 dev {{ mirrored_host_intf }}"
+#  when: item.switch_port is not defined
+#
+#- name: set MAC {{ this_host.mac }} on {{ mirrored_host_intf }}
+#  command: "ip link set dev {{ mirrored_host_intf }} address {{ this_host.mac }}"
+#  when: item.switch_port is not defined
+#
+#- name: set output port {{ mirrored_host_intf }} up
+#  command: "ip link set {{ mirrored_host_intf }} up"
+#  when: item.switch_port is not defined
+#
+#- name: set host mirrored interface up - {{ mirrored_host_intf }}
+#  command: "ip link set {{ mirrored_host_intf }} up"
+#  when: item.switch_port is not defined
+#
+#- name: create port {{ bridge2 }} -> {{ mirrored_host_intf }}
+#  command: "brctl addif {{ bridge2 }} {{ mirrored_host_intf }}"
+#  when: item.switch_port is not defined
+
+# Create host mirror for two tunnels where 2 is in and 1 is out
+#- name: Set OVS facts
+#  set_fact:
+#    mirror_name: "{{ item.host }}-mirror"
+#    ovs_bridge: "mirror-ovs-br"
+#
+#- name: Install OVS
+#  apt:
+#    name: openvswitch-switch
+#  when: item.switch_port is not defined
+#
+#- name: Delete OVS Bridge for mirror - {{ ovs_bridge }}
+#  command: "ovs-vsctl del-br {{ ovs_bridge }}"
+#  when: item.switch_port is not defined
+#  ignore_errors: yes
+#
+#- name: Create OVS Bridge for mirror - {{ ovs_bridge }}
+#  command: "ovs-vsctl add-br {{ ovs_bridge }}"
+#  when: item.switch_port is not defined
+#
+#- name: Add {{ mirrored_host_intf }} to OVS bridge {{ ovs_bridge }}
+#  command: "ovs-vsctl add-port {{ ovs_bridge }} {{ mirrored_host_intf }}"
+#  when: item.switch_port is not defined
+#
+#- name: Add {{ bridge2 }} to OVS bridge {{ ovs_bridge }}
+#  command: "ovs-vsctl add-port {{ ovs_bridge }} {{ bridge2 }}"
+#  when: item.switch_port is not defined
+#
+#- name: Add {{ bridge1 }} to OVS bridge {{ ovs_bridge }}
+#  command: "ovs-vsctl add-port {{ ovs_bridge }} {{ bridge1 }}"
+#  when: item.switch_port is not defined
+
+#- name: Create OVS mirror {{ mirror_name }} to OVS bridge {{ ovs_bridge }} command
+#  set_fact:
+#    ovs_mirror_cmd: >
+#      ovs-vsctl --
+#      --id=@m create mirror name={{ mirror_name }} --
+#      add bridge {{ ovs_bridge }} mirrors @m
+#  when: item.switch_port is not defined
+#
+#- name: Create OVS mirror - {{ ovs_mirror_cmd }}
+#  shell: "{{ ovs_mirror_cmd }}"
+#  when: ovs_mirror_cmd is defined
+#
+#- name: >
+#    Create mirror config command when OVS {{ mirror_name }} source
+#    and destination on a host sitting north of the switch
+#  set_fact:
+#    config_mirror_cmd: >
+#      echo ovs-vsctl set mirror {{ mirror_name }}
+##      ovs-vsctl set mirror {{ mirror_name }}
+#      select-src-port=$(ovs-vsctl get port {{ bridge2 }} _uuid)
+#      select-dst-port=$(ovs-vsctl get port {{ bridge1 }} _uuid)
+#      output-port=$(ovs-vsctl get port {{ mirrored_host_intf }} _uuid)
+#  when: item.switch_port is not defined
+#
+#- name: Configure the mirror - {{ config_mirror_cmd }}
+#  shell: "{{ config_mirror_cmd }}"
+#  when: config_mirror_cmd is defined
+#
+##- name: set OVS bridge {{ ovs_bridge }} up
+##  command: "ip link set {{ ovs_bridge }} up"
+##  when: item.switch_port is not defined

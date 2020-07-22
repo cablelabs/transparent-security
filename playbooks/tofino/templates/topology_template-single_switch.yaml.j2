@@ -4,6 +4,10 @@ hosts:
     id: 1
     ip: 192.168.1.2
     public_ip: {{ host1_ip }}
+    tun1_ip: {{ host1_tun1_ip }}
+    tun1_mac: {{ host1_tun1_mac }}
+    tun2_ip: {{ host1_tun2_ip }}
+    tun2_ip_mac: {{ host1_tun2_mac }}
     tunnels:
       - host: {{ switch_name }}
     ipv6: 0000:0000:0000:0000:0000:0001:0001:0002
@@ -13,8 +17,12 @@ hosts:
   host2:
     name: host2
     id: 2
-    ip: 192.168.2.2
+    ip: 192.168.1.6
     public_ip: {{ host2_ip }}
+    tun1_ip: {{ host2_tun1_ip }}
+    tun1_mac: {{ host2_tun1_mac }}
+    tun2_ip: {{ host2_tun2_ip }}
+    tun2_ip_mac: {{ host2_tun2_mac }}
     tunnels:
       - host: {{ switch_name }}
     ipv6: 0000:0000:0000:0000:0000:0002:0001:0002
@@ -24,8 +32,12 @@ hosts:
   clone:
     name: clone
     id: 3
-    ip: 192.168.3.2
+    ip: 192.168.1.10
     public_ip: {{ clone_ip }}
+    tun1_ip: {{ clone_tun1_ip }}
+    tun1_mac: {{ clone_tun1_mac }}
+    tun2_ip: {{ clone_tun2_ip }}
+    tun2_mac: {{ clone_tun2_mac }}
     tunnels:
       - host: {{ switch_name }}
     ipv6: 0000:0000:0000:0000:0000:0002:0001:0003
@@ -41,17 +53,27 @@ switches:
     tofino_bin: {{ remote_scripts_dir }}/p4/{{ p4_prog }}.tofino/pipe/tofino.bin
     ctx_json: {{ remote_scripts_dir }}/p4/{{ p4_prog }}.tofino/pipe/context.json
     ip: {{ switch_ip }}
+    tun1_ip: {{ switch_tun1_ip }}
+    tun1_mac: {{ switch_tun1_mac }}
+    tun2_ip: {{ switch_tun2_ip }}
+    tun2_mac: {{ switch_tun2_mac }}
     mac: 00:00:00:01:01:00
     grpc: {{ switch_ip }}:{{ grpc_port }}
     type: {{ p4_prog }}
     arch: tofino
     tunnels:
       - host: host1
-        virt_intf:  veth1
+        virt_in_intf:  2
+        virt_out_intf:  3
+        switch_port: 1
       - host: host2
-        virt_intf:  veth2
+        virt_in_intf:  4
+        virt_out_intf:  5
+        switch_port: 2
       - host: clone
-        virt_intf:  veth3
+        virt_in_intf:  6
+        virt_out_intf:  7
+        switch_port: 3
     telemetry_rpt:
       type: host
       name: clone

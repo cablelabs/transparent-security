@@ -11,11 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
-- import_playbook: setup_virt_eth.yml
-  vars:
-    host_val: "{{ switches }}"
-    remote_sde_dir: "{{ sde_dir }}"
-
 - import_playbook: compile_p4.yml
   vars:
     host_val: "{{ switches }}"
@@ -31,6 +26,8 @@
     port_to_wait: "{{ tofino_model_port }}"
     sudo_user: "{{ switch_sudo_user }}"
     prog_name: "{{ p4_pkg }}"
+    additional_tmplt_file: "{{ tps_dir }}/playbooks/tofino/templates/tofino-model-veth-port-mapping.json.j2"
+    additional_tmplt_out_file: "{{ remote_scripts_dir }}/port-mapping.json"
 
 # Start switchd
 - import_playbook: ../general/start_service.yml

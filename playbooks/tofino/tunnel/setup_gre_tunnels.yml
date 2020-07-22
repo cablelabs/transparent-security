@@ -48,14 +48,59 @@
       set_fact:
         switch: "{{ topo_dict.switches.get(ansible_host) }}"
 
-    - name: Retrieve this_host from topology
+    - name: Retrieve this_host from hosts within topology
       set_fact:
         this_host: "{{ topo_dict.hosts.get(ansible_host) }}"
 
-    - include_tasks: gre_tunnel_tasks.yml
-      loop: "{{ host.tunnels | list }}"
-      when: host is defined and host != ""
+    - name: Retrieve this_host from switches within topology when host not found
+      set_fact:
+        this_host: "{{ topo_dict.switches.get(ansible_host) }}"
+      when: this_host is not defined or this_host == ""
+
+    - debug:
+        var: this_host
+    - name: Retrieve this_host tunnel IPs
+      set_fact:
+        tun1_ip: "{{ this_host.tun1_ip }}"
+        tun2_ip: "{{ this_host.tun2_ip }}"
+
+    - debug:
+        var: tun1_ip
+    - debug:
+        var: tun2_ip
+
+    # TODO - The associated MAC address is now available and should be used to
+    #  determine the interface on which to add this IP address
+    - name: delete IP {{ tun1_ip }}/24 on eth1 for tunnel 1 if exists
+      command: "ip addr del {{ tun1_ip }}/24 dev eth1"
+      ignore_errors: yes
+
+    - name: set IP {{ tun1_ip }}/24 on eth1 for tunnel 1
+      command: "ip addr add {{ tun1_ip }}/24 dev eth1"
+
+    - name: set eth1 up
+      command: "ip link set eth1 up"
+
+#    - name: add route {{ tun1_ip }} to host routes on eth1
+#      command: "ip route add {{ tun1_ip }}/24 dev eth1"
+
+    - name: delete IP {{ tun2_ip }}/24 on eth2 for tunnel 2 if exists
+      command: "ip addr del {{ tun2_ip }}/24 dev eth2"
+      ignore_errors: yes
+
+    - name: set IP {{ tun2_ip }}/24 on eth2 for tunnel 2
+      command: "ip addr add {{ tun2_ip }}/24 dev eth2"
+
+    - name: set eth2 up
+      command: "ip link set eth2 up"
+
+#    - name: add route {{ tun2_ip }} to host routes on eth2
+#      command: "ip route add {{ tun2_ip }}/24 dev eth2"
 
     - include_tasks: gre_tunnel_tasks.yml
       loop: "{{ switch.tunnels | list }}"
       when: switch is defined and switch != ""
+
+    - include_tasks: gre_tunnel_tasks.yml
+      loop: "{{ host.tunnels | list }}"
+      when: host is defined and host != ""
