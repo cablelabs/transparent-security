@@ -29,6 +29,19 @@
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
     dst_mac: "{{ receiver['mac'] }}"
+    data_forward_table_action:
+      control_name: TpsCoreIngress
+      table_name: data_forward_t
+      action:
+        name: data_forward
+        match_fields:
+          - key: hdr.ethernet.dst_mac
+            value:
+              - "{{ receiver.mac }}"
+              - "{{ 48 }}"
+        params:
+          - key: port
+            value: 2
 
 # Basic Data Forward scenario for INT packets to egress port
 - import_playbook: ../general/data_forward_basic.yml
@@ -51,6 +64,19 @@
       - switch_id: 1001
         orig_mac: "{{ sender.mac }}"
     sr_rec_int_hops: 0
+    data_forward_table_action:
+      control_name: TpsCoreIngress
+      table_name: data_forward_t
+      action:
+        name: data_forward
+        match_fields:
+          - key: hdr.ethernet.dst_mac
+            value:
+              - "{{ receiver.mac }}"
+              - "{{ 48 }}"
+        params:
+          - key: port
+            value: 2
 
 # Basic Data Forward scenario for INT packets to clone port
 - import_playbook: ../general/data_forward_basic.yml
@@ -73,3 +99,16 @@
       - switch_id: 1001
         orig_mac: "{{ sender.mac }}"
     sr_rec_int_hops: 2
+    data_forward_table_action:
+      control_name: TpsCoreIngress
+      table_name: data_forward_t
+      action:
+        name: data_forward
+        match_fields:
+          - key: hdr.ethernet.dst_mac
+            value:
+              - "{{ receiver.mac }}"
+              - "{{ 48 }}"
+        params:
+          - key: port
+            value: 2

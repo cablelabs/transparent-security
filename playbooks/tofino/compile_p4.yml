@@ -46,7 +46,7 @@
         state: directory
       loop: "{{ p4_progs }}"
 
-    - name: Compile P4 programs {{ p4_progs }}
+    - name: Compile P4 programs {{ p4_progs }} with base command {{ compile_command }}
       become: yes
       command: >
         {{ compile_command }}
