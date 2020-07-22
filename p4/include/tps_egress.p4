@@ -20,7 +20,12 @@
 *************************************************************************/
 
 control TpsEgress(inout headers hdr,
+#ifdef BMV2
                   inout metadata meta,
+#endif
+#ifdef TOFINO
+                  inout ingress_intrinsic_metadata_for_deparser_t meta,
+#endif
                   inout standard_metadata_t standard_metadata) {
 
     action drop_pkt() {
