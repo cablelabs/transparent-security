@@ -13,27 +13,14 @@
 # limitations under the License.
 */
 /* -*- P4_16 -*- */
-#ifdef TOFINO
-#include <tofino.p4>
-#endif
-
-#ifdef BMV2
-#include <core.p4>
-#endif
-
-#include <tps_consts.p4>
+#include "tps_consts.p4"
 
 /*************************************************************************
 ******************* Gateway TPS P A R S E R  *****************************
 *************************************************************************/
 parser TpsGwParser(packet_in packet,
                    out headers hdr,
-#ifdef BMV2
                    inout metadata meta,
-#endif
-#ifdef TOFINO
-                   inout ingress_intrinsic_metadata_for_deparser_t meta,
-#endif
                    inout standard_metadata_t standard_metadata) {
     state start {
         transition parse_ethernet;
@@ -88,12 +75,7 @@ parser TpsGwParser(packet_in packet,
 *************************************************************************/
 parser TpsAggParser(packet_in packet,
                     out headers hdr,
-#ifdef BMV2
                     inout metadata meta,
-#endif
-#ifdef TOFINO
-                    inout ingress_intrinsic_metadata_for_deparser_t meta,
-#endif
                     inout standard_metadata_t standard_metadata) {
     state start {
         transition parse_ethernet;
@@ -154,12 +136,7 @@ parser TpsAggParser(packet_in packet,
 *************************************************************************/
 parser TpsCoreParser(packet_in packet,
                      out headers hdr,
-#ifdef BMV2
                      inout metadata meta,
-#endif
-#ifdef TOFINO
-                     inout ingress_intrinsic_metadata_for_deparser_t meta,
-#endif
                      inout standard_metadata_t standard_metadata) {
     state start {
         transition parse_ethernet;

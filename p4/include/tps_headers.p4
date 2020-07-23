@@ -245,7 +245,5 @@ struct nat_digest {
    bit<32> local_ip;
 }
 
-#ifdef BMV2
 struct metadata {
 }
-#endif

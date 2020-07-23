@@ -13,19 +13,13 @@
 # limitations under the License.
 */
 /* -*- P4_16 -*- */
-#include <core.p4>
 #include <v1model.p4>
 
-#ifdef TOFINO
-#include <tofino.p4>
-#endif
-
-
 /* TPS includes */
-#include <tps_headers.p4>
-#include <tps_parser.p4>
-#include <tps_checksum.p4>
-#include <tps_egress.p4>
+#include "../include/tps_headers.p4"
+#include "../include/tps_parser.p4"
+#include "../include/tps_checksum.p4"
+#include "../include/tps_egress.p4"
 
 const bit<32> INT_CTR_SIZE = 1;
 
@@ -34,31 +28,20 @@ const bit<32> INT_CTR_SIZE = 1;
 *************************************************************************/
 
 control TpsCoreIngress(inout headers hdr,
-#ifdef BMV2
                        inout metadata meta,
-#endif
-#ifdef TOFINO
-                       inout ingress_intrinsic_metadata_for_deparser_t meta,
-#endif
                        inout standard_metadata_t standard_metadata) {
 
     /**
     * Responsible for recirculating a packet after egress processing
     */
     action recirculate_packet() {
-/* TODO/FIXME - resubmit() will most likely break INT packet processing but
-                recirculate() will not compile although it is defined in v1model.p4
-*/
-#ifdef TOFINO
+        #ifdef TOFINO
         standard_metadata.instance_type = BMV2_V1MODEL_INSTANCE_TYPE_RESUBMIT;
-        /*resubmit(meta);*/
         resubmit(standard_metadata);
-        /*recirculate(meta);*/
-        /*recirculate(standard_metadata);*/
-#endif
-#ifdef BMV2
+        #endif
+        #ifdef BMV2
         recirculate(standard_metadata);
-#endif
+        #endif
     }
 
     /**
@@ -214,12 +197,7 @@ control TpsCoreIngress(inout headers hdr,
 *************************************************************************/
 
 control TpsCoreEgress(inout headers hdr,
-#ifdef BMV2
                       inout metadata meta,
-#endif
-#ifdef TOFINO
-                      inout ingress_intrinsic_metadata_for_deparser_t meta,
-#endif
                       inout standard_metadata_t standard_metadata) {
 
     // TODO/FIXME - so this works for both BMV2 & TOFINO

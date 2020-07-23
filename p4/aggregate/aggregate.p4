@@ -13,30 +13,20 @@
 # limitations under the License.
 */
 /* -*- P4_16 -*- */
-#ifdef TOFINO
-#include <tofino.p4>
-#endif
-
-#include <core.p4>
 #include <v1model.p4>
 
 /* TPS includes */
-#include <tps_headers.p4>
-#include <tps_parser.p4>
-#include <tps_checksum.p4>
-#include <tps_egress.p4>
+#include "../include/tps_headers.p4"
+#include "../include/tps_parser.p4"
+#include "../include/tps_checksum.p4"
+#include "../include/tps_egress.p4"
 
 /*************************************************************************
 **************  I N G R E S S   P R O C E S S I N G   ********************
 *************************************************************************/
 
 control TpsAggIngress(inout headers hdr,
-#ifdef BMV2
                       inout metadata meta,
-#endif
-#ifdef TOFINO
-                      inout ingress_intrinsic_metadata_for_deparser_t meta,
-#endif
                       inout standard_metadata_t standard_metadata) {
 
     counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) forwardedPackets;

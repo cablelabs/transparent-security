@@ -15,6 +15,5 @@
   vars:
     # TODO - fix unit tests and change me back to 'true'
     python_unit_tests: true
-    p4_bin_dir: /usr/local
 
 - import_playbook: generate_inventory.yml
