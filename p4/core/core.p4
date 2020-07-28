@@ -13,12 +13,13 @@
 # limitations under the License.
 */
 /* -*- P4_16 -*- */
-#include <v1model.p4>
 
 /* TPS includes */
+#include <v1model.p4>
+#include "../include/tps_consts.p4"
 #include "../include/tps_headers.p4"
-#include "../include/tps_parser.p4"
 #include "../include/tps_checksum.p4"
+#include "../include/tps_parser.p4"
 #include "../include/tps_egress.p4"
 
 const bit<32> INT_CTR_SIZE = 1;
@@ -35,13 +36,7 @@ control TpsCoreIngress(inout headers hdr,
     * Responsible for recirculating a packet after egress processing
     */
     action recirculate_packet() {
-        #ifdef TOFINO
-        standard_metadata.instance_type = BMV2_V1MODEL_INSTANCE_TYPE_RESUBMIT;
-        resubmit(standard_metadata);
-        #endif
-        #ifdef BMV2
         recirculate(standard_metadata);
-        #endif
     }
 
     /**
@@ -170,12 +165,7 @@ control TpsCoreIngress(inout headers hdr,
                 // First pass
                 data_inspection_t.apply();
                 recirculate_packet();
-#ifdef BMV2
             } else if (IS_RECIRCULATED(standard_metadata)) {
-#endif
-#ifdef TOFINO
-            } else if (IS_RESUBMITTED(standard_metadata)) {
-#endif
                 // second pass
                 data_forward_t.apply();
                 if (hdr.int_shim.isValid()) {
