@@ -28,7 +28,8 @@ variable "availability_zone" {default = "us-west-2a"}
 variable "tofino" {
   default = {
     sde_version = "9.2.0"
-    ami = "ami-0eb9501a7d485f7f8"
+    p4rt_ami = "ami-0eb9501a7d485f7f8"
+    bfrt_ami = "ami-0f50c3f145bc21ef7"
   }
 //  default = {
 //    sde_version = "9.1.1"
@@ -67,7 +68,8 @@ variable "remote_srvc_log_dir" {default = "/var/log/transparent-security"}
 variable "topo_file_loc" {default = "/etc/transparent-security/tofino-sim-topology.yaml"}
 variable "tofino_model_start_port" {default = "8000"}
 variable "tofino_model_end_port" {default = "8004"}
-variable "grpc_port" {default = "50051"}
+variable "p4_grpc_port" {default = "50051"}
+variable "bf_grpc_port" {default = "50052"}
 variable "p4_bridge_subnet" {default = "192.168.0.0/24"}
 variable "switchd_port" {default = "50052"}
 variable "sdn_port" {default = "9998"}

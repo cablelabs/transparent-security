@@ -20,6 +20,7 @@
 
 control TpsVerifyChecksum(inout headers hdr, inout metadata meta) {
     apply {
+#ifdef BMV2
         verify_checksum(hdr.ipv4.isValid(),
             {
 	        hdr.ipv4.version,
@@ -47,6 +48,7 @@ control TpsVerifyChecksum(inout headers hdr, inout metadata meta) {
             hdr.udp_int.cksum,
             HashAlgorithm.csum16
         );
+#endif
     }
 }
 
@@ -56,6 +58,7 @@ control TpsVerifyChecksum(inout headers hdr, inout metadata meta) {
 
 control TpsComputeChecksum(inout headers  hdr, inout metadata meta) {
     apply {
+#ifdef BMV2
         update_checksum(hdr.ipv4.isValid(),
             {
                 hdr.ipv4.version,
@@ -121,5 +124,6 @@ control TpsComputeChecksum(inout headers  hdr, inout metadata meta) {
             hdr.trpt_udp.cksum,
             HashAlgorithm.csum16
         );
+#endif
     }
 }

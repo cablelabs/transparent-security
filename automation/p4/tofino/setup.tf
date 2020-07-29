@@ -57,6 +57,9 @@ locals {
   host2_tun1_mac = var.scenario_name == "full" ? "n/a" : aws_network_interface.node_tun_1.1.mac_address
   host2_tun2_ip = var.scenario_name == "full" ? "n/a" : aws_network_interface.node_tun_2.1.private_ip
   host2_tun2_mac = var.scenario_name == "full" ? "n/a" : aws_network_interface.node_tun_2.1.mac_address
+
+  p4_arch = var.scenario_name == "core" ? "tna" : "v1model"
+  grpc_port = var.scenario_name == "core" ? var.bf_grpc_port : var.p4_grpc_port
 }
 
 ########
@@ -126,7 +129,7 @@ switchd_port=${var.switchd_port}
 sdn_port=${var.sdn_port}
 tofino_model_port=${var.tofino_model_start_port}
 switchd_port=${var.switchd_port}
-grpc_port=${var.grpc_port}
+grpc_port=${local.grpc_port}
 sdn_ip=${aws_instance.orchestrator.private_ip}
 trans_sec_dir=${var.remote_tps_dir}
 remote_ansible_inventory=${var.remote_inventory_file}
@@ -186,7 +189,7 @@ switchd_port=${var.switchd_port}
 sdn_port=${var.sdn_port}
 tofino_model_port=${var.tofino_model_start_port}
 switchd_port=${var.switchd_port}
-grpc_port=${var.grpc_port}
+grpc_port=${local.grpc_port}
 sdn_ip=${aws_instance.orchestrator.private_ip}
 trans_sec_dir=${var.remote_tps_dir}
 remote_ansible_inventory=${var.remote_inventory_file}
@@ -198,6 +201,7 @@ host_sudo_user=${var.sudo_user}
 ae_monitor_intf=${var.ae_monitor_intf}
 clone_egress_port=${var.clone_egress_port}
 p4_platform=tofino
+p4_arch=${local.p4_arch}
 "\
 EOT
   }
@@ -233,7 +237,7 @@ switchd_port=${var.switchd_port}
 sdn_port=${var.sdn_port}
 tofino_model_port=${var.tofino_model_start_port}
 switchd_port=${var.switchd_port}
-grpc_port=${var.grpc_port}
+grpc_port=${local.grpc_port}
 sdn_ip=${aws_instance.orchestrator.private_ip}
 trans_sec_dir=${var.remote_tps_dir}
 remote_ansible_inventory=${var.remote_inventory_file}

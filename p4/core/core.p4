@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 */
-/* -*- P4_16 -*- */
+/* -*- P4_16 arch -*- */
+#include <v1model.p4>
 
 /* TPS includes */
-#include <v1model.p4>
 #include "../include/tps_consts.p4"
 #include "../include/tps_headers.p4"
 #include "../include/tps_checksum.p4"

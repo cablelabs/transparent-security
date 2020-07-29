@@ -19,14 +19,15 @@
 - hosts: all
   vars:
     install_dir: "{{ bf_sde_install_dir | default(ansible_facts['user_dir']) }}"
+    profile: "{{ bf_sde_profile | default('p4_runtime_profile') }}"
   environment:
     SDE: "{{ install_dir }}/bf-sde-{{ bf_sde_version }}"
     SDE_INSTALL: "{{ install_dir }}/bf-sde-{{ bf_sde_version }}/install"
   tasks:
-    - name: install bf-sde with P4 Runtime Profile
+    - name: Install bf-sde with {{ profile }} profile
       command: >
         /usr/bin/python2.7 $SDE/p4studio_build/p4studio_build.py
-        --use-profile $SDE/p4studio_build/profiles/p4_runtime_profile.yaml
+        --use-profile $SDE/p4studio_build/profiles/{{ profile }}.yaml
       async: 10800
       poll: 15
 
