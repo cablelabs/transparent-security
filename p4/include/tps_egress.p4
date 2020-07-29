@@ -23,7 +23,16 @@ control TpsEgress(inout headers hdr,
                   inout metadata meta,
                   inout standard_metadata_t standard_metadata) {
 
+    action drop_pkt() {
+        mark_to_drop(standard_metadata);
+    }
+
     apply {
+        if(IS_REPLICATED(standard_metadata)) {
+            if (standard_metadata.egress_port == standard_metadata.ingress_port) {
+                drop_pkt();
+            }
+        }
     }
 }
 
