@@ -1,0 +1,62 @@
+# Copyright (c) 2019 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+- name: Ensure {{ remote_scripts_dir }} directory has been created
+  become: yes
+  file:
+    path: "{{ remote_scripts_dir }}/p4"
+    state: directory
+
+- set_fact:
+    switch: "{{ topo_dict.switches[item] }}"
+
+- name: Create directory $SDE_INSTALL/share/p4/targets/tofino/{{ switch.type }}
+  file:
+    path: "$SDE_INSTALL/share/p4/targets/tofino/{{ switch.type }}"
+    state: directory
+
+- name: The compile command
+  debug:
+    var: compile_command
+
+- name: Add to the compile command for v1model
+  set_fact:
+    compile_command: "{{ compile_command }} --arch v1model"
+  when: switch.arch is not defined or switch.arch == 'v1model'
+
+- name: Determine P4 program name when arch=='tna'
+  set_fact:
+    p4_program_name: "{{ item }}-{{ switch.arch }}"
+  when: switch.arch is defined and switch.arch != 'v1model'
+
+- name: Determine P4 program name when arch!='tna'
+  set_fact:
+    p4_program_name: "{{ item }}"
+  when: switch.arch is not defined or switch.arch == 'v1model'
+
+- name: Compile P4 programs {{ p4_program_name }} with base command {{ compile_command }}
+  become: yes
+  command: >
+    {{ compile_command }}
+    --bf-rt-schema $SDE_INSTALL/share/p4/targets/tofino/{{ item }}/bf-rt.json
+    --p4runtime-files {{ remote_scripts_dir }}/p4/{{ item }}.tofino/p4info.pb.txt
+    -o {{ remote_scripts_dir }}/p4/{{ item }}.tofino
+    {{ remote_tps_dir }}/p4/{{ item }}/{{ p4_program_name }}.p4
+  args:
+    chdir: "{{ remote_scripts_dir }}"
+
+- name: Copy compiled *.conf file to {{ sde_p4_target_dir }}
+  copy:
+    src: "{{ remote_scripts_dir }}/p4/{{ item }}.tofino/{{ p4_program_name }}.conf"
+    dest: "{{ sde_p4_target_dir }}/{{ item }}.conf"
+    remote_src: yes

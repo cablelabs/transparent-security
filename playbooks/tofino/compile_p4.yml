@@ -20,7 +20,7 @@
 
   vars:
     sde_p4_target_dir: "$SDE_INSTALL/share/p4/targets/tofino"
-
+    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
   tasks:
     - name: Ensure {{ remote_scripts_dir }} directory has been created
       become: yes
@@ -32,35 +32,8 @@
         compile_command: >
           $SDE_INSTALL/bin/bf-p4c
           --std p4-16
-          --arch v1model
           -D TOFINO
           --p4runtime-format text
 
-    - name: The compile command
-      debug:
-        var: compile_command
-
-    - name: Create directory $SDE_INSTALL/share/p4/targets/tofino/{{ item }}
-      file:
-        path: "$SDE_INSTALL/share/p4/targets/tofino/{{ item }}"
-        state: directory
-      loop: "{{ p4_progs }}"
-
-    - name: Compile P4 programs {{ p4_progs }} with base command {{ compile_command }}
-      become: yes
-      command: >
-        {{ compile_command }}
-        --bf-rt-schema $SDE_INSTALL/share/p4/targets/tofino/{{ item }}/bf-rt.json
-        --p4runtime-files {{ remote_scripts_dir }}/p4/{{ item }}.tofino/p4info.pb.txt
-        -o {{ remote_scripts_dir }}/p4/{{ item }}.tofino
-        {{ remote_tps_dir }}/p4/{{ item }}/{{ item }}.p4
-      args:
-        chdir: "{{ remote_scripts_dir }}"
-      loop: "{{ p4_progs }}"
-
-    - name: Copy compiled *.conf file to {{ sde_p4_target_dir }}
-      copy:
-        src: "{{ remote_scripts_dir }}/p4/{{ item }}.tofino/{{ item }}.conf"
-        dest: "{{ sde_p4_target_dir }}"
-        remote_src: yes
+    - include_tasks: compile_tasks.yml
       loop: "{{ p4_progs }}"

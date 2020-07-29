@@ -24,70 +24,74 @@
     srvc_name: "{{ service_name }}"
     srv_srvc_name: "{{ service_name }}.service"
     srvc_status: "{{ service_status_running | default('true') }}"
+    start_srvc: "{{ start_service | default(True) }}"
 
   tasks:
-    - name: Ensure {{ remote_scripts_dir }} scripts directory has been created
-      file:
-        path: "{{ remote_scripts_dir }}"
-        state: directory
-
-    - name: Ensure {{ log_dir }} log directory has been created
-      file:
-        path: "{{ log_dir }}"
-        state: directory
-      when: log_dir|length > 0
-
-    - name: Create {{ srvc_name }} Service script
-      template:
-        src: "{{ local_srvc_script_tmplt_file }}"
-        dest: "{{ remote_scripts_dir }}/{{ srvc_name }}.sh"
-
-    - name: Copy {{ additional_tmplt_file }} to {{ remote_scripts_dir }}
-      template:
-        src: "{{ additional_tmplt_file }}"
-        dest: "{{ additional_tmplt_out_file }}"
-      when: additional_tmplt_file is defined
-
-    - name: Copy {{ srvc_name }} Service File to /etc/systemd/system/{{ srvc_name }}.service
-      template:
-        src: ./templates/service.j2
-        dest: "/etc/systemd/system/{{ srv_srvc_name }}"
-      vars:
-        startup_script: "{{ remote_scripts_dir }}/{{ srvc_name }}.sh"
-        description: "{{ srvc_desc | default(srvc_name) }}"
-
-    - name: Start {{ srv_srvc_name }}
-      systemd:
-        name: "{{ srv_srvc_name }}"
-        state: started
-        enabled: yes
-
-    - name: Service check sleep {{ pause }} seconds as the state is always "running" immediatley
-      pause:
-        seconds: "{{ pause }}"
-    - name: Get service facts
-      service_facts:
-
-    - name: Attempt restart when {{ srvc_name }} not running
+    - name: Start service block when {{ start_srvc }} is true
       block:
-        - name: restart {{ srvc_name }}
-          systemd:
-            name: "{{ srv_srvc_name }}"
-            state: restarted
-        - name: Service check sleep {{ pause }} seconds as the state is always "running" immediatley
-          pause:
-            seconds: "{{ pause }}"
-        - name: Get service facts
-          service_facts:
-      when: srvc_status == "true" and ansible_facts.services[srv_srvc_name]['state'] != "running"
+      - name: Ensure {{ remote_scripts_dir }} scripts directory has been created
+        file:
+          path: "{{ remote_scripts_dir }}"
+          state: directory
 
-    - name: Fail when {{ srvc_name }} not running
-      fail:
-        msg: "{{ srvc_name }} not running"
-      when: srvc_status == "true" and ansible_facts.services[srv_srvc_name]['state'] != "running"
+      - name: Ensure {{ log_dir }} log directory has been created
+        file:
+          path: "{{ log_dir }}"
+          state: directory
+        when: log_dir|length > 0
 
-    - name: Wait {{ timeout }} seconds for {{ srvc_name }} to open port {{ wait_port }}
-      wait_for:
-        port: "{{ wait_port }}"
-        timeout: "{{ timeout }}"
-      when: wait_port|length > 0
+      - name: Create {{ srvc_name }} Service script
+        template:
+          src: "{{ local_srvc_script_tmplt_file }}"
+          dest: "{{ remote_scripts_dir }}/{{ srvc_name }}.sh"
+
+      - name: Copy {{ additional_tmplt_file }} to {{ remote_scripts_dir }}
+        template:
+          src: "{{ additional_tmplt_file }}"
+          dest: "{{ additional_tmplt_out_file }}"
+        when: additional_tmplt_file is defined
+
+      - name: Copy {{ srvc_name }} Service File to /etc/systemd/system/{{ srvc_name }}.service
+        template:
+          src: ./templates/service.j2
+          dest: "/etc/systemd/system/{{ srv_srvc_name }}"
+        vars:
+          startup_script: "{{ remote_scripts_dir }}/{{ srvc_name }}.sh"
+          description: "{{ srvc_desc | default(srvc_name) }}"
+
+      - name: Start {{ srv_srvc_name }}
+        systemd:
+          name: "{{ srv_srvc_name }}"
+          state: started
+          enabled: yes
+
+      - name: Service check sleep {{ pause }} seconds as the state is always "running" immediatley
+        pause:
+          seconds: "{{ pause }}"
+      - name: Get service facts
+        service_facts:
+
+      - name: Attempt restart when {{ srvc_name }} not running
+        block:
+          - name: restart {{ srvc_name }}
+            systemd:
+              name: "{{ srv_srvc_name }}"
+              state: restarted
+          - name: Service check sleep {{ pause }} seconds as the state is always "running" immediatley
+            pause:
+              seconds: "{{ pause }}"
+          - name: Get service facts
+            service_facts:
+        when: srvc_status == "true" and ansible_facts.services[srv_srvc_name]['state'] != "running"
+
+      - name: Fail when {{ srvc_name }} not running
+        fail:
+          msg: "{{ srvc_name }} not running"
+        when: srvc_status == "true" and ansible_facts.services[srv_srvc_name]['state'] != "running"
+
+      - name: Wait {{ timeout }} seconds for {{ srvc_name }} to open port {{ wait_port }}
+        wait_for:
+          port: "{{ wait_port }}"
+          timeout: "{{ timeout }}"
+        when: wait_port|length > 0
+      when: start_srvc|bool

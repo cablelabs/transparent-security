@@ -23,6 +23,7 @@ variable "bf_sde_s3_bucket" {default = "null"}
 
 # Optional Variables
 variable "bf_sde_version" {default = "9.2.0"}
+variable "bf_sde_profile" {default = "p4_runtime_profile"}
 variable "create_ami" {default = "yes"}
 variable "public_key_file" {default = "~/.ssh/id_rsa.pub"}
 variable "private_key_file" {default = "~/.ssh/id_rsa"}

@@ -142,7 +142,12 @@ parser TpsAggParser(packet_in packet,
 ******************** Core TPS P A R S E R  *******************************
 *************************************************************************/
 parser TpsCoreParser(packet_in packet,
+#ifdef BMV2
                      out headers hdr,
+#endif
+#ifdef TOFINO
+                     inout headers hdr,
+#endif
                      inout metadata meta,
                      inout standard_metadata_t standard_metadata) {
     state start {

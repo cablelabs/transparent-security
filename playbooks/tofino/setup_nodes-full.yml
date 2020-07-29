@@ -38,7 +38,7 @@
     p4_prog: core.p4
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     tunnels: "{{ topo_dict.switches['core'].tunnels }}"
-
+    load_tofino_p4rt: False
 
 # Start tofino-model and tofino-switchd on the aggregate switch
 - import_playbook: setup_tofino_switch.yml
