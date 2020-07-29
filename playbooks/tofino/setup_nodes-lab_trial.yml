@@ -16,7 +16,6 @@
     host_val: switches
     trans_sec_source_dir: "{{ tps_dir }}"
     trans_sec_dest_dir: "/home/{{ host_sudo_user }}/transparent-security"
-    p4_bin_dir: "{{ sde_dir }}/install"
     python_unit_tests: false
 
 # Create virtual interfaces on switches

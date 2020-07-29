@@ -13,8 +13,7 @@
 ---
 - import_playbook: ../general/setup_source.yml
   vars:
-    python_unit_tests: false
-    p4_bin_dir: "{{ sde_dir }}/install"
+    python_unit_tests: true
 
 - hosts: all
   gather_facts: no

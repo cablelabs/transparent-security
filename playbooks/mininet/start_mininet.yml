@@ -20,7 +20,6 @@
   vars:
     host_val: localhost
     p4_progs: "{{ p4_progs }}"
-    share_dir: /usr/local
 
 - import_playbook: ../general/start_service.yml
   vars:
