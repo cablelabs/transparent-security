@@ -41,8 +41,8 @@ resource "aws_security_group" "tps" {
 
   ingress {
     cidr_blocks = ["0.0.0.0/0"]
-    from_port = var.grpc_port
-    to_port = var.grpc_port
+    from_port = var.p4_grpc_port
+    to_port = var.bf_grpc_port
     protocol = "tcp"
   }
 

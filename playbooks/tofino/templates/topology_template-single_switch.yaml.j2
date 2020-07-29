@@ -61,7 +61,7 @@ switches:
     mac: 00:00:00:01:01:00
     grpc: {{ switch_ip }}:{{ grpc_port }}
     type: {{ p4_prog }}
-    arch: tofino
+    arch: {{ p4_arch }}
     tunnels:
       - host: host1
         virt_in_intf:  2

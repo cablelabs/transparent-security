@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
+# Compile the proper P4 program on the switch
 - import_playbook: compile_p4.yml
   vars:
     host_val: "{{ switches }}"
@@ -52,3 +53,4 @@
     sudo_user: "{{ switch_sudo_user }}"
     prog_name: "{{ p4_pkg }}"
     srvc_start_pause_time: 15
+    start_service: "{{ load_tofino_p4rt | default(True) }}"
