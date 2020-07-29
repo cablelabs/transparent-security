@@ -13,18 +13,14 @@
 # limitations under the License.
 */
 /* -*- P4_16 -*- */
-#ifdef TOFINO
-#include <tofino.p4>
-#endif
-
-#include <core.p4>
 #include <v1model.p4>
 
 /* TPS includes */
-#include <tps_headers.p4>
-#include <tps_parser.p4>
-#include <tps_checksum.p4>
-#include <tps_egress.p4>
+#include "../include/tps_consts.p4"
+#include "../include/tps_headers.p4"
+#include "../include/tps_parser.p4"
+#include "../include/tps_checksum.p4"
+#include "../include/tps_egress.p4"
 
 /*************************************************************************
 **************  I N G R E S S   P R O C E S S I N G   ********************
