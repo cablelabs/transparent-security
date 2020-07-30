@@ -238,5 +238,5 @@ V1Switch(
     TpsAggIngress(),
     TpsEgress(),
     TpsComputeChecksum(),
-   TpsAggDeparser()
+    TpsAggDeparser()
 ) main;
