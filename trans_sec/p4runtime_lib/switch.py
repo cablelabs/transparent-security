@@ -243,6 +243,10 @@ class SwitchConnection(object):
     def add_data_inspection(self, dev_id, dev_mac):
         raise NotImplemented
 
+    @abstractmethod
+    def add_switch_id(self, dev_id):
+        raise NotImplemented
+
     def build_device_config(self):
         if self.sw_info['type'] == 'tofino':
             return self.__build_device_config_tofino()

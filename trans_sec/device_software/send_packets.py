@@ -205,23 +205,28 @@ def __gen_int_pkt(args, ip_ver, src_mac):
     int_hops = len(int_data['meta'])
     shim_len = 4 + 3 + int_hops - 1
     logger.info('Int data to add to packet - [%s]', int_data)
-
-    # TODO/FIXME - Is this correct??? It is not taking into account the
-    #  UDP/TCP header or payload and whats this 34???
-    ip_len = 34 + (shim_len * 4)
+    # TODO - Find a better way to calculate PAYLOAD_LEN using args.msg
+    if args.protocol == 'UDP':
+        udp_int_len = trans_sec.consts.UDP_INT_HDR_LEN + (shim_len * 4) \
+                      + trans_sec.consts.UDP_HDR_LEN + trans_sec.consts.PAYLOAD_LEN
+    elif args.protocol == 'TCP':
+        udp_int_len = trans_sec.consts.UDP_INT_HDR_LEN + (shim_len * 4) \
+                      + trans_sec.consts.TCP_HDR_LEN + trans_sec.consts.PAYLOAD_LEN
+    ipv4_len = trans_sec.consts.IPV4_HDR_LEN + udp_int_len
+    ipv6_len = trans_sec.consts.IPV6_HDR_LEN + udp_int_len
     if ip_ver == 4:
         pkt = (Ether(src=src_mac, dst=args.switch_ethernet,
                      type=trans_sec.consts.IPV4_TYPE) /
-               IP(dst=args.destination, src=args.source_addr, len=ip_len,
+               IP(dst=args.destination, src=args.source_addr, len=ipv4_len,
                   proto=trans_sec.consts.UDP_PROTO))
     else:
         pkt = (Ether(src=src_mac, dst=args.switch_ethernet,
                      type=trans_sec.consts.IPV6_TYPE) /
                IPv6(dst=args.destination, src=args.source_addr,
-                    nh=trans_sec.consts.UDP_PROTO, plen=ip_len))
+                    nh=trans_sec.consts.UDP_PROTO, plen=ipv6_len))
 
     # Add UDP INT header
-    pkt = pkt / UdpInt(len=shim_len * 4 + 8 + 6)
+    pkt = pkt / UdpInt(len=udp_int_len)
 
     # Create INT Shim header
     if args.protocol == 'UDP':

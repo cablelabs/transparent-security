@@ -14,70 +14,22 @@
 # one will be demonstrating dropped packets
 ---
 
-# Basic Data Inspection scenario for UDP - sending INT packet with one hop expect to result in INT headers with 2 hops
-- import_playbook: ../single_switch/data_inspection_basic.yml
+# Basic Data Inspection scenario - receiving packets on core-eth2 (non-INT packets)
+- import_playbook: data_inspection_basic.yml
   vars:
     send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
     ip_version: "{{ scenario_send_ip_version | default(4) }}"
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-    switch: "{{ topo_dict.switches.aggregate }}"
+    first_hop_switch: "{{ topo_dict.switches.aggregate }}"
+    second_hop_switch: "{{ topo_dict.switches.core }}"
     remote_send_host: host1
-    remote_rec_host: host2
+    remote_rec_host: inet
     send_host: "{{ remote_send_host }}"
     rec_host: "{{ remote_rec_host }}"
     sender: "{{ topo_dict.hosts[remote_send_host] }}"
-    send_sw_port: "{{ topo_dict.links[0].south_facing_port }}"
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
-    rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
     dst_mac: "{{ receiver['mac'] }}"
-    data_forward_table_action:
-      control_name: TpsAggIngress
-      table_name: data_forward_t
-      action:
-        name: data_forward
-        match_fields:
-          - key: hdr.ethernet.dst_mac
-            value:
-              - "{{ receiver.mac }}"
-              - "{{ 48 }}"
-        params:
-          - key: port
-            value: 2
-    data_inspection_table_action:
-      control_name: TpsAggIngress
-      table_name: add_switch_id_t
-      action:
-        name: add_switch_id
-        params:
-          - key: device
-            value: "{{ sender.id }}"
-          - key: switch_id
-            value: "{{ switch.id }}"
-    # For sending INT packets on the #1 of 3 send/receive iteration
-    sr1_data_inspection_int:
-      - switch_id: 1001
-        orig_mac: "{{ sender.mac }}"
-    sr1_rec_int_hops: 2
-    # For sending INT packets on the #2 of 3 send/receive iteration
-    sr2_data_inspection_int: "{{ sr1_data_inspection_int }}"
-    sr2_rec_int_hops: "{{ sr1_data_inspection_int|length }}"
-
-- import_playbook: ../single_switch/data_inspection_basic.yml
-  vars:
-    send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
-    ip_version: "{{ scenario_send_ip_version | default(4) }}"
-    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-    switch: "{{ topo_dict.switches.aggregate }}"
-    remote_send_host: host1
-    remote_rec_host: host2
-    send_host: "{{ remote_send_host }}"
-    rec_host: "{{ remote_rec_host }}"
-    sender: "{{ topo_dict.hosts[remote_send_host] }}"
-    send_sw_port: "{{ topo_dict.links[0].south_facing_port }}"
-    receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
-    rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
-    dst_mac: "{{ receiver['mac'] }}"
-    data_inspection_table_action:
+    data_inspection_table_action_hop1:
       control_name: TpsAggIngress
       table_name: data_inspection_t
       action:
@@ -92,4 +44,52 @@
             value: "{{ sender.id }}"
           - key: switch_id
             value: "{{ switch.id }}"
-    sr1_rec_int_hops: 1
+    data_inspection_table_action_hop2:
+      control_name: TpsCoreIngress
+      table_name: data_inspection_t
+      action:
+        name: "{{ 'data_inspect_packet' }}"
+        params:
+          - key: switch_id
+            value: "{{ switch.id }}"
+    sr1_rec_int_hops: 0
+
+# Basic Data Inspection scenario - receiving packets on core-eth3 (INT packets)
+- import_playbook: data_inspection_basic.yml
+  vars:
+    send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
+    ip_version: "{{ scenario_send_ip_version | default(4) }}"
+    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
+    first_hop_switch: "{{ topo_dict.switches.aggregate }}"
+    second_hop_switch: "{{ topo_dict.switches.core }}"
+    remote_send_host: host1
+    remote_rec_host: ae
+    send_host: "{{ remote_send_host }}"
+    rec_host: "{{ remote_rec_host }}"
+    sender: "{{ topo_dict.hosts[remote_send_host] }}"
+    receiver: "{{ topo_dict.hosts.inet }}"
+    dst_mac: "{{ receiver['mac'] }}"
+    data_inspection_table_action_hop1:
+      control_name: TpsAggIngress
+      table_name: data_inspection_t
+      action:
+        name: "{{ 'data_inspect_packet' }}"
+        match_fields:
+          - key: hdr.ethernet.src_mac
+            value: "{{ sender.mac }}"
+          - key: hdr.ethernet.etherType
+            value: "{{ '0x0800' if ip_version == '4' else '0x86dd' }}"
+        params:
+          - key: device
+            value: "{{ sender.id }}"
+          - key: switch_id
+            value: "{{ switch.id }}"
+    data_inspection_table_action_hop2:
+      control_name: TpsCoreIngress
+      table_name: data_inspection_t
+      action:
+        name: "{{ 'data_inspect_packet' }}"
+        params:
+          - key: switch_id
+            value: "{{ switch.id }}"
+    sr1_rec_int_hops: 2

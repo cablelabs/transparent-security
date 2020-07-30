@@ -66,3 +66,22 @@ control TpsDeparser(packet_out packet, in headers hdr) {
         packet.emit(hdr.tcp);
     }
 }
+
+control TpsAggDeparser(packet_out packet, in headers hdr) {
+    apply {
+
+        /* For Standard and INT Packets */
+        packet.emit(hdr.ethernet);
+        packet.emit(hdr.arp);
+        packet.emit(hdr.ipv4);
+        packet.emit(hdr.ipv6);
+        packet.emit(hdr.udp);
+        packet.emit(hdr.int_shim);
+        packet.emit(hdr.int_header);
+        packet.emit(hdr.int_meta_2);
+        packet.emit(hdr.int_meta);
+        packet.emit(hdr.udp_int);
+        packet.emit(hdr.tcp);
+
+    }
+}

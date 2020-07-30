@@ -1,0 +1,72 @@
+# Copyright (c) 2019 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# Simple scenario where packets are sent through 3 devices and only the last
+# one will be demonstrating dropped packets
+---
+# Add table entry "{{ data_inspection_table }}" on aggregate switch
+- import_playbook: ../test_cases/write_to_p4_table.yml
+  vars:
+    switch: "{{ first_hop_switch }}"
+    int_hops: "{{ sr1_rec_int_hops | default(0) }}"
+    te_conf_file: "~/di-inspect-create-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
+    p4_classname: "{{ data_inspection_classname }}"
+    p4_table_action: "{{ data_inspection_table_action_hop1 }}"
+    p4_te_log_dir: "{{ host_log_dir }}"
+    p4_te_log_file: "di-inspection-create-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
+
+# Add table entry "{{ data_inspection_table }}" on core switch
+- import_playbook: ../test_cases/write_to_p4_table.yml
+  vars:
+    switch: "{{ second_hop_switch }}"
+    int_hops: "{{ sr1_rec_int_hops | default(0) }}"
+    te_conf_file: "~/di-inspect-create-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
+    p4_classname: "{{ data_inspection_classname }}"
+    p4_table_action: "{{ data_inspection_table_action_hop2 }}"
+    p4_te_log_dir: "{{ host_log_dir }}"
+    p4_te_log_file: "di-inspection-create-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
+
+# TODO/FIXME - Gateway TCP scenario receives 2x packets
+# Sending UDP packets expect all to be received with configured INT hops sr1_rec_int_hops
+- import_playbook: ../test_cases/send_receive.yml
+  vars:
+    int_hops: "{{ sr1_rec_int_hops | default(0) }}"
+    receiver_log_filename: "di_basic_receiver-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}-1.out"
+    sender_log_filename: "di_basic_sender-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}-1.out"
+    send_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 9) }}"
+    send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 10) }}"
+    send_packet_count: "{{ '%s' % 100 | random(seed=now|int + 11) }}"
+    inspection_data: "{{ sr1_data_inspection_int | default(None) }}"
+    max_received_packet_count: "{{ send_packet_count if send_protocol == 'UDP' else send_packet_count|int*2 }}"
+    discover_fwd_path: True
+
+# Delete table entry "{{ data_inspection_table }}" on aggregate
+- import_playbook: ../test_cases/write_to_p4_table.yml
+  vars:
+    switch: "{{ first_hop_switch }}"
+    int_hops: "{{ sr1_rec_int_hops | default(0) }}"
+    te_conf_file: "~/di-inspect-delete-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
+    p4_table_action: "{{ data_inspection_table_action_hop1 }}"
+    p4_te_log_dir: "{{ host_log_dir }}"
+    p4_te_log_file: "di-inspection-delete-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
+    p4_te_insert: False
+
+# Delete table entry "{{ data_inspection_table }}" on core
+- import_playbook: ../test_cases/write_to_p4_table.yml
+  vars:
+    switch: "{{ second_hop_switch }}"
+    int_hops: "{{ sr1_rec_int_hops | default(0) }}"
+    te_conf_file: "~/di-inspect-delete-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
+    p4_table_action: "{{ data_inspection_table_action_hop2 }}"
+    p4_te_log_dir: "{{ host_log_dir }}"
+    p4_te_log_file: "di-inspection-delete-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
+    p4_te_insert: False

@@ -59,9 +59,6 @@ control TpsCoreIngress(inout headers hdr,
     }
 
     table data_inspection_t {
-        key = {
-            hdr.ethernet.src_mac: exact;
-        }
         actions = {
             data_inspect_packet;
             NoAction;
@@ -114,7 +111,7 @@ control TpsCoreIngress(inout headers hdr,
 
         // TODO/FIXME - so this works for both BMV2 & TOFINO
         #ifdef BMV2
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen - ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE);
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen - ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE) - UDP_HDR_BYTES;
         hdr.ipv6.payload_len = hdr.ipv6.payload_len - ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE);
         #endif
 
