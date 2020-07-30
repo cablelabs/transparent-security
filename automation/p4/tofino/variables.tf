@@ -28,8 +28,16 @@ variable "availability_zone" {default = "us-west-2a"}
 variable "tofino" {
   default = {
     sde_version = "9.2.0"
-    ami = "ami-0eb9501a7d485f7f8" // new p4-rt build w/ additions & py3
+    ami = "ami-0eb9501a7d485f7f8"
   }
+//  default = {
+//    sde_version = "9.1.1"
+//    ami = "ami-06ce0365289cb0580"
+//  }
+//  default = {
+//    sde_version = "9.0.0"
+//    ami = "ami-024c4b7fe3bacd45a"
+//  }
 }
 
 variable "switch_instance_type" {default = "t2.2xlarge"}

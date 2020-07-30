@@ -59,9 +59,12 @@ class GatewaySwitch(Bmv2SwitchConnection):
         self.udp_port_count = 1
 
     def start_digest_listeners(self):
+        logger.debug('Starting digest listener for - [%s]', self.sw_info)
         if 'arch' in self.sw_info and self.sw_info.get('arch') == 'tofino':
+            logger.info('Tofino currently not supporting digests')
             pass
         else:
+            logger.info('Building digest entry')
             digest_entry, digest_info = self.p4info_helper.build_digest_entry(
                 digest_name="nat_digest")
             self.write_digest_entry(digest_entry)

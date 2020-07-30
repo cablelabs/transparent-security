@@ -36,12 +36,7 @@ control TpsCoreIngress(inout headers hdr,
     * Responsible for recirculating a packet after egress processing
     */
     action recirculate_packet() {
-        #ifdef TOFINO
-        resubmit(standard_metadata);
-        #endif
-        #ifdef BMV2
         recirculate(standard_metadata);
-        #endif
     }
 
     /**

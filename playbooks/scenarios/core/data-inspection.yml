@@ -29,6 +29,19 @@
     receiver: "{{ topo_dict.hosts.host2 }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
     dst_mac: "{{ receiver['mac'] }}"
+    data_forward_table_action:
+      control_name: TpsCoreIngress
+      table_name: data_forward_t
+      action:
+        name: data_forward
+        match_fields:
+          - key: hdr.ethernet.dst_mac
+            value:
+              - "{{ receiver.mac }}"
+              - "{{ 48 }}"
+        params:
+          - key: port
+            value: 2
     data_inspection_table_action:
       control_name: TpsCoreIngress
       table_name: data_inspection_t
@@ -66,6 +79,19 @@
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
     dst_mac: "{{ receiver['mac'] }}"
+    data_forward_table_action:
+      control_name: TpsCoreIngress
+      table_name: data_forward_t
+      action:
+        name: data_forward
+        match_fields:
+          - key: hdr.ethernet.dst_mac
+            value:
+              - "{{ receiver.mac }}"
+              - "{{ 48 }}"
+        params:
+          - key: port
+            value: 2
     data_inspection_table_action:
       control_name: TpsCoreIngress
       table_name: data_inspection_t
