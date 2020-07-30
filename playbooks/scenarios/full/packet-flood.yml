@@ -37,7 +37,7 @@
     send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 2) }}"
     send_packet_count: 150
     min_received_packet_count: 99
-    max_received_packet_count: 150
+    max_received_packet_count: "{{ send_packet_count if send_protocol == 'UDP' else send_packet_count|int*2 }}"
     send_loops: 2
     send_loop_delay: 5
     sdn_host_port: "{{ sdn_ip }}:{{ sdn_port }}"
@@ -66,7 +66,7 @@
     send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 4) }}"
     send_packet_count: 150
     min_received_packet_count: 99
-    max_received_packet_count: 150
+    max_received_packet_count: "{{ send_packet_count if send_protocol == 'UDP' else send_packet_count|int*2 }}"
     send_loops: 2
     send_loop_delay: 5
     sdn_host_port: "{{ sdn_ip }}:{{ sdn_port }}"
@@ -95,7 +95,7 @@
     send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 6) }}"
     send_packet_count: 150
     min_received_packet_count: 99
-    max_received_packet_count: 150
+    max_received_packet_count: "{{ send_packet_count if send_protocol == 'UDP' else send_packet_count|int*2 }}"
     send_loops: 2
     send_loop_delay: 5
     sdn_host_port: "{{ sdn_ip }}:{{ sdn_port }}"

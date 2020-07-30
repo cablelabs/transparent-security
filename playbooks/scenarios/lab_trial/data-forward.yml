@@ -26,22 +26,3 @@
     sender: "{{ topo_dict.hosts[send_host] }}"
     receiver: "{{ topo_dict.hosts[rec_host] }}"
     dst_mac: "{{ receiver.mac }}"
-
-# Basic Data Forward scenario for INT packets without data_inspection to the inet
-- import_playbook: ../general/data_forward_basic.yml
-  vars:
-    send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
-    ip_version: "{{ scenario_send_ip_version | default(4) }}"
-    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-    switch: "{{ topo_dict.switches.aggregate }}"
-    egress_switch: "{{ topo_dict.switches.core }}"
-    send_host: host1
-    rec_host: inet
-    sender: "{{ topo_dict.hosts[send_host] }}"
-    receiver: "{{ topo_dict.hosts[rec_host] }}"
-    dst_mac: "{{ receiver.mac }}"
-    sr_data_inspection_int:
-      - switch_id: 1002
-      - switch_id: 1001
-        orig_mac: "{{ sender.mac }}"
-    sr_rec_int_hops: 0

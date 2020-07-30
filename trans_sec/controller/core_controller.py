@@ -78,13 +78,8 @@ class CoreController(AbstractController):
         logger.info('Completed rules for device [%s]', sw.sw_info['mac'])
 
     def __make_int_rules(self, sw):
-        logger.info('Search topology for data_inspection_t table entries')
-        for name, switch in self.topo['switches'].items():
-            if switch.get('type') == GATEWAY_CTRL_KEY:
-                logger.info(
-                    'Adding data inspection for packets from device [%s]',
-                    sw.sw_info['mac'])
-                sw.add_data_inspection(sw.sw_info['id'], switch['mac'])
+        logger.info('Adding table entry on core for data_inspection_t')
+        sw.add_data_inspection(sw.sw_info['id'])
 
     def make_north_rules(self, sw, north_link):
         north_device = self.topo['hosts'].get(north_link['north_node'])

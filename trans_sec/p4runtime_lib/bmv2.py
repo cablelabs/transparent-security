@@ -276,13 +276,33 @@ class AggregateSwitch(Bmv2SwitchConnection):
         logger.info(
             'Adding data inspection to aggregate device [%s] with device ID '
             '- [%s] and mac - [%s]', self.device_id, dev_id, dev_mac)
+        # Northbound Traffic Inspection for IPv4
         action_params = {
             'device': dev_id,
             'switch_id': self.sw_info['id']
         }
         table_entry = self.p4info_helper.build_table_entry(
             table_name='{}.data_inspection_t'.format(self.p4_ingress),
-            match_fields={'hdr.ethernet.src_mac': dev_mac},
+            match_fields={
+                'hdr.ethernet.src_mac': dev_mac,
+                'hdr.ethernet.etherType': IPV4_TYPE
+            },
+            action_name='{}.data_inspect_packet'.format(
+                self.p4_ingress),
+            action_params=action_params)
+        self.write_table_entry(table_entry)
+
+        # Northbound Traffic Inspection for IPv6
+        action_params = {
+            'device': dev_id,
+            'switch_id': self.sw_info['id']
+        }
+        table_entry = self.p4info_helper.build_table_entry(
+            table_name='{}.data_inspection_t'.format(self.p4_ingress),
+            match_fields={
+                'hdr.ethernet.src_mac': dev_mac,
+                'hdr.ethernet.etherType': IPV6_TYPE
+            },
             action_name='{}.data_inspect_packet'.format(
                 self.p4_ingress),
             action_params=action_params)
@@ -291,6 +311,18 @@ class AggregateSwitch(Bmv2SwitchConnection):
             'Installed Northbound Packet Inspection for device - [%s]'
             ' with MAC - [%s] with action params - [%s]',
             AGG_CTRL_KEY, dev_mac, action_params)
+
+    def add_switch_id(self, dev_id):
+        action_params = {
+            'device': dev_id,
+            'switch_id': self.sw_info['id']
+        }
+        table_entry = self.p4info_helper.build_table_entry(
+            table_name='{}.add_switch_id_t'.format(self.p4_ingress),
+            action_name='{}.add_switch_id'.format(
+                self.p4_ingress),
+            action_params=action_params)
+        self.write_table_entry(table_entry)
 
 
 class CoreSwitch(Bmv2SwitchConnection):
@@ -321,26 +353,22 @@ class CoreSwitch(Bmv2SwitchConnection):
             )
             self.write_table_entry(table_entry)
 
-    def add_data_inspection(self, dev_id, dev_mac):
+    def add_data_inspection(self, dev_id):
         logger.info(
-            'Adding data inspection to core device [%s] with device ID '
-            '- [%s] and mac - [%s]', self.device_id, dev_id, dev_mac)
+            'Adding data inspection entry to core device [%s] with device ID '
+            '- [%s]', self.device_id, dev_id)
 
         action_params = {
             'switch_id': dev_id
         }
         table_name = '{}.data_inspection_t'.format(self.p4_ingress)
         action_name = '{}.data_inspect_packet'.format(self.p4_ingress)
-        match_fields = {'hdr.ethernet.src_mac': dev_mac}
         logger.info(
             'Insert params into table - [%s] for action [%s] '
-            'with params [%s] fields [%s] '
-            'key hdr.ethernet.src_mac [%s]',
-            table_name, action_name, action_params, match_fields,
-            dev_mac)
+            'with params [%s] fields [%s] ',
+            table_name, action_name, action_params,)
         table_entry = self.p4info_helper.build_table_entry(
             table_name=table_name,
-            match_fields=match_fields,
             action_name=action_name,
             action_params=action_params)
         self.write_table_entry(table_entry)
