@@ -16,8 +16,9 @@ import argparse
 import logging
 import sys
 
-from trans_sec.p4runtime_lib.bmv2 import Bmv2SwitchConnection
+from trans_sec.p4runtime_lib.p4rt_switch import P4RuntimeSwitch
 from trans_sec.p4runtime_lib.helper import P4InfoHelper
+from trans_sec.switch import SwitchConnection
 
 logger = logging.getLogger('insert_p4_clone_session_entry')
 
@@ -57,7 +58,10 @@ if __name__ == '__main__':
     logger.info('Connecting to BMV2 Switch #[%s] at [%s] loaded with P4 [%s]',
                 args.dev_id, args.grpc_addr, args.p4_info_fpath)
     p4info_helper = P4InfoHelper(args.p4_info_fpath)
-    switch = Bmv2SwitchConnection(
+
+    # TODO/FIXME - This will break and need to know which type of switch
+    #  connection to start
+    switch = SwitchConnection(
         name='test', address=args.grpc_addr, device_id=args.dev_id)
     switch.master_arbitration_update()
 

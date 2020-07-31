@@ -122,7 +122,8 @@ class AbstractController(object):
             if device is not None and add_di:
                 logger.info('Adding inspection to mac [%s] on device [%s]',
                             device['mac'], sw.grpc_addr)
-                sw.add_data_inspection(device['id'], device['mac'])
+                sw.add_data_inspection(dev_id=device['id'],
+                                       dev_mac=device['mac'])
         else:
             logger.info('No south links to install')
 

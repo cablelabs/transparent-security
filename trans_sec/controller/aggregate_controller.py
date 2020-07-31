@@ -13,9 +13,15 @@
 from logging import getLogger
 from trans_sec.controller.abstract_controller import AbstractController
 from trans_sec.controller.ddos_sdn_controller import AGG_CTRL_KEY
-from trans_sec.p4runtime_lib.bmv2 import AggregateSwitch
+from trans_sec.p4runtime_lib.aggregate_switch import AggregateSwitch as P4RTSwitch
 
 logger = getLogger('aggregate_controller')
+
+try:
+    from trans_sec.bfruntime_lib.aggregate_switch import (
+        AggregateSwitch as BFRTSwitch)
+except Exception as e:
+    logger.warning('Could not import bfrt classes')
 
 
 class AggregateController(AbstractController):
@@ -28,20 +34,17 @@ class AggregateController(AbstractController):
             platform, p4_build_out, topo, AGG_CTRL_KEY, log_dir, load_p4)
 
     def instantiate_switch(self, sw_info):
-        return AggregateSwitch(
-            p4info_helper=self.p4info_helper,
-            sw_info=sw_info,
-            proto_dump_file='{}/{}-switch-controller.log'.format(
-                self.log_dir, sw_info['name']))
+        if 'arch' in sw_info and sw_info['arch'] == 'tna':
+            return BFRTSwitch(sw_info=sw_info)
+        else:
+            return P4RTSwitch(
+                p4info_helper=self.p4info_helper,
+                sw_info=sw_info,
+                proto_dump_file='{}/{}-switch-controller.log'.format(
+                    self.log_dir, sw_info['name']))
 
-    def make_rules(self, sw, north_facing_links, south_facing_links,
-                   add_di):
-        if add_di:
-            self.__add_switch_id(sw)
-
-    def __add_switch_id(self, sw):
-        logger.info("Adding table entry on aggregate for add_switch_id_t")
-        sw.add_switch_id(sw.sw_info['id'])
+    def make_rules(self, sw, north_facing_links, south_facing_links, add_di):
+        pass
 
     def make_north_rules(self, sw, north_link):
         if north_link.get('north_facing_port'):
