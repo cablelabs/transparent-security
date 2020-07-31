@@ -25,6 +25,7 @@
     srv_srvc_name: "{{ service_name }}.service"
     srvc_status: "{{ service_status_running | default('true') }}"
     start_srvc: "{{ start_service | default(True) }}"
+    topology: "{{ topo_dict | default('') }}"
 
   tasks:
     - name: Start service block when {{ start_srvc }} is true
@@ -40,7 +41,15 @@
           state: directory
         when: log_dir|length > 0
 
-      - name: Create {{ srvc_name }} Service script
+      - block:
+        - name: Retrieve architecture of the switch
+          set_fact:
+            switch_arch: "{{ item.value.arch }}"
+          when: prog_name is defined and item.key == prog_name
+          with_dict: "{{ topology.switches }}"
+        when: topology is defined and topology != ''
+
+      - name: Create {{ srvc_name }} Service script with template {{ local_srvc_script_tmplt_file }} to {{ remote_scripts_dir }}/{{ srvc_name }}.sh
         template:
           src: "{{ local_srvc_script_tmplt_file }}"
           dest: "{{ remote_scripts_dir }}/{{ srvc_name }}.sh"
