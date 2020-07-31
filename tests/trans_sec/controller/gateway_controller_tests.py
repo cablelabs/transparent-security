@@ -37,7 +37,7 @@ class GatewayControllerTests(unittest.TestCase):
 
     @mock.patch('trans_sec.p4runtime_lib.helper.P4InfoHelper',
                 return_value=mock.Mock())
-    @mock.patch('trans_sec.p4runtime_lib.bmv2.Bmv2SwitchConnection',
+    @mock.patch('trans_sec.p4runtime_lib.p4rt_switch.P4RuntimeSwitch',
                 return_value=mock.Mock())
     def test_construction(self, m1, m2):
         """

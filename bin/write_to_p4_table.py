@@ -18,8 +18,9 @@ import sys
 
 import yaml
 
-from trans_sec.p4runtime_lib.bmv2 import (GatewaySwitch, AggregateSwitch,
-                                          CoreSwitch)
+from trans_sec.p4runtime_lib.gateway_switch import GatewaySwitch
+from trans_sec.p4runtime_lib.aggregate_switch import AggregateSwitch
+from trans_sec.p4runtime_lib.core_switch import CoreSwitch
 from trans_sec.p4runtime_lib.helper import P4InfoHelper
 
 logger = logging.getLogger('insert_p4_table_entry')

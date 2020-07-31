@@ -17,7 +17,7 @@ import mock
 import pkg_resources
 import yaml
 
-from trans_sec.p4runtime_lib.bmv2 import GatewaySwitch
+from trans_sec.p4runtime_lib.gateway_switch import GatewaySwitch
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 logger = logging.getLogger('gateway_switch_tests')
@@ -42,14 +42,12 @@ class GatewaySwitchTests(unittest.TestCase):
     @mock.patch('trans_sec.p4runtime_lib.helper.P4InfoHelper',
                 return_value=mock.Mock())
     @mock.patch(
-        'trans_sec.p4runtime_lib.switch.SwitchConnection.build_device_config',
+        'trans_sec.switch.SwitchConnection.build_device_config',
         return_value=mock.Mock())
-    def test_build_device_config(self, m1, m2):
+    def test_construction(self, m1, m2):
         """
         Tests constructor for class CoreController
         """
 
         switch = GatewaySwitch(p4info_helper=m1, sw_info=self.sw_info)
-
-        device_conf = switch.build_device_config()
-        self.assertIsNotNone(device_conf)
+        self.assertIsNotNone(switch)

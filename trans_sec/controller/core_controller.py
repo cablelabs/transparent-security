@@ -14,9 +14,15 @@ from logging import getLogger
 
 from trans_sec.controller.abstract_controller import AbstractController
 from trans_sec.controller.ddos_sdn_controller import CORE_CTRL_KEY
-from trans_sec.p4runtime_lib.bmv2 import CoreSwitch
+from trans_sec.p4runtime_lib.core_switch import CoreSwitch as P4RTSwitch
 
 logger = getLogger('core_controller')
+
+try:
+    from trans_sec.bfruntime_lib.core_switch import (
+        CoreSwitch as BFRTSwitch)
+except Exception as e:
+    logger.warning('Could not import bfrt classes')
 
 
 class CoreController(AbstractController):
@@ -29,11 +35,13 @@ class CoreController(AbstractController):
     Implementation of the controller for a switch running the core.p4 program
     """
     def instantiate_switch(self, sw_info):
-        return CoreSwitch(
-            p4info_helper=self.p4info_helper,
-            sw_info=sw_info,
-            proto_dump_file='{}/{}-switch-controller.log'.format(
-                self.log_dir, sw_info['name']))
+        if 'arch' in sw_info and sw_info['arch'] == 'tna':
+            return BFRTSwitch(sw_info=sw_info)
+        else:
+            return P4RTSwitch(
+                sw_info=sw_info,
+                proto_dump_file='{}/{}-switch-controller.log'.format(
+                    self.log_dir, sw_info['name']))
 
     def make_rules(self, sw, north_facing_links, south_facing_links,
                    add_di):

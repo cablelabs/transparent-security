@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Cable Television Laboratories, Inc.
+# Copyright (c) 2020 Cable Television Laboratories, Inc.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -28,29 +28,20 @@
 # limitations under the License.
 #
 import logging
-import socket
-from abc import ABC
 
-from trans_sec.p4runtime_lib.switch import SwitchConnection
-from trans_sec.consts import IPV4_TYPE, IPV6_TYPE, UDP_INT_DST_PORT
-from trans_sec.controller.ddos_sdn_controller import AGG_CTRL_KEY
+from trans_sec.p4runtime_lib.p4rt_switch import P4RuntimeSwitch
+from trans_sec.consts import IPV4_TYPE, IPV6_TYPE
 from trans_sec.utils.convert import decode_num, decode_ipv4
 
-logger = logging.getLogger('bmv2')
+logger = logging.getLogger('gateway_switch')
 
 
-class Bmv2SwitchConnection(SwitchConnection, ABC):
-    def write_multicast_entry(self, hosts):
-        super(Bmv2SwitchConnection, self).write_multicast_entry(hosts)
-        self.write_arp_flood()
-
-
-class GatewaySwitch(Bmv2SwitchConnection):
+class GatewaySwitch(P4RuntimeSwitch):
     def __init__(self, p4info_helper, sw_info, proto_dump_file=None):
         """
         Construct Switch class to control BMV2 switches running gateway.p4
         """
-        super(Bmv2SwitchConnection, self).__init__(
+        super(self.__class__, self).__init__(
             p4info_helper, sw_info, 'TpsGwIngress', 'TpsEgress',
             proto_dump_file)
         self.nat_udp_ports = set()
@@ -68,7 +59,7 @@ class GatewaySwitch(Bmv2SwitchConnection):
             digest_entry, digest_info = self.p4info_helper.build_digest_entry(
                 digest_name="nat_digest")
             self.write_digest_entry(digest_entry)
-        super(Bmv2SwitchConnection, self).start_digest_listeners()
+        super(self.__class__, self).start_digest_listeners()
 
     def receive_nat_digests(self):
         """
@@ -223,7 +214,7 @@ class GatewaySwitch(Bmv2SwitchConnection):
     def write_multicast_entry(self, hosts):
         logger.debug('Writing multicast entries on gateway device [%s]',
                      self.device_id)
-        super(Bmv2SwitchConnection, self).write_multicast_entry(hosts)
+        super(self.__class__, self).write_multicast_entry(hosts)
 
         # TODO/FIXME - We need to define something in the topology for
         #  determining which is the NB server as this will break outside of
@@ -261,143 +252,3 @@ class GatewaySwitch(Bmv2SwitchConnection):
         else:
             logger.warning('Target host not found, not setting the '
                            'multicast group')
-
-
-class AggregateSwitch(Bmv2SwitchConnection):
-    def __init__(self, p4info_helper, sw_info, proto_dump_file=None):
-        """
-        Construct Switch class to control BMV2 switches running gateway.p4
-        """
-        super(Bmv2SwitchConnection, self).__init__(
-            p4info_helper, sw_info, 'TpsAggIngress', 'TpsEgress',
-            proto_dump_file)
-
-    def add_data_inspection(self, dev_id, dev_mac):
-        logger.info(
-            'Adding data inspection to aggregate device [%s] with device ID '
-            '- [%s] and mac - [%s]', self.device_id, dev_id, dev_mac)
-        # Northbound Traffic Inspection for IPv4
-        action_params = {
-            'device': dev_id,
-            'switch_id': self.sw_info['id']
-        }
-        table_entry = self.p4info_helper.build_table_entry(
-            table_name='{}.data_inspection_t'.format(self.p4_ingress),
-            match_fields={
-                'hdr.ethernet.src_mac': dev_mac,
-                'hdr.ethernet.etherType': IPV4_TYPE
-            },
-            action_name='{}.data_inspect_packet'.format(
-                self.p4_ingress),
-            action_params=action_params)
-        self.write_table_entry(table_entry)
-
-        # Northbound Traffic Inspection for IPv6
-        action_params = {
-            'device': dev_id,
-            'switch_id': self.sw_info['id']
-        }
-        table_entry = self.p4info_helper.build_table_entry(
-            table_name='{}.data_inspection_t'.format(self.p4_ingress),
-            match_fields={
-                'hdr.ethernet.src_mac': dev_mac,
-                'hdr.ethernet.etherType': IPV6_TYPE
-            },
-            action_name='{}.data_inspect_packet'.format(
-                self.p4_ingress),
-            action_params=action_params)
-        self.write_table_entry(table_entry)
-        logger.info(
-            'Installed Northbound Packet Inspection for device - [%s]'
-            ' with MAC - [%s] with action params - [%s]',
-            AGG_CTRL_KEY, dev_mac, action_params)
-
-    def add_switch_id(self, dev_id):
-        action_params = {
-            'switch_id': self.sw_info['id']
-        }
-        table_entry = self.p4info_helper.build_table_entry(
-            table_name='{}.add_switch_id_t'.format(self.p4_ingress),
-            match_fields={
-                'hdr.udp.dst_port': UDP_INT_DST_PORT
-            },
-            action_name='{}.add_switch_id'.format(
-                self.p4_ingress),
-            action_params=action_params)
-        self.write_table_entry(table_entry)
-
-
-class CoreSwitch(Bmv2SwitchConnection):
-    def __init__(self, p4info_helper, sw_info, proto_dump_file=None):
-        """
-        Construct Switch class to control BMV2 switches running gateway.p4
-        """
-        super(Bmv2SwitchConnection, self).__init__(
-            p4info_helper, sw_info, 'TpsCoreIngress', 'TpsCoreEgress',
-            proto_dump_file)
-
-    def add_data_forward(self, source_mac, ingress_port):
-        logger.info(
-            'Adding data forward to core device [%s] with source_mac '
-            '- [%s] and ingress port - [%s]',
-            self.device_id, source_mac, ingress_port)
-        inserted = super(Bmv2SwitchConnection, self).add_data_forward(
-            source_mac, ingress_port)
-
-        if inserted:
-            table_entry = self.p4info_helper.build_table_entry(
-                table_name='{}.arp_forward_t'.format(self.p4_ingress),
-                match_fields={
-                    'hdr.ethernet.dst_mac': source_mac
-                },
-                action_name='{}.arp_forward'.format(self.p4_ingress),
-                action_params={'port': ingress_port}
-            )
-            self.write_table_entry(table_entry)
-
-    def add_data_inspection(self, dev_id, dev_mac):
-        logger.info(
-            'Adding data inspection entry to core device [%s] with device ID '
-            '- [%s]', self.device_id, dev_id)
-
-        action_params = {
-            'switch_id': dev_id
-        }
-        table_name = '{}.data_inspection_t'.format(self.p4_ingress)
-        action_name = '{}.data_inspect_packet'.format(self.p4_ingress)
-        logger.info(
-            'Insert params into table - [%s] for action [%s] '
-            'with params [%s] fields [%s] ',
-            table_name, action_name, action_params,)
-        table_entry = self.p4info_helper.build_table_entry(
-            table_name=table_name,
-            match_fields={
-                'hdr.udp_int.dst_port': 0x022b
-            },
-            action_name=action_name,
-            action_params=action_params)
-        self.write_table_entry(table_entry)
-
-    def setup_telemetry_rpt(self, ae_ip):
-        logger.info(
-            'Setting up telemetry report on core device [%s] with '
-            'AE IP - [%s]', self.device_id, ae_ip)
-
-        ae_ip_addr = socket.gethostbyname(ae_ip)
-        logger.info(
-            'Starting telemetry report for INT headers with dst_port '
-            'value of 555 to AE IP [%s]', ae_ip_addr)
-        table_name = '{}.setup_telemetry_rpt_t'.format(self.p4_egress)
-        action_name = '{}.setup_telem_rpt_ipv4'.format(self.p4_egress)
-        match_fields = {
-            'hdr.udp_int.dst_port': 555
-        }
-        action_params = {
-            'ae_ip': ae_ip_addr
-        }
-        table_entry = self.p4info_helper.build_table_entry(
-            table_name=table_name,
-            match_fields=match_fields,
-            action_name=action_name,
-            action_params=action_params)
-        self.write_table_entry(table_entry)
