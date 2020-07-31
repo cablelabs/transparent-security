@@ -19,7 +19,11 @@ export SDE=~{{ sudo_user }}/bf-sde-{{ sde_version }}
 export SDE_INSTALL=$SDE/install
 export host_ip=$(hostname -i)
 
+{% if switch_arch == 'tna' %}
+$SDE/run_switchd.sh -p {{ prog_name }} -r {{ log_dir }}/switchd.log
+{% else %}
 $SDE/run_switchd.sh -p {{ prog_name }} -r {{ log_dir }}/switchd.log --skip-p4 -- --p4rt-server $host_ip:{{ grpc_port }}
+{% endif %}
 
 while true
 do
