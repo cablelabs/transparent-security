@@ -28,9 +28,8 @@ logger = logging.getLogger('switch')
 
 class BFRuntimeSwitch(SwitchConnection, ABC):
 
-    def __init__(self, p4info_helper, sw_info, p4_ingress, p4_egress,
-                 proto_dump_file=None):
-        super(BFRuntimeSwitch, self).__init__()
+    def __init__(self, sw_info, proto_dump_file=None):
+        super(BFRuntimeSwitch, self).__init__(sw_info)
         channel = grpc.insecure_channel(self.grpc_addr)
         if proto_dump_file is not None:
             logger.info('Adding interceptor with file - [%s] to device [%s]',

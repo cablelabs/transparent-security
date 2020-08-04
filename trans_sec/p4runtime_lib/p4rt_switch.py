@@ -20,6 +20,7 @@ from p4.tmp import p4config_pb2
 from p4.v1 import p4runtime_pb2, p4runtime_pb2_grpc
 
 from trans_sec.controller.ddos_sdn_controller import GATEWAY_CTRL_KEY
+from trans_sec.p4runtime_lib import helper
 from trans_sec.switch import SwitchConnection, IterableQueue, GrpcRequestLogger
 from trans_sec.utils.convert import decode_mac
 
@@ -30,10 +31,12 @@ logger = logging.getLogger('switch')
 
 class P4RuntimeSwitch(SwitchConnection, ABC):
 
-    def __init__(self, p4info_helper, sw_info, p4_ingress, p4_egress,
-                 proto_dump_file=None):
+    def __init__(self, sw_info, p4_ingress, p4_egress, proto_dump_file=None):
         super(P4RuntimeSwitch, self).__init__(sw_info)
-        self.p4info_helper = p4info_helper
+        p4info_txt = sw_info['runtime_p4info']
+        logger.info('Loading p4info_helper with file - [%s]',
+                    p4info_txt)
+        self.p4info_helper = helper.P4InfoHelper(p4info_txt)
         self.p4_ingress = p4_ingress
         self.p4_egress = p4_egress
         grpc_channel = grpc.insecure_channel(self.grpc_addr)
@@ -350,14 +353,16 @@ class P4RuntimeSwitch(SwitchConnection, ABC):
                      self.grpc_addr)
         return self.client_stub.Read(request)
 
-    def write_clone_entries(self, pre_entry):
+    def write_clone_entries(self, port):
         logger.info(
             'Packet info for insertion to device [%s] cloning table - %s',
-            self.grpc_addr, pre_entry)
+            self.grpc_addr, port)
+        clone_entry = self.p4info_helper.build_clone_entry(port)
+
         request = self.__get_write_request()
         update = request.updates.add()
         update.type = p4runtime_pb2.Update.INSERT
-        update.entity.packet_replication_engine_entry.CopyFrom(pre_entry)
+        update.entity.packet_replication_engine_entry.CopyFrom(clone_entry)
 
         try:
             logger.debug(

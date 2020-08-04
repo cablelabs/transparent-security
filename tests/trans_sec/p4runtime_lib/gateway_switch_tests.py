@@ -49,5 +49,5 @@ class GatewaySwitchTests(unittest.TestCase):
         Tests constructor for class CoreController
         """
 
-        switch = GatewaySwitch(p4info_helper=m1, sw_info=self.sw_info)
+        switch = GatewaySwitch(sw_info=self.sw_info)
         self.assertIsNotNone(switch)
