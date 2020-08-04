@@ -59,6 +59,9 @@ control TpsCoreIngress(inout headers hdr,
     }
 
     table data_inspection_t {
+        key = {
+            hdr.udp_int.dst_port: exact;
+        }
         actions = {
             data_inspect_packet;
             NoAction;

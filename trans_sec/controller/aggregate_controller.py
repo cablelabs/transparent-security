@@ -34,15 +34,6 @@ class AggregateController(AbstractController):
             proto_dump_file='{}/{}-switch-controller.log'.format(
                 self.log_dir, sw_info['name']))
 
-    def make_rules(self, sw, north_facing_links, south_facing_links,
-                   add_di):
-        if add_di:
-            self.__add_switch_id(sw)
-
-    def __add_switch_id(self, sw):
-        logger.info("Adding table entry on aggregate for add_switch_id_t")
-        sw.add_switch_id(sw.sw_info['id'])
-
     def make_north_rules(self, sw, north_link):
         if north_link.get('north_facing_port'):
             logger.info('Creating north switch rules - [%s]', north_link)

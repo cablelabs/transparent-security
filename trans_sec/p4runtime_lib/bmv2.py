@@ -314,11 +314,13 @@ class AggregateSwitch(Bmv2SwitchConnection):
 
     def add_switch_id(self, dev_id):
         action_params = {
-            'device': dev_id,
             'switch_id': self.sw_info['id']
         }
         table_entry = self.p4info_helper.build_table_entry(
             table_name='{}.add_switch_id_t'.format(self.p4_ingress),
+            match_fields={
+                'hdr.udp.dst_port': 0x022b
+            },
             action_name='{}.add_switch_id'.format(
                 self.p4_ingress),
             action_params=action_params)
@@ -369,6 +371,9 @@ class CoreSwitch(Bmv2SwitchConnection):
             table_name, action_name, action_params,)
         table_entry = self.p4info_helper.build_table_entry(
             table_name=table_name,
+            match_fields={
+                'hdr.udp_int.dst_port': 0x022b
+            },
             action_name=action_name,
             action_params=action_params)
         self.write_table_entry(table_entry)
