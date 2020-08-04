@@ -49,5 +49,5 @@ class AggregateSwitchTests(unittest.TestCase):
         Tests constructor for class CoreController
         """
 
-        switch = AggregateSwitch(p4info_helper=m1, sw_info=self.sw_info)
+        switch = AggregateSwitch(sw_info=self.sw_info)
         self.assertIsNotNone(switch)

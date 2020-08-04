@@ -37,13 +37,12 @@ logger = logging.getLogger('gateway_switch')
 
 
 class GatewaySwitch(P4RuntimeSwitch):
-    def __init__(self, p4info_helper, sw_info, proto_dump_file=None):
+    def __init__(self, sw_info, proto_dump_file=None):
         """
         Construct Switch class to control BMV2 switches running gateway.p4
         """
         super(self.__class__, self).__init__(
-            p4info_helper, sw_info, 'TpsGwIngress', 'TpsEgress',
-            proto_dump_file)
+            sw_info, 'TpsGwIngress', 'TpsEgress', proto_dump_file)
         self.nat_udp_ports = set()
         self.nat_tcp_ports = set()
         self.tcp_port_count = 1

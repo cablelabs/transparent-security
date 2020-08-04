@@ -39,10 +39,14 @@ class CoreSwitch(BFRuntimeSwitch):
         """
         Construct Switch class to control BMV2 switches running gateway.p4
         """
+        logger.info('Instantiating BFRT CoreSwitch')
         super(self.__class__, self).__init__(sw_info, proto_dump_file)
 
     def add_data_inspection(self, dev_id, dev_mac):
+        logger.info('Adding data inspection to switch ID [%s] and MAC [%s]',
+                    dev_id, dev_mac)
         raise NotImplementedError
 
     def add_switch_id(self, dev_id):
+        logger.info('Adding switch ID - %s', dev_id)
         raise NotImplementedError

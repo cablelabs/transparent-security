@@ -37,13 +37,12 @@ logger = logging.getLogger('aggregate_switch')
 
 
 class AggregateSwitch(P4RuntimeSwitch):
-    def __init__(self, p4info_helper, sw_info, proto_dump_file=None):
+    def __init__(self, sw_info, proto_dump_file=None):
         """
         Construct Switch class to control BMV2 switches running gateway.p4
         """
         super(self.__class__, self).__init__(
-            p4info_helper, sw_info, 'TpsAggIngress', 'TpsEgress',
-            proto_dump_file)
+            sw_info, 'TpsAggIngress', 'TpsEgress', proto_dump_file)
 
     def write_multicast_entry(self, hosts):
         super(self.__class__, self).write_multicast_entry(hosts)

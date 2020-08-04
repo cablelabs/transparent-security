@@ -39,8 +39,9 @@ class CoreSwitchTests(unittest.TestCase):
         self.p4_json = pkg_resources.resource_filename(
             'tests.trans_sec.conf', 'core.json')
 
-    @mock.patch('trans_sec.p4runtime_lib.helper.P4InfoHelper',
-                return_value=mock.Mock())
+    @mock.patch(
+        'trans_sec.p4runtime_lib.helper.P4InfoHelper',
+        return_value=mock.Mock())
     @mock.patch(
         'trans_sec.switch.SwitchConnection.build_device_config',
         return_value=mock.Mock())
@@ -49,5 +50,5 @@ class CoreSwitchTests(unittest.TestCase):
         Tests constructor for class CoreController
         """
 
-        switch = CoreSwitch(p4info_helper=m1, sw_info=self.sw_info)
+        switch = CoreSwitch(sw_info=self.sw_info)
         self.assertIsNotNone(switch)

@@ -16,7 +16,6 @@ from logging import getLogger
 import ipaddress
 
 from trans_sec.exceptions import NotFoundError
-from trans_sec.p4runtime_lib import helper
 
 logger = getLogger('abstract_controller')
 
@@ -43,17 +42,6 @@ class AbstractController(object):
         self.load_p4 = load_p4
         self.switches = list()
 
-        for switch_topo in self.topo['switches'].values():
-            if switch_topo['type'] == self.switch_type:
-                p4info_txt = switch_topo['runtime_p4info']
-                logger.info('Loading p4info_helper with file - [%s]',
-                            p4info_txt)
-                self.p4info_helper = helper.P4InfoHelper(p4info_txt)
-                break
-
-        if not self.p4info_helper:
-            raise Exception('Unable to obtain the p4info helper')
-
     def start(self):
         logger.info('Adding helpers to switch of type - [%s]',
                     self.switch_type)
@@ -64,6 +52,7 @@ class AbstractController(object):
         for switch in self.switches:
             logger.info('Starting digest listeners on device [%s]',
                         switch.grpc_addr)
+            switch.add_switch_id(switch.sw_info['id'])
             switch.start_digest_listeners()
 
     def stop(self):

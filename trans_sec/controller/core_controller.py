@@ -14,9 +14,15 @@ from logging import getLogger
 
 from trans_sec.controller.abstract_controller import AbstractController
 from trans_sec.controller.ddos_sdn_controller import CORE_CTRL_KEY
-from trans_sec.p4runtime_lib.core_switch import CoreSwitch as P4RTSwitch
 
 logger = getLogger('core_controller')
+
+try:
+    from trans_sec.p4runtime_lib.core_switch import CoreSwitch as P4RTSwitch
+except Exception as e:
+    logger.warning(
+        "Error [%s] - while attempting to import "
+        "trans_sec.p4runtime_lib.core_switch.CoreSwitch", e)
 
 try:
     from trans_sec.bfruntime_lib.core_switch import (
@@ -36,10 +42,12 @@ class CoreController(AbstractController):
     """
     def instantiate_switch(self, sw_info):
         if 'arch' in sw_info and sw_info['arch'] == 'tna':
-            return BFRTSwitch(sw_info=sw_info)
+            return BFRTSwitch(
+                sw_info=sw_info,
+                proto_dump_file='{}/{}-switch-controller.log'.format(
+                    self.log_dir, sw_info['name']))
         else:
             return P4RTSwitch(
-                p4info_helper=self.p4info_helper,
                 sw_info=sw_info,
                 proto_dump_file='{}/{}-switch-controller.log'.format(
                     self.log_dir, sw_info['name']))
@@ -51,9 +59,7 @@ class CoreController(AbstractController):
 
         logger.info('Activating clone on device [%s] to port [%s]',
                     sw.grpc_addr, sw.sw_info['clone_egress'])
-        clone_entry = self.p4info_helper.build_clone_entry(
-            sw.sw_info['clone_egress'])
-        sw.write_clone_entries(clone_entry)
+        sw.write_clone_entries(sw.sw_info['clone_egress'])
         logger.info('Installed clone on %s' % sw.name)
 
         ae_ip = None
