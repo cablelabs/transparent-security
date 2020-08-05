@@ -34,7 +34,7 @@
     send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 1) }}"
     send_packet_count: "{{ '%s' % 100 | random(seed=now|int + 2) }}"
     inspection_data: "{{ sr1_data_inspection_int | default(None) }}"
-    max_received_packet_count: "{{ send_packet_count if send_protocol == 'UDP' else send_packet_count|int*2 }}"
+    max_received_packet_count: "{{ send_packet_count }}"
 
 # Add table entry to {{ data_drop_table }}
 - import_playbook: ../test_cases/write_to_p4_table.yml
@@ -79,7 +79,7 @@
     send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 5) }}"
     send_packet_count: "{{ '%s' % 100 | random(seed=now|int + 6) }}"
     inspection_data: "{{ sr3_data_inspection_int | default(None) }}"
-    max_received_packet_count: "{{ send_packet_count if send_protocol == 'UDP' else send_packet_count|int*2 }}"
+    max_received_packet_count: "{{ send_packet_count }}"
 
 # Delete table entry from "{{ data_forward_table }}"
 - import_playbook: ../test_cases/write_to_p4_table.yml

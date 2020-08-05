@@ -49,7 +49,7 @@
         name: data_inspect_packet
         match_fields:
           - key: hdr.udp_int.dst_port
-            value: "{{ '0x022b' }}"
+            value: 555
         params:
           - key: switch_id
             value: "{{ switch.id }}"
@@ -99,7 +99,7 @@
         name: data_inspect_packet
         match_fields:
           - key: hdr.udp_int.dst_port
-            value: "{{ '0x022b' }}"
+            value: 555
         params:
           - key: switch_id
             value: "{{ switch.id }}"

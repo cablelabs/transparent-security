@@ -32,7 +32,7 @@ import socket
 from abc import ABC
 
 from trans_sec.p4runtime_lib.switch import SwitchConnection
-from trans_sec.consts import IPV4_TYPE, IPV6_TYPE
+from trans_sec.consts import IPV4_TYPE, IPV6_TYPE, UDP_INT_DST_PORT
 from trans_sec.controller.ddos_sdn_controller import AGG_CTRL_KEY
 from trans_sec.utils.convert import decode_num, decode_ipv4
 
@@ -319,7 +319,7 @@ class AggregateSwitch(Bmv2SwitchConnection):
         table_entry = self.p4info_helper.build_table_entry(
             table_name='{}.add_switch_id_t'.format(self.p4_ingress),
             match_fields={
-                'hdr.udp.dst_port': 0x022b
+                'hdr.udp.dst_port': UDP_INT_DST_PORT
             },
             action_name='{}.add_switch_id'.format(
                 self.p4_ingress),
@@ -355,7 +355,7 @@ class CoreSwitch(Bmv2SwitchConnection):
             )
             self.write_table_entry(table_entry)
 
-    def add_data_inspection(self, dev_id):
+    def add_data_inspection(self, dev_id, dev_mac):
         logger.info(
             'Adding data inspection entry to core device [%s] with device ID '
             '- [%s]', self.device_id, dev_id)
