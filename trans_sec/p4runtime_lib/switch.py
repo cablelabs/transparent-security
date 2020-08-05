@@ -243,6 +243,10 @@ class SwitchConnection(object):
     def add_data_inspection(self, dev_id, dev_mac):
         raise NotImplemented
 
+    @abstractmethod
+    def add_switch_id(self, dev_id):
+        pass
+
     def build_device_config(self):
         if self.sw_info['type'] == 'tofino':
             return self.__build_device_config_tofino()
@@ -541,8 +545,8 @@ class SwitchConnection(object):
         if mc_entries:
             multicast_entry = self.p4info_helper.build_multicast_group_entry(
                 mc_group_id, mc_entries)
-            logger.info('Build Multicast Entry on device [%s]: [%s]',
-                        self.grpc_addr, multicast_entry)
+            logger.info('Build Multicast Entry on device [%s] with address [%s]: [%s]',
+                        self.sw_info.get('name'), self.grpc_addr, multicast_entry)
 
             request = self.__get_write_request()
             update = request.updates.add()

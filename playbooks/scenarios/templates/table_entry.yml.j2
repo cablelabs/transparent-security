@@ -17,7 +17,7 @@
 {% if table_action.action.name or table_action.action.name != '' %}
   action_name: {{ table_action.control_name }}.{{ table_action.action.name }}
 {% endif %}
-{% if table_action.action.match_fields %}
+{% if table_action.action.match_fields is defined %}
   match_fields:
 {% for match_field in table_action.action.match_fields %}
 {% if match_field.value is iterable and match_field.value is not string %}

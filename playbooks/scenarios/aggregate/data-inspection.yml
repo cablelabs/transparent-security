@@ -13,8 +13,6 @@
 # Simple scenario where packets are sent through 3 devices and only the last
 # one will be demonstrating dropped packets
 ---
-
-# Basic Data Inspection scenario for UDP - sending INT packet with one hop expect to result in INT headers with 2 hops
 - import_playbook: ../single_switch/data_inspection_basic.yml
   vars:
     send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
@@ -47,20 +45,15 @@
       control_name: TpsAggIngress
       table_name: data_inspection_t
       action:
-        name: data_inspect_packet
+        name: "{{ 'data_inspect_packet' }}"
         match_fields:
           - key: hdr.ethernet.src_mac
             value: "{{ sender.mac }}"
+          - key: hdr.ethernet.etherType
+            value: "{{ '0x0800' if ip_version == '4' else '0x86dd' }}"
         params:
           - key: device
             value: "{{ sender.id }}"
           - key: switch_id
             value: "{{ switch.id }}"
-    # For sending INT packets on the #1 of 3 send/receive iteration
-    sr1_data_inspection_int:
-      - switch_id: 1001
-        orig_mac: "{{ sender.mac }}"
-    sr1_rec_int_hops: 2
-    # For sending INT packets on the #2 of 3 send/receive iteration
-    sr2_data_inspection_int: "{{ sr1_data_inspection_int }}"
-    sr2_rec_int_hops: "{{ sr1_data_inspection_int|length }}"
+    sr1_rec_int_hops: 1

@@ -13,23 +13,25 @@
 # Simple scenario where packets are sent through 3 devices and only the last
 # one will be demonstrating dropped packets
 ---
-# Add table entry to "{{ data_forward_table }}"
+# Add table entry "{{ data_inspection_table }}" on aggregate switch
 - import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
-    int_hops: "{{ sr_rec_int_hops | default(0) }}"
-    te_conf_file: "df-write-data-forward-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
-    p4_table_action: "{{ data_forward_table_action }}"
-    p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: "df-write-data-forward-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
-    execute_insert: "{{ write_data_forward | default(False) }}"
-
-# Add table entry to "{{ data_inspection_table }}"
-- import_playbook: ../test_cases/write_to_p4_table.yml
-  vars:
+    switch: "{{ first_hop_switch }}"
     int_hops: "{{ sr1_rec_int_hops | default(0) }}"
     te_conf_file: "~/di-inspect-create-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
     p4_classname: "{{ data_inspection_classname }}"
-    p4_table_action: "{{ data_inspection_table_action }}"
+    p4_table_action: "{{ data_inspection_table_action_hop1 }}"
+    p4_te_log_dir: "{{ host_log_dir }}"
+    p4_te_log_file: "di-inspection-create-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
+
+# Add table entry "{{ data_inspection_table }}" on core switch
+- import_playbook: ../test_cases/write_to_p4_table.yml
+  vars:
+    switch: "{{ second_hop_switch }}"
+    int_hops: "{{ sr1_rec_int_hops | default(0) }}"
+    te_conf_file: "~/di-inspect-create-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
+    p4_classname: "{{ data_inspection_classname }}"
+    p4_table_action: "{{ data_inspection_table_action_hop2 }}"
     p4_te_log_dir: "{{ host_log_dir }}"
     p4_te_log_file: "di-inspection-create-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
 
@@ -45,37 +47,26 @@
     send_packet_count: "{{ '%s' % 100 | random(seed=now|int + 11) }}"
     inspection_data: "{{ sr1_data_inspection_int | default(None) }}"
     max_received_packet_count: "{{ send_packet_count }}"
+    discover_fwd_path: True
 
-# Delete table entry to "{{ data_inspection_table }}"
+# Delete table entry "{{ data_inspection_table }}" on aggregate
 - import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
+    switch: "{{ first_hop_switch }}"
     int_hops: "{{ sr1_rec_int_hops | default(0) }}"
     te_conf_file: "~/di-inspect-delete-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
-    p4_table_action: "{{ data_inspection_table_action }}"
+    p4_table_action: "{{ data_inspection_table_action_hop1 }}"
     p4_te_log_dir: "{{ host_log_dir }}"
     p4_te_log_file: "di-inspection-delete-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
     p4_te_insert: False
 
-# TODO/FIXME - Gateway TCP scenario receives 2x packets
-# Sending packets expect all to be received with configured INT hops sr2_rec_int_hops
-- import_playbook: ../test_cases/send_receive.yml
-  vars:
-    int_hops: "{{ sr2_rec_int_hops | default(0) }}"
-    receiver_log_filename: "di_basic_receiver-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}-2.out"
-    sender_log_filename: "di_basic_sender-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}-2.out"
-    send_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 12) }}"
-    send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 13) }}"
-    send_packet_count: "{{ '%s' % 100 | random(seed=now|int + 14) }}"
-    inspection_data: "{{ sr2_data_inspection_int | default(None) }}"
-    max_received_packet_count: "{{ send_packet_count }}"
-
-# Delete table entry from "{{ data_forward_table }}"
+# Delete table entry "{{ data_inspection_table }}" on core
 - import_playbook: ../test_cases/write_to_p4_table.yml
   vars:
-    int_hops: "{{ sr_rec_int_hops | default(0) }}"
-    te_conf_file: "df-write-data-forward-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
-    p4_table_action: "{{ data_forward_table_action }}"
+    switch: "{{ second_hop_switch }}"
+    int_hops: "{{ sr1_rec_int_hops | default(0) }}"
+    te_conf_file: "~/di-inspect-delete-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
+    p4_table_action: "{{ data_inspection_table_action_hop2 }}"
     p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: "df-write-data-forward-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
+    p4_te_log_file: "di-inspection-delete-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
     p4_te_insert: False
-    execute_insert: "{{ write_data_forward | default(False) }}"

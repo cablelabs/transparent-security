@@ -48,8 +48,8 @@
       action:
         name: data_inspect_packet
         match_fields:
-          - key: hdr.ethernet.src_mac
-            value: "{{ sender.mac }}"
+          - key: hdr.udp_int.dst_port
+            value: 555
         params:
           - key: switch_id
             value: "{{ switch.id }}"
@@ -98,8 +98,8 @@
       action:
         name: data_inspect_packet
         match_fields:
-          - key: hdr.ethernet.src_mac
-            value: "{{ sender.mac }}"
+          - key: hdr.udp_int.dst_port
+            value: 555
         params:
           - key: switch_id
             value: "{{ switch.id }}"

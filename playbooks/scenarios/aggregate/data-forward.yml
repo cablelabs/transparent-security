@@ -64,7 +64,7 @@
     sr_data_inspection_int:
       - switch_id: 1001
         orig_mac: "{{ sender.mac }}"
-    sr_rec_int_hops: 1
+    sr_rec_int_hops: 2
     data_forward_table_action:
       control_name: TpsAggIngress
       table_name: data_forward_t
