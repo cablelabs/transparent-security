@@ -13,8 +13,7 @@
 from logging import getLogger
 
 from trans_sec.controller.abstract_controller import AbstractController
-from trans_sec.controller.ddos_sdn_controller import GATEWAY_CTRL_KEY, \
-    CORE_CTRL_KEY
+from trans_sec.controller.ddos_sdn_controller import CORE_CTRL_KEY
 from trans_sec.p4runtime_lib.bmv2 import CoreSwitch
 
 logger = getLogger('core_controller')
@@ -77,9 +76,10 @@ class CoreController(AbstractController):
 
         logger.info('Completed rules for device [%s]', sw.sw_info['mac'])
 
-    def __make_int_rules(self, sw):
+    @staticmethod
+    def __make_int_rules(sw):
         logger.info('Adding table entry on core for data_inspection_t')
-        sw.add_data_inspection(sw.sw_info['id'])
+        sw.add_data_inspection(sw.sw_info['id'], None)
 
     def make_north_rules(self, sw, north_link):
         north_device = self.topo['hosts'].get(north_link['north_node'])
