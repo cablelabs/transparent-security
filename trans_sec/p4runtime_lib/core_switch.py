@@ -31,6 +31,7 @@ import logging
 import socket
 from abc import ABC
 
+from trans_sec.consts import UDP_INT_DST_PORT
 from trans_sec.p4runtime_lib.p4rt_switch import P4RuntimeSwitch
 
 logger = logging.getLogger('core_switch')
@@ -67,7 +68,7 @@ class CoreSwitch(P4RuntimeSwitch):
             )
             self.write_table_entry(table_entry)
 
-    def add_data_inspection(self, dev_id):
+    def add_data_inspection(self, dev_id, dev_mac):
         logger.info(
             'Adding data inspection entry to core device [%s] with device ID '
             '- [%s]', self.device_id, dev_id)
@@ -83,6 +84,9 @@ class CoreSwitch(P4RuntimeSwitch):
             table_name, action_name, action_params,)
         table_entry = self.p4info_helper.build_table_entry(
             table_name=table_name,
+            match_fields={
+                'hdr.udp_int.dst_port': UDP_INT_DST_PORT
+            },
             action_name=action_name,
             action_params=action_params)
         self.write_table_entry(table_entry)

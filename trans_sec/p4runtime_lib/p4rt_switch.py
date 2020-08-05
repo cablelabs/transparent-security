@@ -149,11 +149,9 @@ class P4RuntimeSwitch(SwitchConnection, ABC):
                 source_mac, self.grpc_addr)
             return False
 
-    @abstractmethod
     def add_data_inspection(self, dev_id, dev_mac):
         raise NotImplemented
 
-    @abstractmethod
     def add_switch_id(self, dev_id):
         pass
 

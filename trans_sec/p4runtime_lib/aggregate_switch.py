@@ -30,7 +30,7 @@
 import logging
 
 from trans_sec.p4runtime_lib.p4rt_switch import P4RuntimeSwitch
-from trans_sec.consts import IPV4_TYPE, IPV6_TYPE
+from trans_sec.consts import IPV4_TYPE, IPV6_TYPE, UDP_INT_DST_PORT
 from trans_sec.controller.ddos_sdn_controller import AGG_CTRL_KEY
 
 logger = logging.getLogger('aggregate_switch')
@@ -90,11 +90,13 @@ class AggregateSwitch(P4RuntimeSwitch):
 
     def add_switch_id(self, dev_id):
         action_params = {
-            'device': dev_id,
             'switch_id': self.sw_info['id']
         }
         table_entry = self.p4info_helper.build_table_entry(
             table_name='{}.add_switch_id_t'.format(self.p4_ingress),
+            match_fields={
+                'hdr.udp.dst_port': UDP_INT_DST_PORT
+            },
             action_name='{}.add_switch_id'.format(
                 self.p4_ingress),
             action_params=action_params)
