@@ -47,7 +47,7 @@
             switch_arch: "{{ item.value.arch }}"
           when: prog_name is defined and item.key == prog_name
           with_dict: "{{ topology.switches }}"
-        when: topology is defined and topology != ''
+        when: topology is defined and topology|length > 0
 
       - name: Create {{ srvc_name }} Service script with template {{ local_srvc_script_tmplt_file }} to {{ remote_scripts_dir }}/{{ srvc_name }}.sh
         template:
