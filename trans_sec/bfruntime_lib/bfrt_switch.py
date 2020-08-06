@@ -50,8 +50,7 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
         self.interface = bfrt_client.ClientInterface(
             grpc_addr=self.grpc_addr, client_id=self.client_id,
             device_id=self.device_id, is_master=True)
-        # self.bfrt_info = self.interface.bfrt_info_get(self.name)
-        self.bfrt_info = None
+        self.bfrt_info = self.interface.bfrt_info_get(self.name)
 
         # self.digest_thread = Thread(target=self.receive_digests)
         self.digest_thread = None
