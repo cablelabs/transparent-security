@@ -18,8 +18,9 @@ import sys
 
 import yaml
 
-from trans_sec.p4runtime_lib.bmv2 import (GatewaySwitch, AggregateSwitch,
-                                          CoreSwitch)
+from trans_sec.p4runtime_lib.gateway_switch import GatewaySwitch
+from trans_sec.p4runtime_lib.aggregate_switch import AggregateSwitch
+from trans_sec.p4runtime_lib.core_switch import CoreSwitch
 from trans_sec.p4runtime_lib.helper import P4InfoHelper
 
 logger = logging.getLogger('insert_p4_table_entry')
@@ -93,11 +94,11 @@ if __name__ == '__main__':
 
         switch = None
         if sw_info['type'] == 'gateway':
-            switch = GatewaySwitch(p4info_helper, sw_info)
+            switch = GatewaySwitch(sw_info)
         elif sw_info['type'] == 'aggregate':
-            switch = AggregateSwitch(p4info_helper, sw_info)
+            switch = AggregateSwitch(sw_info)
         elif sw_info['type'] == 'core':
-            switch = CoreSwitch(p4info_helper, sw_info)
+            switch = CoreSwitch(sw_info)
 
         if not switch:
             raise Exception('Switch type of [%s] is not supported',

@@ -13,7 +13,7 @@
 ---
 - import_playbook: ../general/setup_source.yml
   vars:
-    python_unit_tests: true
+    python_unit_tests: false
 
 - hosts: all
   gather_facts: no

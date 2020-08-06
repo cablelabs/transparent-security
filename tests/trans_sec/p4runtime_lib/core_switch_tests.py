@@ -17,7 +17,7 @@ import mock
 import pkg_resources
 import yaml
 
-from trans_sec.p4runtime_lib.bmv2 import CoreSwitch
+from trans_sec.p4runtime_lib.core_switch import CoreSwitch
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 logger = logging.getLogger('core_switch_tests')
@@ -39,17 +39,16 @@ class CoreSwitchTests(unittest.TestCase):
         self.p4_json = pkg_resources.resource_filename(
             'tests.trans_sec.conf', 'core.json')
 
-    @mock.patch('trans_sec.p4runtime_lib.helper.P4InfoHelper',
-                return_value=mock.Mock())
     @mock.patch(
-        'trans_sec.p4runtime_lib.switch.SwitchConnection.build_device_config',
+        'trans_sec.p4runtime_lib.helper.P4InfoHelper',
         return_value=mock.Mock())
-    def test_build_device_config(self, m1, m2):
+    @mock.patch(
+        'trans_sec.switch.SwitchConnection.build_device_config',
+        return_value=mock.Mock())
+    def test_construction(self, m1, m2):
         """
         Tests constructor for class CoreController
         """
 
-        switch = CoreSwitch(p4info_helper=m1, sw_info=self.sw_info)
-
-        device_conf = switch.build_device_config()
-        self.assertIsNotNone(device_conf)
+        switch = CoreSwitch(sw_info=self.sw_info)
+        self.assertIsNotNone(switch)

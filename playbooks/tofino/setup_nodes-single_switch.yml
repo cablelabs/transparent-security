@@ -16,7 +16,7 @@
     host_val: switches
     trans_sec_source_dir: "{{ tps_dir }}"
     trans_sec_dest_dir: "/home/{{ host_sudo_user }}/transparent-security"
-    python_unit_tests: true
+    python_unit_tests: false
 
 # Create virtual interfaces on switches
 - import_playbook: setup_virt_eth.yml
@@ -36,6 +36,8 @@
     p4_prog: "{{ scenario_name }}.p4"
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     tunnels: "{{ topo_dict.switches[scenario_name].tunnels }}"
+    load_tofino_p4rt: "{% if scenario_name == 'core' %}False{% else %}True{% endif %}"
+
 
 # Setup source on the nodes for packet testing
 - import_playbook: ../general/setup_source.yml
