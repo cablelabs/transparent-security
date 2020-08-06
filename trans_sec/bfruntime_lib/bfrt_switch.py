@@ -48,13 +48,11 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
                     ' device_id [%s]', self.grpc_addr, self.client_id,
                     self.device_id)
         self.interface = bfrt_client.ClientInterface(
-            grpc_addr=self.grpc_addr, client_id=self.client_id,
-            device_id=self.device_id, is_master=True)
-        # self.bfrt_info = self.interface.bfrt_info_get(self.name)
+            self.grpc_addr, client_id=self.client_id, device_id=self.device_id)
+        self.bfrt_info = self.interface.bfrt_info_get("tna_32q_2pipe")
         self.bfrt_info = None
 
         # self.digest_thread = Thread(target=self.receive_digests)
-        self.digest_thread = None
 
     def start_digest_listeners(self):
         logger.info('Tofino currently not supporting digests')

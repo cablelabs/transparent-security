@@ -28,7 +28,7 @@
 # limitations under the License.
 #
 import logging
-from abc import ABC
+import socket
 
 from tofino.bfrt_grpc import bfruntime_pb2
 
@@ -37,7 +37,7 @@ from trans_sec.bfruntime_lib.bfrt_switch import BFRuntimeSwitch
 logger = logging.getLogger('core_switch')
 
 
-class CoreSwitch(BFRuntimeSwitch, ABC):
+class CoreSwitch(BFRuntimeSwitch):
     def __init__(self, sw_info, proto_dump_file=None):
         """
         Construct Switch class to control BMV2 switches running gateway.p4
