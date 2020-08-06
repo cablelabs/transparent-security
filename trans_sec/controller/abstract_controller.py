@@ -50,7 +50,7 @@ class AbstractController(object):
         for switch in self.switches:
             logger.info('Starting digest listeners on device [%s]',
                         switch.grpc_addr)
-            switch.add_switch_id(switch.sw_info['id'])
+            switch.add_switch_id(switch.device_id)
             switch.start_digest_listeners()
 
     def stop(self):
