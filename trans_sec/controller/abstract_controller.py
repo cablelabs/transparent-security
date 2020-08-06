@@ -52,7 +52,7 @@ class AbstractController(object):
         for switch in self.switches:
             logger.info('Starting digest listeners on device [%s]',
                         switch.grpc_addr)
-            switch.add_switch_id(switch.sw_info['id'])
+            switch.add_switch_id(switch.device_id)
             switch.start_digest_listeners()
 
     def stop(self):
@@ -152,7 +152,7 @@ class AbstractController(object):
             di_match_mac = switch.get_data_inspection_src_mac_keys()
             logger.debug(
                 'Data inspection table keys on device [%s] - [%s]',
-                switch.sw_info['id'], di_match_mac)
+                switch.device_id, di_match_mac)
             if attack['src_mac'] in di_match_mac:
                 logger.info('Found source switch - [%s]', switch.name)
                 attack_switch = switch
