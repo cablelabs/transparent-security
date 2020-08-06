@@ -29,16 +29,8 @@ variable "tofino" {
   default = {
     sde_version = "9.2.0"
     p4rt_ami = "ami-0eb9501a7d485f7f8"
-    bfrt_ami = "ami-0f50c3f145bc21ef7"
+    bfrt_ami = "ami-01ff01cf2d4abb838"
   }
-//  default = {
-//    sde_version = "9.1.1"
-//    ami = "ami-06ce0365289cb0580"
-//  }
-//  default = {
-//    sde_version = "9.0.0"
-//    ami = "ami-024c4b7fe3bacd45a"
-//  }
 }
 
 variable "switch_instance_type" {default = "t2.2xlarge"}
