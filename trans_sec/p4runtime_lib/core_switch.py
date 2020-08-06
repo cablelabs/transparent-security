@@ -29,7 +29,6 @@
 #
 import logging
 import socket
-from abc import ABC
 
 from trans_sec.consts import UDP_INT_DST_PORT
 from trans_sec.p4runtime_lib.p4rt_switch import P4RuntimeSwitch

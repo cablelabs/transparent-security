@@ -55,7 +55,7 @@ class AggregateSwitch(P4RuntimeSwitch):
         # Northbound Traffic Inspection for IPv4
         action_params = {
             'device': dev_id,
-            'switch_id': self.sw_info['id']
+            'switch_id': self.device_id
         }
         table_entry = self.p4info_helper.build_table_entry(
             table_name='{}.data_inspection_t'.format(self.p4_ingress),
@@ -71,7 +71,7 @@ class AggregateSwitch(P4RuntimeSwitch):
         # Northbound Traffic Inspection for IPv6
         action_params = {
             'device': dev_id,
-            'switch_id': self.sw_info['id']
+            'switch_id': self.device_id
         }
         table_entry = self.p4info_helper.build_table_entry(
             table_name='{}.data_inspection_t'.format(self.p4_ingress),
@@ -90,7 +90,7 @@ class AggregateSwitch(P4RuntimeSwitch):
 
     def add_switch_id(self, dev_id):
         action_params = {
-            'switch_id': self.sw_info['id']
+            'switch_id': self.device_id
         }
         table_entry = self.p4info_helper.build_table_entry(
             table_name='{}.add_switch_id_t'.format(self.p4_ingress),
