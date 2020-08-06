@@ -38,16 +38,28 @@
         $SDE_INSTALL/lib/python3.4/*
         /usr/local/lib/python{{ python_version }}/dist-packages/
 
-    - name: Copy built python tofino libs to Python 2.7 runtime
+    - name: Copy built python tofino libs to Python {{ python_version }} runtime
       shell: >
         sudo cp -r
         $SDE_INSTALL/lib/python2.7/site-packages/*
         /usr/local/lib/python{{ python_version }}/dist-packages/
 
-    - name: Copy built python tofino libs to Python {{ python_version }} runtime
+    - name: Copy tofino packages libs to /usr/local/lib/python{{ python_version }}/dist-packages/
+      shell: >
+        sudo cp -r
+        $SDE_INSTALL/lib/python2.7/site-packages/tofino/*
+        /usr/local/lib/python{{ python_version }}/dist-packages/
+
+    - name: Copy built python tofino libs to Python 2.7 runtime
       shell: >
         sudo cp -r
         $SDE_INSTALL/lib/python2.7/site-packages/*
+        /usr/local/lib/python2.7/dist-packages/
+
+    - name: Copy tofino packages libs to /usr/local/lib/python2.7/dist-packages/
+      shell: >
+        sudo cp -r
+        $SDE_INSTALL/lib/python2.7/site-packages/tofino/*
         /usr/local/lib/python2.7/dist-packages/
 
     - name: Copy examples python libs to runtime
