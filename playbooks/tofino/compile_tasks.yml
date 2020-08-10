@@ -39,20 +39,17 @@
 
 - name: Complete building the compile command
   set_fact:
-    compile_command: >
-      {{ compile_command }}
-      --bf-rt-schema $SDE_INSTALL/share/p4/targets/tofino/{{ item }}/bf-rt.json
-      --p4runtime-files {{ remote_scripts_dir }}/p4/{{ item }}.tofino/p4info.pb.txt
-      -o {{ remote_scripts_dir }}/p4/{{ item }}.tofino
-      {{ remote_tps_dir }}/p4/{{ item }}/{{ p4_program_name }}.p4
+    p4_program_name: "{{ item }}"
+  when: switch.arch is not defined or switch.arch == 'v1model'
 
-- name: The actual compile command to be executed
-  debug:
-    var: compile_command
-
-- name: Compile P4 program {{ p4_program_name }}
+- name: Compile P4 programs {{ p4_program_name }} with base command {{ compile_command }}
   become: yes
-  command: "{{ compile_command }}"
+  command: >
+    {{ compile_command }}
+    --bf-rt-schema {{ remote_scripts_dir }}/p4/{{ item }}.tofino/bf-rt.json
+    --p4runtime-files {{ remote_scripts_dir }}/p4/{{ item }}.tofino/p4info.pb.txt
+    -o {{ remote_scripts_dir }}/p4/{{ item }}.tofino
+    {{ remote_tps_dir }}/p4/{{ item }}/{{ p4_program_name }}.p4
   args:
     chdir: "{{ remote_scripts_dir }}"
 
