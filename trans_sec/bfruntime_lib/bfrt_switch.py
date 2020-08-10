@@ -49,8 +49,7 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
                     self.device_id)
         self.interface = bfrt_client.ClientInterface(
             self.grpc_addr, client_id=self.client_id, device_id=self.device_id)
-        self.bfrt_info = self.interface.bfrt_info_get("tna_32q_2pipe")
-        self.bfrt_info = None
+        self.bfrt_info = self.interface.bfrt_info_get(self.name)
 
         # self.digest_thread = Thread(target=self.receive_digests)
 
