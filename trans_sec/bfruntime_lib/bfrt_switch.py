@@ -68,7 +68,7 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
                         action_params, ingress_class=True):
         raise NotImplementedError
 
-    def add_data_forward(self, dst_mac, egress_port):
+    def add_data_forward(self, source_mac, ingress_port):
         raise NotImplementedError
 
     def build_device_config(self):
