@@ -18,11 +18,14 @@ variable "build_id" {}
 variable "ec2_region" {}
 # Image generated from env-build script for build_env='mininet'
 variable "mininet_ami" {default ="ami-0572f054b71fc1cdd"}
+# Image hand created
+variable "hcp_ami" {default ="ami-0c5f7b13179115b5a"}
 
 # Optional Variables
 variable "public_key_file" {default = "~/.ssh/id_rsa.pub"}
 variable "private_key_file" {default = "~/.ssh/id_rsa"}
 variable "sudo_user" {default = "ubuntu"}
+variable "hcp_sudo_user" {default = "centos"}
 variable "instance_type" {default = "t2.2xlarge"}
 
 # Playbook Constants

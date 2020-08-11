@@ -15,3 +15,11 @@
 output "ip" {
   value = aws_instance.transparent-security-mininet-integration.public_ip
 }
+
+output "hcp-ip" {
+  value = aws_instance.transparent-security-hcp-instance.public_ip
+}
+
+output "hcp-private-ip" {
+  value = aws_instance.transparent-security-hcp-instance.private_ip
+}
