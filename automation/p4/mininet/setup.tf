@@ -80,6 +80,19 @@ EOT
   }
 }
 
+//resource "null_resource" "transparent-security-mininet-" {
+//  depends_on = [null_resource.transparent-security-local-inventory]
+//  provisioner "local-exec" {
+//    command = <<EOT
+//${var.ANSIBLE_CMD} -u ${var.sudo_user} \
+//-i ${local.local_ansible_inventory_file} \
+//${var.SETUP_MININET_HOST} \
+//--key-file ${var.private_key_file} \
+//EOT
+//  }
+//}
+
+
 locals {
   setup_pb = var.scenario_name == "full" || var.scenario_name == "lab_trial" ? "setup-${var.scenario_name}.yml" : "setup-single_switch.yml"
 }
