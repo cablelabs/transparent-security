@@ -25,7 +25,7 @@
 #    ip_ver: "{{ ip_version | default('4') }}"
 #    receiver_ip: "{{ receiver.ip if ip_ver == '4' else receiver.ipv6 }}"
     receiver_ip: "{{ receiver.ip }}"
-    sender_intf: "{% if sender.tunnels is defined %}{{ sender.tunnels[0].host }}-br1{% else %}{{ '%s-eth0' % send_host }}{% endif %}"
+    sender_intf: "{{ '%s-eth0' % send_host }}"
     discover_path: "{{ discover_fwd_path | default(True) }}"
     ping_packet_count: "{{ ping_count | default('3') }}"
     ping_packet_interval: "{{ ping_interval | default('.5') }}"
@@ -49,7 +49,7 @@
     receive_timeout: "{{ receiver_timeout_seconds | default(60) }}"
     hops: "{{ int_hops | default(0) }}"
     ip_ver: "{{ ip_version | default('4') }}"
-    receiver_intf: "{% if receiver.tunnels is defined %}{{ receiver.tunnels[0].host }}-br2{% else %}{{ '%s-eth0' % rec_host }}{% endif %}"
+    receiver_intf: "{{ '%s-eth0' % rec_host }}"
     receiver_log_file: "{{ host_log_dir }}/{{ receiver_log_filename }}"
   tasks:
     - debug:
@@ -100,7 +100,7 @@
     loops: "{{ send_loops | default(1) }}"
     loop_delay: "{{ send_loop_delay | default(0) }}"
     hops: "{{ int_hops | default(0) }}"
-    sender_intf: "{% if sender.tunnels is defined %}{{ sender.tunnels[0].host }}-br1{% else %}{{ '%s-eth0' % send_host }}{% endif %}"
+    sender_intf: "{{ '%s-eth0' % send_host }}"
     sender_log_file: "{{ host_log_dir }}/{{ sender_log_filename }}"
     protocol: "{{ send_protocol | default('UDP') }}"
     int_hdr_df: "{{ host_log_dir }}/send_int_data-ip-{{ ip_ver }}-proto-{{ protocol }}-ih-{{ hops }}.yml"
