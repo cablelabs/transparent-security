@@ -80,25 +80,14 @@ EOT
   }
 }
 
-//resource "null_resource" "transparent-security-mininet-" {
-//  depends_on = [null_resource.transparent-security-local-inventory]
-//  provisioner "local-exec" {
-//    command = <<EOT
-//${var.ANSIBLE_CMD} -u ${var.sudo_user} \
-//-i ${local.local_ansible_inventory_file} \
-//${var.SETUP_MININET_HOST} \
-//--key-file ${var.private_key_file} \
-//EOT
-//  }
-//}
-
-
 locals {
   setup_pb = var.scenario_name == "full" || var.scenario_name == "lab_trial" ? "setup-${var.scenario_name}.yml" : "setup-single_switch.yml"
 }
 
 resource "null_resource" "transparent-security-start-sim" {
-  depends_on = [null_resource.transparent-security-mininet-host-setup]
+  depends_on = [
+    null_resource.transparent-security-mininet-host-setup,
+  ]
 
   provisioner "remote-exec" {
     inline = [
@@ -112,5 +101,46 @@ resource "null_resource" "transparent-security-start-sim" {
     type     = "ssh"
     user     = var.sudo_user
     private_key = file(var.private_key_file)
+  }
+}
+
+resource "null_resource" "transparent-security-mininet-tunnel" {
+  depends_on = [
+    null_resource.transparent-security-start-sim,
+  ]
+  provisioner "local-exec" {
+    command = <<EOT
+${var.ANSIBLE_CMD} -u ${var.sudo_user} \
+-i ${aws_instance.transparent-security-mininet-integration.public_ip}, \
+${var.SETUP_MINI_AE_TUNNEL} \
+--key-file ${var.private_key_file} \
+--extra-vars "\
+tunnel_name=${var.ae_tun_name}
+clone_intf=core-eth${var.clone_egress_port}
+local_ip=${aws_instance.transparent-security-mininet-integration.private_ip}
+remote_ip=${aws_instance.transparent-security-hcp-instance.private_ip}
+remote_scripts_dir=${var.remote_scripts_dir}
+log_dir=${var.remote_srvc_log_dir}
+"\
+EOT
+  }
+}
+
+resource "null_resource" "transparent-security-hcp-tunnel" {
+  depends_on = [
+    null_resource.transparent-security-mininet-tunnel,
+  ]
+  provisioner "local-exec" {
+    command = <<EOT
+${var.ANSIBLE_CMD} -u ${var.hcp_sudo_user} \
+-i ${aws_instance.transparent-security-hcp-instance.public_ip}, \
+${var.SETUP_AE_MINI_TUNNEL} \
+--key-file ${var.private_key_file} \
+--extra-vars "\
+tunnel_name=${var.ae_tun_name}
+local_ip=${aws_instance.transparent-security-hcp-instance.private_ip}
+remote_ip=${aws_instance.transparent-security-mininet-integration.private_ip}
+"\
+EOT
   }
 }
