@@ -37,6 +37,7 @@ variable "remote_pb_dir" {default = "/home/ubuntu/transparent-security/playbooks
 variable "remote_inventory_file" {default = "/home/ubuntu/transparent-security.ini"}
 variable "topo_file" {default = "mininet-sim-topology.yaml"}
 variable "clone_egress_port" {default = "3"}
+variable "ae_tun_name" {default = "ae-tun"}
 variable "ae_host" {default = "localhost"}
 variable "sdn_port" {default = "9998"}
 variable "sdn_dev_intf" {default = "lo"} # TODO - verify if this is correct???
@@ -50,6 +51,8 @@ variable "remote_tps_dir" {default = "/home/ubuntu/transparent-security"}
 # Variables for ansible playbooks
 variable "LOCAL_INVENTORY" {default = "../../../playbooks/mininet/local_inventory.yml"}
 variable "SETUP_MININET_HOST" {default = "../../../playbooks/mininet/setup_host.yml"}
+variable "SETUP_MINI_AE_TUNNEL" {default = "../../../playbooks/mininet/setup_mini2ae_tunnel.yml"}
+variable "SETUP_AE_MINI_TUNNEL" {default = "../../../playbooks/mininet/setup_ae2mini_tunnel.yml"}
 variable "remote_scenario_pb_dir" {default = "/home/ubuntu/transparent-security/playbooks/scenarios"}
 
 # Scenario variables
