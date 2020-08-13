@@ -105,7 +105,9 @@ resource "null_resource" "transparent-security-start-sim" {
 }
 
 resource "null_resource" "transparent-security-mininet-tunnel" {
+  count = var.scenario_name == "lab_trial" ? 1 : 0
   depends_on = [
+    aws_instance.transparent-security-hcp-instance,
     null_resource.transparent-security-start-sim,
   ]
   provisioner "local-exec" {
@@ -118,7 +120,7 @@ ${var.SETUP_MINI_AE_TUNNEL} \
 tunnel_name=${var.ae_tun_name}
 clone_intf=core-eth${var.clone_egress_port}
 local_ip=${aws_instance.transparent-security-mininet-integration.private_ip}
-remote_ip=${aws_instance.transparent-security-hcp-instance.private_ip}
+remote_ip=${var.scenario_name == "lab_trial" ? aws_instance.transparent-security-hcp-instance.0.private_ip : "n/a"}
 remote_scripts_dir=${var.remote_scripts_dir}
 log_dir=${var.remote_srvc_log_dir}
 "\
@@ -127,18 +129,20 @@ EOT
 }
 
 resource "null_resource" "transparent-security-hcp-tunnel" {
+  count = var.scenario_name == "lab_trial" ? 1 : 0
   depends_on = [
+    aws_instance.transparent-security-hcp-instance,
     null_resource.transparent-security-mininet-tunnel,
   ]
   provisioner "local-exec" {
     command = <<EOT
 ${var.ANSIBLE_CMD} -u ${var.hcp_sudo_user} \
--i ${aws_instance.transparent-security-hcp-instance.public_ip}, \
+-i ${aws_instance.transparent-security-hcp-instance.0.public_ip}, \
 ${var.SETUP_AE_MINI_TUNNEL} \
 --key-file ${var.private_key_file} \
 --extra-vars "\
 tunnel_name=${var.ae_tun_name}
-local_ip=${aws_instance.transparent-security-hcp-instance.private_ip}
+local_ip=${aws_instance.transparent-security-hcp-instance.0.private_ip}
 remote_ip=${aws_instance.transparent-security-mininet-integration.private_ip}
 "\
 EOT

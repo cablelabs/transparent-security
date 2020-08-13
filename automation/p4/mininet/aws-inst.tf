@@ -45,6 +45,7 @@ resource "aws_instance" "transparent-security-mininet-integration" {
 }
 
 resource "aws_instance" "transparent-security-hcp-instance" {
+  count = var.scenario_name == "lab_trial" ? 1 : 0
   ami = var.hcp_ami
   instance_type = var.instance_type
   key_name = aws_key_pair.transparent-security-pk.key_name

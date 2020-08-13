@@ -17,9 +17,9 @@ output "ip" {
 }
 
 output "hcp-ip" {
-  value = aws_instance.transparent-security-hcp-instance.public_ip
+  value = var.scenario_name == "lab_trial" ? aws_instance.transparent-security-hcp-instance.0.public_ip : "n/a"
 }
 
 output "hcp-private-ip" {
-  value = aws_instance.transparent-security-hcp-instance.private_ip
+  value = var.scenario_name == "lab_trial" ? aws_instance.transparent-security-hcp-instance.0.private_ip: "n/a"
 }
