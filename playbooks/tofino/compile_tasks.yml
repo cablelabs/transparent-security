@@ -25,33 +25,34 @@
     path: "$SDE_INSTALL/share/p4/targets/tofino/{{ switch.type }}"
     state: directory
 
-- name: The compile command
-  debug:
-    var: compile_command
-
-- name: Add to the compile command for v1model
+- name: Determine P4 program name and base compile command when arch == 'v1model'
   set_fact:
+    p4_program_name: "{{ item }}"
     compile_command: "{{ compile_command }} --p4runtime-format text --arch v1model"
   when: switch.arch is not defined or switch.arch == 'v1model'
 
-- name: Determine P4 program name when arch=='tna'
+- name: Determine P4 program name and base compile command when arch != 'v1model'
   set_fact:
     p4_program_name: "{{ item }}-{{ switch.arch }}"
+    compile_command: "{{ compile_command }} --arch {{ switch.arch }}"
   when: switch.arch is defined and switch.arch != 'v1model'
 
-- name: Determine P4 program name when arch!='tna'
+- name: Complete building the compile command
   set_fact:
-    p4_program_name: "{{ item }}"
-  when: switch.arch is not defined or switch.arch == 'v1model'
+    compile_command: >
+      {{ compile_command }}
+      --bf-rt-schema {{ remote_scripts_dir }}/p4/{{ item }}.tofino/bf-rt.json
+      --p4runtime-files {{ remote_scripts_dir }}/p4/{{ item }}.tofino/p4info.pb.txt
+      -o {{ remote_scripts_dir }}/p4/{{ item }}.tofino
+      {{ remote_tps_dir }}/p4/{{ item }}/{{ p4_program_name }}.p4
 
-- name: Compile P4 programs {{ p4_program_name }} with base command {{ compile_command }}
+- name: The actual compile command to be executed
+  debug:
+    var: compile_command
+
+- name: Compile P4 program {{ p4_program_name }}
   become: yes
-  command: >
-    {{ compile_command }}
-    --bf-rt-schema {{ remote_scripts_dir }}/p4/{{ item }}.tofino/bf-rt.json
-    --p4runtime-files {{ remote_scripts_dir }}/p4/{{ item }}.tofino/p4info.pb.txt
-    -o {{ remote_scripts_dir }}/p4/{{ item }}.tofino
-    {{ remote_tps_dir }}/p4/{{ item }}/{{ p4_program_name }}.p4
+  command: "{{ compile_command }}"
   args:
     chdir: "{{ remote_scripts_dir }}"
 
