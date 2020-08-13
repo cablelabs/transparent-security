@@ -38,6 +38,8 @@ def get_args():
                         type=int, help='The client ID - default 0')
     parser.add_argument('-d', '--device-id', required=False, default=0,
                         help='The device ID - default 0')
+    parser.add_argument('-m', '--is-master', required=False, type=bool,
+                        default=False, help='Is master client')
     parser.add_argument('-t', '--table-name', required=False,
                         help='The table name for logging the ID')
 
@@ -72,9 +74,10 @@ if __name__ == '__main__':
     requests_stream = IterableQueue()
     stream_msg_resp = client_stub.StreamChannel(iter(requests_stream))
 
+    logger.info('Creating client interface with client stub')
     interface = bfrt_client.ClientInterface(
-        args.grpc_addr, client_id=args.client_id, device_id=args.device_id,
-        is_master=True)
+        grpc_addr=args.grpc_addr, client_id=args.client_id,
+        device_id=args.device_id, is_master=args.is_master)
 
     logger.info('Clearing tables')
     interface.clear_all_tables()
@@ -105,4 +108,8 @@ if __name__ == '__main__':
                 exit(0)
 
     # interface.bind_pipeline_config(args.switch_name)
-    # bfrt_info = interface.bfrt_info_get(args.switch_name)
+    # bfrt_info = interface.bind_pipeline_config(args.switch_name)
+    bfrt_info = interface.bfrt_info_get(args.switch_name)
+
+    logger.info('Exit 0')
+    exit()
