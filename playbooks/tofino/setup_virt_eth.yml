@@ -24,6 +24,3 @@
   tasks:
     - name: Setup DMA
       command: $SDE/pkgsrc/ptf-modules/ptf-utils/dma_setup.sh
-
-    - name: Setup Tofino Virtual interfaces
-      command: $SDE/pkgsrc/ptf-modules/ptf-utils/veth_setup.sh
