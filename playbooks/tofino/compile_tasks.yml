@@ -41,7 +41,7 @@
   set_fact:
     compile_command: >
       {{ compile_command }}
-      --bf-rt-schema $SDE_INSTALL/share/p4/targets/tofino/{{ item }}/bf-rt.json
+      --bf-rt-schema {{ remote_scripts_dir }}/p4/{{ item }}.tofino/bf-rt.json
       --p4runtime-files {{ remote_scripts_dir }}/p4/{{ item }}.tofino/p4info.pb.txt
       -o {{ remote_scripts_dir }}/p4/{{ item }}.tofino
       {{ remote_tps_dir }}/p4/{{ item }}/{{ p4_program_name }}.p4
