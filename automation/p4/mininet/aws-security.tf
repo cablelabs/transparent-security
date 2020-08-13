@@ -51,6 +51,38 @@ resource "aws_security_group" "transparent-security-img-sg" {
   }
 }
 
+resource "aws_security_group" "transparent-security-hcp-img-sg" {
+  name = "transparent-security-hcp-${var.scenario_name}-${var.build_id}"
+  ingress {
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 22
+    to_port = 22
+    protocol = "tcp"
+  }
+
+  ingress {
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = var.sdn_port
+    to_port = var.sdn_port
+    protocol = "tcp"
+  }
+
+  ingress {
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 50051
+    to_port = 50056
+    protocol = "tcp"
+  }
+
+  // Terraform removes the default rule
+  egress {
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
 # AWS EC2 Instance Public Key
 resource "aws_key_pair" "transparent-security-pk" {
   public_key = file(var.public_key_file)

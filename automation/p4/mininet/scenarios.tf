@@ -11,8 +11,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-resource "null_resource" "transparent-security-run-senario-tests" {
-  depends_on = [null_resource.transparent-security-start-sim]
+resource "null_resource" "transparent-security-run-scenario-tests" {
+  depends_on = [
+    null_resource.transparent-security-start-sim,
+    null_resource.transparent-security-hcp-tunnel,
+  ]
 
   provisioner "remote-exec" {
     inline = [

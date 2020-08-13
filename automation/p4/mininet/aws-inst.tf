@@ -43,3 +43,36 @@ resource "aws_instance" "transparent-security-mininet-integration" {
     volume_size = "50"
   }
 }
+
+resource "aws_instance" "transparent-security-hcp-instance" {
+  count = var.scenario_name == "lab_trial" ? 1 : 0
+  ami = var.hcp_ami
+  instance_type = var.instance_type
+  key_name = aws_key_pair.transparent-security-pk.key_name
+
+  tags = {
+    Name = "transparent-security-hcp-${var.scenario_name}-${var.build_id}"
+  }
+
+  security_groups = [aws_security_group.transparent-security-img-sg.name, aws_security_group.transparent-security-hcp-img-sg.name ]
+  associate_public_ip_address = true
+
+  # Used to ensure host is really up before attempting to apply ansible playbooks
+  provisioner "remote-exec" {
+    inline = [
+      "sudo echo 'transparent-security-hcp integration' > ~/motd",
+    ]
+  }
+
+  # Remote connection info for remote-exec
+  connection {
+    host = self.public_ip
+    type     = "ssh"
+    user     = var.hcp_sudo_user
+    private_key = file(var.private_key_file)
+  }
+
+//  root_block_device {
+//    volume_size = "50"
+//  }
+}

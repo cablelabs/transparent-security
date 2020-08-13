@@ -54,7 +54,7 @@
           src: "{{ local_srvc_script_tmplt_file }}"
           dest: "{{ remote_scripts_dir }}/{{ srvc_name }}.sh"
 
-      - name: Copy {{ additional_tmplt_file }} to {{ remote_scripts_dir }}
+      - name: Copy {{ additional_tmplt_file }} to {{ additional_tmplt_out_file }}
         template:
           src: "{{ additional_tmplt_file }}"
           dest: "{{ additional_tmplt_out_file }}"
