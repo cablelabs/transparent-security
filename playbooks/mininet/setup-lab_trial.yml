@@ -37,12 +37,3 @@
     p4_platform: bmv2
     load_p4: True
     add_data_inspection: False
-
-- import_playbook: ../general/start_service.yml
-  vars:
-    host_val: localhost
-    service_name: tps-ae
-    srvc_desc: 'TPS-AE'
-    srvc_type: 'SIMPLE'
-    local_srvc_script_tmplt_file: ../general/templates/ae_service.sh.j2
-    monitor_intf: "{{ ae_monitor_intf }}"

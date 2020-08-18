@@ -10,6 +10,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import ipaddress
 from logging import getLogger
 from trans_sec.controller.abstract_controller import AbstractController
 from trans_sec.controller.ddos_sdn_controller import GATEWAY_CTRL_KEY
@@ -17,7 +18,7 @@ from trans_sec.controller.ddos_sdn_controller import GATEWAY_CTRL_KEY
 logger = getLogger('gateway_controller')
 
 try:
-    from trans_sec.p4runtime_lib.aggregate_switch import (
+    from trans_sec.p4runtime_lib.gateway_switch import (
         GatewaySwitch as P4RTSwitch)
 except Exception as e:
     logger.warning(
@@ -25,8 +26,8 @@ except Exception as e:
         "trans_sec.p4runtime_lib.aggregate_switch.AggregateSwitch", e)
 
 try:
-    from trans_sec.bfruntime_lib.aggregate_switch import (
-        Ga as BFRTSwitch)
+    from trans_sec.bfruntime_lib.gateway_switch import (
+        GatewaySwitch as BFRTSwitch)
 except Exception as e:
     logger.warning(
         "Error [%s] - while attempting to import "
@@ -91,3 +92,52 @@ class GatewayController(AbstractController):
                 if add_di:
                     sw.add_data_inspection(dev_id=device['id'],
                                            dev_mac=device['mac'])
+
+    def __process_gw_attack(self, attack, host):
+        attack_switch = None
+        for switch in self.switches:
+            if switch.type == 'gateway':
+                di_match_mac = switch.get_data_inspection_src_mac_keys()
+                if len(di_match_mac) > 0:
+                    logger.debug(
+                        'Data inspection table keys on device [%s] - [%s]',
+                        switch.sw_info['id'], di_match_mac)
+                    if attack['src_mac'] in di_match_mac:
+                        logger.info('Found source switch - [%s]', switch.name)
+                        attack_switch = switch
+                else:
+                    attack_switch = self.switches[0]
+                    break
+        if attack_switch:
+            logger.info('Adding an attack [%s] to host [%s] and switch [%s]',
+                        attack, host, attack_switch.name)
+            ip_addr = ipaddress.ip_address(attack['src_ip'])
+            logger.info('Attack ip addr - [%s]', ip_addr)
+            logger.debug('Attack ip addr class - [%s]', ip_addr.__class__)
+            if ip_addr.version == 6:
+                logger.debug('Attack is IPv6')
+                proto_key = 'ipv6'
+            else:
+                logger.debug('Attack is IPv4')
+                proto_key = 'ipv4'
+
+            dst_addr_key = 'hdr.{}.dstAddr'.format(proto_key)
+            return attack_switch, dst_addr_key
+        else:
+            return None
+
+    def add_attacker(self, attack, host):
+        logger.info('Attack received by the controller of type [%s] - [%s]',
+                    self.switch_type, attack)
+        attack_switch, dst_addr_key = self.__process_gw_attack(attack, host)
+        if attack_switch and dst_addr_key:
+            attack['host'] = host
+            attack[dst_addr_key] = attack['src_ip']
+            attack_switch.add_attack(**attack)
+
+    def remove_attacker(self, attack, host):
+        attack_switch, dst_addr_key = self.__process_gw_attack(attack, host)
+        if attack_switch and dst_addr_key:
+            attack['host'] = host
+            attack[dst_addr_key] = attack['src_ip']
+            attack_switch.stop_attack(**attack)

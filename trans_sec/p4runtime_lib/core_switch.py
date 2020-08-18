@@ -29,7 +29,6 @@
 #
 import logging
 import socket
-from abc import ABC
 
 from trans_sec.consts import UDP_INT_DST_PORT
 from trans_sec.p4runtime_lib.p4rt_switch import P4RuntimeSwitch
@@ -80,8 +79,8 @@ class CoreSwitch(P4RuntimeSwitch):
         action_name = '{}.data_inspect_packet'.format(self.p4_ingress)
         logger.info(
             'Insert params into table - [%s] for action [%s] '
-            'with params [%s] fields [%s] ',
-            table_name, action_name, action_params,)
+            'with params [%s]',
+            table_name, action_name, action_params)
         table_entry = self.p4info_helper.build_table_entry(
             table_name=table_name,
             match_fields={

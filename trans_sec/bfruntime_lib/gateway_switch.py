@@ -28,14 +28,15 @@
 # limitations under the License.
 #
 import logging
+from abc import ABC
 
 from trans_sec.bfruntime_lib.bfrt_switch import BFRuntimeSwitch
 
 logger = logging.getLogger('gateway_switch')
 
 
-class GatewaySwitch(BFRuntimeSwitch):
-    def __init__(self, p4info_helper, sw_info, proto_dump_file=None):
+class GatewaySwitch(BFRuntimeSwitch, ABC):
+    def __init__(self, sw_info, proto_dump_file=None):
         """
         Construct Switch class to control BMV2 switches running gateway.p4
         """

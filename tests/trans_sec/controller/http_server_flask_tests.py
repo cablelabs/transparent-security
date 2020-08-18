@@ -70,3 +70,11 @@ class TestSDNController:
     @staticmethod
     def remove_attacker(body):
         logging.info('Removing an attacker - [%s]', body)
+
+    @staticmethod
+    def add_agg_attacker(body):
+        logging.info('Adding an attacker - [%s]', body)
+
+    @staticmethod
+    def remove_agg_attacker(body):
+        logging.info('Removing an attacker - [%s]', body)

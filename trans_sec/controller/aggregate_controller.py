@@ -82,3 +82,18 @@ class AggregateController(AbstractController):
                         north_link.get('south_facing_port'))
         else:
             logger.info('No north links to install')
+
+    def __get_agg_switch(self):
+        return self.switches[0]
+
+    def add_attacker(self, attack, host):
+        logger.info('Attack received by the controller of type [%s] - [%s]',
+                    self.switch_type, attack)
+        agg_switch = self.__get_agg_switch()
+        if agg_switch:
+            agg_switch.add_attack(agg_switch, attack)
+
+    def remove_attacker(self, attack, host):
+        agg_switch = self.__get_agg_switch()
+        if agg_switch:
+            agg_switch.remove_attack(agg_switch, attack)

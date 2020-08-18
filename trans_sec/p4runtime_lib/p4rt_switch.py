@@ -282,6 +282,7 @@ class P4RuntimeSwitch(SwitchConnection, ABC):
 
         out = set()
         for match_val in match_vals:
+            logger.debug('match_val - [%s]', match_val)
             for key, value in match_val.items():
                 if key == 'hdr.ethernet.src_mac':
                     out.add(decode_mac(value))
@@ -455,8 +456,10 @@ class P4RuntimeSwitch(SwitchConnection, ABC):
         if mc_entries:
             multicast_entry = self.p4info_helper.build_multicast_group_entry(
                 mc_group_id, mc_entries)
-            logger.info('Build Multicast Entry on device [%s] with address [%s]: [%s]',
-                        self.sw_info.get('name'), self.grpc_addr, multicast_entry)
+            logger.info('Build Multicast Entry on device [%s] with address '
+                        '[%s]: [%s]',
+                        self.sw_info.get('name'), self.grpc_addr,
+                        multicast_entry)
 
             request = self.__get_write_request()
             update = request.updates.add()
