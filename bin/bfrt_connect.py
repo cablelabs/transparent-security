@@ -37,7 +37,7 @@ def get_args():
     parser.add_argument('-c', '--client-id', required=False, default=0,
                         type=int, help='The client ID - default 0')
     parser.add_argument('-d', '--device-id', required=False, default=0,
-                        help='The device ID - default 0')
+                        type=int, help='The device ID - default 0')
     parser.add_argument('-m', '--is-master', required=False, type=bool,
                         default=False, help='Is master client')
     parser.add_argument('-t', '--table-name', required=False,
@@ -75,10 +75,13 @@ if __name__ == '__main__':
     stream_msg_resp = client_stub.StreamChannel(iter(requests_stream))
 
     logger.info('Creating client interface with client stub')
+    logger.debug('grpc-addr - [%s], client_id - [%s], device_id - [%s], '
+                 'is_master - [%s]',
+                 args.grpc_addr, args.client_id, args.device_id,
+                 args.is_master)
     interface = bfrt_client.ClientInterface(
         grpc_addr=args.grpc_addr, client_id=args.client_id,
         device_id=args.device_id, is_master=args.is_master)
-
     logger.info('Clearing tables')
     interface.clear_all_tables()
     logger.info('Completed clearing tables')
