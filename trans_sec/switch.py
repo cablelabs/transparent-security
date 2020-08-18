@@ -32,6 +32,7 @@ class SwitchConnection(object):
     def __init__(self, sw_info):
         self.sw_info = sw_info
         self.name = sw_info['name']
+        self.type = sw_info['type']
         self.device_id = sw_info['id']
         self.grpc_addr = sw_info['grpc']
         self.digest_thread = Thread(target=self.receive_digests)
@@ -139,6 +140,14 @@ class SwitchConnection(object):
     @abstractmethod
     def add_data_inspection(self, **kwargs):
         raise NotImplemented
+
+    def add_attack(self, **kwargs):
+        logger.info('Switch does not support attack mitigation')
+        pass
+
+    def stop_attack(self, **kwargs):
+        logger.info('Switch does not support attack mitigation')
+        pass
 
     def add_switch_id(self, dev_id):
         pass

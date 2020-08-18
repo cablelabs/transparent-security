@@ -27,7 +27,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import ipaddress
 import logging
+from abc import ABC
 
 from trans_sec.p4runtime_lib.p4rt_switch import P4RuntimeSwitch
 from trans_sec.consts import IPV4_TYPE, IPV6_TYPE
@@ -36,7 +38,7 @@ from trans_sec.utils.convert import decode_num, decode_ipv4
 logger = logging.getLogger('gateway_switch')
 
 
-class GatewaySwitch(P4RuntimeSwitch):
+class GatewaySwitch(P4RuntimeSwitch, ABC):
     def __init__(self, sw_info, proto_dump_file=None):
         """
         Construct Switch class to control BMV2 switches running gateway.p4
@@ -118,6 +120,93 @@ class GatewaySwitch(P4RuntimeSwitch):
             'Installed Northbound Packet Inspection for device with'
             ' MAC - [%s] with action params - [%s]',
             dev_mac, action_params)
+
+    @staticmethod
+    def __parse_attack(**kwargs):
+        src_ip = ipaddress.ip_address(kwargs['src_ip'])
+        dst_ip = ipaddress.ip_address(kwargs['dst_ip'])
+        udp_table_name = 'data_drop_udp_ipv{}_t'.format(dst_ip.version)
+        tcp_table_name = 'data_drop_tcp_ipv{}_t'.format(dst_ip.version)
+        action_name = 'data_drop'
+
+        logger.info('Attack src_ip - [%s], dst_ip - [%s]', src_ip, dst_ip)
+        # TODO - Add back source IP address as a match field after adding
+        #  mitigation at the Aggregate
+        if dst_ip.version == 6:
+            logger.debug('Attack is IPv6')
+            proto_key = 'ipv6'
+        else:
+            logger.debug('Attack is IPv4')
+            proto_key = 'ipv4'
+
+        dst_addr_key = 'hdr.{}.dstAddr'.format(proto_key)
+
+        out = (udp_table_name, tcp_table_name, action_name,
+               str(dst_ip.exploded), dst_addr_key)
+        logger.info('Attack data - [%s]', out)
+        return out
+
+    def add_attack(self, **kwargs):
+        logger.info('Adding attack [%s]', kwargs)
+        udp_tn, tcp_tn, action_name, dst_ip, dst_addr_key = \
+            self.__parse_attack(**kwargs)
+
+        self.insert_p4_table_entry(
+            table_name=udp_tn,
+            action_name=action_name,
+            match_fields={
+                'hdr.ethernet.src_mac': kwargs['src_mac'],
+                dst_addr_key: str(dst_ip),
+                'hdr.udp.dst_port': int(kwargs['dst_port']),
+            },
+            action_params={'device': self.device_id},
+            ingress_class=True,
+         )
+        logger.info('%s Dropping UDP Packets from %s',
+                    self.name, kwargs.get('src_ip'))
+        self.insert_p4_table_entry(
+            table_name=tcp_tn,
+            action_name=action_name,
+            match_fields={
+                'hdr.ethernet.src_mac': kwargs['src_mac'],
+                dst_addr_key: str(dst_ip),
+                'hdr.tcp.dst_port': int(kwargs['dst_port']),
+            },
+            action_params={'device': self.device_id},
+            ingress_class=True,
+         )
+        logger.info('%s Dropping TCP Packets from %s',
+                    self.name, kwargs.get('src_ip'))
+
+    def stop_attack(self, **kwargs):
+        logger.info('Stopping attack [%s]', kwargs)
+        udp_tn, tcp_tn, action_name, dst_ip, dst_addr_key = \
+            self.__parse_attack(**kwargs)
+
+        self.delete_p4_table_entry(
+            table_name=udp_tn,
+            action_name=action_name,
+            match_fields={
+                'hdr.ethernet.src_mac': kwargs['src_mac'],
+                dst_addr_key: dst_ip,
+                'hdr.udp.dst_port': int(kwargs['dst_port']),
+            },
+            ingress_class=True,
+         )
+        logger.info('%s no longer dropping UDP Packets from %s',
+                    self.name, kwargs.get('src_ip'))
+        self.delete_p4_table_entry(
+            table_name=tcp_tn,
+            action_name=action_name,
+            match_fields={
+                'hdr.ethernet.src_mac': kwargs['src_mac'],
+                dst_addr_key: dst_ip,
+                'hdr.tcp.dst_port': int(kwargs['dst_port']),
+            },
+            ingress_class=True,
+         )
+        logger.info('%s no longer dropping TCP Packets from %s',
+                    self.name, kwargs.get('src_ip'))
 
     def add_nat_table(self, udp_source_port, tcp_source_port, source_ip):
         gateway_public_ip = self.sw_info['public_ip']

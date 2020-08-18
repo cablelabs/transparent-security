@@ -201,17 +201,11 @@
         msg: "{{ max_packet_count }} < {{ packet_count }} or {{ min_packet_count }} > {{ packet_count }}"
       when: min_packet_count|int > packet_count|int or max_packet_count|int < packet_count|int
 
-    - name: Call http://{{ sdn_host_port }}/stopAttack
+    - name: Call web service
       uri:
-        url: "http://{{ sdn_host_port }}/stopAttack"
-        method: POST
+        url: "{{ cleanup_rest_call.url }}"
+        method: "{{ cleanup_rest_call.method }}"
         body_format: json
-        body:
-          src_ip: "{{ sender_ip }}"
-          packet_size: 112
-          attack_type: "UDP Flood"
-          dst_port: "{{ send_port }}"
-          dst_ip: "{{ receiver_ip }}"
-          src_mac: "{{ sender.mac }}"
-        status_code: 201
-      when: sdn_host_port is defined
+        body: "{{ cleanup_rest_call.body }}"
+        status_code: "{{ cleanup_rest_call.ok_status }}"
+      when: cleanup_rest_call is defined

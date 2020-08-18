@@ -36,10 +36,16 @@ class SDNControllerServer:
     def start(self):
         self.thread.start()
         self.api.add_resource(
-            Attack, '/attack',
+            GwAttack, '/attack',
             resource_class_kwargs={'sdn_controller': self.sdn_controller})
         self.api.add_resource(
-            StopAttack, '/stopAttack',
+            StopGwAttack, '/stopAttack',
+            resource_class_kwargs={'sdn_controller': self.sdn_controller})
+        self.api.add_resource(
+            AggAttack, '/aggAttack',
+            resource_class_kwargs={'sdn_controller': self.sdn_controller})
+        self.api.add_resource(
+            StopAggAttack, '/stopAggAttack',
             resource_class_kwargs={'sdn_controller': self.sdn_controller})
         self.api.add_resource(Shutdown, '/shutdown')
 
@@ -55,7 +61,10 @@ class SDNControllerServer:
         self.server_start = http_server.run(host=self.host, port=self.port)
 
 
-class Attack(Resource):
+class GwAttack(Resource):
+    """
+    Class for exposing web service to issue an attack call to gateway.p4
+    """
     def __init__(self, **kwargs):
         self.sdn_controller = kwargs['sdn_controller']
 
@@ -75,7 +84,10 @@ class Attack(Resource):
         return json.dumps({"success": True}), 201
 
 
-class StopAttack(Resource):
+class StopGwAttack(Resource):
+    """
+    Class for exposing web service to issue a stop attack call to gateway.p4
+    """
     def __init__(self, **kwargs):
         self.sdn_controller = kwargs['sdn_controller']
 
@@ -92,6 +104,46 @@ class StopAttack(Resource):
 
         logger.info('Attack args - [%s]', args)
         self.sdn_controller.remove_attacker(args)
+        return json.dumps({"success": True}), 201
+
+
+class AggAttack(Resource):
+    """
+    Class for exposing web service to issue an attack call to aggregate.p4
+    """
+    def __init__(self, **kwargs):
+        self.sdn_controller = kwargs['sdn_controller']
+
+    def post(self):
+        logger.info('Attack requested')
+        parser = reqparse.RequestParser()
+        parser.add_argument('src_mac', type=str)
+        parser.add_argument('dst_ip', type=str)
+        parser.add_argument('dst_port', type=str)
+        args = parser.parse_args()
+
+        logger.info('Attack args - [%s]', args)
+        self.sdn_controller.add_agg_attacker(args)
+        return json.dumps({"success": True}), 201
+
+
+class StopAggAttack(Resource):
+    """
+    Class for exposing web service to issue a stop attack acll to aggregate.p4
+    """
+    def __init__(self, **kwargs):
+        self.sdn_controller = kwargs['sdn_controller']
+
+    def post(self):
+        logger.info('Attacker to remove')
+        parser = reqparse.RequestParser()
+        parser.add_argument('src_mac', type=str)
+        parser.add_argument('dst_ip', type=str)
+        parser.add_argument('dst_port', type=str)
+        args = parser.parse_args()
+
+        logger.info('Attack args - [%s]', args)
+        self.sdn_controller.remove_agg_attacker(args)
         return json.dumps({"success": True}), 201
 
 

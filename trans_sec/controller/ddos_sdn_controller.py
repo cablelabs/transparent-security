@@ -14,7 +14,6 @@ from logging import getLogger
 from time import sleep
 
 from trans_sec.controller.http_server_flask import SDNControllerServer
-from trans_sec.packet.packet_telemetry import PacketTelemetry
 
 # Logger stuff
 logger = getLogger('ddos_sdn_controller')
@@ -31,7 +30,6 @@ class DdosSdnController:
     def __init__(self, topo, controllers, http_server_port):
 
         self.topo = topo
-        self.packet_telemetry = PacketTelemetry()
         self.controllers = controllers
         self.http_server = SDNControllerServer(self, http_server_port)
         self.running = False
@@ -43,7 +41,6 @@ class DdosSdnController:
 
         logger.debug('Making switch rules with data inspection - [%s]', add_di)
         self.__make_switch_rules(add_di)
-        self.__build_skeleton_packet_telemetry()
 
         logger.info('Starting HTTP server on port - [%s]',
                     self.http_server.port)
@@ -67,51 +64,6 @@ class DdosSdnController:
             controller.make_switch_rules(add_di)
         logger.debug('Switch rule creation completed')
 
-    def __build_skeleton_packet_telemetry(self):
-        logger.info('Building skeleton packet telemetry')
-        for host, host_info in self.topo['hosts'].items():
-            self.packet_telemetry.add_host(
-                host_info['id'], host_info['mac'],
-                host_info['name'], host_info['type'])
-
-        for switch, switch_info in self.topo['switches'].items():
-            self.packet_telemetry.add_switch(
-                switch_info['id'], switch_info['mac'],
-                switch_info['name'], switch_info['type'])
-
-        for switch, switch_info in self.topo['switches'].items():
-            conditions = {'north_node': switch}
-            south_facing_links = filter(
-                lambda item: all(
-                    (item[k] == v for (k, v) in conditions.items())),
-                self.topo.get('links')
-            )
-
-            for link in south_facing_links:
-                device_name = link.get('south_node')
-                if self.topo.get('hosts').get(device_name) is None:
-                    if self.topo.get('switches').get(device_name) is None:
-                        if self.topo.get('external').get(device_name) is None:
-                            logger.warning(
-                                'Unknown device type in link %s', device_name)
-                        else:
-                            logger.info(
-                                'Ignoring Externals for packet telemetry')
-                    else:
-                        device = self.topo.get('switches').get(device_name)
-                        self.packet_telemetry.add_child(
-                            switch_info['id'], device['id'])
-                        logger.debug(
-                            'Added Switch %s southbound of %s',
-                            device.get('name'), switch_info.get('name'))
-                else:
-                    device = self.topo.get('hosts').get(device_name)
-                    self.packet_telemetry.add_child(
-                        switch_info['id'], device['id'])
-                    logger.debug(
-                        'Added Device %s southbound of %s' %
-                        (device.get('name'), switch_info.get('name')))
-
     def remove_attacker(self, attack):
         """
         Removes a device to mitigate an attack
@@ -121,11 +73,10 @@ class DdosSdnController:
         logger.info('Adding attack to gateways with host - [%s]', host)
         try:
             gw_controller.remove_attacker(attack, host)
-            self.packet_telemetry.register_attack(host['id'])
         except Exception as e:
             logger.error(
-                'Error adding attacker to host - [%s] with error - '
-                '[%s])', host['name'], e)
+                'Error removing attacker to host - [%s] with error - [%s])',
+                host, e)
 
     def add_attacker(self, attack):
         """
@@ -136,11 +87,37 @@ class DdosSdnController:
         logger.info('Adding attack to gateways with host - [%s]', host)
         try:
             gw_controller.add_attacker(attack, host)
-            self.packet_telemetry.register_attack(host['id'])
         except Exception as e:
             logger.error(
-                'Error adding attacker to host - [%s] with error - '
-                '[%s])', host['name'], e)
+                'Error adding attacker to host - [%s] with error - [%s])',
+                host, e)
+            raise e
+
+    def remove_agg_attacker(self, attack):
+        """
+        Removes a device to mitigate an attack
+        :param attack: dict of attack
+        """
+        raise NotImplementedError
+        # agg_controller = self.get_agg_controller(attack)
+        # logger.info('Adding attack to aggregate')
+        # try:
+        #     agg_controller.remove_attacker(attack)
+        # except Exception as e:
+        #     logger.error('Error adding attacker with error - [%s])', e)
+
+    def add_agg_attacker(self, attack):
+        """
+        Adds a device to mitigate an attack
+        :param attack: dict of attack
+        """
+        raise NotImplementedError
+        # agg_controller = self.get_agg_controller(attack)
+        # logger.info('Adding attack to aggregate')
+        # try:
+        #     agg_controller.add_attacker(attack)
+        # except Exception as e:
+        #     logger.error('Error adding attacker with error - [%s])', e)
 
     def __get_attack_host(self, attack):
         """

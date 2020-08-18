@@ -27,6 +27,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import ipaddress
 import logging
 
 from trans_sec.p4runtime_lib.p4rt_switch import P4RuntimeSwitch
@@ -87,6 +88,66 @@ class AggregateSwitch(P4RuntimeSwitch):
             'Installed Northbound Packet Inspection for device - [%s]'
             ' with MAC - [%s] with action params - [%s]',
             AGG_CTRL_KEY, dev_mac, action_params)
+
+    @staticmethod
+    def __parse_attack(**kwargs):
+        dst_ip = ipaddress.ip_address(kwargs['dst_ip'])
+        action_name = 'data_drop'
+
+        logger.info('Attack dst_ip - [%s]', dst_ip)
+        # TODO - Add back source IP address as a match field after adding
+        #  mitigation at the Aggregate
+        dst_ipv4 = None
+        dst_ipv6 = None
+        if dst_ip.version == 6:
+            logger.debug('Attack is IPv6')
+            dst_ipv6 = str(dst_ip.exploded)
+        else:
+            logger.debug('Attack is IPv4')
+            dst_ipv4 = str(dst_ip.exploded)
+
+        dst_port_key = 'metadata.dst_port'
+        return action_name, dst_ipv4, dst_ipv6, dst_port_key
+
+    def add_attack(self, **kwargs):
+        logger.info('Adding attack [%s]', kwargs)
+        action_name, dst_ipv4, dst_ipv6, dst_port_key = \
+            self.__parse_attack(**kwargs)
+
+        self.insert_p4_table_entry(
+            table_name='data_drop_t',
+            action_name=action_name,
+            match_fields={
+                'metadata.src_mac': kwargs['src_mac'],
+                'metadata.dst_ipv4': kwargs['src_mac'],
+                'metadata.dst_ipv6': kwargs['src_mac'],
+                dst_port_key: int(kwargs['dst_port']),
+            },
+            action_params={'device': self.device_id},
+            ingress_class=True,
+         )
+        logger.info('%s Dropping TCP Packets from %s',
+                    self.name, kwargs.get('src_ip'))
+
+    def stop_attack(self, **kwargs):
+        logger.info('Adding attack [%s]', kwargs)
+        action_name, dst_ipv4, dst_ipv6, dst_port_key = \
+            self.__parse_attack(**kwargs)
+
+        self.delete_p4_table_entry(
+            table_name='data_drop_t',
+            action_name=action_name,
+            match_fields={
+                'metadata.src_mac': kwargs['src_mac'],
+                'metadata.dst_ipv4': kwargs['src_mac'],
+                'metadata.dst_ipv6': kwargs['src_mac'],
+                dst_port_key: int(kwargs['dst_port']),
+            },
+            action_params=None,
+            ingress_class=True,
+         )
+        logger.info('%s Dropping TCP Packets from %s',
+                    self.name, kwargs.get('src_ip'))
 
     def add_switch_id(self, dev_id):
         action_params = {
