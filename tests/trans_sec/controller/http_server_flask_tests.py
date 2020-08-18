@@ -54,7 +54,7 @@ class HttpSessionTests(unittest.TestCase):
             'packet_size': '12',
             'attack_type': 'test',
         }
-        ret_val = requests.post(url='http://127.0.0.1:9998/attack',
+        ret_val = requests.post(url='http://127.0.0.1:9998/gwAttack',
                                 params=attack)
         self.assertEquals(201, ret_val.status_code)
 

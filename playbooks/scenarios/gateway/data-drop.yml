@@ -30,20 +30,13 @@
     send_sw_port: "{{ topo_dict.links[0].south_facing_port }}"
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
-    attack_body:
-      src_ip: "{% if scenario_send_ip_version|int == 4 %}{{ sender.ip }}{% else %}{{ sender.ipv6 }}{% endif %}"
-      packet_size: 112
-      attack_type: "UDP Flood"
-      dst_port: "{{ send_port }}"
-      dst_ip: "{% if scenario_send_ip_version|int == 4 %}{{ receiver.ip }}{% else %}{{ receiver.ipv6 }}{% endif %}"
-      src_mac: "{{ sender.mac }}"
-    start_attack:
-      url: "http://{{ sdn_ip }}:{{ sdn_port }}/attack"
-      method: POST
-      body: "{{ attack_body }}"
-      ok_status: 201
-    stop_attack:
-      url: "http://{{ sdn_ip }}:{{ sdn_port }}/stopAttack"
-      method: POST
-      body: "{{ attack_body }}"
+    attack:
+      url: "http://{{ sdn_ip }}:{{ sdn_port }}/gwAttack"
+      body:
+        src_ip: "{% if scenario_send_ip_version|int == 4 %}{{ sender.ip }}{% else %}{{ sender.ipv6 }}{% endif %}"
+        packet_size: 112
+        attack_type: "UDP Flood"
+        dst_port: "{{ send_port }}"
+        dst_ip: "{% if scenario_send_ip_version|int == 4 %}{{ receiver.ip }}{% else %}{{ receiver.ipv6 }}{% endif %}"
+        src_mac: "{{ sender.mac }}"
       ok_status: 201
