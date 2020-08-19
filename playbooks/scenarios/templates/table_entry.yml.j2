@@ -30,7 +30,7 @@
 {% endif %}
 {% endfor %}
 {% endif %}
-{% if table_action.action.params %}
+{% if table_action.action.params is defined %}
   action_params:
 {% for action_param in table_action.action.params %}
     {{ action_param.key }}: {{ action_param.value }}

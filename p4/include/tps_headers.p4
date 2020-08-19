@@ -13,7 +13,6 @@
 # limitations under the License.
 */
 /* -*- P4_16 -*- */
-
 /*************************************************************************
 *********************** H E A D E R S  ***********************************
 *************************************************************************/
@@ -21,7 +20,6 @@ typedef bit<9>  egressSpec_t;
 typedef bit<48> macAddr_t;
 typedef bit<32> ip4Addr_t;
 typedef bit<128> ip6Addr_t;
-
 /*************************
 Ethernet header definition
 **************************/
@@ -30,7 +28,6 @@ header ethernet_t {
     macAddr_t src_mac;
     bit<16>   etherType;
 }
-
 /*************************
 ARP header definition
 **************************/
@@ -62,7 +59,6 @@ header ipv4_t {
     ip4Addr_t srcAddr;
     ip4Addr_t dstAddr;
 }
-
 /*************************
 IPv6 header definition
 **************************/
@@ -76,7 +72,6 @@ header ipv6_t {
     ip6Addr_t srcAddr;
     ip6Addr_t dstAddr;
 }
-
 /*************************
 UDP header definition
 **************************/
@@ -86,7 +81,6 @@ header udp_t {
     bit<16> len;
     bit<16> cksum;
 }
-
 /*************************
 TCP header definition
 **************************/
@@ -103,7 +97,6 @@ header tcp_t {
     bit<16> checksum;
     bit<16> urgentPtr;
 }
-
 /******************************************
 External Gateway INT Data header definition
 *******************************************/
@@ -115,7 +108,6 @@ header int_udp_shim_t { /* 4 */
     bit<8>  res2;
     bit<8>  next_proto;
 }
-
 header int_header_t { /* 12 */
     bit<4>  ver;
     bit<2>  res;
@@ -134,17 +126,14 @@ header int_header_t { /* 12 */
     bit<1>  ds_flags_1;
     bit<14> ds_flags_bal;
 }
-
 header source_metadata_t { /* 12 */
     bit<32>  switch_id;
     bit<48>  orig_mac;
     bit<16>  reserved;
 }
-
 header int_metadata_t { /* 4 */
     bit<32>  switch_id;
 }
-
 header telem_rpt_t { /* 10 */
     bit<4>  ver;
     bit<6>  hw_id;
@@ -211,14 +200,12 @@ header telem_rpt_t { /* 10 */
     bit<1>  ds_mds_bit15;
     bit<32> var_opt_md;
 }
-
 struct headers {
     ethernet_t        trpt_eth;
     ipv4_t            trpt_ipv4;
     ipv6_t            trpt_ipv6;
     udp_t             trpt_udp;
     telem_rpt_t       trpt_hdr;
-
     ethernet_t        ethernet;
     ipv4_t            ipv4;
     ipv6_t            ipv6;
@@ -228,22 +215,21 @@ struct headers {
     int_metadata_t    int_meta_3;
     int_metadata_t    int_meta_2;
     source_metadata_t int_meta;
-
     arp_t             arp;
     udp_t             udp;
     tcp_t             tcp;
 }
-
 struct mac_learn_digest {
     bit<48> src_mac;
     bit<9> ingress_port;
 }
-
 struct nat_digest {
    bit<16> udp_src_port;
    bit<16> tcp_src_port;
    bit<32> local_ip;
 }
-
 struct metadata {
+    ip4Addr_t  ipv4_addr;
+    ip6Addr_t  ipv6_addr;
+    bit<16>    dst_port;
 }

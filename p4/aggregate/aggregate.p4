@@ -31,6 +31,7 @@ control TpsAggIngress(inout headers hdr,
                       inout standard_metadata_t standard_metadata) {
 
     counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) forwardedPackets;
+
     action pack_meta_tcp() {
         meta.dst_port = hdr.tcp.dst_port;
     }
