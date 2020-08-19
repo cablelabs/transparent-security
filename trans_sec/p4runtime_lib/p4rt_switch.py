@@ -76,6 +76,7 @@ class P4RuntimeSwitch(SwitchConnection, ABC):
 
     def get_table_entry(self, table_name, action_name, match_fields,
                         action_params, ingress_class=True):
+        logger.info("Access P4 table [%s]", table_name)
         if ingress_class:
             tbl_class = self.p4_ingress
         else:

@@ -99,14 +99,15 @@ class AggAttack(Resource):
     """
     def __init__(self, **kwargs):
         self.sdn_controller = kwargs['sdn_controller']
+        self.parser = reqparse.RequestParser()
+        self.parser.add_argument('src_mac', type=str)
+        self.parser.add_argument('dst_ip', type=str)
+        self.parser.add_argument('dst_port', type=str)
+
 
     def post(self):
         logger.info('Attack requested')
-        parser = reqparse.RequestParser()
-        parser.add_argument('src_mac', type=str)
-        parser.add_argument('dst_ip', type=str)
-        parser.add_argument('dst_port', type=str)
-        args = parser.parse_args()
+        args = self.parser.parse_args()
 
         logger.info('Attack args - [%s]', args)
         self.sdn_controller.add_agg_attacker(args)
@@ -114,11 +115,7 @@ class AggAttack(Resource):
 
     def delete(self):
         logger.info('Attacker to remove')
-        parser = reqparse.RequestParser()
-        parser.add_argument('src_mac', type=str)
-        parser.add_argument('dst_ip', type=str)
-        parser.add_argument('dst_port', type=str)
-        args = parser.parse_args()
+        args = self.parser.parse_args()
 
         logger.info('Attack args - [%s]', args)
         self.sdn_controller.remove_agg_attacker(args)
