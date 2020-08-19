@@ -104,7 +104,6 @@ class AggAttack(Resource):
         self.parser.add_argument('dst_ip', type=str)
         self.parser.add_argument('dst_port', type=str)
 
-
     def post(self):
         logger.info('Attack requested')
         args = self.parser.parse_args()
