@@ -31,7 +31,37 @@ control TpsAggIngress(inout headers hdr,
                       inout standard_metadata_t standard_metadata) {
 
     counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) forwardedPackets;
-
+    action pack_meta_tcp() {
+        meta.dst_port = hdr.tcp.dst_port;
+    }
+    action pack_meta_udp() {
+        meta.dst_port = hdr.udp.dst_port;
+    }
+    action pack_meta_ipv4() {
+        meta.ipv6_addr = 0;
+        meta.ipv4_addr = hdr.ipv4.dstAddr;
+    }
+    action pack_meta_ipv6() {
+        meta.ipv4_addr = 0;
+        meta.ipv6_addr = hdr.ipv6.dstAddr;
+    }
+    action data_drop() {
+        mark_to_drop(standard_metadata);
+    }
+    table data_drop_t {
+        key = {
+            hdr.ethernet.src_mac: exact;
+            meta.ipv4_addr: exact;
+            meta.ipv6_addr: exact;
+            meta.dst_port: exact;
+        }
+        actions = {
+            data_drop;
+            NoAction;
+        }
+        size = TABLE_SIZE;
+        default_action = NoAction();
+    }
     action data_forward(egressSpec_t port) {
         standard_metadata.egress_spec = port;
     }
@@ -99,6 +129,7 @@ control TpsAggIngress(inout headers hdr,
     }
 
     action data_inspect_packet_ipv4() {
+
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
         hdr.ipv4.protocol = TYPE_UDP;
         hdr.int_shim.next_proto = hdr.ipv4.protocol;
@@ -109,6 +140,7 @@ control TpsAggIngress(inout headers hdr,
     }
 
     action data_inspect_packet_ipv6() {
+
         hdr.ipv6.next_hdr_proto = TYPE_UDP;
         hdr.int_shim.next_proto = hdr.ipv6.next_hdr_proto;
         #ifdef BMV2
@@ -207,23 +239,30 @@ control TpsAggIngress(inout headers hdr,
                 data_inspection_t.apply();
                 if (hdr.int_shim.isValid()) {
                     if (hdr.ipv4.isValid()) {
-                        data_inspect_packet_ipv4();
-                        if (hdr.udp.isValid()) {
-                            insert_udp_int_for_udp();
-                        } else if (hdr.tcp.isValid()) {
-                            insert_udp_int_for_tcp_ipv4();
-                        }
+                       data_inspect_packet_ipv4();
+                       if (hdr.udp.isValid()) {
+                           pack_meta_udp();
+                           insert_udp_int_for_udp();
+                       } else if (hdr.tcp.isValid()) {
+                           pack_meta_tcp();
+                           insert_udp_int_for_tcp_ipv4();
+                       }
+                       pack_meta_ipv4();
                     }
                     else if (hdr.ipv6.isValid()) {
-                        data_inspect_packet_ipv6();
-                        if (hdr.udp.isValid()) {
-                            insert_udp_int_for_udp();
-                        } else if (hdr.tcp.isValid()) {
-                            insert_udp_int_for_tcp_ipv6();
-                        }
-                    }
+                       data_inspect_packet_ipv6();
+                       if (hdr.udp.isValid()) {
+                           pack_meta_udp();
+                           insert_udp_int_for_udp();
+                       } else if (hdr.tcp.isValid()) {
+                           pack_meta_tcp();
+                           insert_udp_int_for_tcp_ipv6();
+                       }
+                       pack_meta_ipv6();
+                   }
                 }
             }
+            data_drop_t.apply();
             data_forward_t.apply();
         }
     }
