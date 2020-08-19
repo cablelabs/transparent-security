@@ -91,9 +91,10 @@ class AggregateController(AbstractController):
                     self.switch_type, attack)
         agg_switch = self.__get_agg_switch()
         if agg_switch:
-            agg_switch.add_attack(agg_switch, attack)
+            logger.info("Adding attack [%s] to Aggregate switch [%s]", attack, agg_switch.device_id)
+            agg_switch.add_attack(**attack)
 
     def remove_attacker(self, attack, host):
         agg_switch = self.__get_agg_switch()
         if agg_switch:
-            agg_switch.remove_attack(agg_switch, attack)
+            agg_switch.stop_attack(**attack)
