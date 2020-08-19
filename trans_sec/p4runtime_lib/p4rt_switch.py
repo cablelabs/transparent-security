@@ -102,19 +102,19 @@ class P4RuntimeSwitch(SwitchConnection, ABC):
             action_params)
         self.delete_table_entry(table_entry, election_high, election_low)
 
-    def add_data_forward(self, source_mac, ingress_port):
+    def __get_data_forward_table_entry(self, dst_mac, egress_port):
         logger.info(
-            'Adding data forward to device [%s] with source_mac '
+            'Adding data forward to device [%s] with destination MAC '
             '- [%s] and ingress port - [%s]',
-            self.grpc_addr, source_mac, ingress_port)
+            self.grpc_addr, dst_mac, egress_port)
 
         if self.sw_info['type'] == GATEWAY_CTRL_KEY:
             action_params = {
-                'port': ingress_port,
-                'switch_mac': self.sw_info['mac']
+                'port': egress_port,
+                'switch_mac': self.mac
             }
         else:
-            action_params = {'port': ingress_port}
+            action_params = {'port': egress_port}
 
         table_name = '{}.data_forward_t'.format(self.p4_ingress)
 
@@ -122,31 +122,52 @@ class P4RuntimeSwitch(SwitchConnection, ABC):
         logger.debug('Table keys to [%s] - [%s] on device [%s]',
                      table_name, table_keys, self.grpc_addr)
 
-        if source_mac not in table_keys:
-            logger.info(
-                'Inserting entry into table [%s] with key [%s] - port [%s] '
-                'on device [%s]',
-                table_name, source_mac, ingress_port, self.grpc_addr)
-            table_entry = self.p4info_helper.build_table_entry(
+        if dst_mac not in table_keys:
+            logger.info('Returning table entry for data_forward_t insertion')
+            return self.p4info_helper.build_table_entry(
                 table_name=table_name,
                 match_fields={
-                    'hdr.ethernet.dst_mac': source_mac
+                    'hdr.ethernet.dst_mac': dst_mac
                 },
                 action_name='{}.data_forward'.format(self.p4_ingress),
                 action_params=action_params
             )
-            self.write_table_entry(table_entry)
-
-            table_keys = self.get_data_forward_macs()
-            logger.debug(
-                'Keys after insert on device [%s] to table [%s] - [%s]',
-                self.grpc_addr, table_name, table_keys)
-            return True
+        elif not egress_port:
+            logger.info('Returning table entry for data_forward_t deletion')
+            return self.p4info_helper.build_table_entry(
+                table_name=table_name,
+                match_fields={
+                    'hdr.ethernet.dst_mac': dst_mac
+                },
+                action_name='{}.data_forward'.format(self.p4_ingress),
+            )
         else:
             logger.info(
                 'Data forward entry already inserted with key - [%s] '
                 'on device [%s]',
-                source_mac, self.grpc_addr)
+                dst_mac, self.grpc_addr)
+            return None
+
+    def add_data_forward(self, dst_mac, egress_port):
+        table_entry = self.__get_data_forward_table_entry(dst_mac, egress_port)
+        if table_entry:
+            self.write_table_entry(table_entry)
+            return True
+        else:
+            logger.warning(
+                'Unable to insert data_forward request with mac - [%s] & '
+                'port - [%s]', dst_mac, egress_port)
+            return False
+
+    def del_data_forward(self, dst_mac):
+        table_entry = self.__get_data_forward_table_entry(dst_mac, None)
+        if table_entry:
+            self.delete_table_entry(table_entry)
+            return True
+        else:
+            logger.warning(
+                'Unable to delete data_forward request with mac - [%s]',
+                dst_mac)
             return False
 
     def add_data_inspection(self, dev_id, dev_mac):

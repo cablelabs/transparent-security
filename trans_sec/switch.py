@@ -32,6 +32,7 @@ class SwitchConnection(object):
     def __init__(self, sw_info):
         self.sw_info = sw_info
         self.name = sw_info['name']
+        self.mac = sw_info['mac']
         self.type = sw_info['type']
         self.device_id = sw_info['id']
         self.grpc_addr = sw_info['grpc']
@@ -134,7 +135,11 @@ class SwitchConnection(object):
                                 election_low=election_low)
 
     @abstractmethod
-    def add_data_forward(self, source_mac, ingress_port):
+    def add_data_forward(self, dst_mac, egress_port):
+        raise NotImplemented
+
+    @abstractmethod
+    def del_data_forward(self, dst_mac):
         raise NotImplemented
 
     @abstractmethod

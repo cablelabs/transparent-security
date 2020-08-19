@@ -12,7 +12,6 @@
 # limitations under the License.
 
 import logging
-import struct
 from abc import ABC
 from threading import Thread
 
@@ -59,7 +58,7 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
                         action_params, ingress_class=True):
         raise NotImplementedError
 
-    def add_data_forward(self, source_mac, ingress_port):
+    def add_data_forward(self, dst_mac, egress_port):
         raise NotImplementedError
 
     def build_device_config(self):

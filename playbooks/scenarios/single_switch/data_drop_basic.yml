@@ -13,15 +13,20 @@
 # Simple scenario where packets are sent through 3 devices and only the last
 # one will be demonstrating dropped packets
 ---
-# Add table entry to "{{ data_forward_table }}"
-- import_playbook: ../test_cases/write_to_p4_table.yml
+# Add table entry to data_forward_t table
+- hosts: "{{ rec_host }}"
+  gather_facts: no
   vars:
-    int_hops: "{{ sr_rec_int_hops | default(0) }}"
-    te_conf_file: "df-write-data-forward-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
-    p4_table_action: "{{ data_forward_table_action }}"
-    p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: "df-write-data-forward-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
     execute_insert: "{{ write_data_forward | default(False) }}"
+  tasks:
+    - name: Insert data forward table entry via endpoint {{ data_forward.url }}
+      uri:
+        url: "{{ data_forward.url }}"
+        method: POST
+        body_format: "{{ data_forward.body_format | default('json') }}"
+        body: "{{ data_forward.body }}"
+        status_code: "{{ data_forward.ok_status | default('200') }}"
+      when: execute_insert|bool
 
 # Sending UDP packets expect all to be received
 - import_playbook: ../test_cases/send_receive.yml
@@ -84,13 +89,17 @@
     inspection_data: "{{ sr3_data_inspection_int | default(None) }}"
     max_received_packet_count: "{{ send_packet_count }}"
 
-# Delete table entry from "{{ data_forward_table }}"
-- import_playbook: ../test_cases/write_to_p4_table.yml
+# Delete table entry from data_forward_t table
+- hosts: "{{ rec_host }}"
+  gather_facts: no
   vars:
-    int_hops: "{{ sr_rec_int_hops | default(0) }}"
-    te_conf_file: "df-write-data-forward-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
-    p4_table_action: "{{ data_forward_table_action }}"
-    p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: "df-write-data-forward-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
-    p4_te_insert: False
     execute_insert: "{{ write_data_forward | default(False) }}"
+  tasks:
+    - name: Insert data forward table entry via endpoint {{ data_forward.url }}
+      uri:
+        url: "{{ data_forward.url }}"
+        method: DELETE
+        body_format: "{{ data_forward.body_format | default('json') }}"
+        body: "{{ data_forward.body }}"
+        status_code: "{{ data_forward.ok_status | default('200') }}"
+      when: execute_insert|bool

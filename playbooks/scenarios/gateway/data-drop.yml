@@ -30,6 +30,14 @@
     send_sw_port: "{{ topo_dict.links[0].south_facing_port }}"
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
+    data_forward:
+      url: "http://{{ sdn_ip }}:{{ sdn_port }}/dataForward"
+      body:
+        device_id: "{{ switch.id }}"
+        switch_mac: "{{ switch.mac }}"
+        dst_mac: "{{ receiver.mac }}"
+        output_port: 2
+      ok_status: 201
     attack:
       url: "http://{{ sdn_ip }}:{{ sdn_port }}/gwAttack"
       body:

@@ -36,6 +36,9 @@ class SDNControllerServer:
     def start(self):
         self.thread.start()
         self.api.add_resource(
+            DataForward, '/dataForward',
+            resource_class_kwargs={'sdn_controller': self.sdn_controller})
+        self.api.add_resource(
             GwAttack, '/gwAttack',
             resource_class_kwargs={'sdn_controller': self.sdn_controller})
         self.api.add_resource(
@@ -55,6 +58,36 @@ class SDNControllerServer:
         self.server_start = http_server.run(host=self.host, port=self.port)
 
 
+class DataForward(Resource):
+    """
+    Class for exposing web service to enter a data_forward entry into the P4
+    gateway.p4
+    """
+    def __init__(self, **kwargs):
+        self.sdn_controller = kwargs['sdn_controller']
+        self.parser = reqparse.RequestParser()
+        self.parser.add_argument('device_id', type=int, default=0)
+        self.parser.add_argument('dst_mac', type=str)
+        self.parser.add_argument('output_port', type=int)
+        self.parser.add_argument('switch_mac', type=str)
+
+    def post(self):
+        logger.info('Attack requested')
+        args = self.parser.parse_args()
+
+        logger.info('Attack args - [%s]', args)
+        self.sdn_controller.add_data_forward(args)
+        return json.dumps({"success": True}), 201
+
+    def delete(self):
+        logger.info('Attacker to remove')
+        args = self.parser.parse_args()
+
+        logger.info('Attack args - [%s]', args)
+        self.sdn_controller.del_data_forward(args)
+        return json.dumps({"success": True}), 201
+
+
 class GwAttack(Resource):
     """
     Class for exposing web service to issue an attack call to gateway.p4
@@ -62,16 +95,17 @@ class GwAttack(Resource):
     def __init__(self, **kwargs):
         self.sdn_controller = kwargs['sdn_controller']
 
+        self.parser = reqparse.RequestParser()
+        self.parser.add_argument('src_mac', type=str)
+        self.parser.add_argument('src_ip', type=str)
+        self.parser.add_argument('dst_ip', type=str)
+        self.parser.add_argument('dst_port', type=str)
+        self.parser.add_argument('packet_size', type=str)
+        self.parser.add_argument('attack_type', type=str)
+
     def post(self):
         logger.info('Attack requested')
-        parser = reqparse.RequestParser()
-        parser.add_argument('src_mac', type=str)
-        parser.add_argument('src_ip', type=str)
-        parser.add_argument('dst_ip', type=str)
-        parser.add_argument('dst_port', type=str)
-        parser.add_argument('packet_size', type=str)
-        parser.add_argument('attack_type', type=str)
-        args = parser.parse_args()
+        args = self.parser.parse_args()
 
         logger.info('Attack args - [%s]', args)
         self.sdn_controller.add_attacker(args)
@@ -79,17 +113,39 @@ class GwAttack(Resource):
 
     def delete(self):
         logger.info('Attacker to remove')
-        parser = reqparse.RequestParser()
-        parser.add_argument('src_mac', type=str)
-        parser.add_argument('src_ip', type=str)
-        parser.add_argument('dst_ip', type=str)
-        parser.add_argument('dst_port', type=str)
-        parser.add_argument('packet_size', type=str)
-        parser.add_argument('attack_type', type=str)
-        args = parser.parse_args()
+        args = self.parser.parse_args()
 
         logger.info('Attack args - [%s]', args)
         self.sdn_controller.remove_attacker(args)
+        return json.dumps({"success": True}), 201
+
+
+class AggDataForward(Resource):
+    """
+    Class for exposing web service to enter a data_forward entry into the P4
+    aggregate.p4
+    """
+    def __init__(self, **kwargs):
+        self.sdn_controller = kwargs['sdn_controller']
+        self.parser = reqparse.RequestParser()
+        self.parser.add_argument('device_id', type=str, default=0)
+        self.parser.add_argument('dst_mac', type=str)
+        self.parser.add_argument('output_port', type=str)
+
+    def post(self):
+        logger.info('Attack requested')
+        args = self.parser.parse_args()
+
+        logger.info('Attack args - [%s]', args)
+        self.sdn_controller.add_agg_data_forward(args)
+        return json.dumps({"success": True}), 201
+
+    def delete(self):
+        logger.info('Attacker to remove')
+        args = self.parser.parse_args()
+
+        logger.info('Attack args - [%s]', args)
+        self.sdn_controller.del_agg_data_forward(args)
         return json.dumps({"success": True}), 201
 
 
@@ -99,14 +155,14 @@ class AggAttack(Resource):
     """
     def __init__(self, **kwargs):
         self.sdn_controller = kwargs['sdn_controller']
+        self.parser = reqparse.RequestParser()
+        self.parser.add_argument('src_mac', type=str)
+        self.parser.add_argument('dst_ip', type=str)
+        self.parser.add_argument('dst_port', type=str)
 
     def post(self):
         logger.info('Attack requested')
-        parser = reqparse.RequestParser()
-        parser.add_argument('src_mac', type=str)
-        parser.add_argument('dst_ip', type=str)
-        parser.add_argument('dst_port', type=str)
-        args = parser.parse_args()
+        args = self.parser.parse_args()
 
         logger.info('Attack args - [%s]', args)
         self.sdn_controller.add_agg_attacker(args)
@@ -114,14 +170,32 @@ class AggAttack(Resource):
 
     def delete(self):
         logger.info('Attacker to remove')
-        parser = reqparse.RequestParser()
-        parser.add_argument('src_mac', type=str)
-        parser.add_argument('dst_ip', type=str)
-        parser.add_argument('dst_port', type=str)
-        args = parser.parse_args()
+        args = self.parser.parse_args()
 
         logger.info('Attack args - [%s]', args)
         self.sdn_controller.remove_agg_attacker(args)
+        return json.dumps({"success": True}), 201
+
+
+class CoreDataForward(AggDataForward):
+    """
+    Class for exposing web service to enter a data_forward entry into the P4
+    core.p4
+    """
+    def post(self):
+        logger.info('Attack requested')
+        args = self.parser.parse_args()
+
+        logger.info('Attack args - [%s]', args)
+        self.sdn_controller.add_core_data_forward(args)
+        return json.dumps({"success": True}), 201
+
+    def delete(self):
+        logger.info('Attacker to remove')
+        args = self.parser.parse_args()
+
+        logger.info('Attack args - [%s]', args)
+        self.sdn_controller.del_agg_data_forward(args)
         return json.dumps({"success": True}), 201
 
 

@@ -48,22 +48,22 @@ class CoreSwitch(P4RuntimeSwitch):
         super(self.__class__, self).write_multicast_entry(hosts)
         self.write_arp_flood()
 
-    def add_data_forward(self, source_mac, ingress_port):
+    def add_data_forward(self, dst_mac, egress_port):
         logger.info(
             'Adding data forward to core device [%s] with source_mac '
             '- [%s] and ingress port - [%s]',
-            self.device_id, source_mac, ingress_port)
+            self.device_id, dst_mac, egress_port)
         inserted = super(self.__class__, self).add_data_forward(
-            source_mac, ingress_port)
+            dst_mac, egress_port)
 
         if inserted:
             table_entry = self.p4info_helper.build_table_entry(
                 table_name='{}.arp_forward_t'.format(self.p4_ingress),
                 match_fields={
-                    'hdr.ethernet.dst_mac': source_mac
+                    'hdr.ethernet.dst_mac': dst_mac
                 },
                 action_name='{}.arp_forward'.format(self.p4_ingress),
-                action_params={'port': ingress_port}
+                action_params={'port': egress_port}
             )
             self.write_table_entry(table_entry)
 
