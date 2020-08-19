@@ -41,8 +41,7 @@
     send_loops: 2
     send_loop_delay: 5
     cleanup_rest_call:
-      url: "http://{{ sdn_ip }}:{{ sdn_port }}/stopAttack"
-      method: POST
+      url: "http://{{ sdn_ip }}:{{ sdn_port }}/gwAttack"
       body:
         src_ip: "{% if scenario_send_ip_version|int == 4 %}{{ sender.ip }}{% else %}{{ sender.ipv6 }}{% endif %}"
         packet_size: 112
@@ -80,8 +79,7 @@
     send_loops: 2
     send_loop_delay: 5
     cleanup_rest_call:
-      url: "http://{{ sdn_ip }}:{{ sdn_port }}/stopAttack"
-      method: POST
+      url: "http://{{ sdn_ip }}:{{ sdn_port }}/gwAttack"
       body:
         src_ip: "{% if scenario_send_ip_version|int == 4 %}{{ sender.ip }}{% else %}{{ sender.ipv6 }}{% endif %}"
         packet_size: 112
@@ -119,8 +117,7 @@
     send_loops: 2
     send_loop_delay: 5
     cleanup_rest_call:
-      url: "http://{{ sdn_ip }}:{{ sdn_port }}/stopAttack"
-      method: POST
+      url: "http://{{ sdn_ip }}:{{ sdn_port }}/gwAttack"
       body:
         src_ip: "{% if scenario_send_ip_version|int == 4 %}{{ sender.ip }}{% else %}{{ sender.ipv6 }}{% endif %}"
         packet_size: 112

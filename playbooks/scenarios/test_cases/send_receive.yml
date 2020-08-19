@@ -204,7 +204,7 @@
     - name: Call web service
       uri:
         url: "{{ cleanup_rest_call.url }}"
-        method: "{{ cleanup_rest_call.method }}"
+        method: DELETE
         body_format: json
         body: "{{ cleanup_rest_call.body }}"
         status_code: "{{ cleanup_rest_call.ok_status }}"
