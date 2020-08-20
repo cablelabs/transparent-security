@@ -89,7 +89,7 @@ class CoreController(AbstractController):
         else:
             logger.info('Not inserting anything to data_inspection_t')
 
-        logger.info('Completed rules for device [%s]', sw.sw_info['mac'])
+        logger.info('Completed rules for device [%s]', sw.mac)
 
     @staticmethod
     def __make_int_rules(sw):

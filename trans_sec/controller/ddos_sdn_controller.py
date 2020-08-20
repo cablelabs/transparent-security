@@ -64,6 +64,37 @@ class DdosSdnController:
             controller.make_switch_rules(add_di)
         logger.debug('Switch rule creation completed')
 
+    def add_data_forward(self, df_req):
+        """
+        Adds a data forward table entry into the expected switch
+        """
+        self.__data_forward(df_req)
+
+    def del_data_forward(self, df_req):
+        """
+        Adds a data forward table entry into the expected switch
+        """
+        self.__data_forward(df_req, True)
+
+    def __data_forward(self, df_req, del_flag=False):
+        """
+        Removes a device to mitigate an attack
+        """
+        logger.debug('df_req - [%s]', df_req)
+        for key, controller in self.controllers.items():
+            for switch in controller.switches:
+                logger.debug('switch - [%s]', switch.device_id)
+                if switch.device_id == df_req['device_id']:
+                    if del_flag:
+                        switch.del_data_forward(df_req['dst_mac'])
+                    else:
+                        switch.add_data_forward(df_req['dst_mac'],
+                                                df_req['output_port'])
+                    return
+
+        logger.warning('Could not find switch with device_id - [%s]',
+                       df_req['device_id'])
+
     def remove_attacker(self, attack):
         """
         Removes a device to mitigate an attack
