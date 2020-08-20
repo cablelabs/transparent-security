@@ -26,13 +26,14 @@
     rec_host: inet
     sender: "{{ topo_dict.hosts[send_host] }}"
     receiver: "{{ topo_dict.hosts[rec_host] }}"
+    dst_mac: "{{ receiver.mac }}"
     data_forwards:
       - url: "http://{{ sdn_ip }}:{{ sdn_port }}/dataForward"
         body:
           device_id: "{{ switch.id }}"
           switch_mac: "{{ switch.mac }}"
           dst_mac: "{{ receiver.mac }}"
-          output_port: 1
+          output_port: 2
         ok_status: 201
       - url: "http://{{ sdn_ip }}:{{ sdn_port }}/dataForward"
         body:
