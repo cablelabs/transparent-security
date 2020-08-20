@@ -53,7 +53,7 @@ control TpsGwIngress(inout headers hdr,
         default_action = NoAction();
     }
 
-    action data_inspect_packet_ipv4(bit<32> device, bit<32> switch_id) {
+    action data_inspect_packet(bit<32> device, bit<32> switch_id) {
         hdr.udp_int.setValid();
         hdr.int_shim.setValid();
         hdr.int_header.setValid();
@@ -61,7 +61,6 @@ control TpsGwIngress(inout headers hdr,
 
         hdr.udp_int.dst_port = UDP_INT_DST_PORT;
 
-        hdr.int_shim.next_proto = hdr.ipv4.protocol;
         hdr.int_shim.npt = INT_SHIM_NPT_UDP_FULL_WRAP;
         hdr.int_shim.type = INT_SHIM_TYPE;
         hdr.int_shim.length = INT_SHIM_BASE_SIZE;
@@ -77,56 +76,36 @@ control TpsGwIngress(inout headers hdr,
         hdr.int_meta.switch_id = switch_id;
         hdr.int_meta.orig_mac = hdr.ethernet.src_mac;
 
-        hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
-        hdr.ipv4.protocol = TYPE_UDP;
-
         #ifdef BMV2
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen + ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE) + UDP_HDR_BYTES;
         forwardedPackets.count(device);
         #endif
     }
 
-    action data_inspect_packet_ipv6(bit<32> device, bit<32> switch_id) {
-        hdr.udp_int.setValid();
-        hdr.int_shim.setValid();
-        hdr.int_header.setValid();
-        hdr.int_meta.setValid();
+    action data_inspect_packet_ipv4() {
+        hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
+        hdr.int_shim.next_proto = hdr.ipv4.protocol;
+        hdr.ipv4.protocol = TYPE_UDP;
 
-        hdr.udp_int.dst_port = UDP_INT_DST_PORT;
+        #ifdef BMV2
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen + ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE) + UDP_HDR_BYTES;
+        #endif
+    }
 
-        hdr.int_shim.next_proto = hdr.ipv6.next_hdr_proto;
-        hdr.int_shim.npt = INT_SHIM_NPT_UDP_FULL_WRAP;
-        hdr.int_shim.type = INT_SHIM_TYPE;
-        hdr.int_shim.length = INT_SHIM_BASE_SIZE;
-
-        hdr.int_header.ver = INT_VERSION;
-        hdr.int_header.domain_id = INT_SHIM_DOMAIN_ID;
-        hdr.int_header.meta_len = INT_META_LEN;
-        hdr.int_header.instr_bit_0 = TRUE;
-        hdr.int_header.ds_instr_0 = TRUE;
-        hdr.int_header.ds_flags_0 = FALSE;
-        hdr.int_header.ds_flags_1 = TRUE;
-        hdr.int_header.remaining_hop_cnt = MAX_HOPS;
-
-        hdr.int_meta.switch_id = switch_id;
-        hdr.int_meta.orig_mac = hdr.ethernet.src_mac;
-
+    action data_inspect_packet_ipv6() {
         hdr.ipv6.next_hdr_proto = TYPE_UDP;
+        hdr.int_shim.next_proto = hdr.ipv6.next_hdr_proto;
 
         #ifdef BMV2
         hdr.ipv6.payload_len = hdr.ipv6.payload_len + IPV6_HDR_BYTES + ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE) + UDP_HDR_BYTES;
-        forwardedPackets.count(device);
         #endif
     }
 
     table data_inspection_t {
         key = {
             hdr.ethernet.src_mac: exact;
-            hdr.ethernet.etherType: exact;
         }
         actions = {
-            data_inspect_packet_ipv4;
-            data_inspect_packet_ipv6;
+            data_inspect_packet;
             NoAction;
         }
         size = TABLE_SIZE;
@@ -337,9 +316,16 @@ control TpsGwIngress(inout headers hdr,
             generate_learn_notification();
         }
         else if (standard_metadata.egress_spec != DROP_PORT) {
-            data_inspection_t.apply();
-
+            if (hdr.ipv4.isValid() || hdr.ipv6.isValid()) {
+                data_inspection_t.apply();
+            }
             if (hdr.int_shim.isValid()) {
+                if (hdr.ipv4.isValid()) {
+                    data_inspect_packet_ipv4();
+                }
+                if (hdr.ipv6.isValid()) {
+                    data_inspect_packet_ipv6();
+                }
                 #ifdef BMV2
                 nat_learn_notification();
                 if (hdr.udp.isValid()) {

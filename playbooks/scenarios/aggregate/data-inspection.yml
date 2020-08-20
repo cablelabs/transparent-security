@@ -36,19 +36,10 @@
         dst_mac: "{{ receiver.mac }}"
         output_port: 2
       ok_status: 201
-    data_inspection_table_action:
-      control_name: TpsAggIngress
-      table_name: data_inspection_t
-      action:
-        name: "{{ 'data_inspect_packet' }}"
-        match_fields:
-          - key: hdr.ethernet.src_mac
-            value: "{{ sender.mac }}"
-          - key: hdr.ethernet.etherType
-            value: "{{ '0x0800' if ip_version == '4' else '0x86dd' }}"
-        params:
-          - key: device
-            value: "{{ sender.id }}"
-          - key: switch_id
-            value: "{{ switch.id }}"
+    data_inspection:
+      url: "http://{{ sdn_ip }}:{{ sdn_port }}/dataInspection"
+      body:
+        device_id: "{{ switch.id }}"
+        device_mac: "{{ sender.mac }}"
+      ok_status: 201
     sr1_rec_int_hops: 1

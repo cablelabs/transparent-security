@@ -87,8 +87,32 @@ class CoreSwitch(P4RuntimeSwitch):
                 'hdr.udp_int.dst_port': UDP_INT_DST_PORT
             },
             action_name=action_name,
-            action_params=action_params)
+            action_params=action_params
+        )
         self.write_table_entry(table_entry)
+
+    def del_data_inspection(self, dev_id, dev_mac):
+        logger.info(
+            'Adding data inspection entry to core device [%s] with device ID '
+            '- [%s]', self.device_id, dev_id)
+
+        action_params = {
+            'switch_id': dev_id
+        }
+        table_name = '{}.data_inspection_t'.format(self.p4_ingress)
+        action_name = '{}.data_inspect_packet'.format(self.p4_ingress)
+        logger.info(
+            'Insert params into table - [%s] for action [%s] '
+            'with params [%s]',
+            table_name, action_name, action_params)
+        table_entry = self.p4info_helper.build_table_entry(
+            table_name=table_name,
+            match_fields={
+                'hdr.udp_int.dst_port': UDP_INT_DST_PORT
+            },
+            action_name=action_name,
+        )
+        self.delete_table_entry(table_entry)
 
     def setup_telemetry_rpt(self, ae_ip):
         logger.info(

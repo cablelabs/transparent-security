@@ -78,7 +78,6 @@ control TpsAggIngress(inout headers hdr,
         hdr.int_header.setValid();
         hdr.int_meta.setValid();
 
-        hdr.int_shim.next_proto = hdr.ipv4.protocol;
         hdr.int_shim.npt = INT_SHIM_NPT_UDP_FULL_WRAP;
         hdr.int_shim.type = INT_SHIM_TYPE;
         hdr.int_shim.length = INT_SHIM_BASE_SIZE;
@@ -100,9 +99,9 @@ control TpsAggIngress(inout headers hdr,
     }
 
     action data_inspect_packet_ipv4() {
-
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
         hdr.ipv4.protocol = TYPE_UDP;
+        hdr.int_shim.next_proto = hdr.ipv4.protocol;
 
         #ifdef BMV2
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE) + UDP_HDR_BYTES;
@@ -110,9 +109,8 @@ control TpsAggIngress(inout headers hdr,
     }
 
     action data_inspect_packet_ipv6() {
-
         hdr.ipv6.next_hdr_proto = TYPE_UDP;
-
+        /* hdr.int_shim.next_proto = hdr.ipv6.next_hdr_proto; */
         #ifdef BMV2
         hdr.ipv6.payload_len = hdr.ipv6.payload_len + IPV6_HDR_BYTES + ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE) + UDP_HDR_BYTES;
         #endif
@@ -121,7 +119,6 @@ control TpsAggIngress(inout headers hdr,
     table data_inspection_t {
         key = {
             hdr.ethernet.src_mac: exact;
-            hdr.ethernet.etherType: exact;
         }
         actions = {
             data_inspect_packet;
@@ -207,7 +204,9 @@ control TpsAggIngress(inout headers hdr,
                 add_switch_id_t.apply();
             }
             else {
-                data_inspection_t.apply();
+                if (hdr.ipv4.isValid() || hdr.ipv6.isValid()) {
+                    data_inspection_t.apply();
+                }
                 if (hdr.int_shim.isValid()) {
                     if (hdr.ipv4.isValid()) {
                         data_inspect_packet_ipv4();

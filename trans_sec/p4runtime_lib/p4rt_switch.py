@@ -171,7 +171,46 @@ class P4RuntimeSwitch(SwitchConnection, ABC):
             return False
 
     def add_data_inspection(self, dev_id, dev_mac):
-        raise NotImplemented
+        logger.info(
+            'Adding data inspection to device [%s] with ID '
+            '- [%s] and mac - [%s]', self.device_id, dev_id, dev_mac)
+        action_params = {
+            'device': dev_id,
+            'switch_id': self.sw_info['id']
+        }
+        table_entry = self.p4info_helper.build_table_entry(
+            table_name='{}.data_inspection_t'.format(self.p4_ingress),
+            match_fields={
+                'hdr.ethernet.src_mac': dev_mac,
+            },
+            action_name='{}.data_inspect_packet'.format(
+                self.p4_ingress),
+            action_params=action_params
+        )
+        self.write_table_entry(table_entry)
+
+        logger.info(
+            'Installed Northbound Packet Inspection for device with'
+            ' MAC - [%s] with action params - [%s]',
+            dev_mac, action_params)
+
+    def del_data_inspection(self, dev_id, dev_mac):
+        logger.info(
+            'Removing data inspection to device [%s] with ID '
+            '- [%s] and mac - [%s]', self.device_id, dev_id, dev_mac)
+        table_entry = self.p4info_helper.build_table_entry(
+            table_name='{}.data_inspection_t'.format(self.p4_ingress),
+            match_fields={
+                'hdr.ethernet.src_mac': dev_mac,
+            },
+            action_name='{}.data_inspect_packet'.format(
+                self.p4_ingress),
+        )
+        self.delete_table_entry(table_entry)
+
+        logger.info(
+            'Installed Northbound Packet Inspection for device with'
+            ' MAC - [%s]', dev_mac)
 
     def add_switch_id(self, dev_id):
         pass

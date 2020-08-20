@@ -163,7 +163,9 @@ control TpsCoreIngress(inout headers hdr,
         } else if (standard_metadata.egress_spec != DROP_PORT) {
             if (IS_NORMAL(standard_metadata)) {
                 // First pass
-                data_inspection_t.apply();
+                if (hdr.ipv4.isValid() || hdr.ipv6.isValid()) {
+                    data_inspection_t.apply();
+                }
                 recirculate_packet();
             } else if (IS_RECIRCULATED(standard_metadata)) {
                 // second pass

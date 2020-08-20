@@ -13,27 +13,29 @@
 # Simple scenario where packets are sent through 3 devices and only the last
 # one will be demonstrating dropped packets
 ---
-# Add table entry "{{ data_inspection_table }}" on aggregate switch
-- import_playbook: ../test_cases/write_to_p4_table.yml
-  vars:
-    switch: "{{ first_hop_switch }}"
-    int_hops: "{{ sr1_rec_int_hops | default(0) }}"
-    te_conf_file: "~/di-inspect-create-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
-    p4_classname: "{{ data_inspection_classname }}"
-    p4_table_action: "{{ data_inspection_table_action_hop1 }}"
-    p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: "di-inspection-create-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
+# Add table entry to data_inspection_t table on aggregate switch
+- hosts: "{{ rec_host }}"
+  gather_facts: no
+  tasks:
+    - name: Insert data inspection table entry via endpoint {{ data_inspection_hop1.url }}
+      uri:
+        url: "{{ data_inspection_hop1.url }}"
+        method: POST
+        body_format: "{{ data_inspection_hop1.body_format | default('json') }}"
+        body: "{{ data_inspection_hop1.body }}"
+        status_code: "{{ data_inspection_hop1.ok_status | default('200') }}"
 
-# Add table entry "{{ data_inspection_table }}" on core switch
-- import_playbook: ../test_cases/write_to_p4_table.yml
-  vars:
-    switch: "{{ second_hop_switch }}"
-    int_hops: "{{ sr1_rec_int_hops | default(0) }}"
-    te_conf_file: "~/di-inspect-create-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
-    p4_classname: "{{ data_inspection_classname }}"
-    p4_table_action: "{{ data_inspection_table_action_hop2 }}"
-    p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: "di-inspection-create-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
+# Add table entry to data_inspection_t table on core switch
+- hosts: "{{ rec_host }}"
+  gather_facts: no
+  tasks:
+    - name: Insert data inspection table entry via endpoint {{ data_inspection_hop2.url }}
+      uri:
+        url: "{{ data_inspection_hop2.url }}"
+        method: POST
+        body_format: "{{ data_inspection_hop2.body_format | default('json') }}"
+        body: "{{ data_inspection_hop2.body }}"
+        status_code: "{{ data_inspection_hop2.ok_status | default('200') }}"
 
 # TODO/FIXME - Gateway TCP scenario receives 2x packets
 # Sending UDP packets expect all to be received with configured INT hops sr1_rec_int_hops
@@ -49,24 +51,26 @@
     max_received_packet_count: "{{ send_packet_count }}"
     discover_fwd_path: True
 
-# Delete table entry "{{ data_inspection_table }}" on aggregate
-- import_playbook: ../test_cases/write_to_p4_table.yml
-  vars:
-    switch: "{{ first_hop_switch }}"
-    int_hops: "{{ sr1_rec_int_hops | default(0) }}"
-    te_conf_file: "~/di-inspect-delete-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
-    p4_table_action: "{{ data_inspection_table_action_hop1 }}"
-    p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: "di-inspection-delete-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
-    p4_te_insert: False
+# Delete table entry from data_inspection_t table on aggregate switch
+- hosts: "{{ rec_host }}"
+  gather_facts: no
+  tasks:
+    - name: Insert data inspection table entry via endpoint {{ data_inspection_hop1.url }}
+      uri:
+        url: "{{ data_inspection_hop1.url }}"
+        method: DELETE
+        body_format: "{{ data_inspection_hop1.body_format | default('json') }}"
+        body: "{{ data_inspection_hop1.body }}"
+        status_code: "{{ data_inspection_hop1.ok_status | default('200') }}"
 
-# Delete table entry "{{ data_inspection_table }}" on core
-- import_playbook: ../test_cases/write_to_p4_table.yml
-  vars:
-    switch: "{{ second_hop_switch }}"
-    int_hops: "{{ sr1_rec_int_hops | default(0) }}"
-    te_conf_file: "~/di-inspect-delete-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
-    p4_table_action: "{{ data_inspection_table_action_hop2 }}"
-    p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: "di-inspection-delete-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
-    p4_te_insert: False
+# Delete table entry from data_inspection_t table on core switch
+- hosts: "{{ rec_host }}"
+  gather_facts: no
+  tasks:
+    - name: Insert data inspection table entry via endpoint {{ data_inspection_hop2.url }}
+      uri:
+        url: "{{ data_inspection_hop2.url }}"
+        method: DELETE
+        body_format: "{{ data_inspection_hop2.body_format | default('json') }}"
+        body: "{{ data_inspection_hop2.body }}"
+        status_code: "{{ data_inspection_hop2.ok_status | default('200') }}"

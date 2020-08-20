@@ -95,6 +95,38 @@ class DdosSdnController:
         logger.warning('Could not find switch with device_id - [%s]',
                        df_req['device_id'])
 
+    def add_data_inspection(self, di_req):
+        """
+        Adds a data inspection table entry into the expected switch
+        """
+        self.__data_inspection(di_req)
+
+    def del_data_inspection(self, di_req):
+        """
+        Adds a data inspection table entry into the expected switch
+        """
+        self.__data_inspection(di_req, True)
+
+    def __data_inspection(self, di_req, del_flag=False):
+        """
+        Removes a device to mitigate an attack
+        """
+        logger.debug('di_req - [%s]', di_req)
+        for key, controller in self.controllers.items():
+            for switch in controller.switches:
+                logger.debug('switch - [%s]', switch.device_id)
+                if switch.device_id == di_req['device_id']:
+                    if del_flag:
+                        switch.del_data_inspection(
+                            di_req['device_id'], di_req['device_mac'])
+                    else:
+                        switch.add_data_inspection(
+                            di_req['device_id'], di_req['device_mac'])
+                    return
+
+        logger.warning('Could not find switch with device_id - [%s]',
+                       di_req['device_id'])
+
     def remove_attacker(self, attack):
         """
         Removes a device to mitigate an attack
