@@ -13,29 +13,22 @@
 # Simple scenario where packets are sent through 3 devices and only the last
 # one will be demonstrating dropped packets
 ---
-# Add table entry to data_inspection_t table on aggregate switch
-- hosts: "{{ rec_host }}"
+# Enable switches for data inspection
+- hosts: "{{ controller_host }}"
   gather_facts: no
   tasks:
-    - name: Insert data inspection table entry via endpoint {{ data_inspection_hop1.url }}
-      uri:
-        url: "{{ data_inspection_hop1.url }}"
-        method: POST
-        body_format: "{{ data_inspection_hop1.body_format | default('json') }}"
-        body: "{{ data_inspection_hop1.body }}"
-        status_code: "{{ data_inspection_hop1.ok_status | default('200') }}"
+    - name: show data inspection requests for enablement
+      debug:
+        var: data_inspections
 
-# Add table entry to data_inspection_t table on core switch
-- hosts: "{{ rec_host }}"
-  gather_facts: no
-  tasks:
-    - name: Insert data inspection table entry via endpoint {{ data_inspection_hop2.url }}
+    - name: Data inspection requests
       uri:
-        url: "{{ data_inspection_hop2.url }}"
+        url: "{{ item.url }}"
         method: POST
-        body_format: "{{ data_inspection_hop2.body_format | default('json') }}"
-        body: "{{ data_inspection_hop2.body }}"
-        status_code: "{{ data_inspection_hop2.ok_status | default('200') }}"
+        body_format: "{{ item.body_format | default('json') }}"
+        body: "{{ item.body }}"
+        status_code: "{{ item.ok_status | default('200') }}"
+      with_items: "{{ data_inspections }}"
 
 # TODO/FIXME - Gateway TCP scenario receives 2x packets
 # Sending UDP packets expect all to be received with configured INT hops sr1_rec_int_hops
@@ -51,26 +44,20 @@
     max_received_packet_count: "{{ send_packet_count }}"
     discover_fwd_path: True
 
-# Delete table entry from data_inspection_t table on aggregate switch
-- hosts: "{{ rec_host }}"
+# Disable switches for data inspection
+- hosts: "{{ controller_host }}"
   gather_facts: no
   tasks:
-    - name: Insert data inspection table entry via endpoint {{ data_inspection_hop1.url }}
-      uri:
-        url: "{{ data_inspection_hop1.url }}"
-        method: DELETE
-        body_format: "{{ data_inspection_hop1.body_format | default('json') }}"
-        body: "{{ data_inspection_hop1.body }}"
-        status_code: "{{ data_inspection_hop1.ok_status | default('200') }}"
+    - name: show data inspection requests for disablment
+      debug:
+        var: data_inspections
 
-# Delete table entry from data_inspection_t table on core switch
-- hosts: "{{ rec_host }}"
-  gather_facts: no
-  tasks:
-    - name: Insert data inspection table entry via endpoint {{ data_inspection_hop2.url }}
+    - name: Data inspection requests
       uri:
-        url: "{{ data_inspection_hop2.url }}"
+        url: "{{ item.url }}"
         method: DELETE
-        body_format: "{{ data_inspection_hop2.body_format | default('json') }}"
-        body: "{{ data_inspection_hop2.body }}"
-        status_code: "{{ data_inspection_hop2.ok_status | default('200') }}"
+        body_format: "{{ item.body_format | default('json') }}"
+        body: "{{ item.body }}"
+        status_code: "{{ item.ok_status | default('200') }}"
+      with_items: "{{ data_inspections }}"
+

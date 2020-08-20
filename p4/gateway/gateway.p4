@@ -316,9 +316,8 @@ control TpsGwIngress(inout headers hdr,
             generate_learn_notification();
         }
         else if (standard_metadata.egress_spec != DROP_PORT) {
-            if (hdr.ipv4.isValid() || hdr.ipv6.isValid()) {
-                data_inspection_t.apply();
-            }
+            data_inspection_t.apply();
+
             if (hdr.int_shim.isValid()) {
                 if (hdr.ipv4.isValid()) {
                     data_inspect_packet_ipv4();

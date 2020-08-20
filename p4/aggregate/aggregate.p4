@@ -110,7 +110,7 @@ control TpsAggIngress(inout headers hdr,
 
     action data_inspect_packet_ipv6() {
         hdr.ipv6.next_hdr_proto = TYPE_UDP;
-        /* hdr.int_shim.next_proto = hdr.ipv6.next_hdr_proto; */
+        hdr.int_shim.next_proto = hdr.ipv6.next_hdr_proto;
         #ifdef BMV2
         hdr.ipv6.payload_len = hdr.ipv6.payload_len + IPV6_HDR_BYTES + ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE) + UDP_HDR_BYTES;
         #endif
@@ -204,9 +204,7 @@ control TpsAggIngress(inout headers hdr,
                 add_switch_id_t.apply();
             }
             else {
-                if (hdr.ipv4.isValid() || hdr.ipv6.isValid()) {
-                    data_inspection_t.apply();
-                }
+                data_inspection_t.apply();
                 if (hdr.int_shim.isValid()) {
                     if (hdr.ipv4.isValid()) {
                         data_inspect_packet_ipv4();
