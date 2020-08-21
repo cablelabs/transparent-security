@@ -32,7 +32,6 @@ import logging
 from abc import ABC
 
 from trans_sec.p4runtime_lib.p4rt_switch import P4RuntimeSwitch
-from trans_sec.consts import IPV4_TYPE, IPV6_TYPE
 from trans_sec.utils.convert import decode_num, decode_ipv4
 
 logger = logging.getLogger('gateway_switch')
@@ -79,47 +78,6 @@ class GatewaySwitch(P4RuntimeSwitch, ABC):
                 logger.error(
                     'Unexpected error reading NAT digest from [%s] - [%s]',
                     self.name, e)
-
-    def add_data_inspection(self, dev_id, dev_mac):
-        logger.info(
-            'Adding data inspection to gateway device [%s] with device ID '
-            '- [%s] and mac - [%s]', self.device_id, dev_id, dev_mac)
-        # Northbound Traffic Inspection for IPv4
-        action_params = {
-            'device': dev_id,
-            'switch_id': self.sw_info['id']
-        }
-        table_entry = self.p4info_helper.build_table_entry(
-            table_name='{}.data_inspection_t'.format(self.p4_ingress),
-            match_fields={
-                'hdr.ethernet.src_mac': dev_mac,
-                'hdr.ethernet.etherType': IPV4_TYPE
-            },
-            action_name='{}.data_inspect_packet_ipv4'.format(
-                self.p4_ingress),
-            action_params=action_params)
-        self.write_table_entry(table_entry)
-
-        # Northbound Traffic Inspection for IPv6
-        action_params = {
-            'device': dev_id,
-            'switch_id': self.sw_info['id']
-        }
-        table_entry = self.p4info_helper.build_table_entry(
-            table_name='{}.data_inspection_t'.format(self.p4_ingress),
-            match_fields={
-                'hdr.ethernet.src_mac': dev_mac,
-                'hdr.ethernet.etherType': IPV6_TYPE
-            },
-            action_name='{}.data_inspect_packet_ipv6'.format(
-                self.p4_ingress),
-            action_params=action_params)
-        self.write_table_entry(table_entry)
-
-        logger.info(
-            'Installed Northbound Packet Inspection for device with'
-            ' MAC - [%s] with action params - [%s]',
-            dev_mac, action_params)
 
     @staticmethod
     def __parse_attack(**kwargs):

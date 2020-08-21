@@ -28,15 +28,17 @@
         status_code: "{{ data_forward.ok_status | default('200') }}"
       when: execute_insert|bool
 
-# Add table entry to "{{ data_inspection_table }}"
-- import_playbook: ../test_cases/write_to_p4_table.yml
-  vars:
-    int_hops: "{{ sr1_rec_int_hops | default(0) }}"
-    te_conf_file: "~/di-inspect-create-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
-    p4_classname: "{{ data_inspection_classname }}"
-    p4_table_action: "{{ data_inspection_table_action }}"
-    p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: "di-inspection-create-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
+# Add table entry to data_inspection_t table
+- hosts: "{{ rec_host }}"
+  gather_facts: no
+  tasks:
+    - name: Insert data inspection table entry via endpoint {{ data_inspection.url }}
+      uri:
+        url: "{{ data_inspection.url }}"
+        method: POST
+        body_format: "{{ data_inspection.body_format | default('json') }}"
+        body: "{{ data_inspection.body }}"
+        status_code: "{{ data_inspection.ok_status | default('200') }}"
 
 # TODO/FIXME - Gateway TCP scenario receives 2x packets
 # Sending UDP packets expect all to be received with configured INT hops sr1_rec_int_hops
@@ -51,15 +53,17 @@
     inspection_data: "{{ sr1_data_inspection_int | default(None) }}"
     max_received_packet_count: "{{ send_packet_count }}"
 
-# Delete table entry to "{{ data_inspection_table }}"
-- import_playbook: ../test_cases/write_to_p4_table.yml
-  vars:
-    int_hops: "{{ sr1_rec_int_hops | default(0) }}"
-    te_conf_file: "~/di-inspect-delete-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.yml"
-    p4_table_action: "{{ data_inspection_table_action }}"
-    p4_te_log_dir: "{{ host_log_dir }}"
-    p4_te_log_file: "di-inspection-delete-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}.log"
-    p4_te_insert: False
+# Delete table entry from data_inspection_t table
+- hosts: "{{ rec_host }}"
+  gather_facts: no
+  tasks:
+    - name: Delete data inspection table entry via endpoint {{ data_inspection.url }}
+      uri:
+        url: "{{ data_inspection.url }}"
+        method: DELETE
+        body_format: "{{ data_inspection.body_format | default('json') }}"
+        body: "{{ data_inspection.body }}"
+        status_code: "{{ data_inspection.ok_status | default('200') }}"
 
 # TODO/FIXME - Gateway TCP scenario receives 2x packets
 # Sending packets expect all to be received with configured INT hops sr2_rec_int_hops

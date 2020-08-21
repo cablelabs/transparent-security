@@ -39,6 +39,9 @@ class SDNControllerServer:
             DataForward, '/dataForward',
             resource_class_kwargs={'sdn_controller': self.sdn_controller})
         self.api.add_resource(
+            DataInspection, '/dataInspection',
+            resource_class_kwargs={'sdn_controller': self.sdn_controller})
+        self.api.add_resource(
             GwAttack, '/gwAttack',
             resource_class_kwargs={'sdn_controller': self.sdn_controller})
         self.api.add_resource(
@@ -85,6 +88,34 @@ class DataForward(Resource):
 
         logger.info('Attack args - [%s]', args)
         self.sdn_controller.del_data_forward(args)
+        return json.dumps({"success": True}), 201
+
+
+class DataInspection(Resource):
+    """
+    Class for exposing web service to enter a data_forward entry into the P4
+    gateway.p4
+    """
+    def __init__(self, **kwargs):
+        self.sdn_controller = kwargs['sdn_controller']
+        self.parser = reqparse.RequestParser()
+        self.parser.add_argument('device_id', type=int, default=0)
+        self.parser.add_argument('device_mac', type=str)
+
+    def post(self):
+        logger.info('Attack requested')
+        args = self.parser.parse_args()
+
+        logger.info('Attack args - [%s]', args)
+        self.sdn_controller.add_data_inspection(args)
+        return json.dumps({"success": True}), 201
+
+    def delete(self):
+        logger.info('Attacker to remove')
+        args = self.parser.parse_args()
+
+        logger.info('Attack args - [%s]', args)
+        self.sdn_controller.del_data_inspection(args)
         return json.dumps({"success": True}), 201
 
 

@@ -40,7 +40,7 @@
     inspection_data: "{{ sr1_data_inspection_int | default(None) }}"
     max_received_packet_count: "{{ send_packet_count }}"
 
-# Add table entry to {{ data_drop_table }}
+# Start packet mitigation
 - hosts: "{{ rec_host }}"
   gather_facts: no
   tasks:
@@ -65,7 +65,7 @@
     min_received_packet_count: 0
     max_received_packet_count: 0
 
-# Delete table entry from table {{ data_drop_table }}
+# Stop packet mitigation
 - hosts: "{{ rec_host }}"
   gather_facts: no
   tasks:

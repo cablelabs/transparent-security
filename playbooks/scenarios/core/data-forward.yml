@@ -29,14 +29,14 @@
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
     dst_mac: "{{ receiver['mac'] }}"
-    data_forward:
-      url: "http://{{ sdn_ip }}:{{ sdn_port }}/dataForward"
-      body:
-        device_id: "{{ switch.id }}"
-        switch_mac: "{{ switch.mac }}"
-        dst_mac: "{{ receiver.mac }}"
-        output_port: 2
-      ok_status: 201
+    data_forwards:
+      - url: "http://{{ sdn_ip }}:{{ sdn_port }}/dataForward"
+        body:
+          device_id: "{{ switch.id }}"
+          switch_mac: "{{ switch.mac }}"
+          dst_mac: "{{ receiver.mac }}"
+          output_port: 2
+        ok_status: 201
 
 # Basic Data Forward scenario for INT packets to egress port
 - import_playbook: ../general/data_forward_basic.yml
@@ -59,14 +59,14 @@
       - switch_id: 1001
         orig_mac: "{{ sender.mac }}"
     sr_rec_int_hops: 0
-    data_forward:
-      url: "http://{{ sdn_ip }}:{{ sdn_port }}/dataForward"
-      body:
-        device_id: "{{ switch.id }}"
-        switch_mac: "{{ switch.mac }}"
-        dst_mac: "{{ receiver.mac }}"
-        output_port: 2
-      ok_status: 201
+    data_forwards:
+      - url: "http://{{ sdn_ip }}:{{ sdn_port }}/dataForward"
+        body:
+          device_id: "{{ switch.id }}"
+          switch_mac: "{{ switch.mac }}"
+          dst_mac: "{{ receiver.mac }}"
+          output_port: 2
+        ok_status: 201
 
 # Basic Data Forward scenario for INT packets to clone port
 - import_playbook: ../general/data_forward_basic.yml
@@ -90,10 +90,10 @@
         orig_mac: "{{ sender.mac }}"
     sr_rec_int_hops: 2
     data_forward:
-      url: "http://{{ sdn_ip }}:{{ sdn_port }}/dataForward"
-      body:
-        device_id: "{{ switch.id }}"
-        switch_mac: "{{ switch.mac }}"
-        dst_mac: "{{ receiver.mac }}"
-        output_port: 2
-      ok_status: 201
+      - url: "http://{{ sdn_ip }}:{{ sdn_port }}/dataForward"
+        body:
+          device_id: "{{ switch.id }}"
+          switch_mac: "{{ switch.mac }}"
+          dst_mac: "{{ receiver.mac }}"
+          output_port: 2
+        ok_status: 201

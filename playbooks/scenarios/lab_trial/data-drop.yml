@@ -15,42 +15,46 @@
 ---
 
 # Basic Data Drop scenario for the lab trial
-#
-# TO BE IMPLEMENTED WHEN DATA DROP HAS BEEN IMPLEMENTED ON THE AGGREGATE SWITCH
-#
-# If using data_drop_basic, move it to ../single_switch/data_drop_basic.yml ../general
-# and of course change the values. Below is simply a template to start with
-#- import_playbook: ../single_switch/data_drop_basic.yml
-#  vars:
-#    send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
-#    ip_version: "{{ scenario_send_ip_version | default(4) }}"
-#    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-#    switch: "{{ topo_dict.switches.gateway }}"
-#    remote_send_host: Camera1
-#    remote_rec_host: inet
-#    send_host: "{{ remote_send_host if run_mode == 'remote' else None }}"
-#    rec_host: "{{ remote_rec_host if run_mode == 'remote' else None }}"
-#    send_port: 4321
-#    sender: "{{ topo_dict.hosts[remote_send_host] }}"
-#    sender_intf: "{{ '%s-eth0' % send_host if run_mode == 'remote' else '%s-eth1' % switch.name }}"
-#    send_sw_port: "{{ topo_dict.links[0].south_facing_port }}"
-#    receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
-#    receiver_intf: "{{ '%s-eth0' % rec_host if run_mode == 'remote' else '%s-eth2' % switch.name }}"
-#    rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
-#    data_drop_table_action:
-#      control_name: TpsAggIngress
-#      table_name: "{{ 'data_drop_udp_ipv%s_t' % ip_version if send_protocol == 'UDP' else 'data_drop_tcp_ipv%s_t' % ip_version }}"
-#      action:
-#        name: data_drop
-#        match_fields:
-#          - key: hdr.ethernet.src_mac
-#            value: "{{ sender.mac }}"
-#          - key: "{{ 'hdr.ipv%s.srcAddr' % ip_version }}"
-#            value: "{{ sender.ip  if ip_version == '4' else sender.ipv6 }}"
-#          - key: "{{ 'hdr.ipv%s.dstAddr' % ip_version }}"
-#            value: "{{ receiver.ip if ip_version == '4' else receiver.ipv6 }}"
-#          - key: "{{ 'hdr.udp.dst_port' if send_protocol == 'UDP' else 'hdr.tcp.dst_port' }}"
-#            value: "{{ send_port }}"
-#        params:
-#          - key: device
-#            value: "{{ sender.id }}"
+- import_playbook: ../single_switch/data_drop_basic.yml
+  vars:
+    send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
+    ip_version: "{{ scenario_send_ip_version | default(4) }}"
+    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
+    switch: "{{ topo_dict.switches.aggregate }}"
+    switch2: "{{ topo_dict.switches.core }}"
+    remote_send_host: Camera1
+    remote_rec_host: inet
+    send_host: "{{ remote_send_host }}"
+    rec_host: "{{ remote_rec_host }}"
+    send_port: 4321
+    sender: "{{ topo_dict.hosts[remote_send_host] }}"
+    sender_intf: "{{ '%s-eth0' % switch.name }}"
+    send_sw_port: "{{ topo_dict.links[0].south_facing_port }}"
+    receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
+    receiver_intf: "{{ '%s-eth0' % switch2.name }}"
+    rec_sw_port: "{{ topo_dict.links[1].north_facing_port }}"
+    data_forwards:
+      - url: "http://{{ sdn_ip }}:{{ sdn_port }}/dataForward"
+        body:
+          device_id: "{{ switch.id }}"
+          switch_mac: "{{ switch.mac }}"
+          dst_mac: "{{ receiver.mac }}"
+          output_port: 1
+        ok_status: 201
+      - url: "http://{{ sdn_ip }}:{{ sdn_port }}/dataForward"
+        body:
+          device_id: "{{ switch2.id }}"
+          switch_mac: "{{ switch2.mac }}"
+          dst_mac: "{{ receiver.mac }}"
+          output_port: 2
+        ok_status: 201
+    attack:
+      url: "http://{{ sdn_ip }}:{{ sdn_port }}/gwAttack"
+      body:
+        src_ip: "{% if scenario_send_ip_version|int == 4 %}{{ sender.ip }}{% else %}{{ sender.ipv6 }}{% endif %}"
+        packet_size: 112
+        attack_type: "UDP Flood"
+        dst_port: "{{ send_port }}"
+        dst_ip: "{% if scenario_send_ip_version|int == 4 %}{{ receiver.ip }}{% else %}{{ receiver.ipv6 }}{% endif %}"
+        src_mac: "{{ sender.mac }}"
+      ok_status: 201
