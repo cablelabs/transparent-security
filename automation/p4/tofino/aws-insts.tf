@@ -49,7 +49,7 @@ locals {
 resource "aws_instance" "tps-switch" {
   count = local.switch_count
   availability_zone = var.availability_zone
-  ami = var.scenario_name == "core" ? var.tofino.bfrt_ami : var.tofino.p4rt_ami
+  ami = var.p4_arch == "tna" ? var.tofino.bfrt_ami : var.tofino.p4rt_ami
   instance_type = var.switch_instance_type
   key_name = aws_key_pair.snaps-mini-pk.key_name
 
