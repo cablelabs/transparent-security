@@ -32,7 +32,6 @@
         compile_command: >
           $SDE_INSTALL/bin/bf-p4c
           --std p4-16
-          -D TOFINO
 
     - include_tasks: compile_tasks.yml
       loop: "{{ p4_progs }}"

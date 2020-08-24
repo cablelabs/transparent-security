@@ -28,13 +28,13 @@
 - name: Determine P4 program name and base compile command when arch == 'v1model'
   set_fact:
     p4_program_name: "{{ item }}"
-    compile_command: "{{ compile_command }} --p4runtime-format text --arch v1model"
+    compile_command: "{{ compile_command }} --p4runtime-format text --arch v1model -D TOFINO"
   when: switch.arch is not defined or switch.arch == 'v1model'
 
 - name: Determine P4 program name and base compile command when arch != 'v1model'
   set_fact:
     p4_program_name: "{{ item }}-{{ switch.arch }}"
-    compile_command: "{{ compile_command }} --arch {{ switch.arch }}"
+    compile_command: "{{ compile_command }} --arch {{ switch.arch }} -D TOFINO-tna"
   when: switch.arch is defined and switch.arch != 'v1model'
 
 - name: Complete building the compile command
