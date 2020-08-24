@@ -201,7 +201,7 @@ host_sudo_user=${var.sudo_user}
 ae_monitor_intf=${var.ae_monitor_intf}
 clone_egress_port=${var.clone_egress_port}
 p4_platform=tofino
-p4_arch=${local.p4_arch}
+p4_arch=${var.p4_arch}
 "\
 EOT
   }
