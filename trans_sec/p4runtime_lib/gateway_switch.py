@@ -31,6 +31,7 @@ import ipaddress
 import logging
 from abc import ABC
 
+from trans_sec.consts import IPV6_TYPE, IPV4_TYPE
 from trans_sec.p4runtime_lib.p4rt_switch import P4RuntimeSwitch
 from trans_sec.utils.convert import decode_num, decode_ipv4
 
@@ -92,14 +93,23 @@ class GatewaySwitch(P4RuntimeSwitch, ABC):
             table_name='{}.data_inspection_t'.format(self.p4_ingress),
             match_fields={
                 'hdr.ethernet.src_mac': dev_mac,
-                'hdr.ethernet.etherType': IPV4_TYPE
             },
-            action_name='{}.data_inspect_packet_ipv4'.format(
+            action_name='{}.data_inspect_packet'.format(
                 self.p4_ingress),
-            action_params=action_params)
+            action_params=action_params
+        )
         self.write_table_entry(table_entry)
 
-        # Northbound Traffic Inspection for IPv6
+        logger.info(
+            'Installed Northbound Packet Inspection for device with'
+            ' MAC - [%s] with action params - [%s]',
+            dev_mac, action_params)
+
+    def del_data_inspection(self, dev_id, dev_mac):
+        logger.info(
+            'Adding data inspection to gateway device [%s] with device ID '
+            '- [%s] and mac - [%s]', self.device_id, dev_id, dev_mac)
+        # Northbound Traffic Inspection for IPv4
         action_params = {
             'device': dev_id,
             'switch_id': self.device_id
@@ -108,12 +118,11 @@ class GatewaySwitch(P4RuntimeSwitch, ABC):
             table_name='{}.data_inspection_t'.format(self.p4_ingress),
             match_fields={
                 'hdr.ethernet.src_mac': dev_mac,
-                'hdr.ethernet.etherType': IPV6_TYPE
             },
-            action_name='{}.data_inspect_packet_ipv6'.format(
+            action_name='{}.data_inspect_packet'.format(
                 self.p4_ingress),
-            action_params=action_params)
-        self.write_table_entry(table_entry)
+        )
+        self.delete_table_entry(table_entry)
 
         logger.info(
             'Installed Northbound Packet Inspection for device with'

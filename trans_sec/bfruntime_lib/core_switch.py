@@ -28,7 +28,7 @@
 # limitations under the License.
 #
 import logging
-import socket
+from abc import ABC
 
 from tofino.bfrt_grpc import bfruntime_pb2
 
@@ -37,7 +37,7 @@ from trans_sec.bfruntime_lib.bfrt_switch import BFRuntimeSwitch
 logger = logging.getLogger('core_switch')
 
 
-class CoreSwitch(BFRuntimeSwitch):
+class CoreSwitch(BFRuntimeSwitch, ABC):
     def __init__(self, sw_info, proto_dump_file=None):
         """
         Construct Switch class to control BMV2 switches running gateway.p4
@@ -68,30 +68,30 @@ class CoreSwitch(BFRuntimeSwitch):
         table_operation.table_id = self.get_table(table_name)
         # table_operation.table_operations_type = table_op
 
-        return self.write(req)
+        return self.write(write_req)
 
-        table_entry = self.p4info_helper.build_table_entry(
-            table_name='{}.arp_flood_t'.format(self.p4_ingress),
-            match_fields={'hdr.ethernet.dst_mac': 'ff:ff:ff:ff:ff:ff'},
-            action_name='{}.arp_flood'.format(self.p4_ingress),
-            action_params={})
-        self.write_table_entry(table_entry)
-
-        ae_ip_addr = socket.gethostbyname(ae_ip)
-        logger.info(
-            'Starting telemetry report for INT headers with dst_port '
-            'value of 555 to AE IP [%s]', ae_ip_addr)
-        table_name = '{}.setup_telemetry_rpt_t'.format('TofinoCoreEgress')
-        action_name = '{}.setup_telem_rpt_ipv4'.format('TofinoCoreEgress')
-        match_fields = {
-            'hdr.udp_int.dst_port': 555
-        }
-        action_params = {
-            'ae_ip': ae_ip_addr
-        }
-        table_entry = self.p4info_helper.build_table_entry(
-            table_name=table_name,
-            match_fields=match_fields,
-            action_name=action_name,
-            action_params=action_params)
-        self.write_table_entry(table_entry)
+        # table_entry = self.p4info_helper.build_table_entry(
+        #     table_name='{}.arp_flood_t'.format(self.p4_ingress),
+        #     match_fields={'hdr.ethernet.dst_mac': 'ff:ff:ff:ff:ff:ff'},
+        #     action_name='{}.arp_flood'.format(self.p4_ingress),
+        #     action_params={})
+        # self.write_table_entry(table_entry)
+        #
+        # ae_ip_addr = socket.gethostbyname(ae_ip)
+        # logger.info(
+        #     'Starting telemetry report for INT headers with dst_port '
+        #     'value of 555 to AE IP [%s]', ae_ip_addr)
+        # table_name = '{}.setup_telemetry_rpt_t'.format('TofinoCoreEgress')
+        # action_name = '{}.setup_telem_rpt_ipv4'.format('TofinoCoreEgress')
+        # match_fields = {
+        #     'hdr.udp_int.dst_port': 555
+        # }
+        # action_params = {
+        #     'ae_ip': ae_ip_addr
+        # }
+        # table_entry = self.p4info_helper.build_table_entry(
+        #     table_name=table_name,
+        #     match_fields=match_fields,
+        #     action_name=action_name,
+        #     action_params=action_params)
+        # self.write_table_entry(table_entry)
