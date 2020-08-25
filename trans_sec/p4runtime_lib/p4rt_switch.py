@@ -106,7 +106,7 @@ class P4RuntimeSwitch(SwitchConnection, ABC):
     def __get_data_forward_table_entry(self, dst_mac, egress_port):
         logger.info(
             'Adding data forward to device [%s] with destination MAC '
-            '- [%s] and ingress port - [%s]',
+            '- [%s] and egress port - [%s]',
             self.grpc_addr, dst_mac, egress_port)
 
         if self.sw_info['type'] == GATEWAY_CTRL_KEY:

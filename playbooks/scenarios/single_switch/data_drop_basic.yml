@@ -39,6 +39,7 @@
     send_packet_count: "{{ '%s' % 100 | random(seed=now|int + 2) }}"
     inspection_data: "{{ sr1_data_inspection_int | default(None) }}"
     max_received_packet_count: "{{ send_packet_count }}"
+    discover_fwd_path: True
 
 # Start packet mitigation
 - hosts: "{{ rec_host }}"
