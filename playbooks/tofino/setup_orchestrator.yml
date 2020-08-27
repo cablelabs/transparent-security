@@ -119,6 +119,7 @@
         - "ae_monitor_intf={{ ae_monitor_intf }}"
         - "host_sender_intf=eth0:0"
         - "p4_platform={{ p4_platform }}"
+        - "p4_arch={{ p4_arch }}"
         - "host_sudo_user={{ host_sudo_user }}"
 
     - include_tasks: etc_hosts_tasks.yml

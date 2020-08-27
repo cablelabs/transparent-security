@@ -45,6 +45,7 @@ class CoreController(AbstractController):
     Implementation of the controller for a switch running the core.p4 program
     """
     def instantiate_switch(self, sw_info):
+        logger.info('Instantiating switch with arch - [%s]', sw_info)
         if 'arch' in sw_info and sw_info['arch'] == 'tna':
             return BFRTSwitch(
                 sw_info=sw_info,

@@ -45,7 +45,10 @@ class CoreSwitch(P4RuntimeSwitch):
             sw_info, 'TpsCoreIngress', 'TpsCoreEgress', proto_dump_file)
 
     def write_multicast_entry(self, hosts):
-        super(self.__class__, self).write_multicast_entry(hosts)
+        try:
+            super(self.__class__, self).write_multicast_entry(hosts)
+        except Exception as e:
+            logger.warning('Unexpected error writing multicast entry')
         self.write_arp_flood()
 
     def add_data_forward(self, dst_mac, egress_port):
