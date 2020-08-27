@@ -223,23 +223,6 @@ control TpsAggIngress(inout headers hdr,
     }
 
      apply {
-        if (hdr.ipv4.isValid()) {
-            if (hdr.udp.isValid()) {
-                pack_meta_udp();
-            } else if (hdr.tcp.isValid()) {
-                pack_meta_tcp();
-            }
-            pack_meta_ipv4();
-            data_drop_t.apply();
-        } else if (hdr.ipv6.isValid()) {
-            if (hdr.udp.isValid()) {
-                pack_meta_udp();
-            } else if (hdr.tcp.isValid()) {
-                pack_meta_tcp();
-            }
-            pack_meta_ipv6();
-            data_drop_t.apply();
-        }
         if (hdr.arp.isValid()) {
             generate_learn_notification();
             if (hdr.arp.opcode == 1) {
@@ -252,30 +235,49 @@ control TpsAggIngress(inout headers hdr,
         } else if (standard_metadata.egress_spec != DROP_PORT) {
             if (hdr.int_shim.isValid()) {
                 add_switch_id_t.apply();
-            }
-            else {
+            } else {
+                if (hdr.ipv4.isValid()) {
+                    if (hdr.udp.isValid()) {
+                        pack_meta_udp();
+                    #ifdef BMV2
+                    } else if (hdr.tcp.isValid()) {
+                        pack_meta_tcp();
+                    #endif
+                    }
+                    pack_meta_ipv4();
+                } else if (hdr.ipv6.isValid()) {
+                    if (hdr.udp.isValid()) {
+                        pack_meta_udp();
+                    #ifdef BMV2
+                    } else if (hdr.tcp.isValid()) {
+                        pack_meta_tcp();
+                    #endif
+                    }
+                    pack_meta_ipv6();
+                }
                 data_inspection_t.apply();
                 if (hdr.int_shim.isValid()) {
                     if (hdr.ipv4.isValid()) {
-                       data_inspect_packet_ipv4();
-                       if (hdr.udp.isValid()) {
-                           insert_udp_int_for_udp();
-                       } else if (hdr.tcp.isValid()) {
-                           insert_udp_int_for_tcp_ipv4();
-                       }
+                        data_inspect_packet_ipv4();
+                        if (hdr.udp.isValid()) {
+                            insert_udp_int_for_udp();
+                        } else if (hdr.tcp.isValid()) {
+                            insert_udp_int_for_tcp_ipv4();
+                        }
                     }
                     else if (hdr.ipv6.isValid()) {
-                       data_inspect_packet_ipv6();
-                       if (hdr.udp.isValid()) {
-                           insert_udp_int_for_udp();
-                       } else if (hdr.tcp.isValid()) {
-                           insert_udp_int_for_tcp_ipv6();
-                       }
+                        data_inspect_packet_ipv6();
+                        if (hdr.udp.isValid()) {
+                            insert_udp_int_for_udp();
+                        } else if (hdr.tcp.isValid()) {
+                            insert_udp_int_for_tcp_ipv6();
+                        }
                     }
                 }
             }
             data_forward_t.apply();
         }
+        data_drop_t.apply();
     }
 }
 

@@ -13,6 +13,7 @@
 # limitations under the License.
 */
 /* -*- P4_16 -*- */
+
 /*************************************************************************
 *********************** H E A D E R S  ***********************************
 *************************************************************************/
@@ -44,7 +45,6 @@ header arp_t {
     bit<48>    dst_mac;
     bit<32>    dstAddr;
 }
-
 /*************************
 IPv4 header definition
 **************************/
@@ -218,6 +218,7 @@ struct headers {
     ipv6_t            trpt_ipv6;
     udp_t             trpt_udp;
     telem_rpt_t       trpt_hdr;
+
     ethernet_t        ethernet;
     ipv4_t            ipv4;
     ipv6_t            ipv6;
@@ -227,6 +228,7 @@ struct headers {
     int_metadata_t    int_meta_3;
     int_metadata_t    int_meta_2;
     source_metadata_t int_meta;
+
     arp_t             arp;
     udp_t             udp;
     tcp_t             tcp;
