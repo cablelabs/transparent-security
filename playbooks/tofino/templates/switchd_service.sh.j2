@@ -22,7 +22,7 @@ export host_ip=$(hostname -i)
 {% if switch_arch == 'tna' %}
 $SDE/run_switchd.sh -p {{ prog_name }} -c /etc/transparent-security/p4/{{ prog_name }}.tofino/{{ prog_name }}_tna.conf -r {{ log_dir }}/switchd.log
 {% else %}
-$SDE/run_switchd.sh -p {{ prog_name }} -c /etc/transparent-security/p4/{{ prog_name }}.tofino/{{ prog_name }}.conf -r {{ log_dir }}/switchd.log
+$SDE/run_switchd.sh -p {{ prog_name }} -r {{ log_dir }}/switchd.log --skip-p4 -- --p4rt-server $host_ip:{{ grpc_port }}
 {% endif %}
 
 while true
