@@ -58,40 +58,7 @@ class CoreSwitch(BFRuntimeSwitch):
             'Setting up telemetry report on core device [%s] with '
             'AE IP - [%s]', self.device_id, ae_ip)
 
-        write_req = bfruntime_pb2.WriteRequest()
-        self.add_target_data_to_request(write_req)
-
-        update = write_req.updates.add()
-        update.type = bfruntime_pb2.Update.INSERT
-        table_operation = update.entity.table_operation
-        table_name = '{}.setup_telemetry_rpt_t'.format('TofinoCoreEgress')
-        table_operation.table_id = self.get_table(table_name)
-        # table_operation.table_operations_type = table_op
-
-        return self.write(write_req)
-
-        # table_entry = self.p4info_helper.build_table_entry(
-        #     table_name='{}.arp_flood_t'.format(self.p4_ingress),
-        #     match_fields={'hdr.ethernet.dst_mac': 'ff:ff:ff:ff:ff:ff'},
-        #     action_name='{}.arp_flood'.format(self.p4_ingress),
-        #     action_params={})
-        # self.write_table_entry(table_entry)
-        #
-        # ae_ip_addr = socket.gethostbyname(ae_ip)
-        # logger.info(
-        #     'Starting telemetry report for INT headers with dst_port '
-        #     'value of 555 to AE IP [%s]', ae_ip_addr)
-        # table_name = '{}.setup_telemetry_rpt_t'.format('TofinoCoreEgress')
-        # action_name = '{}.setup_telem_rpt_ipv4'.format('TofinoCoreEgress')
-        # match_fields = {
-        #     'hdr.udp_int.dst_port': 555
-        # }
-        # action_params = {
-        #     'ae_ip': ae_ip_addr
-        # }
-        # table_entry = self.p4info_helper.build_table_entry(
-        #     table_name=table_name,
-        #     match_fields=match_fields,
-        #     action_name=action_name,
-        #     action_params=action_params)
-        # self.write_table_entry(table_entry)
+        self.insert_table_entry('setup_telemetry_rpt_t',
+                                ['hdr.udp_int.dst_port'],
+                                'setup_telem_rpt_ipv4',
+                                ('ae_ip', ae_ip))

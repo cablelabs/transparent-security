@@ -42,7 +42,7 @@
         when: log_dir|length > 0
 
       - block:
-        - name: Retrieve architecture of the switch
+        - name: Retrieve the switch object from the topology
           set_fact:
             switch: "{{ topology.switches.get(prog_name) }}"
           when: prog_name is defined
