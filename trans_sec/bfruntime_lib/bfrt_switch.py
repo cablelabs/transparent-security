@@ -11,11 +11,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import tofino.bfrt_grpc.client as bfrt_client
 import logging
 from abc import ABC
 
 import grpc
+import tofino.bfrt_grpc.client as bfrt_client
 from google.rpc import code_pb2, status_pb2
 from tofino.bfrt_grpc import bfruntime_pb2_grpc, bfruntime_pb2
 
@@ -50,6 +50,8 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
         self.interface = bfrt_client.ClientInterface(
             grpc_addr=self.grpc_addr, client_id=self.client_id,
             device_id=self.device_id, is_master=True)
+        self.target = bfrt_client.Target(
+            device_id=self.device_id, pipe_id=0xffff)
         self.bfrt_info = self.interface.bfrt_info_get(
             "{}_tna".format(self.name))
 
@@ -150,13 +152,7 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
         pass
 
     def get_table(self, name):
-        for table_name, table in self.bfrt_info.table_dict.items():
-            logger.debug('Checking table [%s] for [%s]', table_name, name)
-            if table_name in name:
-                logger.debug('Table [%s] found with ID [%s]', table_name,
-                             table.info.id)
-                return table
-        logger.warning('Unable to locate table with name - [%s]', name)
+        return self.bfrt_info.table_get(name)
 
     def get_table_id(self, name):
         table = self.get_table(name)
@@ -164,159 +160,29 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
             logger.debug('table id - [%s]', table.info.id)
             return table.info.id
 
-    def add_target_data_to_request(self, req):
-        target = bfrt_client.Target(device_id=self.device_id, pipe_id=0xffff)
-        req.target.device_id = target.device_id_
-        req.target.pipe_id = target.pipe_id_
-        req.target.direction = target.direction_
-        req.target.prsr_id = target.prsr_id_
-
-    def insert_table_entry(self, table_name, key_fields=None, action_name=None,
-                           data_fields=[]):
+    def insert_table_entry(self, table_name, action_name, key_fields=None,
+                           data_fields=None):
         """
         Insert a new table entry
-            @param table_name : Table name.
-            @param key_fields : List of (name, value, [mask]) tuples.
-            @param action_name : Action name.
-            @param data_fields : List of (name, value) tuples.
+        @param table_name : Table name.
+        @param action_name : Action name.
+        @param key_fields : List of bfrt_grpc.client.KeyTuple objects.
+        @param data_fields : List of bfrt_grpc.client.DataTuple objects.
         """
 
-        req = bfruntime_pb2.WriteRequest()
-        self.add_target_data_to_request(req)
-
-        write_data_fields = list()
-        if data_fields and len(data_fields) > 0:
-            for data_field_name in data_fields:
-                field = self.get_data_field(
-                    table_name, action_name, data_field_name)
-                if field:
-                    write_data_fields.append(field)
-
-        return self.write(
-            self.entry_write_req_make(req, table_name, [key_fields],
-                                      [action_name], [write_data_fields],
-                                      bfruntime_pb2.Update.INSERT))
-
-    def entry_write_req_make(self, req, table_name,
-                             key_fields=[], action_names=[], data_fields=[],
-                             update_type=bfruntime_pb2.Update.INSERT,
-                             modify_inc_type=None):
-        if self.get_table(table_name) is None:
-            logger.warning("Table %s not found", table_name)
-            return
-
-        if key_fields and action_names and data_fields:
-            assert (len(key_fields) == len(action_names) == len(data_fields));
-        for idx in range(len(key_fields)):
-            update = req.updates.add()
-            update.type = update_type
-            table_entry = update.entity.table_entry
-            table_entry.table_id = self.get_table_id(table_name)
-            table_entry.is_default_entry = False
-            if modify_inc_type:
-                table_entry.table_mod_inc_flag.type = modify_inc_type
-
-            if key_fields and key_fields[idx]:
-                self.set_table_key(table_entry, key_fields[idx], table_name)
-            if action_names and data_fields:
-                self.set_table_data(table_entry, action_names[idx],
-                                    data_fields[idx], table_name)
-        return req
-
-    def write(self, req):
-        try:
-            self.client_stub.Write(req)
-        except grpc.RpcError as e:
-            printGrpcError(e)
-            raise e
-
-    def read(self, req):
-        try:
-            return self.client_stub.Read(req)
-        except grpc.RpcError as e:
-            printGrpcError(e)
-            raise e
-
-    def set_table_key(self, table, key_fields, table_name):
-        """
-        Sets the key for a bfn::TableEntry object
-        @param table : bfn::TableEntry object.
-        @param key_fields: List of (name, value, [mask]) tuples
-        @param table_name: The name of the table
-        """
-        if table is None:
-            logger.warning("Invalid TableEntry object.")
-            return
-
-        for field in key_fields:
-            field_id = self.get_key_field(table_name, field.name)
-            if field_id is None:
-                logger.error("Data key %s not found.", field.name)
-            key_field = table.key.fields.add()
-            key_field.field_id = field_id
-            if field.mask:
-                key_field.ternary.value = field.value
-                key_field.ternary.mask = field.mask
-            elif field.prefix_len:
-                key_field.lpm.value = field.value
-                key_field.lpm.prefix_len = field.prefix_len
-            elif field.low or field.high:
-                key_field.range.low = field.low
-                key_field.range.high = field.high
-            else:
-                key_field.exact.value = field.value
-
-    def get_key_field(self, table_name, field_name):
-        """ Get key field id for a given table and field. """
-        table = self.get_table(table_name)
-        fields = table.get_fields()
-        for field in fields:
-            if field.name == field_name:
-                return field
-
-    def get_data_field(self, table_name, action_name, field_name):
-        table = self.get_table(table_name)
-        for action in table.info.actions:
-            if action.name == action_name:
-                for field in action.fields:
-                    if field.name == field_name:
-                        return field.id
-
-    def get_action(self, table_name, action_name):
-        """ Get action id for a given table and action. """
         table = self.get_table(table_name)
         if table:
-            actions = table.get_actions()
-            for action in actions:
-                if action.name == action_name:
-                    return action
+            key = table.make_key(key_fields)
+            logger.debug('data_fields - [%s]', data_fields[0])
+            data = table.make_data(data_fields, action_name, True)
 
-    def set_table_data(self, table, action, data_fields, table_name):
-        """ Sets the data for a bfn::TableEntry object
-            @param table : bfn::TableEntry object.
-            @param ation : Name of the action
-            @param data_fields: List of (name, value) tuples.
-        """
-        if action:
-            table.data.action_id = self.get_action(table_name, action)
-
-        if data_fields:
-            for field in data_fields:
-                data_field = table.data.fields.add()
-                data_field.field_id = self.get_data_field(
-                    table_name, action, field.name)
-                if field.stream:
-                    data_field.stream = field.stream
-                elif field.float_val:
-                    data_field.float_val = field.float_val
-                elif field.str_val:
-                    data_field.str_val = field.str_val
-                elif field.bool_val:
-                    data_field.bool_val = field.bool_val
-                elif field.int_arr_val:
-                    data_field.int_arr_val.val.extend(field.int_arr_val)
-                elif field.bool_arr_val:
-                    data_field.bool_arr_val.val.extend(field.bool_arr_val)
+            logger.debug('table actions - [%s]', table.info.action_dict)
+            action = table.info.action_dict.get(action_name)
+            logger.info('Inserting keys - [%s], data - [%s] into table [%s]',
+                        key_fields, data_fields, table_name)
+            logger.debug('key - [%s]', key)
+            logger.debug('data - [%s]', data)
+            table.entry_add(self.target, [key], [data], action.id)
 
 
 def parseGrpcErrorBinaryDetails(grpc_error):
@@ -351,8 +217,8 @@ def parseGrpcErrorBinaryDetails(grpc_error):
 def printGrpcError(grpc_error):
     status_code = grpc_error.code()
     logger.error("gRPC Error %s %s",
-            grpc_error.details(),
-            status_code.name)
+                 grpc_error.details(),
+                 status_code.name)
 
     if status_code != grpc.StatusCode.UNKNOWN:
         return
@@ -364,5 +230,5 @@ def printGrpcError(grpc_error):
         code_name = code_pb2._CODE.values_by_number[
             bfrt_error.canonical_code].name
         logger.error("\t* At index %d %s %s\n",
-                idx, code_name, bfrt_error.message)
+                     idx, code_name, bfrt_error.message)
     return bfrt_errors
