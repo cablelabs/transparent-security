@@ -48,7 +48,8 @@ class CoreSwitch(P4RuntimeSwitch):
         try:
             super(self.__class__, self).write_multicast_entry(hosts)
         except Exception as e:
-            logger.warning('Unexpected error writing multicast entry')
+            logger.warning('Unexpected error writing multicast entry - [%s]',
+                           e)
         self.write_arp_flood()
 
     def add_data_forward(self, dst_mac, egress_port):
@@ -129,7 +130,7 @@ class CoreSwitch(P4RuntimeSwitch):
         table_name = '{}.setup_telemetry_rpt_t'.format(self.p4_egress)
         action_name = '{}.setup_telem_rpt_ipv4'.format(self.p4_egress)
         match_fields = {
-            'hdr.udp_int.dst_port': 555
+            'hdr.udp_int.dst_port': UDP_INT_DST_PORT
         }
         action_params = {
             'ae_ip': ae_ip_addr
