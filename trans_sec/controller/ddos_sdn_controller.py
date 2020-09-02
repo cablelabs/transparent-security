@@ -161,26 +161,34 @@ class DdosSdnController:
         Removes a device to mitigate an attack
         :param attack: dict of attack
         """
-        raise NotImplementedError
-        # agg_controller = self.get_agg_controller(attack)
-        # logger.info('Adding attack to aggregate')
-        # try:
-        #     agg_controller.remove_attacker(attack)
-        # except Exception as e:
-        #     logger.error('Error adding attacker with error - [%s])', e)
+        agg_controller = self.get_agg_controller(attack)
+        logger.info('Removing attack from aggregate')
+        if agg_controller:
+            try:
+                agg_controller.remove_attacker(attack, None)
+            except Exception as e:
+                logger.error('Error removing attacker with error - [%s])', e)
+        else:
+            logger.warning('Aggregate controller cannot stop the attack')
 
     def add_agg_attacker(self, attack):
         """
         Adds a device to mitigate an attack
         :param attack: dict of attack
         """
-        raise NotImplementedError
-        # agg_controller = self.get_agg_controller(attack)
-        # logger.info('Adding attack to aggregate')
-        # try:
-        #     agg_controller.add_attacker(attack)
-        # except Exception as e:
-        #     logger.error('Error adding attacker with error - [%s])', e)
+        agg_controller = self.get_agg_controller(attack)
+        logger.info('Adding attack to aggregate')
+        if agg_controller:
+            try:
+                agg_controller.add_attacker(attack, None)
+            except Exception as e:
+                logger.error('Error adding attacker with error - [%s])', e)
+        else:
+            logger.warning('Aggregate controller cannot add attack')
+
+    def get_agg_controller(self, attack):
+        agg_controller = self.controllers.get(AGG_CTRL_KEY)
+        return agg_controller
 
     def __get_attack_host(self, attack):
         """

@@ -246,4 +246,7 @@ struct nat_digest {
 }
 
 struct metadata {
+    ip4Addr_t  ipv4_addr;
+    ip6Addr_t  ipv6_addr;
+    bit<16>    dst_port;
 }
