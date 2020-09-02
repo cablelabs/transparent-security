@@ -60,14 +60,13 @@ class CoreSwitch(BFRuntimeSwitch):
             'AE IP - [%s]', self.device_id, ae_ip)
 
         ip_addr = ipaddress.ip_address(ae_ip)
-        if isinstance(ip_addr, ipaddress.IPv6Address):
-            action_name = 'TpsCoreEgress.setup_telem_rpt_ipv6'
-        else:
-            action_name = 'TpsCoreEgress.setup_telem_rpt_ipv4'
-
+        action_name = 'TpsCoreEgress.setup_telem_rpt_ipv{}'.format(
+            ip_addr.version)
         self.insert_table_entry('TpsCoreEgress.setup_telemetry_rpt_t',
                                 action_name,
                                 [KeyTuple('hdr.udp_int.dst_port',
                                           value=UDP_INT_DST_PORT)],
                                 [DataTuple('ae_ip',
-                                           val=bytearray(ae_ip, 'utf-8'))])
+                                           val=bytearray(ip_addr.packed))])
+                                # [DataTuple('ae_ip',
+                                #            val=bytearray(ae_ip, 'utf-8'))])
