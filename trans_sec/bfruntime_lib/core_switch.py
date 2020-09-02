@@ -68,5 +68,6 @@ class CoreSwitch(BFRuntimeSwitch):
                                           value=UDP_INT_DST_PORT)],
                                 [DataTuple('ae_ip',
                                            val=bytearray(ip_addr.packed))])
-                                # [DataTuple('ae_ip',
-                                #            val=bytearray(ae_ip, 'utf-8'))])
+# OR TRY
+# [DataTuple('ae_ip',
+#            val=bytearray(ae_ip, 'utf-8'))])
