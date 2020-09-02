@@ -52,8 +52,13 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
             device_id=self.device_id, is_master=True)
         self.target = bfrt_client.Target(
             device_id=self.device_id, pipe_id=0xffff)
-        self.bfrt_info = self.interface.bfrt_info_get(
-            "{}_tna".format(self.name))
+
+        if self.sw_info.get('arch') and self.sw_info['arch'] != 'v1model':
+            self.prog_name = "{}_{}".format(self.name, self.sw_info['arch'])
+        else:
+            self.prog_name = "{}}".format(self.name, self.sw_info['arch'])
+
+        self.bfrt_info = self.interface.bfrt_info_get(self.prog_name)
 
         # self.digest_thread = Thread(target=self.receive_digests)
         self.digest_thread = None
