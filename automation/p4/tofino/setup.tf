@@ -59,7 +59,7 @@ locals {
   host2_tun2_mac = var.scenario_name == "full" ? "n/a" : aws_network_interface.node_tun_2.1.mac_address
 
   p4_arch = var.scenario_name == "core" ? "tna" : "v1model"
-  grpc_port = var.scenario_name == "core" ? var.bf_grpc_port : var.p4_grpc_port
+  grpc_port = var.p4_arch == "tna" ? var.bf_grpc_port : var.p4_grpc_port
 }
 
 ########
