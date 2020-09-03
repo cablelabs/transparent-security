@@ -20,13 +20,15 @@
 /* The Telemetry Report type for INT >= 2.0 */
 #define TRPT_RPT_TYPE_INT_2 0
 /* The Telemetry Report header bytes */
-#define TRPT_HDR_BASE_BYTES 24
+#define TRPT_HDR_BASE_BYTES 18
 /* The Telemetry Report in_type ethernet */
 #define TRPT_HDR_IN_TYPE_ETH 2
 /* The Telemetry Report in_type IPv4 */
 #define TRPT_HDR_IN_TYPE_IPV4 4
 /* The Telemetry Report in_type IPv6 */
 #define TRPT_HDR_IN_TYPE_IPV6 5
+#define TRPT_HDR_BYTES 24
+#define ETH_HDR_BYTES 14
 
 /* The INT Shim length at the gateway */
 #define INT_SHIM_BASE_SIZE 7

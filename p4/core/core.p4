@@ -289,6 +289,12 @@ control TpsCoreEgress(inout headers hdr,
     */
     action update_trpt_hdr_len_ipv4() {
         hdr.trpt_hdr.rpt_len = hdr.trpt_hdr.rpt_len + 5;
+        // TODO/FIXME - so this works for both BMV2 & TOFINO
+        #ifdef BMV2
+        /*hdr.trpt_udp.len = hdr.ipv4.totalLen + IPV4_HDR_BYTES + TRPT_HDR_BYTES + 2;*/
+        hdr.trpt_udp.len = hdr.ipv4.totalLen + IPV4_HDR_BYTES + TRPT_HDR_BYTES - 4;
+        hdr.trpt_ipv4.totalLen = (bit<16>)standard_metadata.packet_length + IPV4_HDR_BYTES + UDP_HDR_BYTES + TRPT_HDR_BASE_BYTES;
+        #endif
     }
 
     /**
@@ -296,6 +302,10 @@ control TpsCoreEgress(inout headers hdr,
     */
     action update_trpt_hdr_len_ipv6() {
         hdr.trpt_hdr.rpt_len = hdr.trpt_hdr.rpt_len + 10;
+        #ifdef BMV2
+        hdr.trpt_udp.len = hdr.ipv6.payload_len + IPV6_HDR_BYTES + TRPT_HDR_BYTES - ETH_HDR_BYTES;
+        hdr.trpt_ipv6.payload_len = (bit<16>)standard_metadata.packet_length + IPV6_HDR_BYTES + UDP_HDR_BYTES + TRPT_HDR_BASE_BYTES;
+        #endif
     }
 
     /* TODO - Design table properly, currently just making IPv4 or IPv6 Choices */
