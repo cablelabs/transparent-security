@@ -11,9 +11,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+locals {
+  ami = var.p4_arch == "tna" ? var.tofino.bfrt_ami : var.tofino.p4rt_ami
+}
+
 # Orchestrator/SDN Controller Instance
 resource "aws_instance" "orchestrator" {
-  ami = var.scenario_name == "core" ? var.tofino.bfrt_ami : var.tofino.p4rt_ami
+  ami = local.ami
   instance_type = var.orch_instance_type
   key_name = aws_key_pair.snaps-mini-pk.key_name
 
@@ -49,7 +53,7 @@ locals {
 resource "aws_instance" "tps-switch" {
   count = local.switch_count
   availability_zone = var.availability_zone
-  ami = var.scenario_name == "core" ? var.tofino.bfrt_ami : var.tofino.p4rt_ami
+  ami = local.ami
   instance_type = var.switch_instance_type
   key_name = aws_key_pair.snaps-mini-pk.key_name
 
@@ -124,7 +128,7 @@ resource "aws_network_interface" "switch_tun_2" {
 resource "aws_instance" "node" {
   count = local.node_count
   availability_zone = var.availability_zone
-  ami = var.scenario_name == "core" ? var.tofino.bfrt_ami : var.tofino.p4rt_ami
+  ami = local.ami
   instance_type = var.node_instance_type
   key_name = aws_key_pair.snaps-mini-pk.key_name
 

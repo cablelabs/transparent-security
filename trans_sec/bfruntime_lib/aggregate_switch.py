@@ -29,7 +29,10 @@
 #
 import logging
 
+from bfrt_grpc.client import KeyTuple, DataTuple
+
 from trans_sec.bfruntime_lib.bfrt_switch import BFRuntimeSwitch
+from trans_sec.consts import UDP_INT_DST_PORT
 
 logger = logging.getLogger('aggregate_switch')
 
@@ -49,4 +52,12 @@ class AggregateSwitch(BFRuntimeSwitch):
         raise NotImplementedError
 
     def add_switch_id(self, dev_id):
-        raise NotImplementedError
+        logger.info(
+            'Inserting device ID [%s] into add_switch_id_t table', dev_id)
+
+        self.insert_table_entry('TpsAggIngress.add_switch_id_t',
+                                'TpsAggIngress.add_switch_id',
+                                [KeyTuple('hdr.udp.dst_port',
+                                          value=UDP_INT_DST_PORT)],
+                                [DataTuple('switch_id',
+                                           val=bytearray(dev_id))])

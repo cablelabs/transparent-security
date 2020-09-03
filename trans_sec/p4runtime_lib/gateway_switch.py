@@ -31,6 +31,7 @@ import ipaddress
 import logging
 from abc import ABC
 
+from trans_sec.consts import IPV6_TYPE, IPV4_TYPE
 from trans_sec.p4runtime_lib.p4rt_switch import P4RuntimeSwitch
 from trans_sec.utils.convert import decode_num, decode_ipv4
 
@@ -78,6 +79,55 @@ class GatewaySwitch(P4RuntimeSwitch, ABC):
                 logger.error(
                     'Unexpected error reading NAT digest from [%s] - [%s]',
                     self.name, e)
+
+    def add_data_inspection(self, dev_id, dev_mac):
+        logger.info(
+            'Adding data inspection to gateway device [%s] with device ID '
+            '- [%s] and mac - [%s]', self.device_id, dev_id, dev_mac)
+        # Northbound Traffic Inspection for IPv4
+        action_params = {
+            'device': dev_id,
+            'switch_id': self.device_id
+        }
+        table_entry = self.p4info_helper.build_table_entry(
+            table_name='{}.data_inspection_t'.format(self.p4_ingress),
+            match_fields={
+                'hdr.ethernet.src_mac': dev_mac,
+            },
+            action_name='{}.data_inspect_packet'.format(
+                self.p4_ingress),
+            action_params=action_params
+        )
+        self.write_table_entry(table_entry)
+
+        logger.info(
+            'Installed Northbound Packet Inspection for device with'
+            ' MAC - [%s] with action params - [%s]',
+            dev_mac, action_params)
+
+    def del_data_inspection(self, dev_id, dev_mac):
+        logger.info(
+            'Adding data inspection to gateway device [%s] with device ID '
+            '- [%s] and mac - [%s]', self.device_id, dev_id, dev_mac)
+        # Northbound Traffic Inspection for IPv4
+        action_params = {
+            'device': dev_id,
+            'switch_id': self.device_id
+        }
+        table_entry = self.p4info_helper.build_table_entry(
+            table_name='{}.data_inspection_t'.format(self.p4_ingress),
+            match_fields={
+                'hdr.ethernet.src_mac': dev_mac,
+            },
+            action_name='{}.data_inspect_packet'.format(
+                self.p4_ingress),
+        )
+        self.delete_table_entry(table_entry)
+
+        logger.info(
+            'Installed Northbound Packet Inspection for device with'
+            ' MAC - [%s] with action params - [%s]',
+            dev_mac, action_params)
 
     @staticmethod
     def __parse_attack(**kwargs):
@@ -171,7 +221,7 @@ class GatewaySwitch(P4RuntimeSwitch, ABC):
         logger.info("Adding nat table entries on gateway device [%s] for %s",
                     self.device_id, source_ip)
         logger.info("Check if %s not in %s for %s", udp_source_port,
-                    self.nat_udp_ports, self.sw_info['name'])
+                    self.nat_udp_ports, self.name)
         # NAT Table Entries to handle UDP packets
         if udp_source_port and udp_source_port not in self.nat_udp_ports:
             table_entry = self.p4info_helper.build_table_entry(
@@ -182,7 +232,7 @@ class GatewaySwitch(P4RuntimeSwitch, ABC):
                 },
                 action_name='{}.udp_local_to_global'.format(self.p4_ingress),
                 action_params={
-                    'src_port': int("50" + str(self.sw_info['id']) + str(
+                    'src_port': int("50" + str(self.device_id) + str(
                         self.udp_port_count)),
                     'ip_srcAddr': gateway_public_ip
                 })
@@ -191,7 +241,7 @@ class GatewaySwitch(P4RuntimeSwitch, ABC):
                 table_name='{}.udp_global_to_local_t'.format(self.p4_ingress),
                 match_fields={
                     'hdr.udp.dst_port': int(
-                        "50" + str(self.sw_info['id']) + str(
+                        "50" + str(self.device_id) + str(
                             self.udp_port_count)),
                     'hdr.ipv4.dstAddr': (gateway_public_ip, 32)
                 },
@@ -204,7 +254,7 @@ class GatewaySwitch(P4RuntimeSwitch, ABC):
             self.udp_port_count = self.udp_port_count + 1
             self.nat_udp_ports.add(udp_source_port)
             logger.info("UDP NAT table entry added on %s",
-                        self.sw_info['name'])
+                        self.name)
         elif tcp_source_port and tcp_source_port not in self.nat_tcp_ports:
             # NAT Table Entries to handle TCP packets
             table_entry = self.p4info_helper.build_table_entry(
@@ -215,7 +265,7 @@ class GatewaySwitch(P4RuntimeSwitch, ABC):
                 },
                 action_name='{}.tcp_local_to_global'.format(self.p4_ingress),
                 action_params={
-                    'src_port': int("50" + str(self.sw_info['id']) + str(
+                    'src_port': int("50" + str(self.device_id) + str(
                         self.tcp_port_count)),
                     'ip_srcAddr': gateway_public_ip
                 })
@@ -224,7 +274,7 @@ class GatewaySwitch(P4RuntimeSwitch, ABC):
                 table_name='{}.tcp_global_to_local_t'.format(self.p4_ingress),
                 match_fields={
                     'hdr.tcp.dst_port': int(
-                        "50" + str(self.sw_info['id']) + str(
+                        "50" + str(self.device_id) + str(
                             self.tcp_port_count)),
                     'hdr.ipv4.dstAddr': (gateway_public_ip, 32)
                 },
@@ -237,7 +287,7 @@ class GatewaySwitch(P4RuntimeSwitch, ABC):
             self.tcp_port_count = self.tcp_port_count + 1
             self.nat_tcp_ports.add(tcp_source_port)
             logger.info("TCP NAT table entry added on %s",
-                        self.sw_info['name'])
+                        self.name)
 
     def interpret_nat_digest(self, digest_data):
         logger.debug("Digest data %s", digest_data)
@@ -247,14 +297,14 @@ class GatewaySwitch(P4RuntimeSwitch, ABC):
                 udp_source_port = decode_num(
                     members.struct.members[0].bitstring)
                 logger.info('Learned UDP Source Port from %s is: %s',
-                            self.sw_info['name'], udp_source_port)
+                            self.name, udp_source_port)
                 tcp_source_port = decode_num(
                     members.struct.members[1].bitstring)
                 logger.info('Learned TCP Source Port from %s is: %s',
-                            self.sw_info['name'], tcp_source_port)
+                            self.name, tcp_source_port)
                 source_ip = decode_ipv4(members.struct.members[2].bitstring)
                 logger.info('Learned Source IP Address from %s is: %s',
-                            self.sw_info['name'], source_ip)
+                            self.name, source_ip)
                 self.add_nat_table(udp_source_port, tcp_source_port, source_ip)
 
     def write_multicast_entry(self, hosts):

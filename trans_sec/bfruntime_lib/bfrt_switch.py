@@ -13,10 +13,11 @@
 
 import logging
 from abc import ABC
-from threading import Thread
 
 import grpc
-from tofino.bfrt_grpc import bfruntime_pb2_grpc
+import tofino.bfrt_grpc.client as bfrt_client
+from google.rpc import code_pb2, status_pb2
+from tofino.bfrt_grpc import bfruntime_pb2_grpc, bfruntime_pb2
 
 from trans_sec.switch import SwitchConnection, GrpcRequestLogger, IterableQueue
 
@@ -26,25 +27,41 @@ logger = logging.getLogger('switch')
 
 
 class BFRuntimeSwitch(SwitchConnection, ABC):
-
-    def __init__(self, sw_info, proto_dump_file=None):
+    def __init__(self, sw_info, proto_dump_file=None, client_id=0):
         super(BFRuntimeSwitch, self).__init__(sw_info)
         channel = grpc.insecure_channel(self.grpc_addr)
-        if proto_dump_file is not None:
+        if proto_dump_file:
             logger.info('Adding interceptor with file - [%s] to device [%s]',
                         proto_dump_file, self.grpc_addr)
             interceptor = GrpcRequestLogger(proto_dump_file)
             channel = grpc.intercept_channel(channel, interceptor)
 
-        logger.info('Creating client stub to channel - [%s] at address - [%s]',
-                    channel, self.grpc_addr)
+        logger.info('Creating client stub to address - [%s]', self.grpc_addr)
+        self.client_id = client_id
         self.client_stub = bfruntime_pb2_grpc.BfRuntimeStub(channel)
         self.requests_stream = IterableQueue()
         self.stream_msg_resp = self.client_stub.StreamChannel(iter(
             self.requests_stream))
         self.proto_dump_file = proto_dump_file
 
-        self.digest_thread = Thread(target=self.receive_digests)
+        logger.info('Connecting to the BFRT server @ [%s], client_id [%s],'
+                    ' device_id [%s]', self.grpc_addr, self.client_id,
+                    self.device_id)
+        self.interface = bfrt_client.ClientInterface(
+            grpc_addr=self.grpc_addr, client_id=self.client_id,
+            device_id=self.device_id, is_master=True)
+        self.target = bfrt_client.Target(
+            device_id=self.device_id, pipe_id=0xffff)
+
+        if self.sw_info.get('arch') and self.sw_info['arch'] != 'v1model':
+            self.prog_name = "{}_{}".format(self.name, self.sw_info['arch'])
+        else:
+            self.prog_name = "{}}".format(self.name, self.sw_info['arch'])
+
+        self.bfrt_info = self.interface.bfrt_info_get(self.prog_name)
+
+        # self.digest_thread = Thread(target=self.receive_digests)
+        self.digest_thread = None
 
     def start_digest_listeners(self):
         logger.info('Tofino currently not supporting digests')
@@ -58,7 +75,7 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
                         action_params, ingress_class=True):
         raise NotImplementedError
 
-    def add_data_forward(self, dst_mac, egress_port):
+    def add_data_forward(self, source_mac, ingress_port):
         raise NotImplementedError
 
     def build_device_config(self):
@@ -68,7 +85,13 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
         raise NotImplementedError
 
     def master_arbitration_update(self):
-        raise NotImplementedError
+        logger.info('Master arbitration not implemented on - [%s]',
+                    self.grpc_addr)
+        # request = bfruntime_pb2.StreamMessageRequest()
+        # request.arbitration.device_id = self.device_id
+        # request.arbitration.election_id.high = 0
+        # request.arbitration.election_id.low = 1
+        # self.requests_stream.put(request)
 
     def set_forwarding_pipeline_config(self, device_config):
         raise NotImplementedError
@@ -95,28 +118,122 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
         raise NotImplementedError
 
     def write_clone_entries(self, pre_entry):
-        raise NotImplementedError
+        # TODO - determine how to clone on TNA
+        pass
 
     def delete_clone_entries(self, pre_entry):
-        raise NotImplementedError
+        # TODO - determine how to clone on TNA
+        pass
 
     def read_counters(self, counter_id=None, index=None):
+        # TODO - determine how to count on TNA
         raise NotImplementedError
 
     def reset_counters(self, counter_id=None, index=None):
+        # TODO - determine how to count on TNA
         raise NotImplementedError
 
     def write_digest_entry(self, digest_entry):
-        raise NotImplementedError
+        # TODO - determine how to digest on TNA
+        pass
 
     def digest_list_ack(self, digest_ack):
-        raise NotImplementedError
+        # TODO - determine how to digest on TNA
+        pass
 
     def digest_list(self):
-        raise NotImplementedError
+        # TODO - determine how to digest on TNA
+        pass
 
-    # def write_multicast_entry(self, hosts):
-    #     raise NotImplementedError
+    # TODO - determine if this is available or even necessary on TNA
+    def write_multicast_entry(self, hosts):
+        self.write_arp_flood()
 
     def write_arp_flood(self):
-        raise NotImplementedError
+        """
+        arp_flood_t has not been implemented in core_tna.p4
+        :return:
+        """
+        pass
+
+    def get_table(self, name):
+        return self.bfrt_info.table_get(name)
+
+    def get_table_id(self, name):
+        table = self.get_table(name)
+        if table:
+            logger.debug('table id - [%s]', table.info.id)
+            return table.info.id
+
+    def insert_table_entry(self, table_name, action_name, key_fields=None,
+                           data_fields=None):
+        """
+        Insert a new table entry
+        @param table_name : Table name.
+        @param action_name : Action name.
+        @param key_fields : List of bfrt_grpc.client.KeyTuple objects.
+        @param data_fields : List of bfrt_grpc.client.DataTuple objects.
+        """
+
+        table = self.get_table(table_name)
+        if table:
+            key = table.make_key(key_fields)
+            logger.debug('data_fields - [%s]', data_fields[0])
+            data = table.make_data(data_fields, action_name, True)
+
+            logger.debug('table actions - [%s]', table.info.action_dict)
+            action = table.info.action_dict.get(action_name)
+            logger.info('Inserting keys - [%s], data - [%s] into table [%s]',
+                        key_fields, data_fields, table_name)
+            logger.debug('key - [%s]', key)
+            logger.debug('data - [%s]', data)
+            table.entry_add(self.target, [key], [data], action.id)
+
+
+def parseGrpcErrorBinaryDetails(grpc_error):
+    if grpc_error.code() != grpc.StatusCode.UNKNOWN:
+        return None
+
+    error = None
+    # The gRPC Python package does not have a convenient way to access the
+    # binary details for the error: they are treated as trailing metadata.
+    for meta in grpc_error.trailing_metadata():
+        if meta[0] == "grpc-status-details-bin":
+            error = status_pb2.Status()
+            error.ParseFromString(meta[1])
+            break
+    if error is None:  # no binary details field
+        return None
+    if len(error.details) == 0:
+        # binary details field has empty Any details repeated field
+        return None
+
+    indexed_p4_errors = []
+    for idx, one_error_any in enumerate(error.details):
+        p4_error = bfruntime_pb2.Error()
+        if not one_error_any.Unpack(p4_error):
+            return None
+        if p4_error.canonical_code == code_pb2.OK:
+            continue
+        indexed_p4_errors += [(idx, p4_error)]
+    return indexed_p4_errors
+
+
+def printGrpcError(grpc_error):
+    status_code = grpc_error.code()
+    logger.error("gRPC Error %s %s",
+                 grpc_error.details(),
+                 status_code.name)
+
+    if status_code != grpc.StatusCode.UNKNOWN:
+        return
+    bfrt_errors = parseGrpcErrorBinaryDetails(grpc_error)
+    if bfrt_errors is None:
+        return
+    logger.error("Errors in batch:")
+    for idx, bfrt_error in bfrt_errors:
+        code_name = code_pb2._CODE.values_by_number[
+            bfrt_error.canonical_code].name
+        logger.error("\t* At index %d %s %s\n",
+                     idx, code_name, bfrt_error.message)
+    return bfrt_errors

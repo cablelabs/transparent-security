@@ -42,12 +42,16 @@
         when: log_dir|length > 0
 
       - block:
-        - name: Retrieve architecture of the switch
+        - name: Retrieve the switch object from the topology
           set_fact:
-            switch_arch: "{{ item.value.arch }}"
-          when: prog_name is defined and item.key == prog_name
-          with_dict: "{{ topology.switches }}"
+            switch: "{{ topology.switches.get(prog_name) }}"
+          when: prog_name is defined
         when: topology is defined and topology|length > 0
+
+      - name: Discover the switch's architechture
+        set_fact:
+          switch_arch: "{{ switch.arch | default('v1model') }}"
+        when: switch is defined
 
       - name: Create {{ srvc_name }} Service script with template {{ local_srvc_script_tmplt_file }} to {{ remote_scripts_dir }}/{{ srvc_name }}.sh
         template:

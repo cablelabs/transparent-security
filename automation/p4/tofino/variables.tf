@@ -29,16 +29,8 @@ variable "tofino" {
   default = {
     sde_version = "9.2.0"
     p4rt_ami = "ami-0eb9501a7d485f7f8"
-    bfrt_ami = "ami-0f50c3f145bc21ef7"
+    bfrt_ami = "ami-01ff01cf2d4abb838"
   }
-//  default = {
-//    sde_version = "9.1.1"
-//    ami = "ami-06ce0365289cb0580"
-//  }
-//  default = {
-//    sde_version = "9.0.0"
-//    ami = "ami-024c4b7fe3bacd45a"
-//  }
 }
 
 variable "switch_instance_type" {default = "t2.2xlarge"}
@@ -77,6 +69,7 @@ variable "switch_nic_prfx" {default = "veth"}
 variable "service_log_level" {default = "DEBUG"}
 variable "ae_monitor_intf" {default = "core-tun"}
 variable "clone_egress_port" {default = "3"}
+variable "p4_arch" {default = "v1model"}
 
 variable "setup_nodes_pb" {default = "setup_nodes.yml"}
 variable "scenario_name" {default = "full"}

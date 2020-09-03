@@ -20,43 +20,59 @@
 - set_fact:
     switch: "{{ topo_dict.switches[item] }}"
 
-- name: Create directory $SDE_INSTALL/share/p4/targets/tofino/{{ switch.type }}
-  file:
-    path: "$SDE_INSTALL/share/p4/targets/tofino/{{ switch.type }}"
-    state: directory
-
-- name: The compile command
-  debug:
-    var: compile_command
-
-- name: Add to the compile command for v1model
-  set_fact:
-    compile_command: "{{ compile_command }} --arch v1model"
-  when: switch.arch is not defined or switch.arch == 'v1model'
-
-- name: Determine P4 program name when arch=='tna'
-  set_fact:
-    p4_program_name: "{{ item }}-{{ switch.arch }}"
-  when: switch.arch is defined and switch.arch != 'v1model'
-
-- name: Determine P4 program name when arch!='tna'
+- name: Determine P4 program name and base compile command when arch == 'v1model'
   set_fact:
     p4_program_name: "{{ item }}"
   when: switch.arch is not defined or switch.arch == 'v1model'
 
-- name: Compile P4 programs {{ p4_program_name }} with base command {{ compile_command }}
+- name: Determine P4 program name and base compile command when arch != 'v1model'
+  set_fact:
+    p4_program_name: "{{ item }}_{{ switch.arch }}"
+  when: switch.arch is defined and switch.arch != 'v1model'
+
+- name: Populate compile variables/facts
+  set_fact:
+    sde_target_dir: "$SDE_INSTALL/share/p4/targets/tofino/{{ item }}"
+    build_obj_dir: "{{ remote_scripts_dir }}/p4/{{ item }}.tofino"
+    build_prog: "{{ remote_tps_dir }}/p4/{{ item }}/{{ p4_program_name }}.p4"
+
+- name: Determine P4 program name and base compile command when arch == 'v1model'
+  set_fact:
+    compile_command: >
+      {{ compile_command }} --p4runtime-format text --arch v1model -D TOFINO
+      --p4runtime-files {{ remote_scripts_dir }}/p4/{{ item }}.tofino/p4info.pb.txt
+  when: switch.arch is not defined or switch.arch == 'v1model'
+
+- name: Determine P4 program name and base compile command when arch != 'v1model'
+  set_fact:
+    compile_command: "{{ compile_command }} --arch {{ switch.arch }} -D TOFINO-tna"
+  when: switch.arch is defined and switch.arch != 'v1model'
+
+- name: Create directory {{ artifact_path }}
+  file:
+    path: "{{ sde_target_dir }}"
+    state: directory
+
+- name: Complete building the compile command
+  set_fact:
+    compile_command: >
+      {{ compile_command }}
+      --bf-rt-schema {{ build_obj_dir }}/bf-rt.json
+      -o {{ build_obj_dir }}
+      {{ build_prog }}
+
+- name: The actual compile command to be executed
+  debug:
+    var: compile_command
+
+- name: Compile P4 program {{ p4_program_name }}
   become: yes
-  command: >
-    {{ compile_command }}
-    --bf-rt-schema $SDE_INSTALL/share/p4/targets/tofino/{{ item }}/bf-rt.json
-    --p4runtime-files {{ remote_scripts_dir }}/p4/{{ item }}.tofino/p4info.pb.txt
-    -o {{ remote_scripts_dir }}/p4/{{ item }}.tofino
-    {{ remote_tps_dir }}/p4/{{ item }}/{{ p4_program_name }}.p4
+  command: "{{ compile_command }}"
   args:
     chdir: "{{ remote_scripts_dir }}"
 
 - name: Copy compiled *.conf file to {{ sde_p4_target_dir }}
   copy:
-    src: "{{ remote_scripts_dir }}/p4/{{ item }}.tofino/{{ p4_program_name }}.conf"
+    src: "{{ build_obj_dir }}/{{ p4_program_name }}.conf"
     dest: "{{ sde_p4_target_dir }}/{{ item }}.conf"
     remote_src: yes

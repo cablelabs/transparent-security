@@ -35,8 +35,9 @@
     p4_pkg: "{{ scenario_name }}"
     p4_prog: "{{ scenario_name }}.p4"
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-    tunnels: "{{ topo_dict.switches[scenario_name].tunnels }}"
-    load_tofino_p4rt: "{% if scenario_name == 'core' %}False{% else %}True{% endif %}"
+    switch: "{{ topo_dict.switches[scenario_name] }}"
+    tunnels: "{{ switch.tunnels }}"
+    load_tofino_p4rt: "{% if switch.arch == 'v1model' %}True{% else %}False{% endif %}"
 
 
 # Setup source on the nodes for packet testing

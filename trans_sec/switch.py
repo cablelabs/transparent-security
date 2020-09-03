@@ -100,40 +100,6 @@ class SwitchConnection(object):
                         action_params, ingress_class=True):
         raise NotImplemented
 
-    def insert_p4_table_entry(self, table_name, action_name, match_fields,
-                              action_params, ingress_class=True,
-                              election_high=0, election_low=1):
-
-        table_entry = self.get_table_entry(
-            table_name, action_name, match_fields, action_params,
-            ingress_class)
-        logger.debug(
-            'Writing table entry to device [%s] table [%s], '
-            'with action name - [%s], '
-            'match fields - [%s], action_params - [%s]',
-            self.grpc_addr, table_name, action_name, match_fields,
-            action_params)
-        self.write_table_entry(table_entry=table_entry,
-                               election_high=election_high,
-                               election_low=election_low)
-
-    def delete_p4_table_entry(self, table_name, action_name, match_fields,
-                              action_params=None, ingress_class=True,
-                              election_high=0, election_low=1):
-
-        table_entry = self.get_table_entry(
-            table_name, action_name, match_fields, action_params,
-            ingress_class)
-        logger.debug(
-            'Deleting table entry to device [%s] table [%s], '
-            'with action name - [%s], '
-            'match fields - [%s], action_params - [%s]',
-            self.grpc_addr, table_name, action_name, match_fields,
-            action_params)
-        self.delete_table_entry(table_entry=table_entry,
-                                election_high=election_high,
-                                election_low=election_low)
-
     @abstractmethod
     def add_data_forward(self, dst_mac, egress_port):
         raise NotImplemented

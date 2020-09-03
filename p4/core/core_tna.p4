@@ -181,10 +181,10 @@ control TpsCoreIngress1(inout headers hdr,
 
 control TpsCoreIngress2(inout headers hdr,
                         inout metadata meta,
-        in ingress_intrinsic_metadata_t ig_intr_md,
-        in ingress_intrinsic_metadata_from_parser_t ig_prsr_md,
-        inout ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md,
-        inout ingress_intrinsic_metadata_for_tm_t ig_tm_md) {
+                        in ingress_intrinsic_metadata_t ig_intr_md,
+                        in ingress_intrinsic_metadata_from_parser_t ig_prsr_md,
+                        inout ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md,
+                        inout ingress_intrinsic_metadata_for_tm_t ig_tm_md) {
 
     /**
     * Responsible for cloning a packet as ingressed
@@ -420,9 +420,9 @@ control TpsCoreEgress(inout headers hdr,
 *************************************************************************/
 
 control TpsCoreIngressDeparser(packet_out packet,
-                        inout headers hdr,
-                        in metadata meta,
-                        in ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md) {
+                               inout headers hdr,
+                               in metadata meta,
+                               in ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md) {
     apply {
         /* For Telemetry Report Packets */
         packet.emit(hdr.trpt_eth);
@@ -450,9 +450,9 @@ control TpsCoreIngressDeparser(packet_out packet,
 }
 
 control TpsCoreEgressDeparser(packet_out packet,
-                        inout headers hdr,
-                        in metadata meta,
-                        in egress_intrinsic_metadata_for_deparser_t eg_intr_dprsr_md) {
+                              inout headers hdr,
+                              in metadata meta,
+                              in egress_intrinsic_metadata_for_deparser_t eg_intr_dprsr_md) {
     apply {
         /* For Telemetry Report Packets */
         packet.emit(hdr.trpt_eth);

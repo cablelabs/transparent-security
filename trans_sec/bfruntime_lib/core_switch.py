@@ -27,9 +27,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import ipaddress
 import logging
 
+from bfrt_grpc.client import KeyTuple, DataTuple
+
 from trans_sec.bfruntime_lib.bfrt_switch import BFRuntimeSwitch
+from trans_sec.consts import UDP_INT_DST_PORT
 
 logger = logging.getLogger('core_switch')
 
@@ -48,5 +52,22 @@ class CoreSwitch(BFRuntimeSwitch):
         raise NotImplementedError
 
     def add_switch_id(self, dev_id):
-        logger.info('Adding switch ID - %s', dev_id)
-        raise NotImplementedError
+        pass
+
+    def setup_telemetry_rpt(self, ae_ip):
+        logger.info(
+            'Setting up telemetry report on core device [%s] with '
+            'AE IP - [%s]', self.device_id, ae_ip)
+
+        ip_addr = ipaddress.ip_address(ae_ip)
+        action_name = 'TpsCoreEgress.setup_telem_rpt_ipv{}'.format(
+            ip_addr.version)
+        self.insert_table_entry('TpsCoreEgress.setup_telemetry_rpt_t',
+                                action_name,
+                                [KeyTuple('hdr.udp_int.dst_port',
+                                          value=UDP_INT_DST_PORT)],
+                                [DataTuple('ae_ip',
+                                           val=bytearray(ip_addr.packed))])
+# OR TRY
+# [DataTuple('ae_ip',
+#            val=bytearray(ae_ip, 'utf-8'))])
