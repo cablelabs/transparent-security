@@ -39,12 +39,12 @@ logger = logging.getLogger('core_switch')
 
 
 class CoreSwitch(BFRuntimeSwitch):
-    def __init__(self, sw_info, proto_dump_file=None):
+    def __init__(self, sw_info, client_id=0, is_master=True):
         """
         Construct Switch class to control BMV2 switches running gateway.p4
         """
         logger.info('Instantiating BFRT CoreSwitch')
-        super(self.__class__, self).__init__(sw_info, proto_dump_file)
+        super(self.__class__, self).__init__(sw_info, client_id, is_master)
 
     def add_data_inspection(self, dev_id, dev_mac):
         logger.info('Adding data inspection to switch ID [%s] and MAC [%s]',

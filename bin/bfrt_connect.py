@@ -13,25 +13,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import argparse
+import logging
 import sys
 
-import tofino.bfrt_grpc.client as bfrt_client
-import logging
-
+import bfrt_grpc.client as bfrt_client
 import grpc
-from tofino.bfrt_grpc import bfruntime_pb2_grpc, bfruntime_pb2
 
-from trans_sec.switch import GrpcRequestLogger, IterableQueue
-
-logger = logging.getLogger('bfrt_connect')
+from trans_sec.switch import GrpcRequestLogger
 
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-g', '--grpc-addr', required=True,
-                        help='The GRPC address')
-    parser.add_argument('-n', '--switch-name', required=True,
-                        help='The switch name')
+    parser.add_argument('-g', '--grpc-addr', required=False,
+                        default='localhost:50052',
+                        help='The GRPC address in the form host:port')
+    parser.add_argument('-n', '--program-name', required=False,
+                        default=None,
+                        help='The P4 program name')
     parser.add_argument('-p', '--proto-dump-file', required=False,
                         help='The GRPC logger')
     parser.add_argument('-c', '--client-id', required=False, default=0,
@@ -39,25 +37,17 @@ def get_args():
     parser.add_argument('-d', '--device-id', required=False, default=0,
                         type=int, help='The device ID - default 0')
     parser.add_argument('-m', '--is-master', required=False, type=bool,
-                        default=False, help='Is master client')
+                        default=True, help='Is master client')
     parser.add_argument('-t', '--table-name', required=False,
                         help='The table name for logging the ID')
-    parser.add_argument('-ct', '--clear-tables', required=False, type=bool,
-                        default=False,
-                        help='The table name for logging the ID')
-
     parser.add_argument('-l', '--log-dir', type=str, required=False,
                         default=None)
     parser.add_argument('-lf', '--log-file', type=str, required=False,
                         default='insert_p4_table.log')
+    parser.add_argument('-R', '--reset', '--clear', type=bool, required=False,
+                        default=False,
+                        help='Clear all tables before programming')
     return parser.parse_args()
-
-
-def get_table_id(tbl_info, in_table_name):
-    for table_name, table in tbl_info.table_dict.items():
-        if table_name == in_table_name:
-            logger.info('Table [%s] found with ID [%s]', table_name, table.info.id)
-            return table.info.id
 
 
 if __name__ == '__main__':
@@ -66,74 +56,60 @@ if __name__ == '__main__':
     file
     """
     args = get_args()
+    logger = logging.getLogger('bfrt_connect')
+
+    #
+    # Set up Logging
+    #
     if args.log_dir and args.log_file:
         log_file = '{}/{}'.format(args.log_dir, args.log_file)
         logging.basicConfig(level=logging.DEBUG, filename=log_file)
     else:
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
-    channel = grpc.insecure_channel(args.grpc_addr)
-    if args.proto_dump_file:
-        logger.info('Adding interceptor with file - [%s] to device [%s]',
-                    args.proto_dump_file, args.grpc_addr)
-        interceptor = GrpcRequestLogger(args.proto_dump_file)
-        channel = grpc.intercept_channel(channel, interceptor)
-
-    logger.info('Creating client stub to address - [%s]', args.grpc_addr)
-    client_stub = bfruntime_pb2_grpc.BfRuntimeStub(channel)
-    requests_stream = IterableQueue()
-    stream_msg_resp = client_stub.StreamChannel(iter(requests_stream))
-
+    #
+    # Connect to the BF Runtime Server
+    #
     logger.info('Creating client interface with client stub')
     logger.debug('grpc-addr - [%s], client_id - [%s], device_id - [%s], '
                  'is_master - [%s]',
                  args.grpc_addr, args.client_id, args.device_id,
                  args.is_master)
+
     interface = bfrt_client.ClientInterface(
         grpc_addr=args.grpc_addr, client_id=args.client_id,
         device_id=args.device_id, is_master=args.is_master)
 
-    # interface.bind_pipeline_config(args.switch_name)
-    # bfrt_info = interface.bind_pipeline_config(args.switch_name)
-    logger.info('Retrieving bfrt_info for switch - [%s]', args.switch_name)
-    bfrt_info = interface.bfrt_info_get(args.switch_name)
-    logger.info('Table info - [%s]', bfrt_info)
-    logger.info('Table info class - [%s]', bfrt_info.__class__)
+    #
+    # Optional: Add GRPC Logging
+    #
+    if args.proto_dump_file:
+        logger.info('Adding interceptor with file - [%s] to device [%s]',
+                    args.proto_dump_file, args.grpc_addr)
+        interceptor = GrpcRequestLogger(args.proto_dump_file)
+        interface.channel = grpc.intercept_channel(interface.channel,
+                                                   interceptor)
 
-    if args.clear_tables:
-        logger.info('Clearing tables')
-        interface.clear_all_tables()
-        logger.info('Completed clearing tables')
+    #
+    # Get the information about the running program
+    #
+    bfrt_info = interface.bfrt_info_get(args.program_name)
 
     # Attempt to receive the ID for the args.table_name argument
     if args.table_name:
-        table_info = get_table_id(bfrt_info, args.table_name)
-        logger.info('table_info = %s', table_info)
+        logger.info('Retrieve table name - [%s]', args.table_name)
+        try:
+            table = bfrt_info.table_get(args.table_name)
+            logger.info('Table ID - [%s]', table.info.id_get())
+        except Exception as e:
+            logger.error("Exit with error - [%s]", e)
 
-        if not table_info:
-            logger.info('Retrieve table name - [%s]', args.table_name)
-            req = bfruntime_pb2.ReadRequest()
-            req.client_id = args.client_id
-            req.target.device_id = args.device_id
+    #
+    # A small workaround to close the connection properly. That should be
+    # addressed in the future versions of SDE
+    interface._tear_down_stream()
 
-            # entity = req.entities.add()
-            # logger.debug('entity = ', entity)
-            object_id = req.entities.add().object_id
-            object_id.table_object.table_name = args.table_name
-
-            ex = None
-            try:
-                for rep in client_stub.Read(req):
-                    logger.info('Table ID - [%s]', rep.entities[0].object_id.id)
-            except Exception as e:
-                ex = e
-            finally:
-                if ex:
-                    logger.error("Exit with error - [%s]", ex)
-                    raise ex
-                else:
-                    logger.info('Graceful exit')
-                    exit(0)
-
+    #
+    # The End
+    #
     logger.info('Exit 0')
-    exit()

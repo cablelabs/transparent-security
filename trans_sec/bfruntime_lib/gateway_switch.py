@@ -36,11 +36,11 @@ logger = logging.getLogger('gateway_switch')
 
 
 class GatewaySwitch(BFRuntimeSwitch, ABC):
-    def __init__(self, sw_info, proto_dump_file=None):
+    def __init__(self, sw_info, client_id=0, is_master=True):
         """
         Construct Switch class to control BMV2 switches running gateway.p4
         """
-        super(self.__class__, self).__init__(sw_info, proto_dump_file)
+        super(self.__class__, self).__init__(sw_info, client_id, is_master)
         self.nat_udp_ports = set()
         self.nat_tcp_ports = set()
         self.tcp_port_count = 1

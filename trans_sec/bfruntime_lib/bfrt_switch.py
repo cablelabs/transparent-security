@@ -17,9 +17,9 @@ from abc import ABC
 import grpc
 import tofino.bfrt_grpc.client as bfrt_client
 from google.rpc import code_pb2, status_pb2
-from tofino.bfrt_grpc import bfruntime_pb2_grpc, bfruntime_pb2
+from tofino.bfrt_grpc import bfruntime_pb2
 
-from trans_sec.switch import SwitchConnection, GrpcRequestLogger, IterableQueue
+from trans_sec.switch import SwitchConnection
 
 MSG_LOG_MAX_LEN = 1024
 
@@ -27,29 +27,15 @@ logger = logging.getLogger('switch')
 
 
 class BFRuntimeSwitch(SwitchConnection, ABC):
-    def __init__(self, sw_info, proto_dump_file=None, client_id=0):
+    def __init__(self, sw_info, client_id=0, is_master=True):
         super(BFRuntimeSwitch, self).__init__(sw_info)
-        channel = grpc.insecure_channel(self.grpc_addr)
-        if proto_dump_file:
-            logger.info('Adding interceptor with file - [%s] to device [%s]',
-                        proto_dump_file, self.grpc_addr)
-            interceptor = GrpcRequestLogger(proto_dump_file)
-            channel = grpc.intercept_channel(channel, interceptor)
-
-        logger.info('Creating client stub to address - [%s]', self.grpc_addr)
-        self.client_id = client_id
-        self.client_stub = bfruntime_pb2_grpc.BfRuntimeStub(channel)
-        self.requests_stream = IterableQueue()
-        self.stream_msg_resp = self.client_stub.StreamChannel(iter(
-            self.requests_stream))
-        self.proto_dump_file = proto_dump_file
 
         logger.info('Connecting to the BFRT server @ [%s], client_id [%s],'
-                    ' device_id [%s]', self.grpc_addr, self.client_id,
-                    self.device_id)
+                    ' device_id [%s]',
+                    self.grpc_addr, client_id, self.device_id)
         self.interface = bfrt_client.ClientInterface(
-            grpc_addr=self.grpc_addr, client_id=self.client_id,
-            device_id=self.device_id, is_master=True)
+            grpc_addr=self.grpc_addr, client_id=client_id,
+            device_id=self.device_id, is_master=is_master)
         self.target = bfrt_client.Target(
             device_id=self.device_id, pipe_id=0xffff)
 
@@ -58,6 +44,7 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
         else:
             self.prog_name = "{}}".format(self.name, self.sw_info['arch'])
 
+        # TODO - Is the program name necessary for this call???
         self.bfrt_info = self.interface.bfrt_info_get(self.prog_name)
 
         # self.digest_thread = Thread(target=self.receive_digests)
@@ -68,6 +55,7 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
         pass
 
     def stop_digest_listeners(self):
+        self.interface._tear_down_stream()
         logger.info('Tofino currently not supporting digests')
         pass
 
