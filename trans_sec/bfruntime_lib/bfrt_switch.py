@@ -46,6 +46,7 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
 
         # TODO - Is the program name necessary for this call???
         self.bfrt_info = self.interface.bfrt_info_get(self.prog_name)
+        self.interface.bind_pipeline_config(self.bfrt_info.p4_name_get())
 
         # self.digest_thread = Thread(target=self.receive_digests)
         self.digest_thread = None
@@ -63,7 +64,10 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
                         action_params, ingress_class=True):
         raise NotImplementedError
 
-    def add_data_forward(self, source_mac, ingress_port):
+    def add_data_forward(self, dst_mac, ingress_port):
+        raise NotImplementedError
+
+    def del_data_forward(self, dst_mac):
         raise NotImplementedError
 
     def build_device_config(self):
@@ -85,9 +89,6 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
         raise NotImplementedError
 
     def write_table_entry(self, **kwargs):
-        raise NotImplementedError
-
-    def delete_table_entry(self, **kwargs):
         raise NotImplementedError
 
     def get_data_forward_macs(self):
@@ -166,16 +167,21 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
         table = self.get_table(table_name)
         if table:
             key = table.make_key(key_fields)
-            logger.debug('data_fields - [%s]', data_fields[0])
-            data = table.make_data(data_fields, action_name, True)
-
-            logger.debug('table actions - [%s]', table.info.action_dict)
-            action = table.info.action_dict.get(action_name)
+            data = table.make_data(data_fields, action_name)
             logger.info('Inserting keys - [%s], data - [%s] into table [%s]',
                         key_fields, data_fields, table_name)
-            logger.debug('key - [%s]', key)
-            logger.debug('data - [%s]', data)
-            table.entry_add(self.target, [key], [data], action.id)
+            table.entry_add(self.target, [key], [data])
+
+    def delete_table_entry(self, table_name, key_fields=None):
+        """
+        Delete an existing table entry
+        @param table_name : Table name.
+        @param key_fields : List of bfrt_grpc.client.KeyTuple objects.
+        """
+        table = self.get_table(table_name)
+        if table:
+            key = table.make_key(key_fields)
+            table.entry_del(self.target, [key])
 
 
 def parseGrpcErrorBinaryDetails(grpc_error):

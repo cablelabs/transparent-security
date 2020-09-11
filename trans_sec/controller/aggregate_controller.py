@@ -44,10 +44,7 @@ class AggregateController(AbstractController):
 
     def instantiate_switch(self, sw_info):
         if 'arch' in sw_info and sw_info['arch'] == 'tna':
-            return BFRTSwitch(
-                sw_info=sw_info,
-                proto_dump_file='{}/{}-switch-controller.log'.format(
-                    self.log_dir, sw_info['name']))
+            return BFRTSwitch(sw_info=sw_info)
         else:
             return P4RTSwitch(
                 sw_info=sw_info,
@@ -91,7 +88,8 @@ class AggregateController(AbstractController):
                     self.switch_type, attack)
         agg_switch = self.__get_agg_switch()
         if agg_switch:
-            logger.info("Adding attack [%s] to Aggregate switch [%s]", attack, agg_switch.device_id)
+            logger.info("Adding attack [%s] to Aggregate switch [%s]",
+                        attack, agg_switch.device_id)
             agg_switch.add_attack(**attack)
 
     def remove_attacker(self, attack, host):

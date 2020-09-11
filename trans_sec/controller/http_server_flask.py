@@ -75,18 +75,18 @@ class DataForward(Resource):
         self.parser.add_argument('switch_mac', type=str)
 
     def post(self):
-        logger.info('Attack requested')
+        logger.info('Data forward entry requested')
         args = self.parser.parse_args()
 
-        logger.info('Attack args - [%s]', args)
+        logger.info('Data forward args - [%s]', args)
         self.sdn_controller.add_data_forward(args)
         return json.dumps({"success": True}), 201
 
     def delete(self):
-        logger.info('Attacker to remove')
+        logger.info('Data forward entry to remove')
         args = self.parser.parse_args()
 
-        logger.info('Attack args - [%s]', args)
+        logger.info('Data forward args - [%s]', args)
         self.sdn_controller.del_data_forward(args)
         return json.dumps({"success": True}), 201
 

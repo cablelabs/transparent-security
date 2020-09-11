@@ -27,6 +27,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import codecs
 import logging
 
 from bfrt_grpc.client import KeyTuple, DataTuple
@@ -51,13 +52,36 @@ class AggregateSwitch(BFRuntimeSwitch):
     def add_data_inspection(self, dev_id, dev_mac):
         raise NotImplementedError
 
+    def add_data_forward(self, dst_mac, ingress_port):
+        logger.info(
+            'Inserting port - [%s] with key - [%s] into '
+            'TpsAggIngress.data_forward_t', ingress_port, dst_mac)
+
+        hex_decoder = codecs.getdecoder('hex_codec')
+        encoded_mac = hex_decoder(dst_mac.replace(':', ''))[0]
+        logger.debug('encoded_mac - [%s]', encoded_mac)
+
+        self.insert_table_entry('TpsAggIngress.data_forward_t',
+                                'TpsAggIngress.data_forward',
+                                [KeyTuple('hdr.ethernet.dst_mac',
+                                          bytearray(encoded_mac))],
+                                [DataTuple('port', val=ingress_port)])
+
+    def del_data_forward(self, dst_mac):
+        logger.info(
+            'Deleting table entry with key - [%s] from '
+            'TpsAggIngress.data_forward_t', dst_mac)
+        hex_decoder = codecs.getdecoder('hex_codec')
+        encoded_mac = hex_decoder(dst_mac.replace(':', ''))[0]
+        self.delete_table_entry('TpsAggIngress.data_forward_t',
+                                [KeyTuple('hdr.ethernet.dst_mac',
+                                          value=bytearray(encoded_mac))])
+
     def add_switch_id(self, dev_id):
         logger.info(
             'Inserting device ID [%s] into add_switch_id_t table', dev_id)
-
         self.insert_table_entry('TpsAggIngress.add_switch_id_t',
                                 'TpsAggIngress.add_switch_id',
                                 [KeyTuple('hdr.udp.dst_port',
                                           value=UDP_INT_DST_PORT)],
-                                [DataTuple('switch_id',
-                                           val=bytearray(dev_id))])
+                                [DataTuple('switch_id', val=dev_id)])

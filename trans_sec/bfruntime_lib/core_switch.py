@@ -51,6 +51,16 @@ class CoreSwitch(BFRuntimeSwitch):
                     dev_id, dev_mac)
         raise NotImplementedError
 
+    def add_data_forward(self, dst_mac, ingress_port):
+        logger.info(
+            'Inserting port - [%s] with key - [%s] into '
+            'TpsCoreIngress.data_forward_t', ingress_port, dst_mac)
+        self.insert_table_entry('TpsCoreIngress.data_forward_t',
+                                'TpsCoreIngress.data_forward',
+                                [KeyTuple('hdr.ethernet.dst_mac',
+                                          value=dst_mac)],
+                                [DataTuple('port', val=ingress_port)])
+
     def add_switch_id(self, dev_id):
         pass
 
