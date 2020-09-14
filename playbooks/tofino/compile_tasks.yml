@@ -45,7 +45,7 @@
 
 - name: Determine P4 program name and base compile command when arch != 'v1model'
   set_fact:
-    compile_command: "{{ compile_command }} --arch {{ switch.arch }} -D TOFINO-tna"
+    compile_command: "{{ compile_command }} --arch {{ switch.arch }} -D TOFINO_{{ switch.arch }}"
   when: switch.arch is defined and switch.arch != 'v1model'
 
 - name: Create directory {{ artifact_path }}

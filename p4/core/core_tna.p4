@@ -19,6 +19,7 @@
 #include "../include/tps_consts.p4"
 #include "../include/tps_headers.p4"
 #include "../include/tps_checksum.p4"
+#include "../include/tofino_util.p4"
 
 const bit<32> INT_CTR_SIZE = 1;
 
@@ -27,9 +28,13 @@ const bit<32> INT_CTR_SIZE = 1;
 *************************************************************************/
 parser TpsCoreParser(packet_in packet,
                      out headers hdr,
-                     out metadata meta,
+                     out mirror_metadata_t meta,
                      out ingress_intrinsic_metadata_t ig_intr_md) {
+
+    TofinoIngressParser() tofino_parser;
+
     state start {
+        tofino_parser.apply(packet, ig_intr_md);
         transition parse_ethernet;
     }
 
@@ -120,7 +125,7 @@ parser TpsCoreParser(packet_in packet,
 parser EmptyEgressParser(
         packet_in pkt,
         out headers hdr,
-        out metadata eg_md,
+        out mirror_metadata_t eg_md,
         out egress_intrinsic_metadata_t eg_intr_md) {
     state start {
         transition accept;
@@ -132,7 +137,7 @@ parser EmptyEgressParser(
 *************************************************************************/
 
 control TpsCoreIngress1(inout headers hdr,
-                        inout metadata meta,
+                        inout mirror_metadata_t meta,
                         in ingress_intrinsic_metadata_t ig_intr_md,
                         in ingress_intrinsic_metadata_from_parser_t ig_prsr_md,
                         inout ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md,
@@ -180,7 +185,7 @@ control TpsCoreIngress1(inout headers hdr,
 }
 
 control TpsCoreIngress2(inout headers hdr,
-                        inout metadata meta,
+                        inout mirror_metadata_t meta,
                         in ingress_intrinsic_metadata_t ig_intr_md,
                         in ingress_intrinsic_metadata_from_parser_t ig_prsr_md,
                         inout ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md,
@@ -197,7 +202,7 @@ control TpsCoreIngress2(inout headers hdr,
     /**
     * Prepares a packet to be forwarded when data_forward tables have a match on dstAddr
     */
-    action data_forward(egressSpec_t port) {
+    action data_forward(PortId_t port) {
     /* TODO/FIMXE
         eg_intr_md.egress_port = port;
     */
@@ -255,7 +260,7 @@ control TpsCoreIngress2(inout headers hdr,
 *************************************************************************/
 
 control EmptyEgress(inout headers hdr,
-                    inout metadata meta,
+                    inout mirror_metadata_t meta,
                     in egress_intrinsic_metadata_t eg_intr_md,
                     in egress_intrinsic_metadata_from_parser_t eg_intr_md_from_prsr,
                     inout egress_intrinsic_metadata_for_deparser_t eg_intr_md_for_dprs,
@@ -265,7 +270,7 @@ control EmptyEgress(inout headers hdr,
 }
 
 control TpsCoreEgress(inout headers hdr,
-                      inout metadata meta,
+                      inout mirror_metadata_t meta,
                       in egress_intrinsic_metadata_t eg_intr_md,
                       in egress_intrinsic_metadata_from_parser_t eg_intr_md_from_prsr,
                       inout egress_intrinsic_metadata_for_deparser_t eg_intr_md_for_dprs,
@@ -421,7 +426,7 @@ control TpsCoreEgress(inout headers hdr,
 
 control TpsCoreIngressDeparser(packet_out packet,
                                inout headers hdr,
-                               in metadata meta,
+                               in mirror_metadata_t meta,
                                in ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md) {
     apply {
         /* For Telemetry Report Packets */
@@ -451,7 +456,7 @@ control TpsCoreIngressDeparser(packet_out packet,
 
 control TpsCoreEgressDeparser(packet_out packet,
                               inout headers hdr,
-                              in metadata meta,
+                              in mirror_metadata_t meta,
                               in egress_intrinsic_metadata_for_deparser_t eg_intr_dprsr_md) {
     apply {
         /* For Telemetry Report Packets */

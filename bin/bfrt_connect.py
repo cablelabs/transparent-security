@@ -17,9 +17,6 @@ import logging
 import sys
 
 import bfrt_grpc.client as bfrt_client
-import grpc
-
-from trans_sec.switch import GrpcRequestLogger
 
 
 def get_args():
@@ -30,8 +27,6 @@ def get_args():
     parser.add_argument('-n', '--program-name', required=False,
                         default=None,
                         help='The P4 program name')
-    parser.add_argument('-p', '--proto-dump-file', required=False,
-                        help='The GRPC logger')
     parser.add_argument('-c', '--client-id', required=False, default=0,
                         type=int, help='The client ID - default 0')
     parser.add_argument('-d', '--device-id', required=False, default=0,
@@ -79,16 +74,6 @@ if __name__ == '__main__':
     interface = bfrt_client.ClientInterface(
         grpc_addr=args.grpc_addr, client_id=args.client_id,
         device_id=args.device_id, is_master=args.is_master)
-
-    #
-    # Optional: Add GRPC Logging
-    #
-    if args.proto_dump_file:
-        logger.info('Adding interceptor with file - [%s] to device [%s]',
-                    args.proto_dump_file, args.grpc_addr)
-        interceptor = GrpcRequestLogger(args.proto_dump_file)
-        interface.channel = grpc.intercept_channel(interface.channel,
-                                                   interceptor)
 
     #
     # Get the information about the running program
