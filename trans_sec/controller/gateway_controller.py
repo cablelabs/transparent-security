@@ -59,10 +59,7 @@ class GatewayController(AbstractController):
 
     def instantiate_switch(self, sw_info):
         if 'arch' in sw_info and sw_info['arch'] == 'tna':
-            return BFRTSwitch(
-                sw_info=sw_info,
-                proto_dump_file='{}/{}-switch-controller.log'.format(
-                    self.log_dir, sw_info['name']))
+            return BFRTSwitch(sw_info=sw_info)
         else:
             return P4RTSwitch(
                 sw_info=sw_info,

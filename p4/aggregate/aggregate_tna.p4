@@ -19,15 +19,20 @@
 #include "../include/tps_consts.p4"
 #include "../include/tps_headers.p4"
 #include "../include/tps_checksum.p4"
+#include "../include/tofino_util.p4"
 
 /*************************************************************************
 ****************** Aggregate TPS P A R S E R  ****************************
 *************************************************************************/
 parser TpsAggParser(packet_in packet,
                     out headers hdr,
-                    out metadata meta,
+                    out metadata ig_meta,
                     out ingress_intrinsic_metadata_t ig_intr_md) {
+
+    TofinoIngressParser() tofino_parser;
+
     state start {
+        tofino_parser.apply(packet, ig_intr_md);
         transition parse_ethernet;
     }
 
@@ -102,10 +107,8 @@ control TpsAggIngress(inout headers hdr,
 
     /* counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) forwardedPackets; */
 
-    action data_forward(egressSpec_t port) {
-    /* TODO/FIMXE
-        eg_intr_md.egress_port = port;
-    */
+    action data_forward(PortId_t port) {
+        ig_tm_md.ucast_egress_port = port;
     }
 
     table data_forward_t {
@@ -235,12 +238,6 @@ control TpsAggIngress(inout headers hdr,
        #endif
     }
 
-    action control_drop() {
-    /* TODO - determine proper way to do this on Tofino
-        eg_intr_md.egress_port = 0;
-    */
-    }
-
     /*
     action generate_learn_notification() {
         digest<mac_learn_digest>((bit<32>) 1024,
@@ -329,20 +326,7 @@ control TpsAggEgress(inout headers hdr,
                      inout egress_intrinsic_metadata_for_deparser_t eg_intr_md_for_dprs,
                      inout egress_intrinsic_metadata_for_output_port_t eg_intr_md_for_oport) {
 
-    action drop_pkt() {
-    /* TODO - determine proper way to do this on Tofino
-        eg_intr_md.egress_port = 0;
-    */
-    }
-
     apply {
-    /*
-        if(IS_REPLICATED(standard_metadata)) {
-            if (standard_metadata.egress_port == standard_metadata.ingress_port) {
-                drop_pkt();
-            }
-        }
-    */
     }
 }
 
