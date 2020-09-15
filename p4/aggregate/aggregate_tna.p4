@@ -108,6 +108,43 @@ control TpsAggIngress(inout headers hdr,
 
     /* counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) forwardedPackets; */
 
+    action pack_meta_tcp() {
+        meta.dst_port = hdr.tcp.dst_port;
+    }
+
+    action pack_meta_udp() {
+        meta.dst_port = hdr.udp.dst_port;
+    }
+
+    action pack_meta_ipv4() {
+        meta.ipv6_addr = 0;
+        meta.ipv4_addr = hdr.ipv4.dstAddr;
+    }
+
+    action pack_meta_ipv6() {
+        meta.ipv4_addr = 0;
+        meta.ipv6_addr = hdr.ipv6.dstAddr;
+    }
+
+    action data_drop() {
+        ig_dprsr_md.drop_ctl = 0x1;
+    }
+
+    table data_drop_t {
+        key = {
+            hdr.ethernet.src_mac: exact;
+            meta.ipv4_addr: exact;
+            meta.ipv6_addr: exact;
+            meta.dst_port: exact;
+        }
+        actions = {
+            data_drop;
+            NoAction;
+        }
+        size = TABLE_SIZE;
+        default_action = NoAction();
+    }
+
     action data_forward(PortId_t port) {
         ig_tm_md.ucast_egress_port = port;
     }
@@ -270,6 +307,21 @@ control TpsAggIngress(inout headers hdr,
             add_switch_id_t.apply();
         }
         else {
+            if (hdr.ipv4.isValid()) {
+                if (hdr.udp.isValid()) {
+                    pack_meta_udp();
+                } else if (hdr.tcp.isValid()) {
+                    pack_meta_tcp();
+                }
+                pack_meta_ipv4();
+            } else if (hdr.ipv6.isValid()) {
+                if (hdr.udp.isValid()) {
+                    pack_meta_udp();
+                } else if (hdr.tcp.isValid()) {
+                    pack_meta_tcp();
+                }
+                pack_meta_ipv6();
+            }
             data_inspection_t.apply();
             if (hdr.int_shim.isValid()) {
                 if (hdr.ipv4.isValid()) {
@@ -291,6 +343,7 @@ control TpsAggIngress(inout headers hdr,
             }
         }
         data_forward_t.apply();
+        data_drop_t.apply();
     }
 }
 

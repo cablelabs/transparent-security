@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import codecs
+import ipaddress
 import logging
 from queue import Queue
 from abc import abstractmethod
@@ -94,6 +95,25 @@ class SwitchConnection(object):
                                digest_data)
 
         logger.info('Completed digest processing')
+
+    @staticmethod
+    def parse_attack(**kwargs):
+        dst_ip = ipaddress.ip_address(kwargs['dst_ip'])
+        action_name = 'data_drop'
+
+        logger.info('Attack dst_ip - [%s]', dst_ip)
+        # TODO - Add back source IP address as a match field after adding
+        #  mitigation at the Aggregate
+        dst_ipv4 = 0
+        dst_ipv6 = 0
+        if dst_ip.version == 6:
+            logger.debug('Attack is IPv6')
+            dst_ipv6 = str(dst_ip.exploded)
+        else:
+            logger.debug('Attack is IPv4')
+            dst_ipv4 = str(dst_ip.exploded)
+
+        return action_name, dst_ipv4, dst_ipv6
 
     @abstractmethod
     def get_table_entry(self, table_name, action_name, match_fields,
