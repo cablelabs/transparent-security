@@ -23,7 +23,7 @@ import sys
 import argparse
 import bfrt_grpc.client as bfrt_client
 
-SDE_INSTALL   = os.environ['SDE_INSTALL']
+SDE_INSTALL = os.environ['SDE_INSTALL']
 SDE_PYTHON_27 = os.path.join(SDE_INSTALL, 'lib', 'python2.7', 'site-packages')
 
 sys.path.append(SDE_PYTHON_27)
