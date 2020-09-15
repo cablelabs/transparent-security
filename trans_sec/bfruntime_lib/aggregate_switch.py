@@ -36,6 +36,12 @@ from trans_sec.consts import UDP_INT_DST_PORT
 
 logger = logging.getLogger('aggregate_switch')
 
+data_inspection_tbl = 'TpsAggIngress.data_inspection_t'
+data_inspection_tbl_key = 'hdr.ethernet.src_mac'
+data_inspection_action = 'TpsAggIngress.data_inspect_packet'
+data_inspection_action_val_1 = 'device'
+data_inspection_action_val_2 = 'switch_id'
+
 data_fwd_tbl = 'TpsAggIngress.data_forward_t'
 data_fwd_tbl_key = 'hdr.ethernet.dst_mac'
 data_fwd_action = 'TpsAggIngress.data_forward'
@@ -59,13 +65,33 @@ class AggregateSwitch(BFRuntimeSwitch):
     def __set_table_field_annotations(self):
         table = self.get_table(data_fwd_tbl)
         table.info.key_field_annotation_add(data_fwd_tbl_key, 'mac')
+        table = self.get_table(data_inspection_tbl)
+        table.info.key_field_annotation_add(data_inspection_tbl_key, 'mac')
 
     def write_multicast_entry(self, hosts):
         super(self.__class__, self).write_multicast_entry(hosts)
         self.write_arp_flood()
 
     def add_data_inspection(self, dev_id, dev_mac):
-        raise NotImplementedError
+        logger.info(
+            'Inserting dev_id - [%s] with key mac - [%s] into %s',
+            dev_id, dev_mac, data_inspection_tbl)
+        self.insert_table_entry(data_inspection_tbl,
+                                data_inspection_action,
+                                [KeyTuple(data_inspection_tbl_key, dev_mac)],
+                                [
+                                    DataTuple(data_inspection_action_val_1,
+                                              int(dev_id)),
+                                    DataTuple(data_inspection_action_val_2,
+                                              int(self.device_id))
+                                ])
+
+    def del_data_inspection(self, dev_id, dev_mac):
+        logger.info(
+            'Deleting key mac - [%s] from %s',
+            dev_id, dev_mac, data_inspection_tbl)
+        self.delete_table_entry(data_inspection_tbl,
+                                [KeyTuple(data_inspection_tbl_key, dev_mac)])
 
     def add_data_forward(self, dst_mac, ingress_port):
         logger.info(

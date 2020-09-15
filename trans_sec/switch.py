@@ -112,6 +112,10 @@ class SwitchConnection(object):
     def add_data_inspection(self, **kwargs):
         raise NotImplemented
 
+    @abstractmethod
+    def del_data_inspection(self, **kwargs):
+        raise NotImplemented
+
     def add_attack(self, **kwargs):
         logger.info('Switch does not support attack mitigation')
         pass
