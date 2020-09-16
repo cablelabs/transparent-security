@@ -66,6 +66,7 @@ class AggregateSwitch(BFRuntimeSwitch):
         """
         Construct Switch class to control BMV2 switches running gateway.p4
         """
+        logger.info('Instantiating BFRT AggregateSwitch')
         super(self.__class__, self).__init__(sw_info, client_id, is_master)
         self.__set_table_field_annotations()
 
