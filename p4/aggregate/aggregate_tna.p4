@@ -29,6 +29,7 @@ parser TpsAggParser(packet_in packet,
                     out metadata ig_meta,
                     out ingress_intrinsic_metadata_t ig_intr_md) {
 
+    Checksum() ipv4_checksum;
     TofinoIngressParser() tofino_parser;
 
     state start {
@@ -106,6 +107,43 @@ control TpsAggIngress(inout headers hdr,
 
 
     /* counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) forwardedPackets; */
+
+    action pack_meta_tcp() {
+        meta.dst_port = hdr.tcp.dst_port;
+    }
+
+    action pack_meta_udp() {
+        meta.dst_port = hdr.udp.dst_port;
+    }
+
+    action pack_meta_ipv4() {
+        meta.ipv6_addr = 0;
+        meta.ipv4_addr = hdr.ipv4.dstAddr;
+    }
+
+    action pack_meta_ipv6() {
+        meta.ipv4_addr = 0;
+        meta.ipv6_addr = hdr.ipv6.dstAddr;
+    }
+
+    action data_drop() {
+        ig_dprsr_md.drop_ctl = 0x1;
+    }
+
+    table data_drop_t {
+        key = {
+            hdr.ethernet.src_mac: exact;
+            meta.ipv4_addr: exact;
+            meta.ipv6_addr: exact;
+            meta.dst_port: exact;
+        }
+        actions = {
+            data_drop;
+            NoAction;
+        }
+        size = TABLE_SIZE;
+        default_action = NoAction();
+    }
 
     action data_forward(PortId_t port) {
         ig_tm_md.ucast_egress_port = port;
@@ -269,6 +307,21 @@ control TpsAggIngress(inout headers hdr,
             add_switch_id_t.apply();
         }
         else {
+            if (hdr.ipv4.isValid()) {
+                if (hdr.udp.isValid()) {
+                    pack_meta_udp();
+                } else if (hdr.tcp.isValid()) {
+                    pack_meta_tcp();
+                }
+                pack_meta_ipv4();
+            } else if (hdr.ipv6.isValid()) {
+                if (hdr.udp.isValid()) {
+                    pack_meta_udp();
+                } else if (hdr.tcp.isValid()) {
+                    pack_meta_tcp();
+                }
+                pack_meta_ipv6();
+            }
             data_inspection_t.apply();
             if (hdr.int_shim.isValid()) {
                 if (hdr.ipv4.isValid()) {
@@ -290,6 +343,7 @@ control TpsAggIngress(inout headers hdr,
             }
         }
         data_forward_t.apply();
+        data_drop_t.apply();
     }
 }
 
@@ -298,7 +352,6 @@ control TpsAggDeparser(packet_out packet,
                        in metadata meta,
                        in ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md) {
     apply {
-
         /* For Standard and INT Packets */
         packet.emit(hdr.ethernet);
         packet.emit(hdr.arp);
@@ -311,7 +364,6 @@ control TpsAggDeparser(packet_out packet,
         packet.emit(hdr.int_meta);
         packet.emit(hdr.udp_int);
         packet.emit(hdr.tcp);
-
     }
 }
 
@@ -331,29 +383,105 @@ control TpsAggEgress(inout headers hdr,
 }
 
 // Empty egress parser/control blocks
-parser EmptyEgressParser(packet_in packet,
+parser TpsAggEgressParser(packet_in packet,
                          out headers hdr,
                          out metadata meta,
                          out egress_intrinsic_metadata_t eg_intr_md) {
+
+    TofinoEgressParser() tofino_parser;
+
     state start {
+        tofino_parser.apply(packet, eg_intr_md);
+        transition parse_ethernet;
+    }
+    state parse_ethernet {
+        packet.extract(hdr.ethernet);
+        transition select(hdr.ethernet.etherType) {
+            TYPE_ARP: parse_arp;
+            TYPE_IPV4: parse_ipv4;
+            TYPE_IPV6: parse_ipv6;
+            default: accept;
+        }
+    }
+
+    state parse_ipv4 {
+        packet.extract(hdr.ipv4);
+        transition select(hdr.ipv4.protocol) {
+            TYPE_UDP: parse_udp;
+            TYPE_TCP: parse_tcp;
+            default: accept;
+        }
+    }
+
+    state parse_ipv6 {
+        packet.extract(hdr.ipv6);
+        transition select(hdr.ipv6.next_hdr_proto) {
+            TYPE_UDP: parse_udp;
+            TYPE_TCP: parse_tcp;
+            default: accept;
+        }
+    }
+
+    state parse_udp {
+        packet.extract(hdr.udp);
+        transition select(hdr.udp.dst_port) {
+            UDP_INT_DST_PORT: parse_int_shim;
+            default: accept;
+        }
+    }
+
+    state parse_int_shim {
+        packet.extract(hdr.int_shim);
+        transition parse_int_hdr;
+    }
+
+    state parse_int_hdr {
+        packet.extract(hdr.int_header);
+        transition accept;
+    }
+
+    state parse_tcp {
+        packet.extract(hdr.tcp);
+        transition accept;
+    }
+
+    state parse_arp {
+        packet.extract(hdr.arp);
         transition accept;
     }
 }
 
-control EmptyEgressDeparser(packet_out packet,
-                            inout headers hdr,
-                            in metadata meta,
-                            in egress_intrinsic_metadata_for_deparser_t eg_intr_dprsr_md) {
-    apply {}
-}
+control TpsAggEgressDeparser(packet_out packet,
+                             inout headers hdr,
+                             in metadata meta,
+                             in egress_intrinsic_metadata_for_deparser_t eg_intr_dprsr_md) {
+    Checksum() ipv4_checksum;
+    apply {
+        hdr.ipv4.hdrChecksum = ipv4_checksum.update(
+                {hdr.ipv4.version,
+                 hdr.ipv4.ihl,
+                 hdr.ipv4.diffserv,
+                 hdr.ipv4.totalLen,
+                 hdr.ipv4.identification,
+                 hdr.ipv4.flags,
+                 hdr.ipv4.fragOffset,
+                 hdr.ipv4.ttl,
+                 hdr.ipv4.protocol,
+                 hdr.ipv4.srcAddr,
+                 hdr.ipv4.dstAddr});
 
-control EmptyEgress(inout headers hdr,
-                    inout metadata meta,
-                    in egress_intrinsic_metadata_t eg_intr_md,
-                    in egress_intrinsic_metadata_from_parser_t eg_intr_md_from_prsr,
-                    inout egress_intrinsic_metadata_for_deparser_t eg_intr_md_for_dprs,
-                    inout egress_intrinsic_metadata_for_output_port_t eg_intr_md_for_oport) {
-    apply {}
+        packet.emit(hdr.ethernet);
+        packet.emit(hdr.arp);
+        packet.emit(hdr.ipv4);
+        packet.emit(hdr.ipv6);
+        packet.emit(hdr.udp);
+        packet.emit(hdr.int_shim);
+        packet.emit(hdr.int_header);
+        packet.emit(hdr.int_meta_2);
+        packet.emit(hdr.int_meta);
+        packet.emit(hdr.udp_int);
+        packet.emit(hdr.tcp);
+    }
 }
 
 /*************************************************************************
@@ -364,8 +492,8 @@ Pipeline(
     TpsAggParser(),
     TpsAggIngress(),
     TpsAggDeparser(),
-    EmptyEgressParser(),
+    TpsAggEgressParser(),
     TpsAggEgress(),
-    EmptyEgressDeparser()
+    TpsAggEgressDeparser()
 ) pipe;
 Switch(pipe) main;

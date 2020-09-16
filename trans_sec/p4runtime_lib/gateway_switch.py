@@ -31,7 +31,6 @@ import ipaddress
 import logging
 from abc import ABC
 
-from trans_sec.consts import IPV6_TYPE, IPV4_TYPE
 from trans_sec.p4runtime_lib.p4rt_switch import P4RuntimeSwitch
 from trans_sec.utils.convert import decode_num, decode_ipv4
 
@@ -130,7 +129,7 @@ class GatewaySwitch(P4RuntimeSwitch, ABC):
             dev_mac, action_params)
 
     @staticmethod
-    def __parse_attack(**kwargs):
+    def parse_attack(**kwargs):
         src_ip = ipaddress.ip_address(kwargs['src_ip'])
         dst_ip = ipaddress.ip_address(kwargs['dst_ip'])
         udp_table_name = 'data_drop_udp_ipv{}_t'.format(dst_ip.version)
@@ -157,7 +156,7 @@ class GatewaySwitch(P4RuntimeSwitch, ABC):
     def add_attack(self, **kwargs):
         logger.info('Adding attack [%s]', kwargs)
         udp_tn, tcp_tn, action_name, dst_ip, dst_addr_key = \
-            self.__parse_attack(**kwargs)
+            self.parse_attack(**kwargs)
 
         self.insert_p4_table_entry(
             table_name=udp_tn,
@@ -189,7 +188,7 @@ class GatewaySwitch(P4RuntimeSwitch, ABC):
     def stop_attack(self, **kwargs):
         logger.info('Stopping attack [%s]', kwargs)
         udp_tn, tcp_tn, action_name, dst_ip, dst_addr_key = \
-            self.__parse_attack(**kwargs)
+            self.parse_attack(**kwargs)
 
         self.delete_p4_table_entry(
             table_name=udp_tn,

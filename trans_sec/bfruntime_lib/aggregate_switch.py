@@ -36,10 +36,23 @@ from trans_sec.consts import UDP_INT_DST_PORT
 
 logger = logging.getLogger('aggregate_switch')
 
+data_inspection_tbl = 'TpsAggIngress.data_inspection_t'
+data_inspection_tbl_key = 'hdr.ethernet.src_mac'
+data_inspection_action = 'TpsAggIngress.data_inspect_packet'
+data_inspection_action_val_1 = 'device'
+data_inspection_action_val_2 = 'switch_id'
+
 data_fwd_tbl = 'TpsAggIngress.data_forward_t'
 data_fwd_tbl_key = 'hdr.ethernet.dst_mac'
 data_fwd_action = 'TpsAggIngress.data_forward'
 data_fwd_action_val = 'port'
+
+data_drop_tbl = 'TpsAggIngress.data_drop_t'
+data_drop_tbl_key_1 = 'hdr.ethernet.src_mac'
+data_drop_tbl_key_2 = 'meta.ipv4_addr'
+data_drop_tbl_key_3 = 'meta.ipv6_addr'
+data_drop_tbl_key_4 = 'meta.dst_port'
+data_drop_action = 'TpsAggIngress.data_drop'
 
 add_switch_id_tbl = 'TpsAggIngress.add_switch_id_t'
 add_switch_id_tbl_key = 'hdr.udp.dst_port'
@@ -57,15 +70,42 @@ class AggregateSwitch(BFRuntimeSwitch):
         self.__set_table_field_annotations()
 
     def __set_table_field_annotations(self):
-        table = self.get_table(data_fwd_tbl)
-        table.info.key_field_annotation_add(data_fwd_tbl_key, 'mac')
+        fwd_table = self.get_table(data_fwd_tbl)
+        fwd_table.info.key_field_annotation_add(data_fwd_tbl_key, 'mac')
+
+        inspection_table = self.get_table(data_inspection_tbl)
+        inspection_table.info.key_field_annotation_add(data_inspection_tbl_key,
+                                                       'mac')
+
+        drop_table = self.get_table(data_drop_tbl)
+        drop_table.info.key_field_annotation_add(data_drop_tbl_key_1, 'mac')
+        drop_table.info.key_field_annotation_add(data_drop_tbl_key_2, 'ipv4')
+        drop_table.info.key_field_annotation_add(data_drop_tbl_key_3, 'ipv6')
 
     def write_multicast_entry(self, hosts):
         super(self.__class__, self).write_multicast_entry(hosts)
         self.write_arp_flood()
 
     def add_data_inspection(self, dev_id, dev_mac):
-        raise NotImplementedError
+        logger.info(
+            'Inserting dev_id - [%s] with key mac - [%s] into %s',
+            dev_id, dev_mac, data_inspection_tbl)
+        self.insert_table_entry(data_inspection_tbl,
+                                data_inspection_action,
+                                [KeyTuple(data_inspection_tbl_key, dev_mac)],
+                                [
+                                    DataTuple(data_inspection_action_val_1,
+                                              int(dev_id)),
+                                    DataTuple(data_inspection_action_val_2,
+                                              int(self.device_id))
+                                ])
+
+    def del_data_inspection(self, dev_id, dev_mac):
+        logger.info(
+            'Deleting key mac - [%s] from %s',
+            dev_id, dev_mac, data_inspection_tbl)
+        self.delete_table_entry(data_inspection_tbl,
+                                [KeyTuple(data_inspection_tbl_key, dev_mac)])
 
     def add_data_forward(self, dst_mac, ingress_port):
         logger.info(
@@ -83,6 +123,33 @@ class AggregateSwitch(BFRuntimeSwitch):
             dst_mac, data_fwd_tbl)
         self.delete_table_entry(data_fwd_tbl,
                                 [KeyTuple(data_fwd_tbl_key, value=dst_mac)])
+
+    def add_attack(self, **kwargs):
+        logger.info('Adding attack [%s]', kwargs)
+        action_name, dst_ipv4, dst_ipv6 = self.parse_attack(**kwargs)
+        self.insert_table_entry(data_drop_tbl,
+                                data_drop_action,
+                                [
+                                    KeyTuple(data_drop_tbl_key_1,
+                                             kwargs['src_mac']),
+                                    KeyTuple(data_drop_tbl_key_2, dst_ipv4),
+                                    KeyTuple(data_drop_tbl_key_3, dst_ipv6),
+                                    KeyTuple(data_drop_tbl_key_4,
+                                             int(kwargs['dst_port']))
+                                ], [])
+
+    def stop_attack(self, **kwargs):
+        logger.info('Adding attack [%s]', kwargs)
+        action_name, dst_ipv4, dst_ipv6 = self.parse_attack(**kwargs)
+        self.delete_table_entry(data_drop_tbl,
+                                [
+                                    KeyTuple(data_drop_tbl_key_1,
+                                             kwargs['src_mac']),
+                                    KeyTuple(data_drop_tbl_key_2, dst_ipv4),
+                                    KeyTuple(data_drop_tbl_key_3, dst_ipv6),
+                                    KeyTuple(data_drop_tbl_key_4,
+                                             int(kwargs['dst_port']))
+                                ])
 
     def add_switch_id(self, dev_id):
         logger.info(

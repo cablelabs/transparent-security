@@ -27,7 +27,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import ipaddress
 import logging
 
 from trans_sec.p4runtime_lib.p4rt_switch import P4RuntimeSwitch
@@ -98,30 +97,9 @@ class AggregateSwitch(P4RuntimeSwitch):
             ' with MAC - [%s] with action params - [%s]',
             AGG_CTRL_KEY, dev_mac, action_params)
 
-    @staticmethod
-    def __parse_attack(**kwargs):
-        dst_ip = ipaddress.ip_address(kwargs['dst_ip'])
-        action_name = 'data_drop'
-
-        logger.info('Attack dst_ip - [%s]', dst_ip)
-        # TODO - Add back source IP address as a match field after adding
-        #  mitigation at the Aggregate
-        dst_ipv4 = 0
-        dst_ipv6 = 0
-        if dst_ip.version == 6:
-            logger.debug('Attack is IPv6')
-            dst_ipv6 = str(dst_ip.exploded)
-        else:
-            logger.debug('Attack is IPv4')
-            dst_ipv4 = str(dst_ip.exploded)
-
-        return action_name, dst_ipv4, dst_ipv6
-
     def add_attack(self, **kwargs):
         logger.info('Adding attack [%s]', kwargs)
-        action_name, dst_ipv4, dst_ipv6 = self.__parse_attack(**kwargs)
-        logger.debug("Action name: [%s] , Destination IPv4: [%s] , Destination IPv6: [%s]",
-                     action_name, dst_ipv4, dst_ipv6)
+        action_name, dst_ipv4, dst_ipv6 = self.parse_attack(**kwargs)
         self.insert_p4_table_entry(
             table_name='data_drop_t',
             action_name=action_name,
@@ -139,7 +117,7 @@ class AggregateSwitch(P4RuntimeSwitch):
 
     def stop_attack(self, **kwargs):
         logger.info('Adding attack [%s]', kwargs)
-        action_name, dst_ipv4, dst_ipv6 = self.__parse_attack(**kwargs)
+        action_name, dst_ipv4, dst_ipv6 = self.parse_attack(**kwargs)
 
         self.delete_p4_table_entry(
             table_name='data_drop_t',
