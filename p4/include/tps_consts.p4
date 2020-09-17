@@ -32,10 +32,18 @@
 
 /* The INT Shim length at the gateway */
 #define INT_SHIM_BASE_SIZE 7
+/* Value derived from IPV4_HDR_BYTES + INT_SHIM_BASE_SIZE + UDP_HDR_BYTES  */
+#define IPV4_INT_UDP_BYTES 35
+/* Value derived from IPV6_HDR_BYTES + INT_SHIM_BASE_SIZE + UDP_HDR_BYTES  */
+#define IPV6_INT_UDP_BYTES 72
 /* Amount to add to the INT Shim length at each hop */
 #define INT_SHIM_HOP_SIZE 1
 /* Number of bytes per INT Shim length */
 #define BYTES_PER_SHIM 4
+/* The INT Shim bytes when created at aggregate on TNA derived by INT_SHIM_BASE_SIZE * BYTES_PER_SHIM */
+#define INT_SHIM_BYTES 28
+/* Derived by INT_SHIM_BYTES + UDP_HDR_BYTES */
+#define INT_SHIM_UDP_BYTES 36
 
 /* Number of bytes used by a UDP header */
 #define UDP_HDR_BYTES 8

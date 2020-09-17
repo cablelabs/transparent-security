@@ -163,14 +163,13 @@ control TpsAggIngress(inout headers hdr,
 
     action add_switch_id(bit<32> switch_id) {
         hdr.int_meta_2.setValid();
-        #ifdef BMV2
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen + BYTES_PER_SHIM * INT_SHIM_HOP_SIZE;
-        hdr.udp.len = hdr.udp.len + BYTES_PER_SHIM * INT_SHIM_HOP_SIZE;
-        hdr.ipv6.payload_len = hdr.ipv6.payload_len + BYTES_PER_SHIM * INT_SHIM_HOP_SIZE;
+        // TODO/FIXME - doesn't look like we can set this value 2x but not having this will only break with the gateway scenario which is not required for the lab trial
+        //hdr.ipv4.totalLen = hdr.ipv4.totalLen + BYTES_PER_SHIM;
+
+        hdr.udp.len = hdr.udp.len + BYTES_PER_SHIM;
+        hdr.ipv6.payload_len = hdr.ipv6.payload_len + BYTES_PER_SHIM;
         hdr.int_shim.length = hdr.int_shim.length + INT_SHIM_HOP_SIZE;
         hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt - 1;
-        #endif
-
         hdr.int_meta_2.switch_id = switch_id;
     }
 
@@ -205,28 +204,21 @@ control TpsAggIngress(inout headers hdr,
 
         hdr.int_meta.switch_id = switch_id;
         hdr.int_meta.orig_mac = hdr.ethernet.src_mac;
-
-        #ifdef BMV2
-        forwardedPackets.count(device);
-        #endif
     }
 
     action data_inspect_packet_ipv4() {
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
         hdr.ipv4.protocol = TYPE_UDP;
         hdr.int_shim.next_proto = hdr.ipv4.protocol;
-
-        #ifdef BMV2
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen + ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE) + UDP_HDR_BYTES;
-        #endif
+        // TODO/FIXME - This value will be incorrect once the gateway with INT has been added into the mix
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen + IPV4_INT_UDP_BYTES;
     }
 
     action data_inspect_packet_ipv6() {
         hdr.ipv6.next_hdr_proto = TYPE_UDP;
         hdr.int_shim.next_proto = hdr.ipv6.next_hdr_proto;
-        #ifdef BMV2
-        hdr.ipv6.payload_len = hdr.ipv6.payload_len + IPV6_HDR_BYTES + ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE) + UDP_HDR_BYTES;
-        #endif
+        // TODO/FIXME - This value will be incorrect once the gateway with INT has been added into the mix
+        hdr.ipv6.payload_len = hdr.ipv6.payload_len + IPV6_INT_UDP_BYTES;
     }
 
     table data_inspection_t {
@@ -251,29 +243,22 @@ control TpsAggIngress(inout headers hdr,
         hdr.udp.src_port = UDP_INT_SRC_PORT;
         hdr.udp.dst_port = UDP_INT_DST_PORT;
 
-        #ifdef BMV2
-        hdr.udp.len = hdr.udp_int.len + ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE) + UDP_HDR_BYTES;
-        #endif
+        // TODO/FIXME - This value will be incorrect once the gateway with INT has been added into the mix
+        hdr.udp.len = hdr.udp_int.len + INT_SHIM_UDP_BYTES;
     }
 
     action insert_udp_int_for_tcp_ipv4() {
         hdr.udp.setValid();
         hdr.udp.src_port = UDP_INT_SRC_PORT;
         hdr.udp.dst_port = UDP_INT_DST_PORT;
-
-        #ifdef BMV2
         hdr.udp.len = hdr.ipv4.totalLen - IPV4_HDR_BYTES;
-        #endif
     }
 
     action insert_udp_int_for_tcp_ipv6() {
        hdr.udp.setValid();
        hdr.udp.src_port = UDP_INT_SRC_PORT;
        hdr.udp.dst_port = UDP_INT_DST_PORT;
-
-       #ifdef BMV2
        hdr.udp.len = hdr.ipv6.payload_len - IPV6_HDR_BYTES;
-       #endif
     }
 
     /*
