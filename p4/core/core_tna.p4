@@ -138,7 +138,7 @@ control TpsCoreIngress(
     * Responsible for recirculating a packet after egress processing
     */
     action recirculate_packet() {
-    /*
+    /* TODO/FIXME - Find Tofino equivalent
         recirculate();
     */
     }
@@ -147,7 +147,7 @@ control TpsCoreIngress(
     * Responsible for cloning a packet as ingressed
     */
     action clone_packet_i2e() {
-    /*
+    /* TODO/FIXME - Find Tofino equivalent
         clone3(CloneType.I2E, I2E_CLONE_SESSION_ID);
     */
     }
@@ -157,7 +157,7 @@ control TpsCoreIngress(
     */
     action data_inspect_packet(bit<32> switch_id) {
         hdr.int_meta_3.setValid();
-        /*
+        /* TODO/FIXME - math
         hdr.int_shim.length = hdr.int_shim.length + INT_SHIM_HOP_SIZE;
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + (INT_SHIM_HOP_SIZE * BYTES_PER_SHIM);
         hdr.udp_int.len = hdr.udp_int.len + (INT_SHIM_HOP_SIZE * BYTES_PER_SHIM);
@@ -221,7 +221,7 @@ control TpsCoreIngress(
         hdr.ipv4.protocol = hdr.int_shim.next_proto;
         hdr.ipv6.next_hdr_proto = hdr.int_shim.next_proto;
 
-        /*
+        /* TODO/FIXME - MATH
         hdr.ipv4.totalLen = hdr.ipv4.totalLen - ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE) - UDP_HDR_BYTES;
         hdr.ipv6.payload_len = hdr.ipv6.payload_len - ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE);
         */
@@ -575,6 +575,7 @@ control TpsCoreEgress(
         } else if (hdr.ipv6.isValid()) {
             update_trpt_hdr_len_ipv6();
         }
+        // TODO/FIXME - find TNA equivalent
         /* Ensure packet is no larger than TRPT_MAX_BYTES
         truncate(TRPT_MAX_BYTES);
         */
