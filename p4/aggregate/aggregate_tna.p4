@@ -50,7 +50,7 @@ parser TpsAggParser(packet_in packet,
     state parse_ipv4 {
         packet.extract(hdr.ipv4);
         transition select(hdr.ipv4.protocol) {
-            TYPE_UDP: parse_udp;
+            TYPE_UDP: parse_udp_int;
             TYPE_TCP: parse_tcp;
             default: accept;
         }
@@ -59,15 +59,15 @@ parser TpsAggParser(packet_in packet,
     state parse_ipv6 {
         packet.extract(hdr.ipv6);
         transition select(hdr.ipv6.next_hdr_proto) {
-            TYPE_UDP: parse_udp;
+            TYPE_UDP: parse_udp_int;
             TYPE_TCP: parse_tcp;
             default: accept;
         }
     }
 
-    state parse_udp {
-        packet.extract(hdr.udp);
-        transition select(hdr.udp.dst_port) {
+    state parse_udp_int {
+        packet.extract(hdr.udp_int);
+        transition select(hdr.udp_int.dst_port) {
             UDP_INT_DST_PORT: parse_int_shim;
             default: accept;
         }
@@ -80,11 +80,20 @@ parser TpsAggParser(packet_in packet,
 
     state parse_int_hdr {
         packet.extract(hdr.int_header);
-        transition accept;
+        transition select(hdr.int_shim.next_proto){
+            TYPE_UDP: parse_udp;
+            TYPE_TCP: parse_tcp;
+            default: accept;
+        }
     }
 
     state parse_tcp {
         packet.extract(hdr.tcp);
+        transition accept;
+    }
+
+    state parse_udp {
+        packet.extract(hdr.udp);
         transition accept;
     }
 
@@ -113,7 +122,7 @@ control TpsAggIngress(inout headers hdr,
     }
 
     action pack_meta_udp() {
-        meta.dst_port = hdr.udp.dst_port;
+        meta.dst_port = hdr.udp_int.dst_port;
     }
 
     action pack_meta_ipv4() {
@@ -166,7 +175,7 @@ control TpsAggIngress(inout headers hdr,
         // TODO/FIXME - doesn't look like we can set this value 2x but not having this will only break with the gateway scenario which is not required for the lab trial
         //hdr.ipv4.totalLen = hdr.ipv4.totalLen + BYTES_PER_SHIM;
 
-        hdr.udp.len = hdr.udp.len + BYTES_PER_SHIM;
+        hdr.udp_int.len = hdr.udp.len + BYTES_PER_SHIM;
         hdr.ipv6.payload_len = hdr.ipv6.payload_len + BYTES_PER_SHIM;
         hdr.int_shim.length = hdr.int_shim.length + INT_SHIM_HOP_SIZE;
         hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt - 1;
@@ -175,7 +184,7 @@ control TpsAggIngress(inout headers hdr,
 
     table add_switch_id_t {
         key = {
-            hdr.udp.dst_port: exact;
+            hdr.udp_int.dst_port: exact;
         }
         actions = {
             add_switch_id;
@@ -208,15 +217,15 @@ control TpsAggIngress(inout headers hdr,
 
     action data_inspect_packet_ipv4() {
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
-        hdr.ipv4.protocol = TYPE_UDP;
         hdr.int_shim.next_proto = hdr.ipv4.protocol;
+        hdr.ipv4.protocol = TYPE_UDP;
         // TODO/FIXME - This value will be incorrect once the gateway with INT has been added into the mix
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + IPV4_INT_UDP_BYTES;
     }
 
     action data_inspect_packet_ipv6() {
-        hdr.ipv6.next_hdr_proto = TYPE_UDP;
         hdr.int_shim.next_proto = hdr.ipv6.next_hdr_proto;
+        hdr.ipv6.next_hdr_proto = TYPE_UDP;
         // TODO/FIXME - This value will be incorrect once the gateway with INT has been added into the mix
         hdr.ipv6.payload_len = hdr.ipv6.payload_len + IPV6_INT_UDP_BYTES;
     }
@@ -234,31 +243,29 @@ control TpsAggIngress(inout headers hdr,
     }
 
     action insert_udp_int_for_udp() {
-        hdr.udp_int.setValid();
-        hdr.udp_int.dst_port = hdr.udp.dst_port;
-        hdr.udp_int.src_port = hdr.udp.src_port;
-        hdr.udp_int.len = hdr.udp.len;
-        hdr.udp_int.cksum = hdr.udp.cksum;
-
-        hdr.udp.src_port = UDP_INT_SRC_PORT;
-        hdr.udp.dst_port = UDP_INT_DST_PORT;
+        hdr.udp.setValid();
+        hdr.udp.src_port = hdr.udp_int.src_port;
+        hdr.udp.dst_port = hdr.udp_int.dst_port;
+        hdr.udp.len = hdr.udp_int.len;
+        hdr.udp_int.src_port = UDP_INT_SRC_PORT;
+        hdr.udp_int.dst_port = UDP_INT_DST_PORT;
 
         // TODO/FIXME - This value will be incorrect once the gateway with INT has been added into the mix
-        hdr.udp.len = hdr.udp_int.len + INT_SHIM_UDP_BYTES;
+        hdr.udp_int.len = hdr.udp.len + INT_SHIM_UDP_BYTES;
     }
 
     action insert_udp_int_for_tcp_ipv4() {
-        hdr.udp.setValid();
-        hdr.udp.src_port = UDP_INT_SRC_PORT;
-        hdr.udp.dst_port = UDP_INT_DST_PORT;
-        hdr.udp.len = hdr.ipv4.totalLen - IPV4_HDR_BYTES;
+        hdr.udp_int.setValid();
+        hdr.udp_int.src_port = UDP_INT_SRC_PORT;
+        hdr.udp_int.dst_port = UDP_INT_DST_PORT;
+        hdr.udp_int.len = hdr.ipv4.totalLen - IPV4_HDR_BYTES;
     }
 
     action insert_udp_int_for_tcp_ipv6() {
-       hdr.udp.setValid();
-       hdr.udp.src_port = UDP_INT_SRC_PORT;
-       hdr.udp.dst_port = UDP_INT_DST_PORT;
-       hdr.udp.len = hdr.ipv6.payload_len - IPV6_HDR_BYTES;
+        hdr.udp_int.setValid();
+        hdr.udp_int.src_port = UDP_INT_SRC_PORT;
+        hdr.udp_int.dst_port = UDP_INT_DST_PORT;
+        hdr.udp_int.len = hdr.ipv6.payload_len - IPV6_HDR_BYTES;
     }
 
     /*
@@ -289,29 +296,29 @@ control TpsAggIngress(inout headers hdr,
     */
      apply {
         if (hdr.int_shim.isValid()) {
+            // Add switch ID into existing INT data
             add_switch_id_t.apply();
-        }
-        else {
+        } else {
+            // Pack metadata with original header values for data drop
+            if (hdr.udp_int.isValid()) {
+                pack_meta_udp();
+            } else if (hdr.tcp.isValid()) {
+                pack_meta_tcp();
+            }
             if (hdr.ipv4.isValid()) {
-                if (hdr.udp.isValid()) {
-                    pack_meta_udp();
-                } else if (hdr.tcp.isValid()) {
-                    pack_meta_tcp();
-                }
                 pack_meta_ipv4();
             } else if (hdr.ipv6.isValid()) {
-                if (hdr.udp.isValid()) {
-                    pack_meta_udp();
-                } else if (hdr.tcp.isValid()) {
-                    pack_meta_tcp();
-                }
                 pack_meta_ipv6();
             }
+
+            // Check to see if need to add INT
             data_inspection_t.apply();
+
+            // Add IP & Protocol specific data to new INT data
             if (hdr.int_shim.isValid()) {
                 if (hdr.ipv4.isValid()) {
                     data_inspect_packet_ipv4();
-                    if (hdr.udp.isValid()) {
+                    if (hdr.udp_int.isValid()) {
                         insert_udp_int_for_udp();
                     } else if (hdr.tcp.isValid()) {
                         insert_udp_int_for_tcp_ipv4();
@@ -319,7 +326,7 @@ control TpsAggIngress(inout headers hdr,
                 }
                 else if (hdr.ipv6.isValid()) {
                     data_inspect_packet_ipv6();
-                    if (hdr.udp.isValid()) {
+                    if (hdr.udp_int.isValid()) {
                         insert_udp_int_for_udp();
                     } else if (hdr.tcp.isValid()) {
                         insert_udp_int_for_tcp_ipv6();
@@ -327,6 +334,8 @@ control TpsAggIngress(inout headers hdr,
                 }
             }
         }
+
+        // Basic forwarding and drop logic
         data_forward_t.apply();
         data_drop_t.apply();
     }
@@ -342,12 +351,12 @@ control TpsAggDeparser(packet_out packet,
         packet.emit(hdr.arp);
         packet.emit(hdr.ipv4);
         packet.emit(hdr.ipv6);
-        packet.emit(hdr.udp);
+        packet.emit(hdr.udp_int);
         packet.emit(hdr.int_shim);
         packet.emit(hdr.int_header);
         packet.emit(hdr.int_meta_2);
         packet.emit(hdr.int_meta);
-        packet.emit(hdr.udp_int);
+        packet.emit(hdr.udp);
         packet.emit(hdr.tcp);
     }
 }
@@ -392,7 +401,7 @@ parser TpsAggEgressParser(packet_in packet,
     state parse_ipv4 {
         packet.extract(hdr.ipv4);
         transition select(hdr.ipv4.protocol) {
-            TYPE_UDP: parse_udp;
+            TYPE_UDP: parse_udp_int;
             TYPE_TCP: parse_tcp;
             default: accept;
         }
@@ -401,15 +410,15 @@ parser TpsAggEgressParser(packet_in packet,
     state parse_ipv6 {
         packet.extract(hdr.ipv6);
         transition select(hdr.ipv6.next_hdr_proto) {
-            TYPE_UDP: parse_udp;
+            TYPE_UDP: parse_udp_int;
             TYPE_TCP: parse_tcp;
             default: accept;
         }
     }
 
-    state parse_udp {
-        packet.extract(hdr.udp);
-        transition select(hdr.udp.dst_port) {
+    state parse_udp_int {
+        packet.extract(hdr.udp_int);
+        transition select(hdr.udp_int.dst_port) {
             UDP_INT_DST_PORT: parse_int_shim;
             default: accept;
         }
@@ -422,11 +431,20 @@ parser TpsAggEgressParser(packet_in packet,
 
     state parse_int_hdr {
         packet.extract(hdr.int_header);
-        transition accept;
+        transition select(hdr.int_shim.next_proto){
+            TYPE_UDP: parse_udp;
+            TYPE_TCP: parse_tcp;
+            default: accept;
+        }
     }
 
     state parse_tcp {
         packet.extract(hdr.tcp);
+        transition accept;
+    }
+
+    state parse_udp {
+        packet.extract(hdr.udp);
         transition accept;
     }
 
@@ -459,12 +477,12 @@ control TpsAggEgressDeparser(packet_out packet,
         packet.emit(hdr.arp);
         packet.emit(hdr.ipv4);
         packet.emit(hdr.ipv6);
-        packet.emit(hdr.udp);
+        packet.emit(hdr.udp_int);
         packet.emit(hdr.int_shim);
         packet.emit(hdr.int_header);
         packet.emit(hdr.int_meta_2);
         packet.emit(hdr.int_meta);
-        packet.emit(hdr.udp_int);
+        packet.emit(hdr.udp);
         packet.emit(hdr.tcp);
     }
 }
