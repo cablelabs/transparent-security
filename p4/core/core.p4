@@ -36,11 +36,7 @@ control TpsCoreIngress(inout headers hdr,
     * Responsible for recirculating a packet after egress processing
     */
     action recirculate_packet() {
-    #ifdef TOFINO
-        standard_metadata.egress_port = standard_metadata.ingress_port;
-    #else
         recirculate(standard_metadata);
-    #endif
     }
 
     /**
@@ -115,12 +111,8 @@ control TpsCoreIngress(inout headers hdr,
     action clear_int() {
         hdr.ipv4.protocol = hdr.int_shim.next_proto;
         hdr.ipv6.next_hdr_proto = hdr.int_shim.next_proto;
-
-    // TODO/FIXME - so this works for both BMV2 & TOFINO
-    #ifdef BMV2
         hdr.ipv4.totalLen = hdr.ipv4.totalLen - ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE) - UDP_HDR_BYTES;
         hdr.ipv6.payload_len = hdr.ipv6.payload_len - ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE);
-    #endif
 
         hdr.udp_int.setInvalid();
         hdr.int_shim.setInvalid();
@@ -131,13 +123,10 @@ control TpsCoreIngress(inout headers hdr,
     }
 
     action generate_learn_notification() {
-    // TODO/FIXME - so this works for both BMV2 & TOFINO
-    #ifdef BMV2
         digest<mac_learn_digest>((bit<32>) 1024,
             { hdr.arp.src_mac,
               standard_metadata.ingress_port
             });
-    #endif
     }
 
     action arp_flood() {
@@ -174,11 +163,7 @@ control TpsCoreIngress(inout headers hdr,
                 data_forward_t.apply();
                 if (hdr.int_shim.isValid()) {
                     clone_packet_i2e();
-
-                # TODO/FIXME - error "In the ALU operation over container B7 in action TpsCoreIngress.clear_int, every write bit does not have a corresponding 1 or 0 read bits."
-                #ifdef BMV2
                     clear_int();
-                #endif
                 }
             }
         }
@@ -194,10 +179,7 @@ control TpsCoreEgress(inout headers hdr,
                       inout metadata meta,
                       inout standard_metadata_t standard_metadata) {
 
-    // TODO/FIXME - so this works for both BMV2 & TOFINO
-#ifdef BMV2
     register<bit<16>>(INT_CTR_SIZE) trpt_pkts;
-#endif
 
     action control_drop() {
         mark_to_drop(standard_metadata);
@@ -227,15 +209,12 @@ control TpsCoreEgress(inout headers hdr,
         hdr.trpt_hdr.sequence_no = 0;
         hdr.trpt_hdr.sequence_pad = 0;
 
-    // TODO/FIXME - so this works for both BMV2 & TOFINO
-    #ifdef BMV2
         hdr.trpt_hdr.rpt_len = hdr.trpt_hdr.rpt_len + hdr.int_shim.length + 5; /* 5 Reflects TRPT ethernet & udp packets
 
         /* TODO - determine if counter resets to 0 once it reaches max */
         trpt_pkts.read(hdr.trpt_hdr.sequence_no, INT_CTR_SIZE - 1);
         hdr.trpt_hdr.sequence_no = hdr.trpt_hdr.sequence_no + 1;
         //trpt_pkts.write(INT_CTR_SIZE - 1, hdr.trpt_hdr.sequence_no);
-    #endif
     }
 
     /* Sets the trpt_eth.in_type for IPv4 */
@@ -263,12 +242,8 @@ control TpsCoreEgress(inout headers hdr,
         hdr.trpt_ipv4.protocol = TYPE_UDP;
         hdr.trpt_ipv4.srcAddr = hdr.ipv4.srcAddr;
         hdr.trpt_ipv4.dstAddr = ae_ip;
-
-    // TODO/FIXME - so this works for both BMV2 & TOFINO
-    #ifdef BMV2
         hdr.trpt_udp.len = hdr.trpt_ipv4.totalLen - IPV4_HDR_BYTES;
         hdr.trpt_ipv4.totalLen = (bit<16>)standard_metadata.packet_length + IPV4_HDR_BYTES + UDP_HDR_BYTES + TRPT_HDR_BASE_BYTES;
-    #endif
     }
 
     /**
@@ -289,12 +264,9 @@ control TpsCoreEgress(inout headers hdr,
     */
     action update_trpt_hdr_len_ipv4() {
         hdr.trpt_hdr.rpt_len = hdr.trpt_hdr.rpt_len + 5;
-        // TODO/FIXME - so this works for both BMV2 & TOFINO
-        #ifdef BMV2
         /*hdr.trpt_udp.len = hdr.ipv4.totalLen + IPV4_HDR_BYTES + TRPT_HDR_BYTES + 2;*/
         hdr.trpt_udp.len = hdr.ipv4.totalLen + IPV4_HDR_BYTES + TRPT_HDR_BYTES - 4;
         hdr.trpt_ipv4.totalLen = (bit<16>)standard_metadata.packet_length + IPV4_HDR_BYTES + UDP_HDR_BYTES + TRPT_HDR_BASE_BYTES;
-        #endif
     }
 
     /**
@@ -302,10 +274,8 @@ control TpsCoreEgress(inout headers hdr,
     */
     action update_trpt_hdr_len_ipv6() {
         hdr.trpt_hdr.rpt_len = hdr.trpt_hdr.rpt_len + 10;
-        #ifdef BMV2
         hdr.trpt_udp.len = hdr.ipv6.payload_len + IPV6_HDR_BYTES + TRPT_HDR_BYTES - ETH_HDR_BYTES;
         hdr.trpt_ipv6.payload_len = (bit<16>)standard_metadata.packet_length + IPV6_HDR_BYTES + UDP_HDR_BYTES + TRPT_HDR_BASE_BYTES;
-        #endif
     }
 
     /* TODO - Design table properly, currently just making IPv4 or IPv6 Choices */
@@ -344,11 +314,8 @@ control TpsCoreEgress(inout headers hdr,
                 } else if (hdr.ipv6.isValid()) {
                     update_trpt_hdr_len_ipv6();
                 }
-            // TODO/FIXME - so this works for both BMV2 & TOFINO
-            #ifdef BMV2
                 /* Ensure packet is no larger than TRPT_MAX_BYTES */
                 truncate(TRPT_MAX_BYTES);
-            #endif
             }
         }
     }
