@@ -138,7 +138,7 @@ control TpsCoreIngress(
     * Responsible for recirculating a packet after egress processing
     */
     action recirculate_packet() {
-    /* TODO/FIXME - Find Tofino equivalent
+    /* TODO/FIXME - Find Tofino equivalent - Mickey to work with Vald to determing BF-RT functions to call
         recirculate();
     */
     }
@@ -147,7 +147,7 @@ control TpsCoreIngress(
     * Responsible for cloning a packet as ingressed
     */
     action clone_packet_i2e() {
-    /* TODO/FIXME - Find Tofino equivalent
+    /* TODO/FIXME - Find Tofino equivalent - use Mirror
         clone3(CloneType.I2E, I2E_CLONE_SESSION_ID);
     */
     }
@@ -575,7 +575,7 @@ control TpsCoreEgress(
         } else if (hdr.ipv6.isValid()) {
             update_trpt_hdr_len_ipv6();
         }
-        // TODO/FIXME - find TNA equivalent
+        // TODO/FIXME - find TNA equivalent - becomes a mirror.cfg attributes
         /* Ensure packet is no larger than TRPT_MAX_BYTES
         truncate(TRPT_MAX_BYTES);
         */
