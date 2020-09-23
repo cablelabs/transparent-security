@@ -140,7 +140,7 @@ class AggregateSwitch(P4RuntimeSwitch):
         table_entry = self.p4info_helper.build_table_entry(
             table_name='{}.add_switch_id_t'.format(self.p4_ingress),
             match_fields={
-                'hdr.udp.dst_port': UDP_INT_DST_PORT
+                'hdr.udp_int.dst_port': UDP_INT_DST_PORT
             },
             action_name='{}.add_switch_id'.format(
                 self.p4_ingress),

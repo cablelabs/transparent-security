@@ -35,20 +35,25 @@ control TpsAggIngress(inout headers hdr,
     action pack_meta_tcp() {
         meta.dst_port = hdr.tcp.dst_port;
     }
+
     action pack_meta_udp() {
-        meta.dst_port = hdr.udp.dst_port;
+        meta.dst_port = hdr.udp_int.dst_port;
     }
+
     action pack_meta_ipv4() {
         meta.ipv6_addr = 0;
         meta.ipv4_addr = hdr.ipv4.dstAddr;
     }
+
     action pack_meta_ipv6() {
         meta.ipv4_addr = 0;
         meta.ipv6_addr = hdr.ipv6.dstAddr;
     }
+
     action data_drop() {
         mark_to_drop(standard_metadata);
     }
+
     table data_drop_t {
         key = {
             hdr.ethernet.src_mac: exact;
@@ -63,6 +68,7 @@ control TpsAggIngress(inout headers hdr,
         size = TABLE_SIZE;
         default_action = NoAction();
     }
+
     action data_forward(egressSpec_t port) {
         standard_metadata.egress_spec = port;
     }
@@ -81,20 +87,17 @@ control TpsAggIngress(inout headers hdr,
 
     action add_switch_id(bit<32> switch_id) {
         hdr.int_meta_2.setValid();
-        #ifdef BMV2
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + BYTES_PER_SHIM * INT_SHIM_HOP_SIZE;
-        hdr.udp.len = hdr.udp.len + BYTES_PER_SHIM * INT_SHIM_HOP_SIZE;
+        hdr.udp_int.len = hdr.udp_int.len + SWITCH_ID_HDR_BYTES;
         hdr.ipv6.payload_len = hdr.ipv6.payload_len + BYTES_PER_SHIM * INT_SHIM_HOP_SIZE;
         hdr.int_shim.length = hdr.int_shim.length + INT_SHIM_HOP_SIZE;
         hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt - 1;
-        #endif
-
         hdr.int_meta_2.switch_id = switch_id;
     }
 
     table add_switch_id_t {
         key = {
-            hdr.udp.dst_port: exact;
+            hdr.udp_int.dst_port: exact;
         }
         actions = {
             add_switch_id;
@@ -124,29 +127,20 @@ control TpsAggIngress(inout headers hdr,
         hdr.int_meta.switch_id = switch_id;
         hdr.int_meta.orig_mac = hdr.ethernet.src_mac;
 
-        #ifdef BMV2
         forwardedPackets.count(device);
-        #endif
     }
 
     action data_inspect_packet_ipv4() {
-
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
-        hdr.ipv4.protocol = TYPE_UDP;
         hdr.int_shim.next_proto = hdr.ipv4.protocol;
-
-        #ifdef BMV2
+        hdr.ipv4.protocol = TYPE_UDP;
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE) + UDP_HDR_BYTES;
-        #endif
     }
 
     action data_inspect_packet_ipv6() {
-
-        hdr.ipv6.next_hdr_proto = TYPE_UDP;
         hdr.int_shim.next_proto = hdr.ipv6.next_hdr_proto;
-        #ifdef BMV2
+        hdr.ipv6.next_hdr_proto = TYPE_UDP;
         hdr.ipv6.payload_len = hdr.ipv6.payload_len + IPV6_HDR_BYTES + ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE) + UDP_HDR_BYTES;
-        #endif
     }
 
     table data_inspection_t {
@@ -162,38 +156,27 @@ control TpsAggIngress(inout headers hdr,
     }
 
     action insert_udp_int_for_udp() {
-        hdr.udp_int.setValid();
-        hdr.udp_int.dst_port = hdr.udp.dst_port;
-        hdr.udp_int.src_port = hdr.udp.src_port;
-        hdr.udp_int.len = hdr.udp.len;
-        hdr.udp_int.cksum = hdr.udp.cksum;
-
-        hdr.udp.src_port = UDP_INT_SRC_PORT;
-        hdr.udp.dst_port = UDP_INT_DST_PORT;
-
-        #ifdef BMV2
-        hdr.udp.len = hdr.udp_int.len + ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE) + UDP_HDR_BYTES;
-        #endif
+        hdr.udp.setValid();
+        hdr.udp.src_port = hdr.udp_int.src_port;
+        hdr.udp.dst_port = hdr.udp_int.dst_port;
+        hdr.udp.len = hdr.udp_int.len;
+        hdr.udp_int.src_port = UDP_INT_SRC_PORT;
+        hdr.udp_int.dst_port = UDP_INT_DST_PORT;
+        hdr.udp_int.len = hdr.udp.len + ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE) + UDP_HDR_BYTES;
     }
 
     action insert_udp_int_for_tcp_ipv4() {
-        hdr.udp.setValid();
-        hdr.udp.src_port = UDP_INT_SRC_PORT;
-        hdr.udp.dst_port = UDP_INT_DST_PORT;
-
-        #ifdef BMV2
-        hdr.udp.len = hdr.ipv4.totalLen - IPV4_HDR_BYTES;
-        #endif
+        hdr.udp_int.setValid();
+        hdr.udp_int.src_port = UDP_INT_SRC_PORT;
+        hdr.udp_int.dst_port = UDP_INT_DST_PORT;
+        hdr.udp_int.len = hdr.ipv4.totalLen - IPV4_HDR_BYTES;
     }
 
     action insert_udp_int_for_tcp_ipv6() {
-       hdr.udp.setValid();
-       hdr.udp.src_port = UDP_INT_SRC_PORT;
-       hdr.udp.dst_port = UDP_INT_DST_PORT;
-
-       #ifdef BMV2
-       hdr.udp.len = hdr.ipv6.payload_len - IPV6_HDR_BYTES;
-       #endif
+        hdr.udp_int.setValid();
+        hdr.udp_int.src_port = UDP_INT_SRC_PORT;
+        hdr.udp_int.dst_port = UDP_INT_DST_PORT;
+        hdr.udp_int.len = hdr.ipv6.payload_len - IPV6_HDR_BYTES;
     }
 
     action control_drop() {
@@ -227,39 +210,34 @@ control TpsAggIngress(inout headers hdr,
             generate_learn_notification();
             if (hdr.arp.opcode == 1) {
                 arp_flood_t.apply();
-            #ifdef BMV2
             } else if (hdr.arp.opcode == 2) {
                 data_forward_t.apply();
-            #endif
             }
         } else if (standard_metadata.egress_spec != DROP_PORT) {
             if (hdr.int_shim.isValid()) {
+                // Add switch ID into existing INT data
                 add_switch_id_t.apply();
             } else {
+                // Pack metadata with original header values for data drop
+                if (hdr.udp_int.isValid()) {
+                    pack_meta_udp();
+                } else if (hdr.tcp.isValid()) {
+                    pack_meta_tcp();
+                }
                 if (hdr.ipv4.isValid()) {
-                    if (hdr.udp.isValid()) {
-                        pack_meta_udp();
-                    #ifdef BMV2
-                    } else if (hdr.tcp.isValid()) {
-                        pack_meta_tcp();
-                    #endif
-                    }
                     pack_meta_ipv4();
                 } else if (hdr.ipv6.isValid()) {
-                    if (hdr.udp.isValid()) {
-                        pack_meta_udp();
-                    #ifdef BMV2
-                    } else if (hdr.tcp.isValid()) {
-                        pack_meta_tcp();
-                    #endif
-                    }
                     pack_meta_ipv6();
                 }
+
+                // Check to see if need to add INT
                 data_inspection_t.apply();
+
+                // Add IP & Protocol specific data to new INT data
                 if (hdr.int_shim.isValid()) {
                     if (hdr.ipv4.isValid()) {
                         data_inspect_packet_ipv4();
-                        if (hdr.udp.isValid()) {
+                        if (hdr.udp_int.isValid()) {
                             insert_udp_int_for_udp();
                         } else if (hdr.tcp.isValid()) {
                             insert_udp_int_for_tcp_ipv4();
@@ -267,7 +245,7 @@ control TpsAggIngress(inout headers hdr,
                     }
                     else if (hdr.ipv6.isValid()) {
                         data_inspect_packet_ipv6();
-                        if (hdr.udp.isValid()) {
+                        if (hdr.udp_int.isValid()) {
                             insert_udp_int_for_udp();
                         } else if (hdr.tcp.isValid()) {
                             insert_udp_int_for_tcp_ipv6();

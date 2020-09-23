@@ -55,7 +55,7 @@ data_drop_tbl_key_4 = 'meta.dst_port'
 data_drop_action = 'TpsAggIngress.data_drop'
 
 add_switch_id_tbl = 'TpsAggIngress.add_switch_id_t'
-add_switch_id_tbl_key = 'hdr.udp.dst_port'
+add_switch_id_tbl_key = 'hdr.udp_int.dst_port'
 add_switch_id_action = 'TpsAggIngress.add_switch_id'
 add_switch_id_action_val = 'switch_id'
 
