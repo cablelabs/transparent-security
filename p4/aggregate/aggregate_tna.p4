@@ -80,7 +80,11 @@ parser TpsAggParser(
 
     state parse_int_hdr {
         packet.extract(hdr.int_header);
-        transition accept;
+        transition select(hdr.int_shim.next_proto){
+            TYPE_UDP: parse_udp;
+            TYPE_TCP: parse_tcp;
+            default: accept;
+        }
     }
 
     state parse_tcp {
