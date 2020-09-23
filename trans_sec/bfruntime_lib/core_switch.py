@@ -72,6 +72,13 @@ class CoreSwitch(BFRuntimeSwitch):
                                 [DataTuple(data_fwd_action_val,
                                            val=int(ingress_port))])
 
+    def del_data_forward(self, dst_mac):
+        logger.info(
+            'Deleting table entry with key - [%s] from %s',
+            dst_mac, data_fwd_tbl)
+        self.delete_table_entry(data_fwd_tbl,
+                                [KeyTuple(data_fwd_tbl_key, value=dst_mac)])
+
     def add_switch_id(self, dev_id):
         pass
 

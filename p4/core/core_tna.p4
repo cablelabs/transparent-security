@@ -41,6 +41,12 @@ parser TpsCoreParser(
 
     state parse_ethernet {
         packet.extract(hdr.ethernet);
+        transition accept;
+    }
+
+/*
+    state parse_ethernet {
+        packet.extract(hdr.ethernet);
         transition select(hdr.ethernet.etherType) {
             TYPE_ARP: parse_arp;
             TYPE_IPV4: parse_ipv4;
@@ -100,19 +106,6 @@ parser TpsCoreParser(
 
     state parse_int_meta {
         packet.extract(hdr.int_meta);
-        transition select (hdr.int_shim.next_proto) {
-            TYPE_UDP: parse_udp;
-            TYPE_TCP: parse_tcp;
-        }
-    }
-
-    state parse_udp {
-        packet.extract(hdr.udp);
-        transition accept;
-    }
-
-    state parse_tcp {
-        packet.extract(hdr.tcp);
         transition accept;
     }
 
@@ -120,6 +113,7 @@ parser TpsCoreParser(
         packet.extract(hdr.arp);
         transition accept;
     }
+*/
 }
 
 /*************************************************************************
@@ -181,28 +175,8 @@ control TpsCoreDeparser(
     in ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md) {
 
     apply {
-        /* For Telemetry Report Packets */
-        packet.emit(hdr.trpt_eth);
-        packet.emit(hdr.trpt_ipv4);
-        packet.emit(hdr.trpt_ipv6);
-        packet.emit(hdr.trpt_udp);
-        packet.emit(hdr.trpt_hdr);
-
         /* For Standard and INT Packets */
         packet.emit(hdr.ethernet);
-        packet.emit(hdr.arp);
-        packet.emit(hdr.ipv4);
-        packet.emit(hdr.ipv6);
-        packet.emit(hdr.udp_int);
-
-        packet.emit(hdr.int_shim);
-        packet.emit(hdr.int_header);
-        packet.emit(hdr.int_meta_3);
-        packet.emit(hdr.int_meta_2);
-        packet.emit(hdr.int_meta);
-
-        packet.emit(hdr.udp);
-        packet.emit(hdr.tcp);
     }
 }
 
@@ -284,19 +258,6 @@ parser TpsCoreEgressParser(
 
     state parse_int_meta {
         packet.extract(hdr.int_meta);
-        transition select (hdr.int_shim.next_proto) {
-            TYPE_UDP: parse_udp;
-            TYPE_TCP: parse_tcp;
-        }
-    }
-
-    state parse_udp {
-        packet.extract(hdr.udp);
-        transition accept;
-    }
-
-    state parse_tcp {
-        packet.extract(hdr.tcp);
         transition accept;
     }
 
@@ -465,16 +426,7 @@ control TpsCoreEgress(
     /**
     * Removes INT data from a packet
     */
-    action clear_int() {
-        /*
-        hdr.ipv4.protocol = hdr.int_shim.next_proto;
-        hdr.ipv6.next_hdr_proto = hdr.int_shim.next_proto;
-        */
-        /* TODO/FIXME - MATH
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen - ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE) - UDP_HDR_BYTES;
-        hdr.ipv6.payload_len = hdr.ipv6.payload_len - ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE);
-        */
-
+    action clear_int_all() {
         hdr.udp_int.setInvalid();
         hdr.int_shim.setInvalid();
         hdr.int_header.setInvalid();
@@ -483,30 +435,47 @@ control TpsCoreEgress(
         hdr.int_meta.setInvalid();
     }
 
+    action clear_int_ipv4() {
+        hdr.ipv4.protocol = hdr.int_shim.next_proto;
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen - IPV4_INT_UDP_BYTES;
+    }
+
+    action clear_int_ipv6() {
+        hdr.ipv6.payload_len = hdr.ipv6.payload_len - IPV6_INT_UDP_BYTES;
+    }
+
     apply {
         data_inspection_t.apply();
         if (eg_intr_md_for_dprs.mirror_type != 0) {
             if (hdr.int_shim.isValid()) {
-            init_telem_rpt();
-            if (hdr.ipv4.isValid()) {
-                set_telem_rpt_in_type_ipv4();
-            }
-            if (hdr.ipv6.isValid()) {
-                set_telem_rpt_in_type_ipv6();
-            }
-            setup_telemetry_rpt_t.apply();
-            if (hdr.ipv4.isValid()) {
-                update_trpt_hdr_len_ipv4();
-            } else if (hdr.ipv6.isValid()) {
-                update_trpt_hdr_len_ipv6();
-            }
-            // TODO/FIXME - find TNA equivalent - becomes a mirror.cfg attributes
-            /* Ensure packet is no larger than TRPT_MAX_BYTES
-            truncate(TRPT_MAX_BYTES);
-            */
+                init_telem_rpt();
+                if (hdr.ipv4.isValid()) {
+                    set_telem_rpt_in_type_ipv4();
+                }
+                if (hdr.ipv6.isValid()) {
+                    set_telem_rpt_in_type_ipv6();
+                }
+                setup_telemetry_rpt_t.apply();
+                if (hdr.ipv4.isValid()) {
+                    update_trpt_hdr_len_ipv4();
+                } else if (hdr.ipv6.isValid()) {
+                    update_trpt_hdr_len_ipv6();
+                }
+                // TODO/FIXME - find TNA equivalent - becomes a mirror.cfg attributes
+                /* Ensure packet is no larger than TRPT_MAX_BYTES
+                truncate(TRPT_MAX_BYTES);
+                */
             }
         } else {
-            clear_int();
+            if(hdr.int_shim.isValid()) {
+                if(hdr.ipv4.isValid()) {
+                    clear_int_ipv4();
+                }
+                if(hdr.ipv6.isValid()) {
+                    clear_int_ipv6();
+                }
+                clear_int_all();
+            }
         }
     }
 }
@@ -555,9 +524,6 @@ control TpsCoreEgressDeparser(
         packet.emit(hdr.int_meta_3);
         packet.emit(hdr.int_meta_2);
         packet.emit(hdr.int_meta);
-
-        packet.emit(hdr.udp);
-        packet.emit(hdr.tcp);
     }
 }
 
