@@ -135,47 +135,12 @@ control TpsCoreIngress(
     inout ingress_intrinsic_metadata_for_tm_t ig_tm_md) {
 
     /**
-    * Responsible for recirculating a packet after egress processing
-    */
-    action recirculate_packet() {
-    /* TODO/FIXME - Find Tofino equivalent - Mickey to work with Vald to determing BF-RT functions to call
-        recirculate();
-    */
-    }
-
-    /**
     * Responsible for cloning a packet as ingressed
     */
     action clone_packet_i2e() {
     /* TODO/FIXME - Find Tofino equivalent - use Mirror
         clone3(CloneType.I2E, I2E_CLONE_SESSION_ID);
     */
-    }
-
-    /**
-    * Adds INT data if data_inspection_t table has a match on hdr.ethernet.src_mac
-    */
-    action data_inspect_packet(bit<32> switch_id) {
-        hdr.int_meta_3.setValid();
-        /* TODO/FIXME - math
-        hdr.int_shim.length = hdr.int_shim.length + INT_SHIM_HOP_SIZE;
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen + (INT_SHIM_HOP_SIZE * BYTES_PER_SHIM);
-        hdr.udp_int.len = hdr.udp_int.len + (INT_SHIM_HOP_SIZE * BYTES_PER_SHIM);
-        hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt - 1;
-        */
-        hdr.int_meta_3.switch_id = switch_id;
-    }
-
-    table data_inspection_t {
-        key = {
-            hdr.udp_int.dst_port: exact;
-        }
-        actions = {
-            data_inspect_packet;
-            NoAction;
-        }
-        size = TABLE_SIZE;
-        default_action = NoAction();
     }
 
     /**
@@ -197,94 +162,11 @@ control TpsCoreIngress(
         default_action = NoAction();
     }
 
-/*
-    action arp_forward(PortId_t port) {
-        standard_metadata.egress_spec = port;
-    }
-
-    table arp_forward_t {
-        key = {
-            hdr.ethernet.dst_mac: exact;
-        }
-        actions = {
-            arp_forward;
-            NoAction;
-        }
-        size = TABLE_SIZE;
-        default_action = NoAction();
-    }
-
-    /**
-    * Removes INT data from a packet
-    */
-    action clear_int() {
-        hdr.ipv4.protocol = hdr.int_shim.next_proto;
-        hdr.ipv6.next_hdr_proto = hdr.int_shim.next_proto;
-
-        /* TODO/FIXME - MATH
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen - ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE) - UDP_HDR_BYTES;
-        hdr.ipv6.payload_len = hdr.ipv6.payload_len - ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE);
-        */
-
-        hdr.udp_int.setInvalid();
-        hdr.int_shim.setInvalid();
-        hdr.int_header.setInvalid();
-        hdr.int_meta_2.setInvalid();
-        hdr.int_meta_3.setInvalid();
-        hdr.int_meta.setInvalid();
-    }
-
-/*
-    action generate_learn_notification() {
-    // TODO/FIXME - so this works for both BMV2 & TOFINO
-        digest<mac_learn_digest>((bit<32>) 1024,
-            { hdr.arp.src_mac,
-              standard_metadata.ingress_port
-            });
-    }
-
-    action arp_flood() {
-        standard_metadata.mcast_grp = 1;
-    }
-
-    table arp_flood_t {
-        key = {
-            hdr.ethernet.dst_mac: exact;
-        }
-        actions = {
-            arp_flood;
-            NoAction;
-        }
-        default_action = NoAction();
-    }
-*/
     apply {
-    /*
-        if (hdr.arp.isValid()) {
-            generate_learn_notification();
-            if (hdr.arp.opcode == 1) {
-                arp_flood_t.apply();
-            }
-            else if (hdr.arp.opcode == 2) {
-                arp_forward_t.apply();
-            }
-        } else */
-        if (ig_tm_md.ucast_egress_port != DROP_PORT) {
-        /*
-            if (ig_intr_md.resubmit_flag == 0) {
-                // First pass
-                data_inspection_t.apply();
-                recirculate_packet();
-            } else {
-        */
-                // second pass
-                data_forward_t.apply();
-                if (hdr.int_shim.isValid()) {
-                    clone_packet_i2e();
-                    //clear_int();
-                }
-            }
-        //}
+        if (ig_intr_md.resubmit_flag == 0) {
+            data_forward_t.apply();
+            clone_packet_i2e();
+        }
     }
 }
 
@@ -432,9 +314,32 @@ control TpsCoreEgress(
     inout egress_intrinsic_metadata_for_deparser_t eg_intr_md_for_dprs,
     inout egress_intrinsic_metadata_for_output_port_t eg_intr_md_for_oport) {
 
-/*
-    register<bit<16>>(INT_CTR_SIZE) trpt_pkts;
-*/
+
+    /**
+    * Adds INT data if data_inspection_t table has a match on hdr.ethernet.src_mac
+    */
+    action data_inspect_packet(bit<32> switch_id) {
+        hdr.int_meta_3.setValid();
+        /* TODO/FIXME - math
+        hdr.int_shim.length = hdr.int_shim.length + INT_SHIM_HOP_SIZE;
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen + (INT_SHIM_HOP_SIZE * BYTES_PER_SHIM);
+        hdr.udp_int.len = hdr.udp_int.len + (INT_SHIM_HOP_SIZE * BYTES_PER_SHIM);
+        hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt - 1;
+        */
+        hdr.int_meta_3.switch_id = switch_id;
+    }
+
+    table data_inspection_t {
+        key = {
+            hdr.udp_int.dst_port: exact;
+        }
+        actions = {
+            data_inspect_packet;
+            NoAction;
+        }
+        size = TABLE_SIZE;
+        default_action = NoAction();
+    }
 
     action control_drop() {
         eg_intr_md_for_dprs.drop_ctl = 0x1;
@@ -557,28 +462,52 @@ control TpsCoreEgress(
         default_action = control_drop();
     }
 
-    apply {
-    /* TODO/FIXME
-        if (ig_intr_md.ingress_port != DROP_PORT) {
-            if (ig_intr_md.resubmit_flag != 0) {
+    /**
+    * Removes INT data from a packet
     */
-        init_telem_rpt();
-        if (hdr.ipv4.isValid()) {
-            set_telem_rpt_in_type_ipv4();
-        }
-        if (hdr.ipv6.isValid()) {
-            set_telem_rpt_in_type_ipv6();
-        }
-        setup_telemetry_rpt_t.apply();
-        if (hdr.ipv4.isValid()) {
-            update_trpt_hdr_len_ipv4();
-        } else if (hdr.ipv6.isValid()) {
-            update_trpt_hdr_len_ipv6();
-        }
-        // TODO/FIXME - find TNA equivalent - becomes a mirror.cfg attributes
-        /* Ensure packet is no larger than TRPT_MAX_BYTES
-        truncate(TRPT_MAX_BYTES);
+    action clear_int() {
+        /*
+        hdr.ipv4.protocol = hdr.int_shim.next_proto;
+        hdr.ipv6.next_hdr_proto = hdr.int_shim.next_proto;
         */
+        /* TODO/FIXME - MATH
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen - ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE) - UDP_HDR_BYTES;
+        hdr.ipv6.payload_len = hdr.ipv6.payload_len - ((bit<16>)hdr.int_shim.length * BYTES_PER_SHIM * INT_SHIM_HOP_SIZE);
+        */
+
+        hdr.udp_int.setInvalid();
+        hdr.int_shim.setInvalid();
+        hdr.int_header.setInvalid();
+        hdr.int_meta_2.setInvalid();
+        hdr.int_meta_3.setInvalid();
+        hdr.int_meta.setInvalid();
+    }
+
+    apply {
+        data_inspection_t.apply();
+        if (eg_intr_md_for_dprs.mirror_type != 0) {
+            if (hdr.int_shim.isValid()) {
+            init_telem_rpt();
+            if (hdr.ipv4.isValid()) {
+                set_telem_rpt_in_type_ipv4();
+            }
+            if (hdr.ipv6.isValid()) {
+                set_telem_rpt_in_type_ipv6();
+            }
+            setup_telemetry_rpt_t.apply();
+            if (hdr.ipv4.isValid()) {
+                update_trpt_hdr_len_ipv4();
+            } else if (hdr.ipv6.isValid()) {
+                update_trpt_hdr_len_ipv6();
+            }
+            // TODO/FIXME - find TNA equivalent - becomes a mirror.cfg attributes
+            /* Ensure packet is no larger than TRPT_MAX_BYTES
+            truncate(TRPT_MAX_BYTES);
+            */
+            }
+        } else {
+            clear_int();
+        }
     }
 }
 
