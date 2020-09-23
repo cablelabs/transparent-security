@@ -92,6 +92,11 @@ parser TpsAggParser(
         transition accept;
     }
 
+    state parse_udp {
+        packet.extract(hdr.udp);
+        transition accept;
+    }
+
     state parse_arp {
         packet.extract(hdr.arp);
         transition accept;
