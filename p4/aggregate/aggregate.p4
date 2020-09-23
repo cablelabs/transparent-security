@@ -88,7 +88,7 @@ control TpsAggIngress(inout headers hdr,
     action add_switch_id(bit<32> switch_id) {
         hdr.int_meta_2.setValid();
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + BYTES_PER_SHIM * INT_SHIM_HOP_SIZE;
-        hdr.udp_int.len = hdr.udp.len + BYTES_PER_SHIM * INT_SHIM_HOP_SIZE;
+        hdr.udp_int.len = hdr.udp_int.len + SWITCH_ID_HDR_BYTES;
         hdr.ipv6.payload_len = hdr.ipv6.payload_len + BYTES_PER_SHIM * INT_SHIM_HOP_SIZE;
         hdr.int_shim.length = hdr.int_shim.length + INT_SHIM_HOP_SIZE;
         hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt - 1;

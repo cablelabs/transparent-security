@@ -27,8 +27,12 @@
 #define TRPT_HDR_IN_TYPE_IPV4 4
 /* The Telemetry Report in_type IPv6 */
 #define TRPT_HDR_IN_TYPE_IPV6 5
+/* The number of bytes in a Telemetry Report header */
 #define TRPT_HDR_BYTES 24
+/* The number of bytes in an Ethernet header */
 #define ETH_HDR_BYTES 14
+/* The number of bytes in an int_meta_2 switch_id */
+#define SWITCH_ID_HDR_BYTES 4
 
 /* The INT Shim length at the gateway */
 #define INT_SHIM_BASE_SIZE 7

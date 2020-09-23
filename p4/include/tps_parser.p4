@@ -124,20 +124,11 @@ parser TpsAggParser(packet_in packet,
 
     state parse_int_hdr {
         packet.extract(hdr.int_header);
-        transition select(hdr.int_shim.next_proto){
-            TYPE_UDP: parse_udp;
-            TYPE_TCP: parse_tcp;
-            default: accept;
-        }
+        transition accept;
     }
 
     state parse_tcp {
         packet.extract(hdr.tcp);
-        transition accept;
-    }
-
-    state parse_udp {
-        packet.extract(hdr.udp);
         transition accept;
     }
 
