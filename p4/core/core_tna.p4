@@ -281,12 +281,10 @@ control TpsCoreEgress(
     */
     action data_inspect_packet(bit<32> switch_id) {
         hdr.int_meta_3.setValid();
-        /* TODO/FIXME - math
         hdr.int_shim.length = hdr.int_shim.length + INT_SHIM_HOP_SIZE;
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen + (INT_SHIM_HOP_SIZE * BYTES_PER_SHIM);
-        hdr.udp_int.len = hdr.udp_int.len + (INT_SHIM_HOP_SIZE * BYTES_PER_SHIM);
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen + BYTES_PER_SHIM;
+        hdr.udp_int.len = hdr.udp_int.len + BYTES_PER_SHIM;
         hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt - 1;
-        */
         hdr.int_meta_3.switch_id = switch_id;
     }
 
@@ -331,13 +329,9 @@ control TpsCoreEgress(
         hdr.trpt_hdr.sequence_pad = 0;
 
     #ifdef FIX_MATH
-        hdr.trpt_hdr.rpt_len = hdr.trpt_hdr.rpt_len + hdr.int_shim.length + 5; /* 5 Reflects TRPT ethernet & udp packets
-
-        /* TODO - determine if counter resets to 0 once it reaches max */
-        trpt_pkts.read(hdr.trpt_hdr.sequence_no, INT_CTR_SIZE - 1);
-        hdr.trpt_hdr.sequence_no = hdr.trpt_hdr.sequence_no + 1;
-        //trpt_pkts.write(INT_CTR_SIZE - 1, hdr.trpt_hdr.sequence_no);
+        hdr.trpt_hdr.rpt_len = hdr.trpt_hdr.rpt_len + hdr.int_shim.length + 5; // 5 Reflects TRPT ethernet & udp packets
     #endif
+        hdr.trpt_hdr.sequence_no = hdr.trpt_hdr.sequence_no + 1;
     }
 
     /* Sets the trpt_eth.in_type for IPv4 */
@@ -366,11 +360,8 @@ control TpsCoreEgress(
         hdr.trpt_ipv4.srcAddr = hdr.ipv4.srcAddr;
         hdr.trpt_ipv4.dstAddr = ae_ip;
 
-    // TODO/FIXME - so this works for both BMV2 & TOFINO
-    #ifdef FIX_MATH
         hdr.trpt_udp.len = hdr.trpt_ipv4.totalLen - IPV4_HDR_BYTES;
-        hdr.trpt_ipv4.totalLen = (bit<16>)standard_metadata.packet_length + IPV4_HDR_BYTES + UDP_HDR_BYTES + TRPT_HDR_BASE_BYTES;
-    #endif
+        hdr.trpt_ipv4.totalLen = eg_intr_md.pkt_length + TRPT_IPV4_BYTES;
     }
 
     /**
@@ -392,9 +383,8 @@ control TpsCoreEgress(
     action update_trpt_hdr_len_ipv4() {
     #ifdef FIX_MATH
         hdr.trpt_hdr.rpt_len = hdr.trpt_hdr.rpt_len + 5;
-        /*hdr.trpt_udp.len = hdr.ipv4.totalLen + IPV4_HDR_BYTES + TRPT_HDR_BYTES + 2;*/
         hdr.trpt_udp.len = hdr.ipv4.totalLen + IPV4_HDR_BYTES + TRPT_HDR_BYTES - 4;
-        hdr.trpt_ipv4.totalLen = (bit<16>)standard_metadata.packet_length + IPV4_HDR_BYTES + UDP_HDR_BYTES + TRPT_HDR_BASE_BYTES;
+        hdr.trpt_ipv4.totalLen = eg_intr_md.pkt_length + IPV4_HDR_BYTES + UDP_HDR_BYTES + TRPT_HDR_BASE_BYTES;
     #endif
     }
 
@@ -405,11 +395,10 @@ control TpsCoreEgress(
     #ifdef FIX_MATH
         hdr.trpt_hdr.rpt_len = hdr.trpt_hdr.rpt_len + 10;
         hdr.trpt_udp.len = hdr.ipv6.payload_len + IPV6_HDR_BYTES + TRPT_HDR_BYTES - ETH_HDR_BYTES;
-        hdr.trpt_ipv6.payload_len = (bit<16>)standard_metadata.packet_length + IPV6_HDR_BYTES + UDP_HDR_BYTES + TRPT_HDR_BASE_BYTES;
+        hdr.trpt_ipv6.payload_len = eg_intr_md.pkt_length + IPV6_HDR_BYTES + UDP_HDR_BYTES + TRPT_HDR_BASE_BYTES;
     #endif
     }
 
-    /* TODO - Design table properly, currently just making IPv4 or IPv6 Choices */
     table setup_telemetry_rpt_t {
         key = {
             hdr.udp_int.dst_port: exact;
