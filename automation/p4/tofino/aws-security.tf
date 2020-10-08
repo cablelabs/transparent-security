@@ -55,6 +55,13 @@ resource "aws_security_group" "tps" {
 
   ingress {
     cidr_blocks = ["0.0.0.0/0"]
+    from_port = 3000
+    to_port = 3000
+    protocol = "tcp"
+  }
+
+  ingress {
+    cidr_blocks = ["0.0.0.0/0"]
     from_port = var.tofino_model_start_port
     to_port = var.tofino_model_end_port
     protocol = "tcp"

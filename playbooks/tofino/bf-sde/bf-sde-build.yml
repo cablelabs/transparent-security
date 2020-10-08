@@ -15,14 +15,20 @@
   import_playbook: bf-sde-setup.yml
   vars:
     install_dir: "{{ bf_sde_install_dir | default(ansible_facts['user_dir']) }}"
+    sde_dir: "{{ install_dir }}/bf-sde-{{ bf_sde_version }}"
+    sde_build_dir: "{{ sde_dir }}/build"
+    sde_install_dir: "{{ sde_dir }}/install"
 
 - hosts: all
   vars:
     install_dir: "{{ bf_sde_install_dir | default(ansible_facts['user_dir']) }}"
     profile: "{{ bf_sde_profile | default('p4_runtime_profile') }}"
+    sde_dir: "{{ install_dir }}/bf-sde-{{ bf_sde_version }}"
+    sde_install_dir: "{{ sde_dir }}/install"
+    diags_build_dir: "{{ sde_dir }}/build/bf-diags"
   environment:
-    SDE: "{{ install_dir }}/bf-sde-{{ bf_sde_version }}"
-    SDE_INSTALL: "{{ install_dir }}/bf-sde-{{ bf_sde_version }}/install"
+    SDE: "{{ sde_dir }}"
+    SDE_INSTALL: "{{ sde_install_dir }}"
   tasks:
     - name: Install bf-sde with {{ profile }} profile
       command: >
@@ -31,12 +37,52 @@
       async: 10800
       poll: 15
 
+    - name: Patch 9.2.0 bug
+      block:
+        - name: Copy patch file
+          copy:
+            src: templates/bf-sde-9.2.0.patch
+            dest: "{{ sde_install_dir }}/bf-sde-9.2.0.patch"
+
+        - name: Apply patch
+          shell: "patch -p1 < {{ sde_install_dir }}/bf-sde-9.2.0.patch"
+          args:
+            chdir: "{{ sde_dir }}/pkgsrc/bf-drivers"
+
+        - name: Make patch
+          shell: "make -j4"
+          args:
+            chdir: "{{ sde_install_dir }}/../build/bf-drivers"
+
+        - name: Install patch
+          command: "make install"
+          args:
+            chdir: "{{ sde_install_dir }}/../build/bf-drivers"
+      when: bf_sde_version == "9.2.0"
+
     - name: Copy build python libs to Python {{ python_version }} runtime
       become: yes
       shell: >
         sudo cp -r
         $SDE_INSTALL/lib/python3.4/*
         /usr/local/lib/python{{ python_version }}/dist-packages/
+
+    - name: Create directory $SDE_INSTALL/lib/python3.4/p4testutils
+      file:
+        path: "{{ sde_install_dir }}/lib/python3.4/site-packages/p4testutils"
+        state: directory
+
+    - name: Create and copy built 2.7 p4testutils to buld libs in $SDE_INSTALL Python 3.4
+      shell: >
+        cp -r
+        $SDE_INSTALL/lib/python2.7/site-packages/p4testutils/*
+        $SDE_INSTALL/lib/python3.4/site-packages/p4testutils/
+
+    - name: Copy built 3.4 python libs to SDE Python {{ python_version }}
+      shell: >
+        cp -r
+        $SDE_INSTALL/lib/python3.4
+        $SDE_INSTALL/lib/python{{ python_version }}
 
     - name: Copy built python tofino libs to Python {{ python_version }} runtime
       shell: >
@@ -80,3 +126,9 @@
     - name: Set python version {{ python_version }} as the default runtime
       become: yes
       command: "sudo update-alternatives --install /usr/bin/python python /usr/bin/python{{ python_version }} 0"
+
+    - name: Install thrift into the Python default runtime
+      become: yes
+      pip:
+        name:
+          - thrift

@@ -28,8 +28,8 @@ variable "availability_zone" {default = "us-west-2a"}
 variable "tofino" {
   default = {
     sde_version = "9.2.0"
-    p4rt_ami = "ami-0eb9501a7d485f7f8"
-    bfrt_ami = "ami-01ff01cf2d4abb838"
+    p4rt_ami = "ami-043e6714f3d0863f2"
+    bfrt_ami = "ami-01a5ff54de23b6739"
   }
 }
 

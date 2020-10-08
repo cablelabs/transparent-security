@@ -1,0 +1,58 @@
+diff --git a/src/bf_rt/bf_rt_pre/bf_rt_pre_table_key_impl.cpp b/src/bf_rt/bf_rt_pre/bf_rt_pre_table_key_impl.cpp
+index 5b5343de39..79d02c536e 100644
+--- a/src/bf_rt/bf_rt_pre/bf_rt_pre_table_key_impl.cpp
++++ b/src/bf_rt/bf_rt_pre/bf_rt_pre_table_key_impl.cpp
+@@ -111,7 +111,7 @@ bf_status_t BfRtPREMGIDTableKey::setValue(const bf_rt_id_t &field_id,
+   // Check if the key field value is valid based on size of the key field
+   // We don't have common utils function for key bounds check, so
+   // use anonymous namesapce function for PRE.
+-  size_t size = (key_field->getSize() + 7) / 8;
++  size_t size = key_field->getSize();
+   status = keyValueBoundsCheck(value, size);
+   if (status != BF_SUCCESS) {
+     LOG_ERROR("%s:%d %s : Value %" PRIu64
+@@ -213,7 +213,7 @@ bf_status_t BfRtPREMulticastNodeTableKey::setValue(const bf_rt_id_t &field_id,
+   // Check if the key field value is valid based on size of the key field
+   // We don't have common utils function for key bounds check, so
+   // use anonymous namesapce function for PRE.
+-  size_t size = (key_field->getSize() + 7) / 8;
++  size_t size = key_field->getSize();
+   status = keyValueBoundsCheck(value, size);
+   if (status != BF_SUCCESS) {
+     LOG_ERROR("%s:%d %s : Value %" PRIu64
+@@ -317,7 +317,7 @@ bf_status_t BfRtPREECMPTableKey::setValue(const bf_rt_id_t &field_id,
+   // Check if the key field value is valid based on size of the key field
+   // We don't have common utils function for key bounds check, so
+   // use anonymous namesapce function for PRE.
+-  size_t size = (key_field->getSize() + 7) / 8;
++  size_t size = key_field->getSize();
+   status = keyValueBoundsCheck(value, size);
+   if (status != BF_SUCCESS) {
+     LOG_ERROR("%s:%d %s : Value %" PRIu64
+@@ -420,7 +420,7 @@ bf_status_t BfRtPRELAGTableKey::setValue(const bf_rt_id_t &field_id,
+   // Check if the key field value is valid based on size of the key field
+   // We don't have common utils function for key bounds check, so
+   // use anonymous namesapce function for PRE.
+-  size_t size = (key_field->getSize() + 7) / 8;
++  size_t size = key_field->getSize();
+   status = keyValueBoundsCheck(value, size);
+   if (status != BF_SUCCESS) {
+     LOG_ERROR("%s:%d %s : Value %" PRIu64
+@@ -522,7 +522,7 @@ bf_status_t BfRtPREMulticastPruneTableKey::setValue(const bf_rt_id_t &field_id,
+   // Check if the key field value is valid based on size of the key field
+   // We don't have common utils function for key bounds check, so
+   // use anonymous namesapce function for PRE.
+-  size_t size = (key_field->getSize() + 7) / 8;
++  size_t size = key_field->getSize();
+   status = keyValueBoundsCheck(value, size);
+   if (status != BF_SUCCESS) {
+     LOG_ERROR("%s:%d %s : Value %" PRIu64
+@@ -626,7 +626,7 @@ bf_status_t BfRtPREMulticastPortTableKey::setValue(const bf_rt_id_t &field_id,
+   // Check if the key field value is valid based on size of the key field
+   // We don't have common utils function for key bounds check, so
+   // use anonymous namesapce function for PRE.
+-  size_t size = (key_field->getSize() + 7) / 8;
++  size_t size = key_field->getSize();
+   status = keyValueBoundsCheck(value, size);
+   if (status != BF_SUCCESS) {
+     LOG_ERROR("%s:%d %s : Value %" PRIu64
