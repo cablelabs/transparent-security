@@ -16,3 +16,11 @@
 output "ip" {
   value = aws_instance.orchestrator.public_ip
 }
+
+output "switch1-ip" {
+  value = var.scenario_name == aws_instance.tps-switch.0.public_ip
+}
+
+output "switch2-ip" {
+  value = var.scenario_name == "lab_trial" ? aws_instance.tps-switch.1.public_ip : "n/a"
+}

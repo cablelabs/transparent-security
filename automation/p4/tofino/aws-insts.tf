@@ -62,7 +62,7 @@ resource "aws_instance" "tps-switch" {
   }
 
   security_groups = [aws_security_group.tps.name]
-  associate_public_ip_address = false
+  associate_public_ip_address = true
 }
 
 # Third octet of the subnet IPv4 value
