@@ -17,7 +17,7 @@ variable "secret_key" {}
 variable "build_id" {}
 variable "ec2_region" {}
 # Image generated from env-build script for build_env='mininet'
-variable "mininet_ami" {default ="ami-01d5d0aec6e487afe"}
+variable "mininet_ami" {default ="ami-0572f054b71fc1cdd"}
 # Image hand created
 variable "hcp_ami" {default ="ami-0c5f7b13179115b5a"}
 
