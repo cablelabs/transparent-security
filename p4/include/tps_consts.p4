@@ -38,6 +38,8 @@
 #define INT_SHIM_BASE_SIZE 7
 /* Value derived from IPV4_HDR_BYTES + INT_SHIM_BASE_SIZE + UDP_HDR_BYTES  */
 #define IPV4_INT_UDP_BYTES 35
+/* Telemetry report additional IPv4 bytes from IPV4_HDR_BYTES + UDP_HDR_BYTES + TRPT_HDR_BASE_BYTES */
+#define TRPT_IPV4_BYTES 46
 /* Value derived from IPV6_HDR_BYTES + INT_SHIM_BASE_SIZE + UDP_HDR_BYTES  */
 #define IPV6_INT_UDP_BYTES 72
 /* Amount to add to the INT Shim length at each hop */

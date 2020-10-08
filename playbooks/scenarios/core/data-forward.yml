@@ -89,7 +89,7 @@
       - switch_id: 1001
         orig_mac: "{{ sender.mac }}"
     sr_rec_int_hops: 2
-    data_forward:
+    data_forwards:
       - url: "http://{{ sdn_ip }}:{{ sdn_port }}/dataForward"
         body:
           device_id: "{{ switch.id }}"

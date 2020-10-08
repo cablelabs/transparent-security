@@ -44,8 +44,10 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
         else:
             self.prog_name = "{}}".format(self.name, self.sw_info['arch'])
 
-        # TODO - Is the program name necessary for this call???
         self.bfrt_info = self.interface.bfrt_info_get(self.prog_name)
+
+        p4_name = self.bfrt_info.p4_name_get()
+        logger.info('Binding pipeline config with - [%s]', p4_name)
         self.interface.bind_pipeline_config(self.bfrt_info.p4_name_get())
 
         # self.digest_thread = Thread(target=self.receive_digests)

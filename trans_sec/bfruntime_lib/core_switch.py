@@ -37,9 +37,9 @@ from trans_sec.consts import UDP_INT_DST_PORT
 
 logger = logging.getLogger('core_switch')
 
-data_fwd_tbl = 'pipe2.TpsCoreIngress2.data_forward_t'
+data_fwd_tbl = 'TpsCoreIngress.data_forward_t'
 data_fwd_tbl_key = 'hdr.ethernet.dst_mac'
-data_fwd_action = 'TpsCoreIngress2.data_forward'
+data_fwd_action = 'TpsCoreIngress.data_forward'
 data_fwd_action_val = 'port'
 
 
@@ -50,14 +50,11 @@ class CoreSwitch(BFRuntimeSwitch):
         """
         logger.info('Instantiating BFRT CoreSwitch')
         super(self.__class__, self).__init__(sw_info, client_id, is_master)
-        # self.__set_table_field_annotations()
+        self.__set_table_field_annotations()
 
     def __set_table_field_annotations(self):
         table = self.get_table(data_fwd_tbl)
-        if table:
-            table.key_field_annotation_add(data_fwd_tbl_key, "mac")
-        else:
-            raise Exception('Table {} not found'.format(data_fwd_tbl))
+        table.info.key_field_annotation_add(data_fwd_tbl_key, "mac")
 
     def add_data_inspection(self, dev_id, dev_mac):
         logger.info('Adding data inspection to switch ID [%s] and MAC [%s]',
@@ -68,15 +65,19 @@ class CoreSwitch(BFRuntimeSwitch):
         logger.info(
             'Inserting port - [%s] with key - [%s] into '
             'TpsCoreIngress.data_forward_t', ingress_port, dst_mac)
-        table = self.get_table(data_fwd_tbl)
-        # table.key_field_annotation_add("dst_mac", "mac")
-
         self.insert_table_entry(data_fwd_tbl,
                                 data_fwd_action,
                                 [KeyTuple(data_fwd_tbl_key,
                                           value=dst_mac)],
                                 [DataTuple(data_fwd_action_val,
                                            val=int(ingress_port))])
+
+    def del_data_forward(self, dst_mac):
+        logger.info(
+            'Deleting table entry with key - [%s] from %s',
+            dst_mac, data_fwd_tbl)
+        self.delete_table_entry(data_fwd_tbl,
+                                [KeyTuple(data_fwd_tbl_key, value=dst_mac)])
 
     def add_switch_id(self, dev_id):
         pass
@@ -95,6 +96,3 @@ class CoreSwitch(BFRuntimeSwitch):
                                           value=UDP_INT_DST_PORT)],
                                 [DataTuple('ae_ip',
                                            val=bytearray(ip_addr.packed))])
-# OR TRY
-# [DataTuple('ae_ip',
-#            val=bytearray(ae_ip, 'utf-8'))])

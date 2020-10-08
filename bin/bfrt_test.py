@@ -15,7 +15,6 @@
 
 from __future__ import print_function
 
-import codecs
 import logging
 import os
 import sys
@@ -34,11 +33,24 @@ def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-g', '--grpc-addr', required=True,
                         help='The GRPC address in the form host:port')
+    parser.add_argument('-i', '--ingress', required=True, type=str,
+                        help='The name of the table to manipulate')
+    parser.add_argument('-d', '--device_id', required=False, type=int,
+                        default=0, help='The name of the table to manipulate')
+    parser.add_argument('-t', '--table', required=False, type=str,
+                        default='data_forward_t',
+                        help='The name of the table to manipulate')
+    parser.add_argument('-a', '--action', required=False, type=str,
+                        default='data_forward',
+                        help='The name of the table to manipulate')
+    parser.add_argument('-f', '--mac-field', required=False, type=str,
+                        default='hdr.ethernet.dst_mac',
+                        help='The name of the table to manipulate')
     parser.add_argument('-m', '--mac', required=False, type=str,
                         default='00:00:00:01:01:01',
                         help='The key value to the data_forward_t table')
     parser.add_argument('-p', '--port', required=False, type=int,
-                        default=1,
+                        default=2,
                         help='The acton value to the data_forward action')
     return parser.parse_args()
 
@@ -50,6 +62,7 @@ if __name__ == '__main__':
     """
     args = get_args()
     logger = logging.getLogger('bfrt_connect')
+    logging.basicConfig(level=logging.DEBUG)
     #
     # Connect to the BF Runtime Server
     #
@@ -58,44 +71,27 @@ if __name__ == '__main__':
         client_id=0,
         device_id=0,
         is_master=True)
-    print('Connected to BF Runtime Server')
+    logger.info('Connected to BF Runtime Server')
 
+    target = bfrt_client.Target(device_id=args.device_id, pipe_id=0xffff)
     #
     # Get the information about the running program
     #
     bfrt_info = interface.bfrt_info_get()
-    print('The target runs program ', bfrt_info.p4_name_get())
-    interface.bind_pipeline_config(bfrt_info.p4_name_get())
+    p4_name = bfrt_info.p4_name_get()
+    logger.info('The target runs program ', p4_name)
+    interface.bind_pipeline_config(p4_name)
 
-    data_forward_t = bfrt_info.table_get('pipe.TpsAggIngress.data_forward_t')
-    # kt = bfrt_client.KeyTuple('hdr.ethernet.dst_mac', value=args.mac)
-    # data_forward_t.info.key_field_annotation_add("hdr.ethernet.dst_mac", "mac")
-    # key = data_forward_t.make_key([kt])
-    #
-    # dt = bfrt_client.DataTuple('port', args.port)
-    # # dt = bfrt_client.DataTuple(name='port', val=10)
-    # data = data_forward_t.make_data([dt], 'TpsAggIngress.data_forward')
-    # target = bfrt_client.Target(device_id=0, pipe_id=0xffff)
-    # data_forward_t.entry_add(target, [key], [data])
+    table_name = "{}.{}".format(args.ingress, args.table)
+    logger.info('Table name - [%s]', table_name)
+    table = bfrt_info.table_get(table_name)
+    logger.info('Table class - [%s]', table.__class__)
+    table.info.key_field_annotation_add(args.mac_field, 'mac')
 
-    hex_decoder = codecs.getdecoder('hex_codec')
-    encoded_mac = hex_decoder(args.mac.replace(':', ''))[0]
-    logger.debug('encoded_mac - [%s]', encoded_mac)
+    action_name = "{}.{}".format(args.ingress, args.action)
 
-    data_forward_t.entry_add('TpsAggIngress.data_forward_t',
-                             'TpsAggIngress.data_forward',
-                             [bfrt_client.KeyTuple('hdr.ethernet.dst_mac',
-                                                   bytearray(encoded_mac))],
-                             [bfrt_client.DataTuple('port', val=args.port)])
-
-    # add_switch_id_t = bfrt_info.table_get('pipe.TpsAggIngress.add_switch_id_t')
-    # kt = bfrt_client.KeyTuple('hdr.udp.dst_port', value=777)
-    # key = add_switch_id_t.make_key([kt])
-    #
-    # dt = bfrt_client.DataTuple('switch_id', val=10)
-    # data = add_switch_id_t.make_data([dt], 'TpsAggIngress.add_switch_id')
-    # target = bfrt_client.Target(device_id=0, pipe_id=0xffff)
-    #
-    # add_switch_id_t.entry_add(target, [key], [data])
+    table.entry_add(target,
+                    [bfrt_client.KeyTuple(args.mac_field, args.mac)],
+                    [bfrt_client.DataTuple('port', val=args.port)])
 
     interface._tear_down_stream()

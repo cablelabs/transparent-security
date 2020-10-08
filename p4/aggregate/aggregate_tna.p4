@@ -24,12 +24,12 @@
 /*************************************************************************
 ****************** Aggregate TPS P A R S E R  ****************************
 *************************************************************************/
-parser TpsAggParser(packet_in packet,
-                    out headers hdr,
-                    out metadata ig_meta,
-                    out ingress_intrinsic_metadata_t ig_intr_md) {
+parser TpsAggParser(
+    packet_in packet,
+    out headers hdr,
+    out metadata ig_meta,
+    out ingress_intrinsic_metadata_t ig_intr_md) {
 
-    Checksum() ipv4_checksum;
     TofinoIngressParser() tofino_parser;
 
     state start {
@@ -107,12 +107,13 @@ parser TpsAggParser(packet_in packet,
 **************  I N G R E S S   P R O C E S S I N G   ********************
 *************************************************************************/
 
-control TpsAggIngress(inout headers hdr,
-                      inout metadata meta,
-                      in ingress_intrinsic_metadata_t ig_intr_md,
-                      in ingress_intrinsic_metadata_from_parser_t ig_prsr_md,
-                      inout ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md,
-                      inout ingress_intrinsic_metadata_for_tm_t ig_tm_md) {
+control TpsAggIngress(
+    inout headers hdr,
+    inout metadata meta,
+    in ingress_intrinsic_metadata_t ig_intr_md,
+    in ingress_intrinsic_metadata_from_parser_t ig_prsr_md,
+    inout ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md,
+    inout ingress_intrinsic_metadata_for_tm_t ig_tm_md) {
 
 
     /* counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) forwardedPackets; */
@@ -213,6 +214,10 @@ control TpsAggIngress(inout headers hdr,
 
         hdr.int_meta.switch_id = switch_id;
         hdr.int_meta.orig_mac = hdr.ethernet.src_mac;
+
+        #ifdef IMPL_COUNTER
+        forwardedPackets.count(device);
+        #endif
     }
 
     action data_inspect_packet_ipv4() {
@@ -341,10 +346,16 @@ control TpsAggIngress(inout headers hdr,
     }
 }
 
-control TpsAggDeparser(packet_out packet,
-                       inout headers hdr,
-                       in metadata meta,
-                       in ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md) {
+/*************************************************************************
+***********************  D E P A R S E R  ********************************
+*************************************************************************/
+
+control TpsAggDeparser(
+    packet_out packet,
+    inout headers hdr,
+    in metadata meta,
+    in ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md) {
+
     apply {
         /* For Standard and INT Packets */
         packet.emit(hdr.ethernet);
@@ -365,22 +376,11 @@ control TpsAggDeparser(packet_out packet,
 ****************  E G R E S S   P R O C E S S I N G   ********************
 *************************************************************************/
 
-control TpsAggEgress(inout headers hdr,
-                     inout metadata meta,
-                     in egress_intrinsic_metadata_t eg_intr_md,
-                     in egress_intrinsic_metadata_from_parser_t eg_intr_md_from_prsr,
-                     inout egress_intrinsic_metadata_for_deparser_t eg_intr_md_for_dprs,
-                     inout egress_intrinsic_metadata_for_output_port_t eg_intr_md_for_oport) {
-
-    apply {
-    }
-}
-
-// Empty egress parser/control blocks
-parser TpsAggEgressParser(packet_in packet,
-                         out headers hdr,
-                         out metadata meta,
-                         out egress_intrinsic_metadata_t eg_intr_md) {
+parser TpsAggEgressParser(
+    packet_in packet,
+    out headers hdr,
+    out metadata meta,
+    out egress_intrinsic_metadata_t eg_intr_md) {
 
     TofinoEgressParser() tofino_parser;
 
@@ -454,10 +454,28 @@ parser TpsAggEgressParser(packet_in packet,
     }
 }
 
-control TpsAggEgressDeparser(packet_out packet,
-                             inout headers hdr,
-                             in metadata meta,
-                             in egress_intrinsic_metadata_for_deparser_t eg_intr_dprsr_md) {
+control TpsAggEgress(
+    inout headers hdr,
+    inout metadata meta,
+    in egress_intrinsic_metadata_t eg_intr_md,
+    in egress_intrinsic_metadata_from_parser_t eg_intr_md_from_prsr,
+    inout egress_intrinsic_metadata_for_deparser_t eg_intr_md_for_dprs,
+    inout egress_intrinsic_metadata_for_output_port_t eg_intr_md_for_oport) {
+
+    apply {
+    }
+}
+
+/*************************************************************************
+*************************  D E P A R S E R   *****************************
+*************************************************************************/
+
+control TpsAggEgressDeparser(
+    packet_out packet,
+    inout headers hdr,
+    in metadata meta,
+    in egress_intrinsic_metadata_for_deparser_t eg_intr_dprsr_md) {
+
     Checksum() ipv4_checksum;
     apply {
         hdr.ipv4.hdrChecksum = ipv4_checksum.update(
