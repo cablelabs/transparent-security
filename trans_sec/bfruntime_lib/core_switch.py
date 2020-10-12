@@ -79,6 +79,27 @@ class CoreSwitch(BFRuntimeSwitch):
         self.delete_table_entry(data_fwd_tbl,
                                 [KeyTuple(data_fwd_tbl_key, value=dst_mac)])
 
+    def write_clone_entries(self, port, mirror_tbl_key=1):
+        logger.info('Start mirroring operations on table [%s] to port [%s]',
+                    "$mirror.cfg", port)
+        mirror_cfg_table = self.get_table("$mirror.cfg")
+
+        mirror_cfg_table.entry_add(
+            self.target,
+            [mirror_cfg_table.make_key([KeyTuple('$sid', mirror_tbl_key)])],
+            [mirror_cfg_table.make_data([
+                DataTuple('$direction', str_val="BOTH"),
+                DataTuple('$ucast_egress_port', port),
+                DataTuple('$ucast_egress_port_valid', bool_val=True),
+                DataTuple('$session_enable', bool_val=True)
+            ], '$normal')]
+        )
+
+    def delete_clone_entries(self, port, mirror_tbl_key=1):
+        mirror_cfg_table = self.get_table("$mirror.cfg")
+        mirror_cfg_table.entry_del([
+            mirror_cfg_table.make_key([KeyTuple('$sid', mirror_tbl_key)])])
+
     def add_switch_id(self, dev_id):
         pass
 
