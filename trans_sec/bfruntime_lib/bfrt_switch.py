@@ -72,6 +72,12 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
     def del_data_forward(self, dst_mac):
         raise NotImplementedError
 
+    def add_data_inspection(self, dev_id, dev_mac):
+        raise NotImplementedError
+
+    def del_data_inspection(self, dev_id, dev_mac):
+        raise NotImplementedError
+
     def build_device_config(self):
         """
         Builds the device config for Tofino

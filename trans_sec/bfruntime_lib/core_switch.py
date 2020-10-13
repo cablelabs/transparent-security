@@ -37,6 +37,11 @@ from trans_sec.consts import UDP_INT_DST_PORT
 
 logger = logging.getLogger('core_switch')
 
+data_inspection_tbl = 'TpsCoreEgress.data_inspection_t'
+data_inspection_tbl_key = 'hdr.udp_int.dst_port'
+data_inspection_action = 'TpsCoreEgress.data_inspect_packet'
+data_inspection_action_val = 'switch_id'
+
 data_fwd_tbl = 'TpsCoreIngress.data_forward_t'
 data_fwd_tbl_key = 'hdr.ethernet.dst_mac'
 data_fwd_action = 'TpsCoreIngress.data_forward'
@@ -53,13 +58,8 @@ class CoreSwitch(BFRuntimeSwitch):
         self.__set_table_field_annotations()
 
     def __set_table_field_annotations(self):
-        table = self.get_table(data_fwd_tbl)
-        table.info.key_field_annotation_add(data_fwd_tbl_key, "mac")
-
-    def add_data_inspection(self, dev_id, dev_mac):
-        logger.info('Adding data inspection to switch ID [%s] and MAC [%s]',
-                    dev_id, dev_mac)
-        raise NotImplementedError
+        df_table = self.get_table(data_fwd_tbl)
+        df_table.info.key_field_annotation_add(data_fwd_tbl_key, "mac")
 
     def add_data_forward(self, dst_mac, ingress_port):
         logger.info(
@@ -100,8 +100,18 @@ class CoreSwitch(BFRuntimeSwitch):
         mirror_cfg_table.entry_del([
             mirror_cfg_table.make_key([KeyTuple('$sid', mirror_tbl_key)])])
 
-    def add_switch_id(self, dev_id):
-        pass
+    def add_data_inspection(self, dev_id, dev_mac):
+        self.insert_table_entry(data_inspection_tbl,
+                                data_inspection_action,
+                                [KeyTuple(data_inspection_tbl_key,
+                                          value=UDP_INT_DST_PORT)],
+                                [DataTuple(data_inspection_action_val,
+                                           val=int(dev_id))])
+
+    def del_data_inspection(self, dev_id, dev_mac):
+        self.delete_table_entry(data_inspection_tbl,
+                                [KeyTuple(data_inspection_tbl_key,
+                                          value=UDP_INT_DST_PORT)])
 
     def setup_telemetry_rpt(self, ae_ip):
         logger.info(
@@ -111,9 +121,15 @@ class CoreSwitch(BFRuntimeSwitch):
         ip_addr = ipaddress.ip_address(ae_ip)
         action_name = 'TpsCoreEgress.setup_telem_rpt_ipv{}'.format(
             ip_addr.version)
-        self.insert_table_entry('TpsCoreEgress.setup_telemetry_rpt_t',
-                                action_name,
-                                [KeyTuple('hdr.udp_int.dst_port',
-                                          value=UDP_INT_DST_PORT)],
-                                [DataTuple('ae_ip',
-                                           val=bytearray(ip_addr.packed))])
+        try:
+            self.insert_table_entry('TpsCoreEgress.setup_telemetry_rpt_t',
+                                    action_name,
+                                    [KeyTuple('hdr.udp_int.dst_port',
+                                              value=UDP_INT_DST_PORT)],
+                                    [DataTuple('ae_ip',
+                                               val=bytearray(ip_addr.packed))])
+        except Exception as e:
+            if 'ALREADY_EXISTS' in str(e):
+                pass
+            else:
+                raise e
