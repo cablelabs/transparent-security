@@ -18,7 +18,7 @@ output "ip" {
 }
 
 output "switch1-ip" {
-  value = var.scenario_name == aws_instance.tps-switch.0.public_ip
+  value = aws_instance.tps-switch.0.public_ip
 }
 
 output "switch2-ip" {
