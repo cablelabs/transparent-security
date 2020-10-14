@@ -44,6 +44,21 @@ hosts:
     ip_port: any
     mac: 00:00:00:00:01:02
     type: nas
+  inet:
+    name: inet
+    id: 4
+    ip: 192.168.1.10
+    public_ip: {{ inet_ip }}
+    tun1_ip: {{ inet_tun1_ip }}
+    tun1_mac: {{ inet_tun1_mac }}
+    tun2_ip: {{ inet_tun2_ip }}
+    tun2_ip_mac: {{ inet_tun2_mac }}
+    tunnels:
+      - host: core
+    ipv6: 0000:0000:0000:0000:0000:0001:0001:0003
+    ip_port: any
+    mac: 00:00:00:00:01:02
+    type: nas
   ae:
     name: ae
     id: 13
@@ -74,9 +89,6 @@ switches:
     tun2_mac: {{ agg_tun2_mac }}
     type: aggregate
     arch: {{ p4_arch }}
-    tunnels:
-      - host: host1
-        virt_intf:  veth1
     mac: 00:00:00:02:04:00
     grpc: {{ agg_ip }}:{{ grpc_port }}
     ipv6_term_host: inet
@@ -86,6 +98,8 @@ switches:
         switch_port: 1
       - host: host1
         switch_port: 2
+      - host: host2
+        switch_port: 3
   core:
     name: core
     id: 0
@@ -106,7 +120,7 @@ switches:
     tunnels:
       - host: aggregate
         switch_port:  1
-      - host: host2
+      - host: inet
         switch_port:  2
       - host: ae
         switch_port:  3
@@ -126,18 +140,13 @@ links:
     south_facing_port: 1
     latency: 0ms
     bandwidth: null
-  - north_node: aggregate
-    south_node: host2
-    south_facing_port: 2
-    latency: 0ms
-    bandwidth: null
   - north_node: core
     south_node: aggregate
     south_facing_port: 1
     north_facing_port: 3
     latency: 0ms
     bandwidth: null
-  - north_node: inet
+  - north_node: host2
     south_node: core
     north_facing_port: 2
     latency: 0ms

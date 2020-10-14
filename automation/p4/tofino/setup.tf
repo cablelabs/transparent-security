@@ -39,7 +39,7 @@ locals {
   game_3_ip = var.scenario_name == "full" ? aws_instance.node.6.private_ip: "n/a"
 
   # For full & lab_trial scenarios
-  inet_ip = var.scenario_name == "full" || var.scenario_name == "lab_trial" ? aws_instance.node.2.private_ip: "n/a"
+  inet_ip = var.scenario_name == "full" ? aws_instance.node.2.private_ip: "n/a"
   ae_ip = var.scenario_name == "full" || var.scenario_name == "lab_trial" ? aws_instance.node.2.private_ip: "n/a"
 
   # For single-switch scenario
@@ -65,6 +65,14 @@ locals {
   host2_tun1_mac = var.scenario_name == "full" ? "n/a" : aws_network_interface.node_tun_1.1.mac_address
   host2_tun2_ip = var.scenario_name == "full" ? "n/a" : aws_network_interface.node_tun_2.1.private_ip
   host2_tun2_mac = var.scenario_name == "full" ? "n/a" : aws_network_interface.node_tun_2.1.mac_address
+
+  # For lab_trial scenarios
+  lab_inet_ip = var.scenario_name == "lab_trial" ? aws_instance.node.3.private_ip: "n/a"
+  lab_inet_tun1_ip = var.scenario_name == "lab_trial" ? aws_network_interface.node_tun_1.3.private_ip: "n/a"
+  lab_inet_tun1_mac = var.scenario_name == "lab_trial" ? aws_network_interface.node_tun_1.3.mac_address: "n/a"
+  lab_inet_tun2_ip = var.scenario_name == "lab_trial" ? aws_network_interface.node_tun_2.3.private_ip: "n/a"
+  lab_inet_tun2_mac = var.scenario_name == "lab_trial" ? aws_network_interface.node_tun_2.3.mac_address: "n/a"
+
 
   p4_arch = var.scenario_name == "core" ? "tna" : "v1model"
   grpc_port = var.p4_arch == "tna" ? var.bf_grpc_port : var.p4_grpc_port
@@ -242,6 +250,11 @@ host2_tun1_ip=${local.host2_tun1_ip}
 host2_tun1_mac=${local.host2_tun1_mac}
 host2_tun2_ip=${local.host2_tun2_ip}
 host2_tun2_mac=${local.host2_tun2_mac}
+inet_ip=${local.lab_inet_ip}
+inet_tun1_ip=${local.lab_inet_tun1_ip}
+inet_tun1_mac=${local.lab_inet_tun1_mac}
+inet_tun2_ip=${local.lab_inet_tun2_ip}
+inet_tun2_mac=${local.lab_inet_tun2_mac}
 ae_ip=${local.clone_ip}
 ae_tun1_ip=${local.clone_tun1_ip}
 ae_tun1_mac=${local.clone_tun1_mac}
