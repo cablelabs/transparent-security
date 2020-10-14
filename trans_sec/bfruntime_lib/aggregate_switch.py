@@ -155,9 +155,16 @@ class AggregateSwitch(BFRuntimeSwitch):
     def add_switch_id(self, dev_id):
         logger.info(
             'Inserting device ID [%s] into add_switch_id_t table', dev_id)
-        self.insert_table_entry(add_switch_id_tbl,
-                                add_switch_id_action,
-                                [KeyTuple(add_switch_id_tbl_key,
-                                          value=UDP_INT_DST_PORT)],
-                                [DataTuple(add_switch_id_action_val,
-                                           val=dev_id)])
+
+        try:
+            self.insert_table_entry(add_switch_id_tbl,
+                                    add_switch_id_action,
+                                    [KeyTuple(add_switch_id_tbl_key,
+                                              value=UDP_INT_DST_PORT)],
+                                    [DataTuple(add_switch_id_action_val,
+                                               val=dev_id)])
+        except Exception as e:
+            if 'ALREADY_EXISTS' in str(e):
+                pass
+            else:
+                raise e

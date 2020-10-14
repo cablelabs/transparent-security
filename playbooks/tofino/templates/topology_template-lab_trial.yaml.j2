@@ -19,6 +19,10 @@ hosts:
     id: 2
     ip: 192.168.1.2
     public_ip: {{ host1_ip }}
+    tun1_ip: {{ host1_tun1_ip }}
+    tun1_mac: {{ host1_tun1_mac }}
+    tun2_ip: {{ host1_tun2_ip }}
+    tun2_ip_mac: {{ host1_tun2_mac }}
     tunnels:
       - host: aggregate
     ipv6: 0000:0000:0000:0000:0000:0001:0001:0002
@@ -30,29 +34,26 @@ hosts:
     id: 3
     ip: 192.168.1.6
     public_ip: {{ host2_ip }}
+    tun1_ip: {{ host2_tun1_ip }}
+    tun1_mac: {{ host2_tun1_mac }}
+    tun2_ip: {{ host2_tun2_ip }}
+    tun2_ip_mac: {{ host2_tun2_mac }}
     tunnels:
       - host: core
     ipv6: 0000:0000:0000:0000:0000:0001:0001:0003
     ip_port: any
     mac: 00:00:00:00:01:02
     type: nas
-  inet:
-    name: inet
-    id: 4
-    ip: 192.168.1.10
-    public_ip: {{ inet_ip }}
-    tunnels:
-      - host: core
-    ipv6: 0000:0000:0000:0000:0000:0002:0001:0002
-    ip_port: any
-    mac: 00:00:00:00:05:07
-    type: target-server
   ae:
     name: ae
     id: 13
     switch_ip: 10.0.1.8
     ip: 10.0.1.9
     public_ip: {{ ae_ip }}
+    tun1_ip: {{ ae_tun1_ip }}
+    tun1_mac: {{ ae_tun1_mac }}
+    tun2_ip: {{ ae_tun2_ip }}
+    tun2_mac: {{ ae_tun2_mac }}
     tunnels:
       - host: core
     ipv6: 0000:0000:0000:0000:0000:0002:0001:0003
@@ -67,8 +68,12 @@ switches:
     tofino_bin: {{ remote_scripts_dir }}/p4/aggregate.tofino/pipe/tofino.bin
     ctx_json: {{ remote_scripts_dir }}/p4/aggregate.tofino/pipe/context.json
     ip: {{ agg_ip }}
+    tun1_ip: {{ agg_tun1_ip }}
+    tun1_mac: {{ agg_tun1_mac }}
+    tun2_ip: {{ agg_tun2_ip }}
+    tun2_mac: {{ agg_tun2_mac }}
     type: aggregate
-    arch: tofino
+    arch: {{ p4_arch }}
     tunnels:
       - host: host1
         virt_intf:  veth1
@@ -76,32 +81,35 @@ switches:
     grpc: {{ agg_ip }}:{{ grpc_port }}
     ipv6_term_host: inet
     multicast_entries:
-      - egress_port: 1
-        instance: 1
-      - egress_port: 2
-        instance: 1
-      - egress_port: 3
-        instance: 1
+    tunnels:
+      - host: aggregate
+        switch_port: 1
+      - host: host1
+        switch_port: 2
   core:
     name: core
-    id: 1
+    id: 0
     runtime_p4info: {{ remote_scripts_dir }}/p4/core.tofino/p4info.pb.txt
     tofino_bin: {{ remote_scripts_dir }}/p4/core.tofino/pipe/tofino.bin
     ctx_json: {{ remote_scripts_dir }}/p4/core.tofino/pipe/context.json
     ip: {{ core_ip }}
+    tun1_ip: {{ core_tun1_ip }}
+    tun1_mac: {{ core_tun1_mac }}
+    tun2_ip: {{ core_tun2_ip }}
+    tun2_mac: {{ core_tun2_mac }}
     clone_egress: 3
     telemetry_rpt:
       type: host
       name: ae
     type: core
-    arch: tofino
+    arch: {{ p4_arch }}
     tunnels:
+      - host: aggregate
+        switch_port:  1
       - host: host2
-        virt_intf:  veth1
-      - host: inet
-        virt_intf:  veth2
+        switch_port:  2
       - host: ae
-        virt_intf:  veth3
+        switch_port:  3
     mac: 00:00:00:03:05:00
     grpc: {{ core_ip }}:{{ grpc_port }}
     ipv6_term_host: inet
@@ -116,13 +124,11 @@ links:
   - north_node: aggregate
     south_node: host1
     south_facing_port: 1
-    south_facing_ip: 192.168.1.1
     latency: 0ms
     bandwidth: null
   - north_node: aggregate
     south_node: host2
     south_facing_port: 2
-    south_facing_ip: 192.168.1.5
     latency: 0ms
     bandwidth: null
   - north_node: core
@@ -134,13 +140,10 @@ links:
   - north_node: inet
     south_node: core
     north_facing_port: 2
-    north_facing_ip: 192.168.1.9
     latency: 0ms
     bandwidth: null
   - north_node: ae
     south_node: core
     north_facing_port: 3
-    north_facing_ip: 10.0.1.8
     latency: 0ms
     bandwidth: null
-    l2ptr: 53261

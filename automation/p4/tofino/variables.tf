@@ -41,7 +41,7 @@ variable "num_switches_single" {default = 1}
 variable "num_switches_lab_trial" {default = 2}
 variable "num_nodes_full" {default = 9}
 variable "num_nodes_single" {default = 3}
-variable "num_nodes_lab_trial" {default = 4}
+variable "num_nodes_lab_trial" {default = 3}
 
 # Variables for ansible playbooks
 variable "ANSIBLE_CMD" {default = "export ANSIBLE_HOST_KEY_CHECKING=False; ansible-playbook"}

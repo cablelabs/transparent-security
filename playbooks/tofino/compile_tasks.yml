@@ -18,17 +18,17 @@
     state: directory
 
 - set_fact:
-    switch: "{{ topo_dict.switches[item] }}"
+    compile_switch: "{{ topo_dict.switches[item] }}"
 
 - name: Determine P4 program name and base compile command when arch == 'v1model'
   set_fact:
     p4_program_name: "{{ item }}"
-  when: switch.arch is not defined or switch.arch == 'v1model'
+  when: compile_switch.arch is not defined or compile_switch.arch == 'v1model'
 
 - name: Determine P4 program name and base compile command when arch != 'v1model'
   set_fact:
-    p4_program_name: "{{ item }}_{{ switch.arch }}"
-  when: switch.arch is defined and switch.arch != 'v1model'
+    p4_program_name: "{{ item }}_{{ compile_switch.arch }}"
+  when: compile_switch.arch is defined and compile_switch.arch != 'v1model'
 
 - name: Populate compile variables/facts
   set_fact:
@@ -41,12 +41,12 @@
     compile_command: >
       {{ compile_command }} --p4runtime-format text --arch v1model -D TOFINO
       --p4runtime-files {{ remote_scripts_dir }}/p4/{{ item }}.tofino/p4info.pb.txt
-  when: switch.arch is not defined or switch.arch == 'v1model'
+  when: compile_switch.arch is not defined or compile_switch.arch == 'v1model'
 
 - name: Determine P4 program name and base compile command when arch != 'v1model'
   set_fact:
-    compile_command: "{{ compile_command }} --arch {{ switch.arch }} -D TOFINO_{{ switch.arch }}"
-  when: switch.arch is defined and switch.arch != 'v1model'
+    compile_command: "{{ compile_command }} --arch {{ compile_switch.arch }} -D TOFINO_{{ compile_switch.arch }}"
+  when: compile_switch.arch is defined and compile_switch.arch != 'v1model'
 
 - name: Create directory {{ artifact_path }}
   file:

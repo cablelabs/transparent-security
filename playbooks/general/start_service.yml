@@ -25,7 +25,7 @@
     srv_srvc_name: "{{ service_name }}.service"
     srvc_status: "{{ service_status_running | default('true') }}"
     start_srvc: "{{ start_service | default(True) }}"
-    topology: "{{ topo_dict | default('') }}"
+    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
 
   tasks:
     - name: Start service block when {{ start_srvc }} is true
@@ -40,18 +40,6 @@
           path: "{{ log_dir }}"
           state: directory
         when: log_dir|length > 0
-
-      - block:
-        - name: Retrieve the switch object from the topology
-          set_fact:
-            switch: "{{ topology.switches.get(prog_name) }}"
-          when: prog_name is defined
-        when: topology is defined and topology|length > 0
-
-      - name: Discover the switch's architechture
-        set_fact:
-          switch_arch: "{{ switch.arch | default('v1model') }}"
-        when: switch is defined
 
       - name: Create {{ srvc_name }} Service script with template {{ local_srvc_script_tmplt_file }} to {{ remote_scripts_dir }}/{{ srvc_name }}.sh
         template:
@@ -75,7 +63,7 @@
       - name: Start {{ srv_srvc_name }}
         systemd:
           name: "{{ srv_srvc_name }}"
-          state: started
+          state: restarted
           enabled: yes
 
       - name: Service check sleep {{ pause }} seconds as the state is always "running" immediatley

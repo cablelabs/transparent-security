@@ -16,7 +16,15 @@ locals {
 
   # For full & lab_trial scenarios
   core_switch_ip = var.scenario_name == "full" || var.scenario_name == "lab_trial" ? aws_instance.tps-switch.0.private_ip: "n/a"
+  core_tun1_ip = var.scenario_name == "full" || var.scenario_name == "lab_trial" ? aws_network_interface.switch_tun_1.0.private_ip: "n/a"
+  core_tun1_mac = var.scenario_name == "full" || var.scenario_name == "lab_trial" ? aws_network_interface.switch_tun_1.0.mac_address: "n/a"
+  core_tun2_ip = var.scenario_name == "full" || var.scenario_name == "lab_trial" ? aws_network_interface.switch_tun_2.0.private_ip: "n/a"
+  core_tun2_mac = var.scenario_name == "full" || var.scenario_name == "lab_trial" ? aws_network_interface.switch_tun_2.0.mac_address: "n/a"
   agg_switch_ip = var.scenario_name == "full" || var.scenario_name == "lab_trial" ? aws_instance.tps-switch.1.private_ip: "n/a"
+  agg_tun1_ip = var.scenario_name == "full" || var.scenario_name == "lab_trial" ? aws_network_interface.switch_tun_1.1.private_ip: "n/a"
+  agg_tun1_mac = var.scenario_name == "full" || var.scenario_name == "lab_trial" ? aws_network_interface.switch_tun_1.1.mac_address: "n/a"
+  agg_tun2_ip = var.scenario_name == "full" || var.scenario_name == "lab_trial" ? aws_network_interface.switch_tun_2.1.private_ip: "n/a"
+  agg_tun2_mac = var.scenario_name == "full" || var.scenario_name == "lab_trial" ? aws_network_interface.switch_tun_2.1.mac_address: "n/a"
 
   # For full scenario
   gateway_1_ip = var.scenario_name == "full" ? aws_instance.tps-switch.2.private_ip: "n/a"
@@ -32,7 +40,7 @@ locals {
 
   # For full & lab_trial scenarios
   inet_ip = var.scenario_name == "full" || var.scenario_name == "lab_trial" ? aws_instance.node.2.private_ip: "n/a"
-  ae_ip = var.scenario_name == "full" || var.scenario_name == "lab_trial" ? aws_instance.node.3.private_ip: "n/a"
+  ae_ip = var.scenario_name == "full" || var.scenario_name == "lab_trial" ? aws_instance.node.2.private_ip: "n/a"
 
   # For single-switch scenario
   switch_ip = var.scenario_name == "full" ? "n/a" : aws_instance.tps-switch.0.private_ip
@@ -225,11 +233,30 @@ ${var.SETUP_ORCH_LAB_TRIAL} \
 --extra-vars "\
 scenario_name=${var.scenario_name}
 host1_ip=${local.host1_ip}
+host1_tun1_ip=${local.host1_tun1_ip}
+host1_tun1_mac=${local.host1_tun1_mac}
+host1_tun2_ip=${local.host1_tun2_ip}
+host1_tun2_mac=${local.host1_tun2_mac}
 host2_ip=${local.host2_ip}
-inet_ip=${local.inet_ip}
+host2_tun1_ip=${local.host2_tun1_ip}
+host2_tun1_mac=${local.host2_tun1_mac}
+host2_tun2_ip=${local.host2_tun2_ip}
+host2_tun2_mac=${local.host2_tun2_mac}
 ae_ip=${local.clone_ip}
+ae_tun1_ip=${local.clone_tun1_ip}
+ae_tun1_mac=${local.clone_tun1_mac}
+ae_tun2_ip=${local.clone_tun2_ip}
+ae_tun2_mac=${local.clone_tun2_mac}
 agg_ip=${local.agg_switch_ip}
+agg_tun1_ip=${local.agg_tun1_ip}
+agg_tun1_mac=${local.agg_tun1_mac}
+agg_tun2_ip=${local.agg_tun2_ip}
+agg_tun2_mac=${local.agg_tun2_mac}
 core_ip=${local.core_switch_ip}
+core_tun1_ip=${local.core_tun1_ip}
+core_tun1_mac=${local.core_tun1_mac}
+core_tun2_ip=${local.core_tun2_ip}
+core_tun2_mac=${local.core_tun2_mac}
 topo_file_loc=${var.topo_file_loc}
 sde_version=${var.tofino.sde_version}
 sde_dir=/home/${var.sudo_user}/bf-sde-${var.tofino.sde_version}
@@ -250,6 +277,7 @@ host_sudo_user=${var.sudo_user}
 ae_monitor_intf=${var.ae_monitor_intf}
 clone_egress_port=${var.clone_egress_port}
 p4_platform=tofino
+p4_arch=${var.p4_arch}
 "\
 EOT
   }
