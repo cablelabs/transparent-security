@@ -13,11 +13,13 @@
 # limitations under the License.
 */
 /* -*- P4_16 arch -*- */
+#include <core.p4>
 #include <tna.p4>
 
 /* TPS includes */
 #include "../include/tps_consts.p4"
 #include "../include/tps_headers.p4"
+#include "../include/tna_mirror.p4"
 #include "../include/tps_checksum.p4"
 #include "../include/tofino_util.p4"
 
@@ -29,7 +31,7 @@ const bit<32> INT_CTR_SIZE = 1;
 parser TpsCoreParser(
     packet_in packet,
     out headers hdr,
-    out metadata ig_meta,
+    out custom_metadata_t ig_meta,
     out ingress_intrinsic_metadata_t ig_intr_md) {
 
     TofinoIngressParser() tofino_parser;
@@ -43,77 +45,6 @@ parser TpsCoreParser(
         packet.extract(hdr.ethernet);
         transition accept;
     }
-
-/*
-    state parse_ethernet {
-        packet.extract(hdr.ethernet);
-        transition select(hdr.ethernet.etherType) {
-            TYPE_ARP: parse_arp;
-            TYPE_IPV4: parse_ipv4;
-            TYPE_IPV6: parse_ipv6;
-            default: accept;
-        }
-    }
-
-    state parse_ipv4 {
-        packet.extract(hdr.ipv4);
-        transition select(hdr.ipv4.protocol) {
-            TYPE_UDP: parse_udp_int;
-            default: accept;
-        }
-    }
-
-    state parse_ipv6 {
-        packet.extract(hdr.ipv6);
-        transition select(hdr.ipv6.next_hdr_proto) {
-            TYPE_UDP: parse_udp_int;
-            default: accept;
-        }
-    }
-
-    state parse_udp_int {
-        packet.extract(hdr.udp_int);
-        transition select(hdr.udp_int.dst_port) {
-            UDP_INT_DST_PORT: parse_int_shim;
-            default: accept;
-        }
-    }
-
-    state parse_int_shim {
-        packet.extract(hdr.int_shim);
-        transition parse_int_hdr;
-    }
-
-    state parse_int_hdr {
-        packet.extract(hdr.int_header);
-        transition select(hdr.int_shim.length) {
-            0x9: parse_int_meta_3;
-            0x8: parse_int_meta_2;
-            0x7: parse_int_meta;
-            default: accept;
-        }
-    }
-
-    state parse_int_meta_3 {
-        packet.extract(hdr.int_meta_3);
-        transition parse_int_meta_2;
-    }
-
-    state parse_int_meta_2 {
-        packet.extract(hdr.int_meta_2);
-        transition parse_int_meta;
-    }
-
-    state parse_int_meta {
-        packet.extract(hdr.int_meta);
-        transition accept;
-    }
-
-    state parse_arp {
-        packet.extract(hdr.arp);
-        transition accept;
-    }
-*/
 }
 
 /*************************************************************************
@@ -122,7 +53,7 @@ parser TpsCoreParser(
 
 control TpsCoreIngress(
     inout headers hdr,
-    inout metadata meta,
+    inout custom_metadata_t meta,
     in ingress_intrinsic_metadata_t ig_intr_md,
     in ingress_intrinsic_metadata_from_parser_t ig_prsr_md,
     inout ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md,
@@ -131,14 +62,25 @@ control TpsCoreIngress(
     /**
     * Responsible for cloning a packet as ingressed
     */
-    action clone_packet_i2e() {
-    /* TODO/FIXME - Find Tofino equivalent - use Mirror
-        clone3(CloneType.I2E, I2E_CLONE_SESSION_ID);
-    */
+    action mirror_packet_i2e() {
+        meta.pkt_type = PKT_TYPE_MIRROR;
+        ig_dprsr_md.mirror_type = ING_PORT_MIRROR;
+
+        meta.mirror_header_type = HEADER_TYPE_MIRROR_INGRESS;
+        meta.mirror_header_info = (header_info_t)ING_PORT_MIRROR;
+
+        meta.ingress_port   = ig_intr_md.ingress_port;
+
+        /* TODO/FIXME - need to send in this value */
+        meta.mirror_session = 1;
+
+        meta.ingress_mac_tstamp    = ig_intr_md.ingress_mac_tstamp;
+        meta.ingress_global_tstamp = ig_prsr_md.global_tstamp;
     }
 
     /**
-    * Prepares a packet to be forwarded when data_forward tables have a match on dstAddr
+    * Prepares a packet to be forwarded when data_forward tables have a match
+    * on dstAddr
     */
     action data_forward(PortId_t port) {
         ig_tm_md.ucast_egress_port = port;
@@ -158,8 +100,9 @@ control TpsCoreIngress(
 
     apply {
         if (ig_intr_md.resubmit_flag == 0) {
-            data_forward_t.apply();
-            clone_packet_i2e();
+            if(data_forward_t.apply().hit) {
+                mirror_packet_i2e();
+            }
         }
     }
 }
@@ -168,15 +111,21 @@ control TpsCoreIngress(
 ***********************  D E P A R S E R  ********************************
 *************************************************************************/
 
-control TpsCoreDeparser(
+control TpsCoreIngressDeparser(
     packet_out packet,
     inout headers hdr,
-    in metadata meta,
+    in custom_metadata_t meta,
     in ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md) {
 
+    Mirror() ing_port_mirror;
+
     apply {
+        if (ig_dprsr_md.mirror_type == ING_PORT_MIRROR) {
+            ing_port_mirror.emit<mirror_h>(
+                meta.mirror_session, {meta.pkt_type});
+        }
         /* For Standard and INT Packets */
-        packet.emit(hdr.ethernet);
+        packet.emit(hdr);
     }
 }
 
@@ -187,13 +136,29 @@ control TpsCoreDeparser(
 parser TpsCoreEgressParser(
     packet_in packet,
     out headers hdr,
-    out metadata meta,
+    out custom_metadata_t meta,
     out egress_intrinsic_metadata_t eg_intr_md) {
 
     TofinoEgressParser() tofino_parser;
 
     state start {
         tofino_parser.apply(packet, eg_intr_md);
+        mirror_h mirror_md = packet.lookahead<mirror_h>();
+        transition select(mirror_md.pkt_type) {
+            PKT_TYPE_MIRROR : parse_mirror_md;
+            default : parse_normal;
+        }
+    }
+
+    state parse_normal {
+        meta.pkt_type = PKT_TYPE_NORMAL;
+        transition parse_ethernet;
+    }
+
+    state parse_mirror_md {
+        mirror_h mirror_md;
+        packet.extract(mirror_md);
+        meta.pkt_type = PKT_TYPE_MIRROR;
         transition parse_ethernet;
     }
 
@@ -269,7 +234,7 @@ parser TpsCoreEgressParser(
 
 control TpsCoreEgress(
     inout headers hdr,
-    inout metadata meta,
+    inout custom_metadata_t meta,
     in egress_intrinsic_metadata_t eg_intr_md,
     in egress_intrinsic_metadata_from_parser_t eg_intr_md_from_prsr,
     inout egress_intrinsic_metadata_for_deparser_t eg_intr_md_for_dprs,
@@ -434,8 +399,10 @@ control TpsCoreEgress(
     }
 
     apply {
-        data_inspection_t.apply();
-        if (eg_intr_md_for_dprs.mirror_type != 0) {
+        //if (eg_intr_md_for_dprs.mirror_type == ING_PORT_MIRROR) {
+        //if (mirror_md.isValid()) {
+        if (meta.pkt_type == PKT_TYPE_MIRROR) {
+            data_inspection_t.apply();
             if (hdr.int_shim.isValid()) {
                 init_telem_rpt();
                 if (hdr.ipv4.isValid()) {
@@ -450,10 +417,12 @@ control TpsCoreEgress(
                 } else if (hdr.ipv6.isValid()) {
                     update_trpt_hdr_len_ipv6();
                 }
-                // TODO/FIXME - find TNA equivalent - becomes a mirror.cfg attributes
+                // TODO/FIXME - find TNA equivalent
                 /* Ensure packet is no larger than TRPT_MAX_BYTES
                 truncate(TRPT_MAX_BYTES);
                 */
+            } else {
+                control_drop();
             }
         } else {
             if(hdr.int_shim.isValid()) {
@@ -476,7 +445,7 @@ control TpsCoreEgress(
 control TpsCoreEgressDeparser(
     packet_out packet,
     inout headers hdr,
-    in metadata meta,
+    in custom_metadata_t meta,
     in egress_intrinsic_metadata_for_deparser_t eg_intr_dprsr_md) {
 
     Checksum() ipv4_checksum;
@@ -523,7 +492,7 @@ control TpsCoreEgressDeparser(
 Pipeline(
     TpsCoreParser(),
     TpsCoreIngress(),
-    TpsCoreDeparser(),
+    TpsCoreIngressDeparser(),
     TpsCoreEgressParser(),
     TpsCoreEgress(),
     TpsCoreEgressDeparser()

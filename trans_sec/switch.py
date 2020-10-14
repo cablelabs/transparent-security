@@ -129,11 +129,11 @@ class SwitchConnection(object):
         raise NotImplemented
 
     @abstractmethod
-    def add_data_inspection(self, **kwargs):
+    def add_data_inspection(self, dev_id, dev_mac):
         raise NotImplemented
 
     @abstractmethod
-    def del_data_inspection(self, **kwargs):
+    def del_data_inspection(self, dev_id, dev_mac):
         raise NotImplemented
 
     def add_attack(self, **kwargs):

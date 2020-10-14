@@ -250,25 +250,3 @@ struct metadata {
     ip6Addr_t  ipv6_addr;
     bit<16>    dst_port;
 }
-
-#ifdef TOFINO_tna
-typedef bit<3> mirror_type_t;
-typedef bit<8> pkt_type_t;
-
-const pkt_type_t PKT_TYPE_NORMAL = 1;
-const pkt_type_t PKT_TYPE_MIRROR = 2;
-const mirror_type_t MIRROR_TYPE_I2E = 1;
-const mirror_type_t MIRROR_TYPE_E2E = 2;
-
-struct mirror_metadata_t {
-    bit<1> do_ing_mirroring;  // Enable ingress mirroring
-    bit<1> do_egr_mirroring;  // Enable egress mirroring
-    MirrorId_t ing_mir_ses;   // Ingress mirror session ID
-    MirrorId_t egr_mir_ses;   // Egress mirror session ID
-    pkt_type_t pkt_type;
-
-    ip4Addr_t  ipv4_addr;
-    ip6Addr_t  ipv6_addr;
-    bit<16>    dst_port;
-}
-#endif
