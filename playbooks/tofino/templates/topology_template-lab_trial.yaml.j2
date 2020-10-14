@@ -94,10 +94,10 @@ switches:
     ipv6_term_host: inet
     multicast_entries:
     tunnels:
-      - host: aggregate
-        switch_port: 1
-      - host: host1
+      - host: core
         switch_port: 2
+      - host: host1
+        switch_port: 1
       - host: host2
         switch_port: 3
   core:
@@ -140,13 +140,18 @@ links:
     south_facing_port: 1
     latency: 0ms
     bandwidth: null
+  - north_node: aggregate
+    south_node: host2
+    south_facing_port: 3
+    latency: 0ms
+    bandwidth: null
   - north_node: core
     south_node: aggregate
     south_facing_port: 1
     north_facing_port: 3
     latency: 0ms
     bandwidth: null
-  - north_node: host2
+  - north_node: inet
     south_node: core
     north_facing_port: 2
     latency: 0ms

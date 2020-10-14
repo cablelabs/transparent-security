@@ -41,6 +41,7 @@
       url: "http://{{ sdn_ip }}:{{ sdn_port }}/dataInspection"
       body:
         device_id: "{{ switch.id }}"
+        switch_mac: "{{ switch.mac }}"
         device_mac: "{{ sender.mac }}"
       ok_status: 201
     # For sending INT packets on the #1 of 3 send/receive iteration
@@ -81,6 +82,7 @@
       url: "http://{{ sdn_ip }}:{{ sdn_port }}/dataInspection"
       body:
         device_id: "{{ switch.id }}"
+        switch_mac: "{{ switch.mac }}"
         device_mac: "{{ sender.mac }}"
       ok_status: 201
     # For sending INT packets on the #1 of 3 send/receive iteration

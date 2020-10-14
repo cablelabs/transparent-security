@@ -84,7 +84,7 @@ class DdosSdnController:
         for key, controller in self.controllers.items():
             for switch in controller.switches:
                 logger.debug('switch - [%s]', switch.device_id)
-                if switch.device_id == df_req['device_id']:
+                if switch.mac == df_req['switch_mac']:
                     if del_flag:
                         switch.del_data_forward(df_req['dst_mac'])
                     else:
@@ -115,7 +115,7 @@ class DdosSdnController:
         for key, controller in self.controllers.items():
             for switch in controller.switches:
                 logger.debug('switch - [%s]', switch.device_id)
-                if switch.device_id == di_req['device_id']:
+                if switch.mac == di_req['switch_mac']:
                     if del_flag:
                         switch.del_data_inspection(
                             di_req['device_id'], di_req['device_mac'])

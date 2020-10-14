@@ -49,11 +49,13 @@
       - url: "http://{{ sdn_ip }}:{{ sdn_port }}/dataInspection"
         body:
           device_id: "{{ switch.id }}"
+          switch_mac: "{{ switch.mac }}"
           device_mac: "{{ sender.mac }}"
         ok_status: 201
       - url: "http://{{ sdn_ip }}:{{ sdn_port }}/dataInspection"
         body:
           device_id: "{{ switch2.id }}"
+          switch_mac: "{{ switch2.mac }}"
           device_mac: "{{ sender.mac }}"
         ok_status: 201
     sr1_rec_int_hops: 0
@@ -93,11 +95,13 @@
       - url: "http://{{ sdn_ip }}:{{ sdn_port }}/dataInspection"
         body:
           device_id: "{{ switch.id }}"
+          switch_mac: "{{ switch.mac }}"
           device_mac: "{{ sender.mac }}"
         ok_status: 201
       - url: "http://{{ sdn_ip }}:{{ sdn_port }}/dataInspection"
         body:
           device_id: "{{ switch2.id }}"
+          switch_mac: "{{ switch2.mac }}"
           device_mac: "{{ sender.mac }}"
         ok_status: 201
     sr1_rec_int_hops: 2
