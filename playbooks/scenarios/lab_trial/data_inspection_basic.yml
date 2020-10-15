@@ -61,6 +61,7 @@
     send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 10) }}"
     send_packet_count: "{{ '%s' % 100 | random(seed=now|int + 11) }}"
     inspection_data: "{{ sr1_data_inspection_int | default(None) }}"
+    min_received_packet_count: "{{ send_packet_count|int - 10 }}" # TODO/FIXME - Have been noticing missing packets on TNA
     max_received_packet_count: "{{ send_packet_count }}"
     discover_fwd_path: True
 

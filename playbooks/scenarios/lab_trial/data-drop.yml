@@ -36,7 +36,7 @@
           device_id: "{{ switch.id }}"
           switch_mac: "{{ switch.mac }}"
           dst_mac: "{{ receiver.mac }}"
-          output_port: 3
+          output_port: 1
         ok_status: 201
       - url: "http://{{ sdn_ip }}:{{ sdn_port }}/dataForward"
         body:

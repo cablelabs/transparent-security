@@ -95,9 +95,9 @@ switches:
     multicast_entries:
     tunnels:
       - host: core
-        switch_port: 2
-      - host: host1
         switch_port: 1
+      - host: host1
+        switch_port: 2
       - host: host2
         switch_port: 3
   core:
@@ -137,7 +137,7 @@ switches:
 links:
   - north_node: aggregate
     south_node: host1
-    south_facing_port: 1
+    south_facing_port: 2
     latency: 0ms
     bandwidth: null
   - north_node: aggregate
@@ -148,7 +148,7 @@ links:
   - north_node: core
     south_node: aggregate
     south_facing_port: 1
-    north_facing_port: 3
+    north_facing_port: 1
     latency: 0ms
     bandwidth: null
   - north_node: inet
