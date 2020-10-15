@@ -20,17 +20,17 @@
     execute_insert: "{{ write_data_forward | default(False) }}"
   tasks:
     - block:
-      - name: Data forward structure
-        debug:
-          var: data_forwards
-      - name: Insert data forward table
-        uri:
-          url: "{{ item.url }}"
-          method: POST
-          body_format: "{{ item.body_format | default('json') }}"
-          body: "{{ item.body }}"
-          status_code: "{{ item.ok_status | default('200') }}"
-        with_items: "{{ data_forwards }}"
+        - name: Data forward structure
+          debug:
+            var: data_forwards
+        - name: Insert data forward table
+          uri:
+            url: "{{ item.url }}"
+            method: POST
+            body_format: "{{ item.body_format | default('json') }}"
+            body: "{{ item.body }}"
+            status_code: "{{ item.ok_status | default('200') }}"
+          with_items: "{{ data_forwards }}"
       when: execute_insert|bool
 
 # Sending UDP packets expect all to be received
@@ -100,16 +100,12 @@
   vars:
     execute_insert: "{{ write_data_forward | default(False) }}"
   tasks:
-    - block:
-      - name: Data forward structure
-        debug:
-          var: data_forwards
-      - name: Delete data forward table
-        uri:
-          url: "{{ item.url }}"
-          method: DELETE
-          body_format: "{{ item.body_format | default('json') }}"
-          body: "{{ item.body }}"
-          status_code: "{{ item.ok_status | default('200') }}"
-        with_items: "{{ data_forwards }}"
+    - name: Delete data forward table
+      uri:
+        url: "{{ item.url }}"
+        method: DELETE
+        body_format: "{{ item.body_format | default('json') }}"
+        body: "{{ item.body }}"
+        status_code: "{{ item.ok_status | default('200') }}"
+      with_items: "{{ data_forwards }}"
       when: execute_insert|bool
