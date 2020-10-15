@@ -21,8 +21,6 @@ hosts:
     public_ip: {{ host1_ip }}
     tun1_ip: {{ host1_tun1_ip }}
     tun1_mac: {{ host1_tun1_mac }}
-    tun2_ip: {{ host1_tun2_ip }}
-    tun2_ip_mac: {{ host1_tun2_mac }}
     tunnels:
       - host: aggregate
     ipv6: 0000:0000:0000:0000:0000:0001:0001:0002
@@ -36,8 +34,6 @@ hosts:
     public_ip: {{ host2_ip }}
     tun1_ip: {{ host2_tun1_ip }}
     tun1_mac: {{ host2_tun1_mac }}
-    tun2_ip: {{ host2_tun2_ip }}
-    tun2_ip_mac: {{ host2_tun2_mac }}
     tunnels:
       - host: core
     ipv6: 0000:0000:0000:0000:0000:0001:0001:0003
@@ -51,8 +47,6 @@ hosts:
     public_ip: {{ inet_ip }}
     tun1_ip: {{ inet_tun1_ip }}
     tun1_mac: {{ inet_tun1_mac }}
-    tun2_ip: {{ inet_tun2_ip }}
-    tun2_ip_mac: {{ inet_tun2_mac }}
     tunnels:
       - host: core
     ipv6: 0000:0000:0000:0000:0000:0001:0001:0003
@@ -67,8 +61,6 @@ hosts:
     public_ip: {{ ae_ip }}
     tun1_ip: {{ ae_tun1_ip }}
     tun1_mac: {{ ae_tun1_mac }}
-    tun2_ip: {{ ae_tun2_ip }}
-    tun2_mac: {{ ae_tun2_mac }}
     tunnels:
       - host: core
     ipv6: 0000:0000:0000:0000:0000:0002:0001:0003
@@ -85,8 +77,6 @@ switches:
     ip: {{ agg_ip }}
     tun1_ip: {{ agg_tun1_ip }}
     tun1_mac: {{ agg_tun1_mac }}
-    tun2_ip: {{ agg_tun2_ip }}
-    tun2_mac: {{ agg_tun2_mac }}
     type: aggregate
     arch: {{ p4_arch }}
     mac: 00:00:00:02:04:00
@@ -109,8 +99,6 @@ switches:
     ip: {{ core_ip }}
     tun1_ip: {{ core_tun1_ip }}
     tun1_mac: {{ core_tun1_mac }}
-    tun2_ip: {{ core_tun2_ip }}
-    tun2_mac: {{ core_tun2_mac }}
     clone_egress: 3
     telemetry_rpt:
       type: host

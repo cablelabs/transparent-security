@@ -78,12 +78,6 @@ resource "aws_subnet" "tunnel_1_subnet" {
   vpc_id = var.vpc_id
 }
 
-resource "aws_subnet" "tunnel_2_subnet" {
-  availability_zone = var.availability_zone
-  cidr_block = "${var.vpc_subnet_prfx}.${random_integer.tunnel_subnet_3.result + 1}.0/24"
-  vpc_id = var.vpc_id
-}
-
 locals {
   switch_inst_ids = tolist([
     for switch_inst in aws_instance.tps-switch: {
@@ -102,24 +96,6 @@ resource "aws_network_interface" "switch_tun_1" {
   }
   attachment {
     device_index = 1
-    instance = aws_instance.tps-switch[count.index].id
-  }
-}
-
-resource "aws_network_interface" "switch_tun_2" {
-  depends_on = [
-    aws_instance.tps-switch,
-    aws_subnet.tunnel_2_subnet,
-    aws_network_interface.switch_tun_1
-  ]
-  count = local.switch_count
-  subnet_id = aws_subnet.tunnel_2_subnet.id
-  security_groups = [aws_security_group.tps-internal.id]
-  tags = {
-    Name = "tps-switch-tun2-${var.build_id}"
-  }
-  attachment {
-    device_index = 2
     instance = aws_instance.tps-switch[count.index].id
   }
 }
@@ -150,24 +126,6 @@ resource "aws_network_interface" "node_tun_1" {
   }
   attachment {
     device_index = 1
-    instance = aws_instance.node[count.index].id
-  }
-}
-
-resource "aws_network_interface" "node_tun_2" {
-  depends_on = [
-    aws_instance.node,
-    aws_subnet.tunnel_2_subnet,
-    aws_network_interface.node_tun_1
-  ]
-  count = local.node_count
-  subnet_id = aws_subnet.tunnel_2_subnet.id
-  security_groups = [aws_security_group.tps-internal.id]
-  tags = {
-    Name = "tps-node-tun2-${var.build_id}"
-  }
-  attachment {
-    device_index = 2
     instance = aws_instance.node[count.index].id
   }
 }

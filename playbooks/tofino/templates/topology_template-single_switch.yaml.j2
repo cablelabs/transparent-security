@@ -6,8 +6,6 @@ hosts:
     public_ip: {{ host1_ip }}
     tun1_ip: {{ host1_tun1_ip }}
     tun1_mac: {{ host1_tun1_mac }}
-    tun2_ip: {{ host1_tun2_ip }}
-    tun2_ip_mac: {{ host1_tun2_mac }}
     tunnels:
       - host: {{ switch_name }}
     ipv6: 0000:0000:0000:0000:0000:0001:0001:0002
@@ -21,8 +19,6 @@ hosts:
     public_ip: {{ host2_ip }}
     tun1_ip: {{ host2_tun1_ip }}
     tun1_mac: {{ host2_tun1_mac }}
-    tun2_ip: {{ host2_tun2_ip }}
-    tun2_ip_mac: {{ host2_tun2_mac }}
     tunnels:
       - host: {{ switch_name }}
     ipv6: 0000:0000:0000:0000:0000:0002:0001:0002
@@ -36,8 +32,6 @@ hosts:
     public_ip: {{ clone_ip }}
     tun1_ip: {{ clone_tun1_ip }}
     tun1_mac: {{ clone_tun1_mac }}
-    tun2_ip: {{ clone_tun2_ip }}
-    tun2_mac: {{ clone_tun2_mac }}
     tunnels:
       - host: {{ switch_name }}
     ipv6: 0000:0000:0000:0000:0000:0002:0001:0003
@@ -56,8 +50,6 @@ switches:
     ip: {{ switch_ip }}
     tun1_ip: {{ switch_tun1_ip }}
     tun1_mac: {{ switch_tun1_mac }}
-    tun2_ip: {{ switch_tun2_ip }}
-    tun2_mac: {{ switch_tun2_mac }}
     mac: 00:00:00:01:01:00
     grpc: {{ switch_ip }}:{{ grpc_port }}
     type: {{ p4_prog }}

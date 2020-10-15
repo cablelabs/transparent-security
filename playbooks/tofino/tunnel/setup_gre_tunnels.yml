@@ -44,13 +44,11 @@
     - name: Retrieve setup_switch tunnel IPs
       set_fact:
         tun1_ip: "{{ setup_switch.tun1_ip }}"
-        tun2_ip: "{{ setup_switch.tun2_ip }}"
       when: setup_switch and setup_switch != ""
 
     - name: Retrieve setup_host tunnel IPs
       set_fact:
         tun1_ip: "{{ setup_host.tun1_ip }}"
-        tun2_ip: "{{ setup_host.tun2_ip }}"
       when: setup_host and setup_host != ""
 
     # TODO - The associated MAC address is now available and should be used to
@@ -64,16 +62,6 @@
 
     - name: set eth1 up
       command: "ip link set eth1 up"
-
-    - name: delete IP {{ tun2_ip }}/24 on eth2 for tunnel 2 if exists
-      command: "ip addr del {{ tun2_ip }}/24 dev eth2"
-      ignore_errors: yes
-
-    - name: set IP {{ tun2_ip }}/24 on eth2 for tunnel 2
-      command: "ip addr add {{ tun2_ip }}/24 dev eth2"
-
-    - name: set eth2 up
-      command: "ip link set eth2 up"
 
     - include_tasks: gre_tunnel_tasks.yml
       loop: "{{ setup_switch.tunnels | list }}"
