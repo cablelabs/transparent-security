@@ -15,7 +15,7 @@
 #
 # Runs the Tofino switchd service
 
-export SDE=~{{ sudo_user }}/bf-sde-{{ sde_version }}
+export SDE={{ sde_dir }}
 export SDE_INSTALL=$SDE/install
 export host_ip=$(hostname -i)
 

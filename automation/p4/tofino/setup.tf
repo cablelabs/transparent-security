@@ -92,62 +92,6 @@ EOT
   }
 }
 
-resource "null_resource" "tps-sim-setup-orch-full" {
-  count = var.scenario_name == "full" ? 1 : 0
-  depends_on = [
-    aws_instance.tps-switch,
-    aws_instance.node,
-    null_resource.tps-tofino-orch-key-setup,
-  ]
-  provisioner "local-exec" {
-    command = <<EOT
-${var.ANSIBLE_CMD} -u ${var.sudo_user} \
--i ${aws_instance.orchestrator.public_ip}, \
-${var.SETUP_ORCH_FULL} \
---key-file ${var.private_key_file} \
---extra-vars "\
-scenario_name=${var.scenario_name}
-core_ip=${local.core_switch_ip}
-agg_ip=${local.agg_switch_ip}
-gateway1_ip=${local.gateway_1_ip}
-gateway2_ip=${local.gateway_2_ip}
-gateway3_ip=${local.gateway_3_ip}
-sdn_ip=${local.sdn_ip}
-camera1_ip=${local.camera_1_ip}
-nas1_ip=${local.nas_1_ip}
-game1_ip=${local.game_1_ip}
-camera2_ip=${local.camera_2_ip}
-game2_ip=${local.game_2_ip}
-camera3_ip=${local.camera_3_ip}
-game3_ip=${local.game_3_ip}
-inet_ip=${local.inet_ip}
-ae_ip=${local.ae_ip}
-topo_file_loc=${var.topo_file_loc}
-sde_version=${var.tofino.sde_version}
-sde_dir=/home/${var.sudo_user}/bf-sde-${var.tofino.sde_version}
-remote_scripts_dir=${var.remote_scripts_dir}
-switchd_port=${var.switchd_port}
-sdn_port=${var.sdn_port}
-tofino_model_port=${var.tofino_model_start_port}
-switchd_port=${var.switchd_port}
-grpc_port=${local.grpc_port}
-sdn_ip=${aws_instance.orchestrator.private_ip}
-trans_sec_dir=${var.remote_tps_dir}
-remote_ansible_inventory=${var.remote_inventory_file}
-switch_nic_prfx=${var.switch_nic_prfx}
-srvc_log_dir=${var.remote_srvc_log_dir}
-srvc_log_level=${var.service_log_level}
-switch_sudo_user=${var.sudo_user}
-host_sudo_user=${var.sudo_user}
-ae_monitor_intf=${var.ae_monitor_intf}
-clone_egress_port=${var.clone_egress_port}
-p4_platform=tofino
-p4_arch=${var.p4_arch}
-"\
-EOT
-  }
-}
-
 resource "null_resource" "tps-sim-setup-orch-single-switch" {
   count = var.scenario_name == "full" || var.scenario_name == "lab_trial" ? 0 : 1
   depends_on = [
@@ -176,25 +120,18 @@ switch_ip=${local.switch_ip}
 switch_tun1_ip=${local.switch_tun1_ip}
 switch_tun1_mac=${local.switch_tun1_mac}
 topo_file_loc=${var.topo_file_loc}
-sde_version=${var.tofino.sde_version}
 sde_dir=/home/${var.sudo_user}/bf-sde-${var.tofino.sde_version}
+log_dir=${var.remote_srvc_log_dir}
 remote_scripts_dir=${var.remote_scripts_dir}
-switchd_port=${var.switchd_port}
-sdn_port=${var.sdn_port}
 tofino_model_port=${var.tofino_model_start_port}
-switchd_port=${var.switchd_port}
 grpc_port=${local.grpc_port}
 sdn_ip=${aws_instance.orchestrator.private_ip}
+sdn_port=${var.sdn_port}
 trans_sec_dir=${var.remote_tps_dir}
 remote_ansible_inventory=${var.remote_inventory_file}
-switch_nic_prfx=${var.switch_nic_prfx}
-srvc_log_dir=${var.remote_srvc_log_dir}
-srvc_log_level=${var.service_log_level}
-switch_sudo_user=${var.sudo_user}
-host_sudo_user=${var.sudo_user}
+sudo_user=${var.sudo_user}
 ae_monitor_intf=${var.ae_monitor_intf}
 clone_egress_port=${var.clone_egress_port}
-p4_platform=tofino
 p4_arch=${var.p4_arch}
 "\
 EOT
@@ -236,25 +173,18 @@ core_ip=${local.core_switch_ip}
 core_tun1_ip=${local.core_tun1_ip}
 core_tun1_mac=${local.core_tun1_mac}
 topo_file_loc=${var.topo_file_loc}
-sde_version=${var.tofino.sde_version}
 sde_dir=/home/${var.sudo_user}/bf-sde-${var.tofino.sde_version}
+log_dir=${var.remote_srvc_log_dir}
 remote_scripts_dir=${var.remote_scripts_dir}
-switchd_port=${var.switchd_port}
-sdn_port=${var.sdn_port}
 tofino_model_port=${var.tofino_model_start_port}
-switchd_port=${var.switchd_port}
 grpc_port=${local.grpc_port}
 sdn_ip=${aws_instance.orchestrator.private_ip}
+sdn_port=${var.sdn_port}
 trans_sec_dir=${var.remote_tps_dir}
 remote_ansible_inventory=${var.remote_inventory_file}
-switch_nic_prfx=${var.switch_nic_prfx}
-srvc_log_dir=${var.remote_srvc_log_dir}
-srvc_log_level=${var.service_log_level}
-switch_sudo_user=${var.sudo_user}
-host_sudo_user=${var.sudo_user}
+sudo_user=${var.sudo_user}
 ae_monitor_intf=${var.ae_monitor_intf}
 clone_egress_port=${var.clone_egress_port}
-p4_platform=tofino
 p4_arch=${var.p4_arch}
 "\
 EOT
@@ -267,7 +197,6 @@ locals {
 
 resource "null_resource" "tps-tofino-setup-nodes" {
   depends_on = [
-    null_resource.tps-sim-setup-orch-full,
     null_resource.tps-sim-setup-orch-single-switch,
     null_resource.tps-sim-setup-orch-lab-trial
   ]

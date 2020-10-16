@@ -15,7 +15,7 @@
 #
 # Runs the Tofino model chip emulator
 
-export SDE=~{{ sudo_user }}/bf-sde-{{ sde_version }}
+export SDE={{ sde_dir }}
 export SDE_INSTALL=$SDE/install
 
 mkdir {{ log_dir }}

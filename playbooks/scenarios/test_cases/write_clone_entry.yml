@@ -18,7 +18,7 @@
   vars:
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch: "{{ topo_dict.switches.core }}"
-    log_dir: "{{ host_log_dir }}"
+    log_dir: "{{ log_dir }}"
     log_file: write_to_clone.log
     clone: "{{ clone_entry | default('True') }}"
   tasks:

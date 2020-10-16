@@ -20,7 +20,6 @@
     pause: "{{ srvc_start_pause_time | default(10) }}"
     wait_port: "{{ port_to_wait | default('') }}"
     timeout: "{{ wait_timeout | default(60) }}"
-    log_dir: "{{ srvc_log_dir | default('') }}"
     srvc_name: "{{ service_name }}"
     srv_srvc_name: "{{ service_name }}.service"
     srvc_status: "{{ service_status_running | default('true') }}"

@@ -26,11 +26,10 @@
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     the_switch: "{{ topo_dict.switches[p4_pkg] }}"
     tunnels: "{{ the_switch.tunnels }}"
-    local_srvc_script_tmplt_file: "{{ tps_dir }}/playbooks/general/templates/tofino_service.sh.j2"
+    local_srvc_script_tmplt_file: "{{ trans_sec_dir }}/playbooks/general/templates/tofino_service.sh.j2"
     port_to_wait: "{{ tofino_model_port }}"
-    sudo_user: "{{ switch_sudo_user }}"
     prog_name: "{{ p4_pkg }}"
-    additional_tmplt_file: "{{ tps_dir }}/playbooks/tofino/templates/tofino-model-veth-port-mapping.json.j2"
+    additional_tmplt_file: "{{ trans_sec_dir }}/playbooks/tofino/templates/tofino-model-veth-port-mapping.json.j2"
     additional_tmplt_out_file: "{{ remote_scripts_dir }}/port-mapping.json"
 
 # Start switchd
@@ -40,11 +39,10 @@
     service_name: tps-tofino-switchd
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch_arch: "{{ topo_dict.switches[p4_pkg].arch }}"
-    tmplt_dir: "{{ tps_dir }}/playbooks/tofino/templates"
+    tmplt_dir: "{{ trans_sec_dir }}/playbooks/tofino/templates"
     local_srvc_script_tmplt_file: "{{ tmplt_dir }}/switchd_service.sh.j2"
-    port_to_wait: "{{ switchd_port }}"
+    port_to_wait: "{{ grpc_port }}"
     wait_timeout: 90
-    sudo_user: "{{ switch_sudo_user }}"
     prog_name: "{{ p4_pkg }}"
     srvc_start_pause_time: 30
     log_file: "{{ log_dir }}/tofino-switchd.log"
@@ -56,8 +54,7 @@
   vars:
     host_val: "{{ switches }}"
     service_name: tps-tofino-load-p4rt
-    local_srvc_script_tmplt_file: "{{ tps_dir }}/playbooks/general/templates/tofino_p4rt_service.sh.j2"
-    sudo_user: "{{ switch_sudo_user }}"
+    local_srvc_script_tmplt_file: "{{ trans_sec_dir }}/playbooks/general/templates/tofino_p4rt_service.sh.j2"
     prog_name: "{{ p4_pkg }}"
     srvc_start_pause_time: 15
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"

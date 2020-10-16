@@ -16,8 +16,8 @@
     host_val:
       - hosts
       - switches
-    trans_sec_source_dir: "{{ tps_dir }}"
-    trans_sec_dest_dir: "/home/{{ host_sudo_user }}/transparent-security"
+    trans_sec_source_dir: "{{ trans_sec_dir }}"
+    trans_sec_dest_dir: "/home/{{ sudo_user }}/transparent-security"
     python_unit_tests: false
 
 # Create virtual interfaces on switches
@@ -69,10 +69,10 @@
     host_val: controller
     service_name: tps-tofino-sdn
     scenario_name: full
-    local_srvc_script_tmplt_file: "{{ tps_dir }}/playbooks/general/templates/sdn_controller.sh.j2"
+    local_srvc_script_tmplt_file: "{{ trans_sec_dir }}/playbooks/general/templates/sdn_controller.sh.j2"
     port_to_wait: "{{ sdn_port }}"
     wait_timeout: 30
-    remote_tps_dir: "{{ tps_dir }}"
+    remote_tps_dir: "{{ trans_sec_dir }}"
     load_p4: False
     add_data_inspection: True
 
@@ -81,8 +81,8 @@
   vars:
     host_val: ae
     service_name: tps-tofino-ae
-    local_srvc_script_tmplt_file: "{{ tps_dir }}/playbooks/general/templates/ae_service.sh.j2"
+    local_srvc_script_tmplt_file: "{{ trans_sec_dir }}/playbooks/general/templates/ae_service.sh.j2"
     srvc_type: SIMPLE
     sdn_url: "http://{{ sdn_ip }}:{{ sdn_port }}"
     monitor_intf: "{{ ae_monitor_intf }}"
-    remote_tps_dir: "{{ tps_dir }}"
+    remote_tps_dir: "{{ trans_sec_dir }}"
