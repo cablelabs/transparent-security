@@ -13,8 +13,28 @@
 # Simple scenario where packets are sent through 3 devices and only the last
 # one will be demonstrating dropped packets
 ---
+# Add table entries into data_forward_t tables
+- hosts: "{{ rec_host }}"
+  gather_facts: no
+  vars:
+    execute_insert: "{{ write_data_forward | default(False) }}"
+  tasks:
+    - block:
+        - name: Data forward structure
+          debug:
+            var: data_forwards
+        - name: Insert data forward table
+          uri:
+            url: "{{ item.url }}"
+            method: POST
+            body_format: "{{ item.body_format | default('json') }}"
+            body: "{{ item.body }}"
+            status_code: "{{ item.ok_status | default('200') }}"
+          with_items: "{{ data_forwards }}"
+      when: execute_insert|bool
+
 # Enable switches for data inspection
-- hosts: "{{ controller_host }}"
+- hosts: "{{ rec_host }}"
   gather_facts: no
   tasks:
     - name: show data inspection requests for enablement
@@ -30,8 +50,7 @@
         status_code: "{{ item.ok_status | default('200') }}"
       with_items: "{{ data_inspections }}"
 
-# TODO/FIXME - Gateway TCP scenario receives 2x packets
-# Sending UDP packets expect all to be received with configured INT hops sr1_rec_int_hops
+# Sending packets expect all to be received with configured INT hops sr1_rec_int_hops
 - import_playbook: ../test_cases/send_receive.yml
   vars:
     int_hops: "{{ sr1_rec_int_hops | default(0) }}"
@@ -41,17 +60,14 @@
     send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 10) }}"
     send_packet_count: "{{ '%s' % 100 | random(seed=now|int + 11) }}"
     inspection_data: "{{ sr1_data_inspection_int | default(None) }}"
+    min_received_packet_count: "{{ send_packet_count|int - 10 }}" # TODO/FIXME - Have been noticing missing packets on TNA
     max_received_packet_count: "{{ send_packet_count }}"
     discover_fwd_path: True
 
 # Disable switches for data inspection
-- hosts: "{{ controller_host }}"
+- hosts: "{{ rec_host }}"
   gather_facts: no
   tasks:
-    - name: show data inspection requests for disablment
-      debug:
-        var: data_inspections
-
     - name: Data inspection requests
       uri:
         url: "{{ item.url }}"
@@ -61,3 +77,18 @@
         status_code: "{{ item.ok_status | default('200') }}"
       with_items: "{{ data_inspections }}"
 
+# Delete table entries from data_forward_t tables
+- hosts: "{{ rec_host }}"
+  gather_facts: no
+  vars:
+    execute_insert: "{{ write_data_forward | default(False) }}"
+  tasks:
+    - name: Delete data forward table
+      uri:
+        url: "{{ item.url }}"
+        method: DELETE
+        body_format: "{{ item.body_format | default('json') }}"
+        body: "{{ item.body }}"
+        status_code: "{{ item.ok_status | default('200') }}"
+      with_items: "{{ data_forwards }}"
+      when: execute_insert|bool

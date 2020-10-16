@@ -36,38 +36,20 @@
         path: /etc/sysctl.conf
         line: "net.ipv4.ip_forward=1"
 
-    - name: Read topology {{ topo_file_loc }}
+    - name: Retrieve setup_switch from topology
       set_fact:
-        topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
+        setup_switch: "{{ topo_dict.switches.get(ansible_host) }}"
+        setup_host: "{{ topo_dict.hosts.get(ansible_host) }}"
 
-    - name: Retrieve host from topology
+    - name: Retrieve setup_switch tunnel IPs
       set_fact:
-        host: "{{ topo_dict.hosts.get(ansible_host) }}"
+        tun1_ip: "{{ setup_switch.tun1_ip }}"
+      when: setup_switch and setup_switch != ""
 
-    - name: Retrieve switch from topology
+    - name: Retrieve setup_host tunnel IPs
       set_fact:
-        switch: "{{ topo_dict.switches.get(ansible_host) }}"
-
-    - name: Retrieve this_host from hosts within topology
-      set_fact:
-        this_host: "{{ topo_dict.hosts.get(ansible_host) }}"
-
-    - name: Retrieve this_host from switches within topology when host not found
-      set_fact:
-        this_host: "{{ topo_dict.switches.get(ansible_host) }}"
-      when: this_host is not defined or this_host == ""
-
-    - debug:
-        var: this_host
-    - name: Retrieve this_host tunnel IPs
-      set_fact:
-        tun1_ip: "{{ this_host.tun1_ip }}"
-        tun2_ip: "{{ this_host.tun2_ip }}"
-
-    - debug:
-        var: tun1_ip
-    - debug:
-        var: tun2_ip
+        tun1_ip: "{{ setup_host.tun1_ip }}"
+      when: setup_host and setup_host != ""
 
     # TODO - The associated MAC address is now available and should be used to
     #  determine the interface on which to add this IP address
@@ -81,26 +63,10 @@
     - name: set eth1 up
       command: "ip link set eth1 up"
 
-#    - name: add route {{ tun1_ip }} to host routes on eth1
-#      command: "ip route add {{ tun1_ip }}/24 dev eth1"
-
-    - name: delete IP {{ tun2_ip }}/24 on eth2 for tunnel 2 if exists
-      command: "ip addr del {{ tun2_ip }}/24 dev eth2"
-      ignore_errors: yes
-
-    - name: set IP {{ tun2_ip }}/24 on eth2 for tunnel 2
-      command: "ip addr add {{ tun2_ip }}/24 dev eth2"
-
-    - name: set eth2 up
-      command: "ip link set eth2 up"
-
-#    - name: add route {{ tun2_ip }} to host routes on eth2
-#      command: "ip route add {{ tun2_ip }}/24 dev eth2"
+    - include_tasks: gre_tunnel_tasks.yml
+      loop: "{{ setup_switch.tunnels | list }}"
+      when: setup_switch is defined and setup_switch != ""
 
     - include_tasks: gre_tunnel_tasks.yml
-      loop: "{{ switch.tunnels | list }}"
-      when: switch is defined and switch != ""
-
-    - include_tasks: gre_tunnel_tasks.yml
-      loop: "{{ host.tunnels | list }}"
-      when: host is defined and host != ""
+      loop: "{{ setup_host.tunnels | list }}"
+      when: setup_host is defined and setup_host != ""

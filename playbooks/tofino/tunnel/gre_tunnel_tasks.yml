@@ -29,10 +29,6 @@
     this_host: "{{ topo_dict.hosts.get(ansible_host) }}"
     remote_host: "{{ topo_dict.hosts.get(item.host) }}"
 
-- name: Display the remote_host
-  debug:
-    var: remote_host
-
 - name: set this_host from switches when not in hosts
   set_fact:
     this_host: "{{ topo_dict.switches.get(ansible_host) }}"
@@ -41,9 +37,6 @@
 - name: item.host value
   set_fact:
     item_host: item.host
-- name: Retrieve switch from topology
-  set_fact:
-    switch: "{{ topo_dict.switches.get(item_host) }}"
 
 - name: set remote_host from switches when not in hosts
   set_fact:
@@ -52,31 +45,33 @@
 
 - name: Set tunnel facts
   set_fact:
-    local_tun1_ip: "{{ this_host.tun1_ip }}"
-    local_tun2_ip: "{{ this_host.tun2_ip }}"
-    remote_tun1_ip: "{{ remote_host.tun1_ip }}"
-    remote_tun2_ip: "{{ remote_host.tun2_ip }}"
     tunnel1: "{{ item.host }}-tun1"
 
-- name: Create GRE tunnel 1 command
-  set_fact:
-    gre_tunnel1_cmd: >
-      ip link add {{ tunnel1 }} type gretap local {{ local_tun1_ip }}
-      remote {{ remote_tun1_ip }}
-  when: remote_host is defined and remote_host != ""
+- name: Determine if {{ tunnel1 }} has already been created
+  command: "ip link show {{ tunnel1 }}"
+  register: intf_exist
+  ignore_errors: yes
 
-- name: Show the GRE tunnel 1 command
-  debug:
-    var: gre_tunnel1_cmd
-  when: remote_host is defined and remote_host != ""
+# TODO/FIXME - This is only a problem with lab_trial but why is it attempting to create the same tunnel with the same name 2x
+- name: GRE Tunnel Block
+  block:
+    - name: Create GRE tunnel 1 command
+      set_fact:
+        gre_tunnel1_cmd: >
+          ip link add {{ tunnel1 }} type gretap local {{ this_host.tun1_ip }}
+          remote {{ remote_host.tun1_ip }}
 
-- name: Create GRE tunnel1
-  command: "{{ gre_tunnel1_cmd }}"
-  when: gre_tunnel1_cmd is defined
+    - name: Show the GRE tunnel 1 command
+      debug:
+        var: gre_tunnel1_cmd
 
-# Bring up tunnel
-- name: set gre tunnel 1 up - {{ tunnel1 }}
-  command: "ip link set {{ tunnel1 }} up"
+    - name: Create GRE tunnel1
+      command: "{{ gre_tunnel1_cmd }}"
+
+    # Bring up tunnel
+    - name: set gre tunnel 1 up - {{ tunnel1 }}
+      command: "ip link set {{ tunnel1 }} up"
+  when: intf_exist is failed and remote_host is defined and remote_host != ""
 
 - name: Setup host communication ports to send/receive packets
   block:

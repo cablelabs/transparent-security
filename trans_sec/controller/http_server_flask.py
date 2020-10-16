@@ -100,6 +100,7 @@ class DataInspection(Resource):
         self.sdn_controller = kwargs['sdn_controller']
         self.parser = reqparse.RequestParser()
         self.parser.add_argument('device_id', type=int, default=0)
+        self.parser.add_argument('switch_mac', type=str)
         self.parser.add_argument('device_mac', type=str)
 
     def post(self):

@@ -71,8 +71,4 @@ resource "aws_instance" "transparent-security-hcp-instance" {
     user     = var.hcp_sudo_user
     private_key = file(var.private_key_file)
   }
-
-//  root_block_device {
-//    volume_size = "50"
-//  }
 }
