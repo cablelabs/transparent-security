@@ -14,4 +14,4 @@
 # limitations under the License.
 #
 # Runs the Analytics Engine
-{{ remote_tps_dir }}/bin/start_ae.py -f {{ log_dir }}/{{ service_name }}.log -s {{ sdn_host }}:{{ sdn_port }} -l {{ log_level }} -i {{ monitor_intf }} -t {{ srvc_type }}
+{{ remote_tps_dir }}/bin/start_ae.py -f {{ log_dir }}/{{ service_name }}.log -s {{ sdn_url }} -l {{ log_level }} -i {{ monitor_intf }} -t {{ srvc_type }}

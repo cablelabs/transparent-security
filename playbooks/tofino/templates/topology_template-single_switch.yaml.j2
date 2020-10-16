@@ -3,6 +3,9 @@ hosts:
     name: host1
     id: 1
     ip: 192.168.1.2
+{% if host_user is defined %}
+    user: {{ host_user }}
+{% endif %}
     public_ip: {{ host1_ip }}
     tun1_ip: {{ host1_tun1_ip }}
     tun1_mac: {{ host1_tun1_mac }}
@@ -16,6 +19,9 @@ hosts:
     name: host2
     id: 2
     ip: 192.168.1.6
+{% if host_user is defined %}
+    user: {{ host_user }}
+{% endif %}
     public_ip: {{ host2_ip }}
     tun1_ip: {{ host2_tun1_ip }}
     tun1_mac: {{ host2_tun1_mac }}
@@ -29,6 +35,9 @@ hosts:
     name: clone
     id: 3
     ip: 192.168.1.10
+{% if host_user is defined %}
+    user: {{ host_user }}
+{% endif %}
     public_ip: {{ clone_ip }}
     tun1_ip: {{ clone_tun1_ip }}
     tun1_mac: {{ clone_tun1_mac }}
@@ -48,6 +57,9 @@ switches:
     ctx_json: {{ remote_scripts_dir }}/p4/{{ p4_prog }}.tofino/pipe/context.json
     clone_egress: 3
     ip: {{ switch_ip }}
+{% if switch_user is defined %}
+    user: {{ switch_user }}
+{% endif %}
     tun1_ip: {{ switch_tun1_ip }}
     tun1_mac: {{ switch_tun1_mac }}
     mac: 00:00:00:01:01:00
