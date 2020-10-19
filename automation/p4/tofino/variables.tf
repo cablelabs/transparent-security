@@ -67,6 +67,7 @@ variable "sdn_port" {default = "9998"}
 variable "switch_nic_prfx" {default = "veth"}
 variable "service_log_level" {default = "DEBUG"}
 variable "ae_monitor_intf" {default = "core-tun"}
+variable "ae_lab_intf" {default = "core-tun1"}
 variable "clone_egress_port" {default = "3"}
 variable "p4_arch" {default = "v1model"}
 

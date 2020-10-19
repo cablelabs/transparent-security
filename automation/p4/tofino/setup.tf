@@ -154,6 +154,7 @@ ${var.SETUP_ORCH_LAB_TRIAL} \
 --key-file ${var.private_key_file} \
 --extra-vars "\
 scenario_name=${var.scenario_name}
+host_user=${var.sudo_user}
 host1_ip=${local.host1_ip}
 host1_tun1_ip=${local.host1_tun1_ip}
 host1_tun1_mac=${local.host1_tun1_mac}
@@ -163,9 +164,11 @@ host2_tun1_mac=${local.host2_tun1_mac}
 inet_ip=${local.lab_inet_ip}
 inet_tun1_ip=${local.lab_inet_tun1_ip}
 inet_tun1_mac=${local.lab_inet_tun1_mac}
+ae_user=${var.sudo_user}
 ae_ip=${local.clone_ip}
 ae_tun1_ip=${local.clone_tun1_ip}
 ae_tun1_mac=${local.clone_tun1_mac}
+switch_user=${var.sudo_user}
 agg_ip=${local.agg_switch_ip}
 agg_tun1_ip=${local.agg_tun1_ip}
 agg_tun1_mac=${local.agg_tun1_mac}
@@ -183,7 +186,7 @@ sdn_port=${var.sdn_port}
 trans_sec_dir=${var.remote_tps_dir}
 remote_ansible_inventory=${var.remote_inventory_file}
 sudo_user=${var.sudo_user}
-ae_monitor_intf=${var.ae_monitor_intf}
+ae_monitor_intf=${var.ae_lab_intf}
 clone_egress_port=${var.clone_egress_port}
 p4_arch=${var.p4_arch}
 "\
