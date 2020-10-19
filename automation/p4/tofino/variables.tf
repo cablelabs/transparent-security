@@ -53,7 +53,7 @@ variable "remote_scenario_pb_dir" {default = "/home/ubuntu/transparent-security/
 
 variable "tunnel_intf" {default = "veth1"}
 variable "remote_pb_dir" {default = "/home/ubuntu/transparent-security/playbooks"}
-variable "remote_inventory_file" {default = "/home/ubuntu/transparent-security.ini"}
+variable "remote_inventory_file" {default = "/home/ubuntu/transparent-security.yaml"}
 variable "remote_tps_dir" {default = "/home/ubuntu/transparent-security"}
 variable "remote_scripts_dir" {default = "/etc/transparent-security"}
 variable "remote_srvc_log_dir" {default = "/var/log/transparent-security"}
@@ -63,7 +63,6 @@ variable "tofino_model_end_port" {default = "8004"}
 variable "p4_grpc_port" {default = "50051"}
 variable "bf_grpc_port" {default = "50052"}
 variable "p4_bridge_subnet" {default = "192.168.0.0/24"}
-variable "switchd_port" {default = "50052"}
 variable "sdn_port" {default = "9998"}
 variable "switch_nic_prfx" {default = "veth"}
 variable "service_log_level" {default = "DEBUG"}

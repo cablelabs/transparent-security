@@ -35,7 +35,6 @@
         - "srvc_log_dir={{ remote_srvc_log_dir }}"
         - "log_level={{ service_log_level }}"
         - "log_dir={{ remote_srvc_log_dir }}"
-        - "host_log_dir={{ host_log_dir }}"
         - "remote_tps_dir={{ remote_tps_dir }}"
         - "trans_sec_dir={{ remote_tps_dir }}"
         - "remote_scripts_dir={{ remote_scripts_dir }}"

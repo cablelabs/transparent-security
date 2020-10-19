@@ -18,6 +18,9 @@ hosts:
     name: host1
     id: 2
     ip: 192.168.1.2
+{% if host_user is defined %}
+    user: {{ host_user }}
+{% endif %}
     public_ip: {{ host1_ip }}
     tun1_ip: {{ host1_tun1_ip }}
     tun1_mac: {{ host1_tun1_mac }}
@@ -31,6 +34,9 @@ hosts:
     name: host2
     id: 3
     ip: 192.168.1.6
+{% if host_user is defined %}
+    user: {{ host_user }}
+{% endif %}
     public_ip: {{ host2_ip }}
     tun1_ip: {{ host2_tun1_ip }}
     tun1_mac: {{ host2_tun1_mac }}
@@ -44,6 +50,9 @@ hosts:
     name: inet
     id: 4
     ip: 192.168.1.10
+{% if host_user is defined %}
+    user: {{ host_user }}
+{% endif %}
     public_ip: {{ inet_ip }}
     tun1_ip: {{ inet_tun1_ip }}
     tun1_mac: {{ inet_tun1_mac }}
@@ -58,6 +67,9 @@ hosts:
     id: 13
     switch_ip: 10.0.1.8
     ip: 10.0.1.9
+{% if ae_user is defined or host_user is defined %}
+    user: {{ ae_user | default(host_user) }}
+{% endif %}
     public_ip: {{ ae_ip }}
     tun1_ip: {{ ae_tun1_ip }}
     tun1_mac: {{ ae_tun1_mac }}
@@ -75,6 +87,9 @@ switches:
     tofino_bin: {{ remote_scripts_dir }}/p4/aggregate.tofino/pipe/tofino.bin
     ctx_json: {{ remote_scripts_dir }}/p4/aggregate.tofino/pipe/context.json
     ip: {{ agg_ip }}
+{% if switch_user is defined %}
+    user: {{ switch_user }}
+{% endif %}
     tun1_ip: {{ agg_tun1_ip }}
     tun1_mac: {{ agg_tun1_mac }}
     type: aggregate
@@ -97,6 +112,9 @@ switches:
     tofino_bin: {{ remote_scripts_dir }}/p4/core.tofino/pipe/tofino.bin
     ctx_json: {{ remote_scripts_dir }}/p4/core.tofino/pipe/context.json
     ip: {{ core_ip }}
+{% if switch_user is defined %}
+    user: {{ switch_user }}
+{% endif %}
     tun1_ip: {{ core_tun1_ip }}
     tun1_mac: {{ core_tun1_mac }}
     clone_egress: 3

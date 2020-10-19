@@ -1,0 +1,40 @@
+all:
+  children:
+    controller:
+      hosts:
+        localhost:
+            ansible_connection: local
+    hosts:
+      hosts:
+{% for name, host in topo_dict.hosts.items() %}
+        {{ name }}:
+          ansible_connection: ssh
+{% if host.user is defined %}
+          ansible_user: {{ host.user }}
+{% endif %}
+{% endfor %}
+    switches:
+      hosts:
+{% for name, switch in topo_dict.switches.items() %}
+        {{ name }}:
+          ansible_connection: ssh
+{% if switch.user is defined %}
+          ansible_user: {{ switch.user }}
+{% endif %}
+{% endfor %}
+  vars:
+    scenario_name: {{ scenario_name }}
+    topo_file_loc: {{ topo_file_loc }}
+    trans_sec_dir: {{ trans_sec_dir }}
+    remote_tps_dir: {{ trans_sec_dir }}
+    remote_scripts_dir: {{ remote_scripts_dir }}
+    log_dir: {{ log_dir }}
+    log_level: {{ log_level | default('DEBUG') }}
+    sde_dir: {{ sde_dir }}
+    sdn_ip: {{ sdn_ip }}
+    sdn_port: {{ sdn_port | default('9998') }}
+    tofino_model_port: {{ tofino_model_port | default('8000') }}
+    grpc_port: {{ grpc_port | default('50052') }}
+    p4_platform: tofino
+    p4_arch: {{ p4_arch }}
+    sudo_user: {{ sudo_user }}
