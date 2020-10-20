@@ -34,7 +34,7 @@
   set_fact:
     sde_target_dir: "$SDE_INSTALL/share/p4/targets/tofino/{{ item }}"
     build_obj_dir: "{{ remote_scripts_dir }}/p4/{{ item }}.tofino"
-    build_prog: "{{ remote_tps_dir }}/p4/{{ item }}/{{ p4_program_name }}.p4"
+    build_prog: "{{ trans_sec_dir }}/p4/{{ item }}/{{ p4_program_name }}.p4"
 
 - name: Determine P4 program name and base compile command when arch == 'v1model'
   set_fact:

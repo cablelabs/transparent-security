@@ -34,9 +34,10 @@ locals {
   camera_3_ip = var.scenario_name == "full" ? aws_instance.node.5.private_ip: "n/a"
   game_3_ip = var.scenario_name == "full" ? aws_instance.node.6.private_ip: "n/a"
 
-  # For full & lab_trial scenarios
-  inet_ip = var.scenario_name == "full" ? aws_instance.node.2.private_ip: "n/a"
-  ae_ip = var.scenario_name == "full" || var.scenario_name == "lab_trial" ? aws_instance.node.2.private_ip: "n/a"
+  # For lab_trial scenario
+  ae_ip = var.scenario_name == "lab_trial" ? aws_instance.ae.private_ip: "n/a"
+  ae_tun1_ip = var.scenario_name == "lab_trial" ? aws_network_interface.ae_tun_1.private_ip: "n/a"
+  ae_tun1_mac = var.scenario_name == "lab_trial" ? aws_network_interface.ae_tun_1.mac_address: "n/a"
 
   # For single-switch scenario
   switch_ip = var.scenario_name == "full" ? "n/a" : aws_instance.tps-switch.0.private_ip
@@ -55,9 +56,9 @@ locals {
   host2_tun1_mac = var.scenario_name == "full" ? "n/a" : aws_network_interface.node_tun_1.1.mac_address
 
   # For lab_trial scenarios
-  lab_inet_ip = var.scenario_name == "lab_trial" ? aws_instance.node.3.private_ip: "n/a"
-  lab_inet_tun1_ip = var.scenario_name == "lab_trial" ? aws_network_interface.node_tun_1.3.private_ip: "n/a"
-  lab_inet_tun1_mac = var.scenario_name == "lab_trial" ? aws_network_interface.node_tun_1.3.mac_address: "n/a"
+  lab_inet_ip = var.scenario_name == "lab_trial" ? aws_instance.node.2.private_ip: "n/a"
+  lab_inet_tun1_ip = var.scenario_name == "lab_trial" ? aws_network_interface.node_tun_1.2.private_ip: "n/a"
+  lab_inet_tun1_mac = var.scenario_name == "lab_trial" ? aws_network_interface.node_tun_1.2.mac_address: "n/a"
 
   p4_arch = var.scenario_name == "core" ? "tna" : "v1model"
   grpc_port = var.p4_arch == "tna" ? var.bf_grpc_port : var.p4_grpc_port
@@ -80,14 +81,12 @@ resource "null_resource" "tps-tofino-orch-key-setup" {
     aws_instance.orchestrator,
     null_resource.tps-tofino-sim-setup,
     aws_network_interface.node_tun_1,
-//    aws_network_interface.node_tun_2,
     aws_network_interface.switch_tun_1,
-//    aws_network_interface.switch_tun_2,
   ]
   provisioner "local-exec" {
     command = <<EOT
-scp -o StrictHostKeyChecking=no ${var.private_key_file} ${var.sudo_user}@${aws_instance.orchestrator.public_ip}:~/.ssh/id_rsa"
-ssh -o StrictHostKeyChecking=no ${var.sudo_user}@${aws_instance.orchestrator.public_ip} 'chmod 600 ~/.ssh/id_rsa'"
+scp -o StrictHostKeyChecking=no ${var.private_key_file} ${var.orch_user}@${aws_instance.orchestrator.public_ip}:~/.ssh/id_rsa"
+ssh -o StrictHostKeyChecking=no ${var.orch_user}@${aws_instance.orchestrator.public_ip} 'chmod 600 ~/.ssh/id_rsa'"
 EOT
   }
 }
@@ -101,12 +100,13 @@ resource "null_resource" "tps-sim-setup-orch-single-switch" {
   ]
   provisioner "local-exec" {
     command = <<EOT
-${var.ANSIBLE_CMD} -u ${var.sudo_user} \
+${var.ANSIBLE_CMD} -u ${var.orch_user} \
 -i ${aws_instance.orchestrator.public_ip}, \
 ${var.SETUP_ORCH_SINGLE_SWITCH} \
 --key-file ${var.private_key_file} \
 --extra-vars "\
 scenario_name=${var.scenario_name}
+host_user=${var.node_user}
 host1_ip=${local.host1_ip}
 host1_tun1_ip=${local.host1_tun1_ip}
 host1_tun1_mac=${local.host1_tun1_mac}
@@ -116,20 +116,19 @@ host2_tun1_mac=${local.host2_tun1_mac}
 clone_ip=${local.clone_ip}
 clone_tun1_ip=${local.clone_tun1_ip}
 clone_tun1_mac=${local.clone_tun1_mac}
+switch_user=${var.switch_user}
 switch_ip=${local.switch_ip}
 switch_tun1_ip=${local.switch_tun1_ip}
 switch_tun1_mac=${local.switch_tun1_mac}
 topo_file_loc=${var.topo_file_loc}
-sde_dir=/home/${var.sudo_user}/bf-sde-${var.tofino.sde_version}
+sde_dir=/home/${var.orch_user}/bf-sde-${var.tofino.sde_version}
 log_dir=${var.remote_srvc_log_dir}
 remote_scripts_dir=${var.remote_scripts_dir}
 tofino_model_port=${var.tofino_model_start_port}
 grpc_port=${local.grpc_port}
 sdn_ip=${aws_instance.orchestrator.private_ip}
 sdn_port=${var.sdn_port}
-trans_sec_dir=${var.remote_tps_dir}
 remote_ansible_inventory=${var.remote_inventory_file}
-sudo_user=${var.sudo_user}
 ae_monitor_intf=${var.ae_monitor_intf}
 clone_egress_port=${var.clone_egress_port}
 p4_arch=${var.p4_arch}
@@ -148,12 +147,13 @@ resource "null_resource" "tps-sim-setup-orch-lab-trial" {
   ]
   provisioner "local-exec" {
     command = <<EOT
-${var.ANSIBLE_CMD} -u ${var.sudo_user} \
+${var.ANSIBLE_CMD} -u ${var.orch_user} \
 -i ${aws_instance.orchestrator.public_ip}, \
 ${var.SETUP_ORCH_LAB_TRIAL} \
 --key-file ${var.private_key_file} \
 --extra-vars "\
 scenario_name=${var.scenario_name}
+host_user=${var.node_user}
 host1_ip=${local.host1_ip}
 host1_tun1_ip=${local.host1_tun1_ip}
 host1_tun1_mac=${local.host1_tun1_mac}
@@ -163,9 +163,11 @@ host2_tun1_mac=${local.host2_tun1_mac}
 inet_ip=${local.lab_inet_ip}
 inet_tun1_ip=${local.lab_inet_tun1_ip}
 inet_tun1_mac=${local.lab_inet_tun1_mac}
-ae_ip=${local.clone_ip}
-ae_tun1_ip=${local.clone_tun1_ip}
-ae_tun1_mac=${local.clone_tun1_mac}
+ae_user=${var.ae_user}
+ae_ip=${local.ae_ip}
+ae_tun1_ip=${local.ae_tun1_ip}
+ae_tun1_mac=${local.ae_tun1_mac}
+switch_user=${var.switch_user}
 agg_ip=${local.agg_switch_ip}
 agg_tun1_ip=${local.agg_tun1_ip}
 agg_tun1_mac=${local.agg_tun1_mac}
@@ -173,17 +175,15 @@ core_ip=${local.core_switch_ip}
 core_tun1_ip=${local.core_tun1_ip}
 core_tun1_mac=${local.core_tun1_mac}
 topo_file_loc=${var.topo_file_loc}
-sde_dir=/home/${var.sudo_user}/bf-sde-${var.tofino.sde_version}
+sde_dir=/home/${var.orch_user}/bf-sde-${var.tofino.sde_version}
 log_dir=${var.remote_srvc_log_dir}
 remote_scripts_dir=${var.remote_scripts_dir}
 tofino_model_port=${var.tofino_model_start_port}
 grpc_port=${local.grpc_port}
 sdn_ip=${aws_instance.orchestrator.private_ip}
 sdn_port=${var.sdn_port}
-trans_sec_dir=${var.remote_tps_dir}
 remote_ansible_inventory=${var.remote_inventory_file}
-sudo_user=${var.sudo_user}
-ae_monitor_intf=${var.ae_monitor_intf}
+ae_monitor_intf=${var.ae_lab_intf}
 clone_egress_port=${var.clone_egress_port}
 p4_arch=${var.p4_arch}
 "\
@@ -211,7 +211,7 @@ resource "null_resource" "tps-tofino-setup-nodes" {
   connection {
     host = aws_instance.orchestrator.public_ip
     type     = "ssh"
-    user     = var.sudo_user
+    user     = var.orch_user
     private_key = file(var.private_key_file)
   }
 }

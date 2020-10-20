@@ -12,16 +12,16 @@
 # limitations under the License.
 ---
 - hosts: "{{ host_val | default('all') }}"
-  gather_facts: no
+  gather_facts: yes
   become: yes
 
   vars:
     orig_src_dir: "{{ trans_sec_source_dir | default('../../..') }}/"
-    dest_dir: "{{ trans_sec_dest_dir | default(trans_sec_dir) }}"
+    dest_dir: "/home/{{ ansible_user }}/transparent-security"
     run_tests: "{{ python_unit_tests | default(false) }}"
 
   tasks:
-    - name: install python3-pip
+    - name: Install apt dependencies
       apt:
         update_cache: yes
         name:
@@ -30,8 +30,33 @@
       retries: 3
       delay: 10
       until: apt_rc is not failed
+      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
-    - name: Copy local transparent-security source from {{ orig_src_dir }} to remote {{ dest_dir }} directory
+    - name: Install yum dependencies
+      yum:
+        update_cache: yes
+        name:
+          - python3-pip
+          - python3-devel
+          - gcc-c++
+      register: apt_rc
+      retries: 3
+      delay: 10
+      until: apt_rc is not failed
+      when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+
+    - name: Downgrade pip3 scapy version to 2.4.3 due to 2.4.4 bug when running receive_packets.py on centos
+      pip:
+        name:
+          - scapy==2.4.3
+        executable: pip3
+      register: pip_rc
+      retries: 3
+      delay: 10
+      until: pip_rc is not failed
+      when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+
+    - name: Copy local transparent-security source
       become: no
       synchronize:
         # Top-level source directory relative to this directory
@@ -46,23 +71,34 @@
           - "--exclude=*.tfstate"
           - "--exclude=*.eggs"
 
-    - name: install {{ dest_dir }} dependencies into python runtime
-      command: "pip install -r {{ dest_dir }}/requirements.txt"
+    - name: Install TPS dependencies into python runtime
+      command: "pip3 install -r {{ dest_dir }}/requirements.txt"
       register: cmd_out
       changed_when: cmd_out is not failed
       until: cmd_out is not failed
       retries: 3
       delay: 5
 
-    - name: install {{ dest_dir }} into python runtime
-      command: "pip install -e {{ dest_dir }}"
+    - name: Install TPS into python runtime
+      command: "pip3 install -e {{ dest_dir }}"
       register: cmd_out
       changed_when: cmd_out is not failed
       until: cmd_out is not failed
       retries: 3
       delay: 5
+      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
-    - name: run python unit tests
+    - name: Install TPS into Python 3.6 runtime for Centos
+      block:
+        - name: Create trans_sec directory
+          file:
+            path: /usr/local/lib/python3.6/site-packages/trans_sec
+            state: directory
+        - name: Copy trans_sec directory contents
+          shell: "cp -r {{ dest_dir }}/trans_sec/* /usr/local/lib/python3.6/site-packages/trans_sec"
+      when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+
+    - name: Run python unit tests
       command: python setup.py test
       args:
         chdir: "{{ dest_dir }}"

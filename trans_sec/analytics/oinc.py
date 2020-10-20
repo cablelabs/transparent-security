@@ -124,12 +124,24 @@ def extract_int_data(ether_pkt):
                  int_shim_pkt.next_proto, int_shim_pkt.npt,
                  int_shim_pkt.length)
     int_hdr_pkt = IntHeader(_pkt=int_shim_pkt.payload)
+
     logger.debug('INT Header ver - [%s]', int_hdr_pkt.ver)
-    int_meta_1 = IntMeta1(_pkt=int_hdr_pkt.payload)
-    logger.debug('INT Meta 1 switch_id - [%s]', int_meta_1.switch_id)
-    int_meta_2 = IntMeta2(_pkt=int_meta_1.payload)
-    logger.debug('INT Meta 2 switch_id - [%s]', int_meta_2.switch_id)
-    source_int_pkt = SourceIntMeta(_pkt=int_meta_2.payload)
+
+    if int_shim_pkt.length == 7:
+        source_int_pkt = SourceIntMeta(_pkt=int_hdr_pkt.payload)
+    elif int_shim_pkt.length == 8:
+        int_meta_1 = IntMeta1(_pkt=int_hdr_pkt.payload)
+        logger.debug('INT Meta 1 switch_id - [%s]', int_meta_1.switch_id)
+        source_int_pkt = SourceIntMeta(_pkt=int_meta_1.payload)
+    elif int_shim_pkt.length == 9:
+        int_meta_1 = IntMeta1(_pkt=int_hdr_pkt.payload)
+        logger.debug('INT Meta 1 switch_id - [%s]', int_meta_1.switch_id)
+        int_meta_2 = IntMeta2(_pkt=int_meta_1.payload)
+        logger.debug('INT Meta 2 switch_id - [%s]', int_meta_2.switch_id)
+        source_int_pkt = SourceIntMeta(_pkt=int_meta_2.payload)
+    else:
+        return
+
     logger.debug('SourceIntMeta switch_id - [%s], orig_mac - [%s]',
                  source_int_pkt.switch_id, source_int_pkt.orig_mac)
 

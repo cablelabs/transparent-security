@@ -28,7 +28,7 @@ resource "null_resource" "transparent-security-run-scenario-tests" {
   connection {
     host        = aws_instance.orchestrator.public_ip
     type        = "ssh"
-    user        = var.sudo_user
+    user        = var.orch_user
     private_key = file(var.private_key_file)
   }
 }

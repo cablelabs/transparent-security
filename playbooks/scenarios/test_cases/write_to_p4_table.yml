@@ -39,7 +39,7 @@
         - name: Creating add table command
           set_fact:
             add_table_entry_cmd: >
-              {{ remote_tps_dir }}/bin/write_to_p4_table.py
+              {{ trans_sec_dir }}/bin/write_to_p4_table.py
               -s {{ switch.name }}
               -t {{ topo_file_loc }}
               -tc {{ table_entry_config }}

@@ -38,7 +38,7 @@ resource "aws_instance" "orchestrator" {
   connection {
     host = self.public_ip
     type = "ssh"
-    user = var.sudo_user
+    user = var.orch_user
     private_key = file(var.private_key_file)
   }
 }
@@ -127,5 +127,33 @@ resource "aws_network_interface" "node_tun_1" {
   attachment {
     device_index = 1
     instance = aws_instance.node[count.index].id
+  }
+}
+
+# Network nodes
+resource "aws_instance" "ae" {
+  availability_zone = var.availability_zone
+  ami = var.hcp_ami
+  instance_type = var.ae_instance_type
+  key_name = aws_key_pair.snaps-mini-pk.key_name
+
+  tags = {
+    Name = "tps-ae-${var.build_id}"
+  }
+
+  security_groups = [aws_security_group.tps.name]
+  associate_public_ip_address = false
+}
+
+resource "aws_network_interface" "ae_tun_1" {
+  depends_on = [aws_instance.ae, aws_subnet.tunnel_1_subnet]
+  subnet_id = aws_subnet.tunnel_1_subnet.id
+  security_groups = [aws_security_group.tps-internal.id]
+  tags = {
+    Name = "tps-ae-tun1-${var.build_id}"
+  }
+  attachment {
+    device_index = 1
+    instance = aws_instance.ae.id
   }
 }

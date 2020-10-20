@@ -3,12 +3,14 @@ all:
     controller:
       hosts:
         localhost:
-            ansible_connection: local
+          ansible_connection: local
+          trans_sec_dir: /home/ubuntu/transparent-security
     hosts:
       hosts:
 {% for name, host in topo_dict.hosts.items() %}
         {{ name }}:
           ansible_connection: ssh
+          trans_sec_dir: /home/{{ host.user | default('ubuntu') }}/transparent-security
 {% if host.user is defined %}
           ansible_user: {{ host.user }}
 {% endif %}
@@ -20,13 +22,13 @@ all:
           ansible_connection: ssh
 {% if switch.user is defined %}
           ansible_user: {{ switch.user }}
+          trans_sec_dir: /home/{{ switch.user | default('ubuntu') }}/transparent-security
 {% endif %}
 {% endfor %}
   vars:
+    orch_trans_sec_dir: /home/ubuntu/transparent-security
     scenario_name: {{ scenario_name }}
     topo_file_loc: {{ topo_file_loc }}
-    trans_sec_dir: {{ trans_sec_dir }}
-    remote_tps_dir: {{ trans_sec_dir }}
     remote_scripts_dir: {{ remote_scripts_dir }}
     log_dir: {{ log_dir }}
     log_level: {{ log_level | default('DEBUG') }}
@@ -37,4 +39,6 @@ all:
     grpc_port: {{ grpc_port | default('50052') }}
     p4_platform: tofino
     p4_arch: {{ p4_arch }}
-    sudo_user: {{ sudo_user }}
+{% if ae_monitor_intf is defined %}
+    ae_monitor_intf: {{ ae_monitor_intf }}
+{% endif %}
