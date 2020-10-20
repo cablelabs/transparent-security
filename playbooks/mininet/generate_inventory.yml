@@ -35,8 +35,6 @@
         - "srvc_log_dir={{ remote_srvc_log_dir }}"
         - "log_level={{ service_log_level }}"
         - "log_dir={{ remote_srvc_log_dir }}"
-        - "remote_tps_dir={{ remote_tps_dir }}"
-        - "trans_sec_dir={{ remote_tps_dir }}"
         - "remote_scripts_dir={{ remote_scripts_dir }}"
         - "remote_ansible_inventory={{ remote_inventory_file }}"
         - "topo_file_loc={{ topo_file }}"

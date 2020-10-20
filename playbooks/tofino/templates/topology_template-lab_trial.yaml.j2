@@ -65,7 +65,6 @@ hosts:
   ae:
     name: ae
     id: 13
-    switch_ip: 10.0.1.8
     ip: 10.0.1.9
 {% if ae_user is defined or host_user is defined %}
     user: {{ ae_user | default(host_user) }}

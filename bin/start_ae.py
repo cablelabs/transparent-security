@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (c) 2019 Cable Television Laboratories, Inc.
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,7 @@ import pydevd
 from trans_sec.analytics.oinc import Oinc, SimpleAE, LoggerAE, IntLoggerAE
 from trans_sec.utils.http_session import HttpSession
 
-logger = logging.getLogger('oinc')
+logger = logging.getLogger('start_ae')
 FORMAT = '%(levelname)s %(asctime)-15s %(filename)s %(lineno)d %(message)s'
 
 

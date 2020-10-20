@@ -23,6 +23,15 @@
       - bridge-utils
       - iptables
       - iproute2
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+- name: install dependecies
+  yum:
+    name:
+      - bridge-utils
+      - iptables
+      - net-tools
+  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
 
 - name: extract this_host and remote_host (item_host) from topology
   set_fact:

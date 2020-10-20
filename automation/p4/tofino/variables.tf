@@ -21,7 +21,10 @@ variable "vpc_subnet_prfx" {default = "172.31"}
 # Optional Variables
 variable "public_key_file" {default = "~/.ssh/id_rsa.pub"}
 variable "private_key_file" {default = "~/.ssh/id_rsa"}
-variable "sudo_user" {default = "ubuntu"}
+variable "orch_user" {default = "ubuntu"}
+variable "switch_user" {default = "ubuntu"}
+variable "node_user" {default = "ubuntu"}
+variable "ae_user" {default = "centos"}
 variable "region" {default = "us-west-2"}
 variable "availability_zone" {default = "us-west-2a"}
 
@@ -32,8 +35,10 @@ variable "tofino" {
     bfrt_ami = "ami-01a5ff54de23b6739"
   }
 }
+variable "hcp_ami" {default ="ami-04da02f70cbcbe7a5"}
 
 variable "switch_instance_type" {default = "t2.2xlarge"}
+variable "ae_instance_type" {default = "t2.large"}
 variable "orch_instance_type" {default = "t2.2xlarge"}
 variable "node_instance_type" {default = "t2.small"}
 variable "num_switches_full" {default = 5}
@@ -41,7 +46,7 @@ variable "num_switches_single" {default = 1}
 variable "num_switches_lab_trial" {default = 2}
 variable "num_nodes_full" {default = 9}
 variable "num_nodes_single" {default = 3}
-variable "num_nodes_lab_trial" {default = 4}
+variable "num_nodes_lab_trial" {default = 3}
 
 # Variables for ansible playbooks
 variable "ANSIBLE_CMD" {default = "export ANSIBLE_HOST_KEY_CHECKING=False; ansible-playbook"}

@@ -74,7 +74,7 @@
     - name: Create receive packets command
       set_fact:
         receive_cmd: >
-          {{ remote_tps_dir }}/trans_sec/device_software/receive_packets.py
+          {{ trans_sec_dir }}/trans_sec/device_software/receive_packets.py
           -i {{ receiver_intf }} -f {{ receiver_log_file }} -d {{ receive_timeout }} -ih {{ hops }}
 
     - debug:
@@ -127,7 +127,7 @@
     - name: Create send command
       set_fact:
         send_cmd: >-
-          {{ remote_tps_dir }}/trans_sec/device_software/send_packets.py
+          {{ trans_sec_dir }}/trans_sec/device_software/send_packets.py
           -y {{ send_delay }} -i {{ interval }} -it {{ loops }} -itd {{ loop_delay }}
           -z {{ sender_intf }} -sa {{ sender_ip }} -r {{ receiver_ip }} -sp {{ send_src_port }}
           -p {{ send_port }} -f {{ sender_log_file }} -c {{ send_packet_count }} -e {{ sender.mac }}
