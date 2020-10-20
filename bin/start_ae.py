@@ -45,6 +45,17 @@ def get_args():
     parser.add_argument('-t', '--type', dest='type', required=True,
                         choices=['OINC', 'SIMPLE', 'LOGGING', 'INT'],
                         help='Acceptable values OINC|SIMPLE|LOGGING|INT')
+    parser.add_argument('-c', '--sdn-attack-ctx', dest='sdn_ctx',
+                        required=False, default='gwAttack',
+                        help='the URL to the SDN controller')
+    parser.add_argument('-pc', '--packet-count', required=False, type=int,
+                        default=100,
+                        help='Number of packets to hit alert within the '
+                             'sample-interval')
+    parser.add_argument('-si', '--sample-interval', required=False, type=int,
+                        default=60,
+                        help='Number of seconds the packet count needs to hit '
+                             'to trigger alert')
     return parser.parse_args()
 
 
@@ -72,10 +83,12 @@ def main():
     logger.info('Retrieving http session from url - [%s]', args.sdn_url)
     http_session = HttpSession(args.sdn_url)
 
-    logger.info('Type of AE to instantiate - [%s]', args.type)
     if args.type == 'SIMPLE':
         logger.info('SimpleAE instantiated')
-        ae = SimpleAE(http_session)
+        logger.debug('SDN Context - [%s]', args.sdn_ctx)
+        ae = SimpleAE(http_session, packet_count=args.packet_count,
+                      sample_interval=args.sample_interval,
+                      sdn_attack_context=args.sdn_ctx)
     elif args.type == 'OINC':
         logger.info('Oinc instantiated')
         ae = Oinc(http_session)

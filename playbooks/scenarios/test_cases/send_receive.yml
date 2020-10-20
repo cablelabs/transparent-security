@@ -201,11 +201,16 @@
         msg: "{{ max_packet_count }} < {{ packet_count }} or {{ min_packet_count }} > {{ packet_count }}"
       when: min_packet_count|int > packet_count|int or max_packet_count|int < packet_count|int
 
-    - name: Call web service
-      uri:
-        url: "{{ cleanup_rest_call.url }}"
-        method: DELETE
-        body_format: json
-        body: "{{ cleanup_rest_call.body }}"
-        status_code: "{{ cleanup_rest_call.ok_status }}"
+    - block:
+        - name: Show the web service attributes
+          debug:
+            var: cleanup_rest_call
+
+        - name: Call web service
+          uri:
+            url: "{{ cleanup_rest_call.url }}"
+            method: DELETE
+            body_format: json
+            body: "{{ cleanup_rest_call.body }}"
+            status_code: "{{ cleanup_rest_call.ok_status }}"
       when: cleanup_rest_call is defined

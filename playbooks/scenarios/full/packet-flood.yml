@@ -31,8 +31,8 @@
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     switch_egress_intf: eth4
     dst_mac: "{{ sender['switch_mac'] }}"
-    receiver_log_filename: "udp-flood-receiver-{{ rec_host }}-{{ send_protocol }}-1.out"
-    sender_log_filename: "udp-flood-sender-{{ send_host }}-{{ send_protocol }}-1.out"
+    receiver_log_filename: "{{ send_protocol }}-flood-receiver-{{ rec_host }}-{{ send_protocol }}-1.out"
+    sender_log_filename: "{{ send_protocol }}-flood-sender-{{ send_host }}-{{ send_protocol }}-1.out"
     send_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 1) }}"
     send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 2) }}"
     send_packet_count: 150
@@ -45,7 +45,7 @@
       body:
         src_ip: "{% if scenario_send_ip_version|int == 4 %}{{ sender.ip }}{% else %}{{ sender.ipv6 }}{% endif %}"
         packet_size: 112
-        attack_type: "UDP Flood"
+        attack_type: "{{ send_protocol }} Flood"
         dst_port: "{{ send_port }}"
         dst_ip: "{% if scenario_send_ip_version|int == 4 %}{{ receiver.ip }}{% else %}{{ receiver.ipv6 }}{% endif %}"
         src_mac: "{{ sender.mac }}"
@@ -69,8 +69,8 @@
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     switch_egress_intf: eth3
     dst_mac: "{{ sender['switch_mac'] }}"
-    receiver_log_filename: "udp-flood-receiver-{{ rec_host }}-{{ send_protocol }}-2.out"
-    sender_log_filename: "udp-flood-sender-{{ send_host }}-{{ send_protocol }}-2.out"
+    receiver_log_filename: "{{ send_protocol }}-flood-receiver-{{ rec_host }}-{{ send_protocol }}-2.out"
+    sender_log_filename: "{{ send_protocol }}-flood-sender-{{ send_host }}-{{ send_protocol }}-2.out"
     send_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 3) }}"
     send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 4) }}"
     send_packet_count: 150
@@ -83,7 +83,7 @@
       body:
         src_ip: "{% if scenario_send_ip_version|int == 4 %}{{ sender.ip }}{% else %}{{ sender.ipv6 }}{% endif %}"
         packet_size: 112
-        attack_type: "UDP Flood"
+        attack_type: "{{ send_protocol }} Flood"
         dst_port: "{{ send_port }}"
         dst_ip: "{% if scenario_send_ip_version|int == 4 %}{{ receiver.ip }}{% else %}{{ receiver.ipv6 }}{% endif %}"
         src_mac: "{{ sender.mac }}"
@@ -107,8 +107,8 @@
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     switch_egress_intf: eth3
     dst_mac: "{{ sender['switch_mac'] }}"
-    receiver_log_filename: "udp-flood-receiver-{{ rec_host }}-{{ send_protocol }}-3.out"
-    sender_log_filename: "udp-flood-sender-{{ send_host }}-{{ send_protocol }}-3.out"
+    receiver_log_filename: "{{ send_protocol }}-flood-receiver-{{ rec_host }}-{{ send_protocol }}-3.out"
+    sender_log_filename: "{{ send_protocol }}-flood-sender-{{ send_host }}-{{ send_protocol }}-3.out"
     send_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 5) }}"
     send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 6) }}"
     send_packet_count: 150
@@ -121,7 +121,7 @@
       body:
         src_ip: "{% if scenario_send_ip_version|int == 4 %}{{ sender.ip }}{% else %}{{ sender.ipv6 }}{% endif %}"
         packet_size: 112
-        attack_type: "UDP Flood"
+        attack_type: "{{ send_protocol }} Flood"
         dst_port: "{{ send_port }}"
         dst_ip: "{% if scenario_send_ip_version|int == 4 %}{{ receiver.ip }}{% else %}{{ receiver.ipv6 }}{% endif %}"
         src_mac: "{{ sender.mac }}"
