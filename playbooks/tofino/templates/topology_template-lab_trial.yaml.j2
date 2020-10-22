@@ -82,6 +82,7 @@ switches:
   aggregate:
     name: aggregate
     id: 0
+    int_id: 123
     runtime_p4info: {{ remote_scripts_dir }}/p4/aggregate.tofino/p4info.pb.txt
     tofino_bin: {{ remote_scripts_dir }}/p4/aggregate.tofino/pipe/tofino.bin
     ctx_json: {{ remote_scripts_dir }}/p4/aggregate.tofino/pipe/context.json
@@ -107,6 +108,7 @@ switches:
   core:
     name: core
     id: 0
+    int_id: 234
     runtime_p4info: {{ remote_scripts_dir }}/p4/core.tofino/p4info.pb.txt
     tofino_bin: {{ remote_scripts_dir }}/p4/core.tofino/pipe/tofino.bin
     ctx_json: {{ remote_scripts_dir }}/p4/core.tofino/pipe/context.json

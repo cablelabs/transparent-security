@@ -98,7 +98,7 @@ class AggregateSwitch(BFRuntimeSwitch):
                                     DataTuple(data_inspection_action_val_1,
                                               int(dev_id)),
                                     DataTuple(data_inspection_action_val_2,
-                                              int(self.device_id))
+                                              int(self.int_device_id))
                                 ])
 
     def del_data_inspection(self, dev_id, dev_mac):
@@ -152,9 +152,10 @@ class AggregateSwitch(BFRuntimeSwitch):
                                              int(kwargs['dst_port']))
                                 ])
 
-    def add_switch_id(self, dev_id):
+    def add_switch_id(self):
         logger.info(
-            'Inserting device ID [%s] into add_switch_id_t table', dev_id)
+            'Inserting device ID [%s] into add_switch_id_t table',
+            self.int_device_id)
 
         try:
             self.insert_table_entry(add_switch_id_tbl,
@@ -162,7 +163,7 @@ class AggregateSwitch(BFRuntimeSwitch):
                                     [KeyTuple(add_switch_id_tbl_key,
                                               value=UDP_INT_DST_PORT)],
                                     [DataTuple(add_switch_id_action_val,
-                                               val=dev_id)])
+                                               val=self.int_device_id)])
         except Exception as e:
             if 'ALREADY_EXISTS' in str(e):
                 pass

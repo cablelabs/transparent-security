@@ -74,10 +74,10 @@ class CoreSwitch(P4RuntimeSwitch):
     def add_data_inspection(self, dev_id, dev_mac):
         logger.info(
             'Adding data inspection entry to core device [%s] with device ID '
-            '- [%s]', self.device_id, dev_id)
+            '- [%s]', self.int_device_id, dev_id)
 
         action_params = {
-            'switch_id': dev_id
+            'switch_id': self.int_device_id
         }
         table_name = '{}.data_inspection_t'.format(self.p4_ingress)
         action_name = '{}.data_inspect_packet'.format(self.p4_ingress)

@@ -36,6 +36,7 @@ class SwitchConnection(object):
         self.mac = sw_info['mac']
         self.type = sw_info['type']
         self.device_id = sw_info['id']
+        self.int_device_id = sw_info.get('int_id', sw_info['id'])
         self.grpc_addr = sw_info['grpc']
         self.digest_thread = Thread(target=self.receive_digests)
 
@@ -144,7 +145,7 @@ class SwitchConnection(object):
         logger.info('Switch does not support attack mitigation')
         pass
 
-    def add_switch_id(self, dev_id):
+    def add_switch_id(self):
         pass
 
     @abstractmethod
