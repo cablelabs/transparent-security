@@ -106,7 +106,7 @@ class CoreSwitch(BFRuntimeSwitch):
                                 [KeyTuple(data_inspection_tbl_key,
                                           value=UDP_INT_DST_PORT)],
                                 [DataTuple(data_inspection_action_val,
-                                           val=int(dev_id))])
+                                           val=int(self.int_device_id))])
 
     def del_data_inspection(self, dev_id, dev_mac):
         self.delete_table_entry(data_inspection_tbl,
