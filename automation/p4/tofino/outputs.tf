@@ -17,10 +17,21 @@ output "ip" {
   value = aws_instance.orchestrator.public_ip
 }
 
+output "ubuntu-private-ip" {
+  value = aws_instance.orchestrator.private_ip
+}
+
 output "switch1-ip" {
   value = aws_instance.tps-switch.0.public_ip
 }
 
 output "switch2-ip" {
   value = var.scenario_name == "lab_trial" ? aws_instance.tps-switch.1.public_ip : "n/a"
+}
+
+output "snaps-hcp-ip" {
+  value = var.scenario_name == "lab_trial" ? aws_instance.ae.public_ip : "n/a"
+}
+output "snaps-hcp-private-ip" {
+  value = var.scenario_name == "lab_trial" ? aws_instance.ae.private_ip : "n/a"
 }
