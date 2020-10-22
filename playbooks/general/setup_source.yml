@@ -86,17 +86,17 @@
       until: cmd_out is not failed
       retries: 3
       delay: 5
-      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
-
-    - name: Install TPS into Python 3.6 runtime for Centos
-      block:
-        - name: Create trans_sec directory
-          file:
-            path: /usr/local/lib/python3.6/site-packages/trans_sec
-            state: directory
-        - name: Copy trans_sec directory contents
-          shell: "cp -r {{ dest_dir }}/trans_sec/* /usr/local/lib/python3.6/site-packages/trans_sec"
-      when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+#      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+#
+#    - name: Install TPS into Python 3.8 runtime for Centos
+#      block:
+#        - name: Create trans_sec directory
+#          file:
+#            path: /usr/local/lib/python3.8/site-packages/trans_sec
+#            state: directory
+#        - name: Copy trans_sec directory contents
+#          shell: "cp -r {{ dest_dir }}/trans_sec/* /usr/local/lib/python3.8/site-packages/trans_sec"
+#      when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
 
     - name: Run python unit tests
       command: python setup.py test

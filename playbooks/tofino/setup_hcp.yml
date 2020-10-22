@@ -1,0 +1,63 @@
+# Copyright (c) 2020 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+- hosts: ae
+  gather_facts: no
+  become: yes
+#  environment:
+#    JAVA_HOME:$(dirname $(dirname $(readlink $(readlink $(which java)))))
+  tasks:
+  - name: Install yum dependencies
+    yum:
+      name:
+        - tcpdump
+        - java
+        - logstash
+
+#  - name: Logstash input configs
+#    template:
+#      src: templates/logstash_input_template.conf.j2
+#      dest: /etc/logstash/conf.d/02-udp-input.conf
+#
+#  - name: Logstash output configs
+#    template:
+#      src: templates/logstash_output_template.conf.j2
+#      dest: /etc/logstash/conf.d/30-udp-output.conf
+
+  - name: Start Elasticsearch
+    service:
+      name: elasticsearch
+      state: started
+
+  - name: Start Kibana
+    service:
+      name: kibana
+      state: started
+
+#  - name: Initialize
+#    shell: cd /home/centos/espcap
+#           sudo python3 -m pip install -r requirements-7.x.txt
+
+#  - name: Initialize transparent security data collection pipeline
+#    shell: cd /home/centos/espcap
+#           sudo python3 scripts/packet_template-7.x.sh localhost:9200
+
+#  - name: Setup and start data capture using Espcap
+#    shell: cd /home/centos/espcap
+#           sudo python3 src/espcap.py --nic=ae-tun --node=localhost:9200 --chunk=50
+
+
+#  - name: Start Logstash
+#    shell: cd /etc/logstash/conf.d && nohup /usr/share/logstash/bin/logstash -f /etc/logstash/conf.d/02-udp-input.conf --path.settings /etc/logstash/ &
+
+
