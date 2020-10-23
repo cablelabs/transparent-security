@@ -85,3 +85,51 @@
   vars:
     scenario_send_protocol: TCP
     scenario_send_ip_version: 6
+
+# Data Inspection scenarios for UDP and IPv4
+- import_playbook: data-inspection.yml
+  vars:
+    di_log_prfx: di-ae-dd
+    scenario_send_protocol: UDP
+    scenario_send_ip_version: 4
+    di_send_packet_count: 150
+    di_min_rec_packet_count: 99
+    di_max_rec_packet_count: 175
+    di_send_loops: 2
+    di_send_loop_delay: 5
+
+# Data Inspection scenarios for UDP and IPv6 with AE for testing dropping packets
+- import_playbook: data-inspection.yml
+  vars:
+    di_log_prfx: di-ae-dd
+    scenario_send_protocol: UDP
+    scenario_send_ip_version: 6
+    di_send_packet_count: 150
+    di_min_rec_packet_count: 99
+    di_max_rec_packet_count: 175
+    di_send_loops: 2
+    di_send_loop_delay: 5
+
+# Data Inspection scenarios for TCP and IPv4 with AE for testing dropping packets
+- import_playbook: data-inspection.yml
+  vars:
+    di_log_prfx: di-ae-dd
+    scenario_send_protocol: TCP
+    scenario_send_ip_version: 4
+    di_send_packet_count: 150
+    di_min_rec_packet_count: 99
+    di_max_rec_packet_count: 175
+    di_send_loops: 2
+    di_send_loop_delay: 5
+
+# Data Inspection scenarios for TCP and IPv6 with AE for testing dropping packets
+- import_playbook: data-inspection.yml
+  vars:
+    di_log_prfx: di-ae-dd
+    scenario_send_protocol: TCP
+    scenario_send_ip_version: 6
+    di_send_packet_count: 150
+    di_min_rec_packet_count: 99
+    di_max_rec_packet_count: 175
+    di_send_loops: 2
+    di_send_loop_delay: 5

@@ -35,7 +35,8 @@ class PacketAnalytics(object):
     """
     Analytics Engine class
     """
-    def __init__(self, sdn_interface, packet_count=100, sample_interval=60):
+    def __init__(self, sdn_interface, packet_count=100, sample_interval=60,
+                 sdn_attack_context='gwAttack'):
         """
         Constructor
         :param sdn_interface: the HTTP interface to the SDN Controller
@@ -48,8 +49,10 @@ class PacketAnalytics(object):
         self.sample_interval = sample_interval
         self.count_map = dict()
         self.sniff_stop = threading.Event()
+        self.sdn_attack_context = sdn_attack_context
 
-        logger.debug("Completed binding packet layers")
+        logger.debug("Started AE with attack call to [%s/%s]",
+                     self.sdn_interface, self.sdn_attack_context)
 
     def start_sniffing(self, iface, udp_dport=UDP_TRPT_DST_PORT):
         """
@@ -84,7 +87,7 @@ class PacketAnalytics(object):
         :raises Exception: due to the remote HTTP POST
         """
         logger.info('Start attack - %s', attack_dict)
-        self.sdn_interface.post('gwAttack', attack_dict)
+        self.sdn_interface.post(self.sdn_attack_context, attack_dict)
 
     @abc.abstractmethod
     def process_packet(self, packet, udp_dport=UDP_INT_DST_PORT):
@@ -299,9 +302,10 @@ class SimpleAE(PacketAnalytics):
     Simple implementation of PacketAnalytics where the count for detecting
     attack notifications is based on the unique hash of the extracted INT data
     """
-    def __init__(self, sdn_interface, packet_count=100, sample_interval=60):
-        super(self.__class__, self).__init__(sdn_interface, packet_count,
-                                             sample_interval)
+    def __init__(self, sdn_interface, packet_count=100, sample_interval=60,
+                 sdn_attack_context='gwAttack'):
+        super(self.__class__, self).__init__(
+            sdn_interface, packet_count, sample_interval, sdn_attack_context)
         # Holds the last time an attack call was issued to the SDN controller
         self.attack_map = dict()
 

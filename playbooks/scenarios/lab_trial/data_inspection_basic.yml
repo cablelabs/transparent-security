@@ -13,6 +13,16 @@
 # Simple scenario where packets are sent through 3 devices and only the last
 # one will be demonstrating dropped packets
 ---
+# Restart AE service to ensure moving window gets reset
+- hosts: ae
+  gather_facts: no
+  become: yes
+  tasks:
+    - name: Restart tps-tofino-ae
+      systemd:
+        name: tps-tofino-ae
+        state: restarted
+
 # Add table entries into data_forward_t tables
 - hosts: "{{ rec_host }}"
   gather_facts: no
@@ -54,15 +64,28 @@
 - import_playbook: ../test_cases/send_receive.yml
   vars:
     int_hops: "{{ sr1_rec_int_hops | default(0) }}"
-    receiver_log_filename: "di_basic_receiver-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}-1.out"
-    sender_log_filename: "di_basic_sender-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}-1.out"
+    receiver_log_filename: "{{ di_log_prfx | default('di') }}_basic_receiver-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}-1.out"
+    sender_log_filename: "{{ di_log_prfx | default('di') }}_basic_sender-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}-1.out"
     send_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 9) }}"
     send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 10) }}"
-    send_packet_count: "{{ '%s' % 100 | random(seed=now|int + 11) }}"
+    send_packet_count: "{{ di_send_packet_count | default('%s' % 100 | random(seed=now|int + 11)) }}"
     inspection_data: "{{ sr1_data_inspection_int | default(None) }}"
-    min_received_packet_count: "{{ send_packet_count|int - 10 }}" # TODO/FIXME - Have been noticing missing packets on TNA
-    max_received_packet_count: "{{ send_packet_count }}"
+    # TODO/FIXME - Have been noticing missing packets on TNA so we should not do the '- 10' (see issue #268)
+    min_received_packet_count: "{{ di_min_rec_packet_count | default(send_packet_count|int - 10) }}"
+    max_received_packet_count: "{{ di_max_rec_packet_count | default(send_packet_count) }}"
+    send_loops: "{{ di_send_loops | default(1) }}"
+    send_loop_delay: "{{ di_send_loop_delay | default(5) }}"
     discover_fwd_path: True
+    cleanup_rest_call:
+      url: "http://{{ sdn_ip }}:{{ sdn_port }}/aggAttack"
+      body:
+        src_ip: "{% if scenario_send_ip_version|int == 4 %}{{ sender.ip }}{% else %}{{ sender.ipv6 }}{% endif %}"
+        packet_size: 112
+        attack_type: "{{ send_protocol }} Flood"
+        dst_port: "{{ send_port }}"
+        dst_ip: "{% if scenario_send_ip_version|int == 4 %}{{ receiver.ip }}{% else %}{{ receiver.ipv6 }}{% endif %}"
+        src_mac: "{{ sender.mac }}"
+      ok_status: 201
 
 # Disable switches for data inspection
 - hosts: "{{ rec_host }}"
