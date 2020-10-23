@@ -116,7 +116,7 @@ control TpsAggIngress(
     inout ingress_intrinsic_metadata_for_tm_t ig_tm_md) {
 
 
-    /* counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) forwardedPackets; */
+    DirectCounter<bit<32>>(CounterType_t.PACKETS) droppedPackets;
 
     action pack_meta_tcp() {
         meta.dst_port = hdr.tcp.dst_port;
@@ -138,6 +138,7 @@ control TpsAggIngress(
 
     action data_drop() {
         ig_dprsr_md.drop_ctl = 0x1;
+        droppedPackets.count();
     }
 
     table data_drop_t {
@@ -149,10 +150,9 @@ control TpsAggIngress(
         }
         actions = {
             data_drop;
-            NoAction;
         }
+        counters = droppedPackets;
         size = TABLE_SIZE;
-        default_action = NoAction();
     }
 
     action data_forward(PortId_t port) {

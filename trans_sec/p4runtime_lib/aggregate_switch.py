@@ -146,3 +146,6 @@ class AggregateSwitch(P4RuntimeSwitch):
                 self.p4_ingress),
             action_params=action_params)
         self.write_table_entry(table_entry)
+
+    def drop_count(self):
+        pass

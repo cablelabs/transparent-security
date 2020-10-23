@@ -138,3 +138,6 @@ class GatewayController(AbstractController):
             attack['host'] = host
             attack[dst_addr_key] = attack['src_ip']
             attack_switch.stop_attack(**attack)
+
+    def count_dropped_packets(self):
+        pass

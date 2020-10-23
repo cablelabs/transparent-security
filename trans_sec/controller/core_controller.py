@@ -114,3 +114,6 @@ class CoreController(AbstractController):
             logger.info(
                 'Installed Host %s ipv4 cloning rule on %s',
                 north_device.get('ip'), sw.name)
+
+    def count_dropped_packets(self):
+        pass
