@@ -50,7 +50,7 @@ class AbstractController(object):
         for switch in self.switches:
             logger.info('Starting digest listeners on device [%s]',
                         switch.grpc_addr)
-            switch.add_switch_id(switch.device_id)
+            switch.add_switch_id()
             switch.start_digest_listeners()
 
     def stop(self):
@@ -109,8 +109,9 @@ class AbstractController(object):
             if device is not None and add_di:
                 logger.info('Adding inspection to mac [%s] on device [%s]',
                             device['mac'], sw.grpc_addr)
-                sw.add_data_inspection(dev_id=device['id'],
-                                       dev_mac=device['mac'])
+                sw.add_data_inspection(
+                    dev_id=device.get('int_id', device['id']),
+                    dev_mac=device['mac'])
         else:
             logger.info('No south links to install')
 

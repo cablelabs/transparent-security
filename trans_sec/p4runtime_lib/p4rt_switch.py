@@ -191,9 +191,10 @@ class P4RuntimeSwitch(SwitchConnection, ABC):
     def add_data_inspection(self, dev_id, dev_mac):
         logger.info(
             'Adding data inspection to device [%s] with ID '
-            '- [%s] and mac - [%s]', self.device_id, dev_id, dev_mac)
+            '- [%s] and mac - [%s]',
+            self.device_id, self.int_device_id, dev_mac)
         action_params = {
-            'device': dev_id,
+            'device': self.int_device_id,
             'switch_id': self.sw_info['id']
         }
         table_entry = self.p4info_helper.build_table_entry(
@@ -230,7 +231,7 @@ class P4RuntimeSwitch(SwitchConnection, ABC):
             'Installed Northbound Packet Inspection for device with'
             ' MAC - [%s]', dev_mac)
 
-    def add_switch_id(self, dev_id):
+    def add_switch_id(self):
         pass
 
     def build_device_config(self):
