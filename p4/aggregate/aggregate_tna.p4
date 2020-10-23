@@ -115,9 +115,6 @@ control TpsAggIngress(
     inout ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md,
     inout ingress_intrinsic_metadata_for_tm_t ig_tm_md) {
 
-
-    /* counter(MAX_DEVICE_ID, CounterType.packets_and_bytes) forwardedPackets; */
-
     action pack_meta_tcp() {
         meta.dst_port = hdr.tcp.dst_port;
     }
@@ -214,10 +211,6 @@ control TpsAggIngress(
 
         hdr.int_meta.switch_id = switch_id;
         hdr.int_meta.orig_mac = hdr.ethernet.src_mac;
-
-        #ifdef IMPL_COUNTER
-        forwardedPackets.count(device);
-        #endif
     }
 
     action data_inspect_packet_ipv4() {
@@ -225,14 +218,14 @@ control TpsAggIngress(
         hdr.int_shim.next_proto = hdr.ipv4.protocol;
         hdr.ipv4.protocol = TYPE_UDP;
         // TODO/FIXME - This value will be incorrect once the gateway with INT has been added into the mix
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen + IPV4_INT_UDP_BYTES;
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen + (IPV4_HDR_BYTES + INT_SHIM_BASE_SIZE + UDP_HDR_BYTES);
     }
 
     action data_inspect_packet_ipv6() {
         hdr.int_shim.next_proto = hdr.ipv6.next_hdr_proto;
         hdr.ipv6.next_hdr_proto = TYPE_UDP;
         // TODO/FIXME - This value will be incorrect once the gateway with INT has been added into the mix
-        hdr.ipv6.payload_len = hdr.ipv6.payload_len + IPV6_INT_UDP_BYTES;
+        hdr.ipv6.payload_len = hdr.ipv6.payload_len + (IPV6_HDR_BYTES + INT_SHIM_BASE_SIZE + UDP_HDR_BYTES);
     }
 
     table data_inspection_t {
