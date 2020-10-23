@@ -96,7 +96,7 @@
     di_min_rec_packet_count: 99
     di_max_rec_packet_count: 175
     di_send_loops: 2
-    di_send_loop_delay: 5
+    di_send_loop_delay: 10
 
 # Data Inspection scenarios for UDP and IPv6 with AE for testing dropping packets
 - import_playbook: data-inspection.yml
@@ -108,7 +108,7 @@
     di_min_rec_packet_count: 99
     di_max_rec_packet_count: 175
     di_send_loops: 2
-    di_send_loop_delay: 5
+    di_send_loop_delay: 10
 
 # Data Inspection scenarios for TCP and IPv4 with AE for testing dropping packets
 - import_playbook: data-inspection.yml
@@ -120,7 +120,7 @@
     di_min_rec_packet_count: 99
     di_max_rec_packet_count: 175
     di_send_loops: 2
-    di_send_loop_delay: 5
+    di_send_loop_delay: 10
 
 # Data Inspection scenarios for TCP and IPv6 with AE for testing dropping packets
 - import_playbook: data-inspection.yml
@@ -132,4 +132,4 @@
     di_min_rec_packet_count: 99
     di_max_rec_packet_count: 175
     di_send_loops: 2
-    di_send_loop_delay: 5
+    di_send_loop_delay: 10
