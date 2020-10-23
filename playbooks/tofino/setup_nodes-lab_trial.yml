@@ -65,3 +65,6 @@
     srvc_type: SIMPLE
     sdn_url: "http://{{ sdn_ip }}:{{ sdn_port }}"
     monitor_intf: "{{ ae_monitor_intf }}"
+    packet_count: 100
+    sample_interval: 60
+    sdn_attack_context: aggAttack
