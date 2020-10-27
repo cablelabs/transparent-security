@@ -302,7 +302,7 @@ control TpsCoreEgress(
         hdr.trpt_hdr.in_type = TRPT_HDR_IN_TYPE_IPV4;
         hdr.trpt_ipv6.payload_len = hdr.ipv4.totalLen + (IPV6_HDR_BYTES + UDP_HDR_BYTES + TRPT_HDR_BASE_BYTES + ETH_HDR_BYTES);
         hdr.trpt_ipv4.totalLen = hdr.ipv4.totalLen + (IPV4_HDR_BYTES + UDP_HDR_BYTES + (INT_SHIM_BASE_SIZE * BYTES_PER_SHIM) + SWITCH_ID_HDR_BYTES + 6);
-        hdr.trpt_udp.len = hdr.ipv4.totalLen + (IPV4_HDR_BYTES + (INT_SHIM_BASE_SIZE * BYTES_PER_SHIM) + SWITCH_ID_HDR_BYTES + 6);
+        hdr.trpt_udp.len = hdr.ipv4.totalLen + (IPV4_HDR_BYTES + (INT_SHIM_BASE_SIZE * BYTES_PER_SHIM) + SWITCH_ID_HDR_BYTES - 6);
     }
 
     /* Sets the trpt_eth.in_type for IPv6 */
@@ -328,8 +328,6 @@ control TpsCoreEgress(
         hdr.trpt_ipv4.protocol = TYPE_UDP;
         hdr.trpt_ipv4.srcAddr = hdr.ipv4.srcAddr;
         hdr.trpt_ipv4.dstAddr = ae_ip;
-
-        hdr.trpt_udp.len = eg_intr_md.pkt_length + (UDP_HDR_BYTES + TRPT_HDR_BASE_BYTES);
     }
 
     /**
@@ -343,7 +341,6 @@ control TpsCoreEgress(
         hdr.trpt_ipv6.next_hdr_proto = TYPE_UDP;
         hdr.trpt_ipv6.srcAddr = hdr.ipv6.srcAddr;
         hdr.trpt_ipv6.dstAddr = ae_ip;
-        hdr.trpt_udp.len = eg_intr_md.pkt_length + (UDP_HDR_BYTES + TRPT_HDR_BASE_BYTES);
     }
 
     /**
