@@ -472,9 +472,9 @@ control TpsAggEgressDeparser(
     in metadata meta,
     in egress_intrinsic_metadata_for_deparser_t eg_intr_dprsr_md) {
 
-    Checksum() checksum;
+    Checksum() ipv4_checksum;
     apply {
-        hdr.ipv4.hdrChecksum = checksum.update(
+        hdr.ipv4.hdrChecksum = ipv4_checksum.update(
                 {hdr.ipv4.version,
                  hdr.ipv4.ihl,
                  hdr.ipv4.diffserv,
@@ -486,16 +486,6 @@ control TpsAggEgressDeparser(
                  hdr.ipv4.protocol,
                  hdr.ipv4.srcAddr,
                  hdr.ipv4.dstAddr});
-
-        hdr.udp.cksum = checksum.update(
-                {hdr.udp.src_port,
-                 hdr.udp.dst_port,
-                 hdr.udp.len});
-
-        hdr.udp_int.cksum = checksum.update(
-                {hdr.udp_int.src_port,
-                 hdr.udp_int.dst_port,
-                 hdr.udp_int.len});
 
         packet.emit(hdr.ethernet);
         packet.emit(hdr.arp);
