@@ -16,6 +16,7 @@ locals {
 }
 
 resource "null_resource" "transparent-security-run-scenario-tests" {
+  count = var.test_case == "none" ? 0 : 1
   depends_on = [null_resource.tps-tofino-setup-nodes]
 
   provisioner "remote-exec" {
