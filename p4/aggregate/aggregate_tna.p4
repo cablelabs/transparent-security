@@ -218,14 +218,14 @@ control TpsAggIngress(
         hdr.int_shim.next_proto = hdr.ipv4.protocol;
         hdr.ipv4.protocol = TYPE_UDP;
         // TODO/FIXME - This value will be incorrect once the gateway with INT has been added into the mix
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen + (IPV4_HDR_BYTES + INT_SHIM_BASE_SIZE + UDP_HDR_BYTES);
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen + ((INT_SHIM_BASE_SIZE * BYTES_PER_SHIM) + UDP_HDR_BYTES);
     }
 
     action data_inspect_packet_ipv6() {
         hdr.int_shim.next_proto = hdr.ipv6.next_hdr_proto;
         hdr.ipv6.next_hdr_proto = TYPE_UDP;
         // TODO/FIXME - This value will be incorrect once the gateway with INT has been added into the mix
-        hdr.ipv6.payload_len = hdr.ipv6.payload_len + (IPV6_HDR_BYTES + INT_SHIM_BASE_SIZE + UDP_HDR_BYTES);
+        hdr.ipv6.payload_len = hdr.ipv6.payload_len + ((INT_SHIM_BASE_SIZE * BYTES_PER_SHIM) + UDP_HDR_BYTES);
     }
 
     table data_inspection_t {
@@ -249,7 +249,7 @@ control TpsAggIngress(
         hdr.udp_int.dst_port = UDP_INT_DST_PORT;
 
         // TODO/FIXME - This value will be incorrect once the gateway with INT has been added into the mix
-        hdr.udp_int.len = hdr.udp.len + INT_SHIM_UDP_BYTES;
+        hdr.udp_int.len = hdr.udp.len + ((INT_SHIM_BASE_SIZE * BYTES_PER_SHIM) + UDP_HDR_BYTES);
     }
 
     action insert_udp_int_for_tcp_ipv4() {
