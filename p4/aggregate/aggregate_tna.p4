@@ -253,7 +253,7 @@ control TpsAggIngress(
         hdr.udp_int.setValid();
         hdr.udp_int.src_port = UDP_INT_SRC_PORT;
         hdr.udp_int.dst_port = UDP_INT_DST_PORT;
-        hdr.udp_int.len = hdr.ipv6.payload_len - IPV6_HDR_BYTES;
+        hdr.udp_int.len = hdr.ipv6.payload_len;
     }
 
      apply {
@@ -269,19 +269,18 @@ control TpsAggIngress(
 
             // Add IP & Protocol specific data to new INT data
             if (hdr.int_shim.isValid()) {
+                if (hdr.udp_int.isValid()) {
+                    insert_udp_int_for_udp();
+                }
                 if (hdr.ipv4.isValid()) {
                     data_inspect_packet_ipv4();
-                    if (hdr.udp_int.isValid()) {
-                        insert_udp_int_for_udp();
-                    } else if (hdr.tcp.isValid()) {
+                    if (hdr.tcp.isValid()) {
                         insert_udp_int_for_tcp_ipv4();
                     }
                 }
                 else if (hdr.ipv6.isValid()) {
                     data_inspect_packet_ipv6();
-                    if (hdr.udp_int.isValid()) {
-                        insert_udp_int_for_udp();
-                    } else if (hdr.tcp.isValid()) {
+                    if (hdr.tcp.isValid()) {
                         insert_udp_int_for_tcp_ipv6();
                     }
                 }
