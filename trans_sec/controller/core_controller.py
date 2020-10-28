@@ -71,11 +71,13 @@ class CoreController(AbstractController):
             if trpt_dict['type'] == 'host':
                 host_dict = self.topo['hosts'].get(trpt_dict['name'])
                 if host_dict:
-                    ae_ip = host_dict.get('public_ip', 'ip')
+                    default_ae_ip = host_dict.get('ip')
+                    ae_ip = host_dict.get('public_ip', default_ae_ip)
             elif trpt_dict['type'] == 'external':
                 ext_dict = self.topo['external'].get(trpt_dict['name'])
                 if ext_dict:
-                    ae_ip = ext_dict.get('public_ip', 'ip')
+                    default_ae_ip = ext_dict.get('ip')
+                    ae_ip = ext_dict.get('public_ip', default_ae_ip)
 
             if ae_ip:
                 logger.info('Telemetry report to be sent to - [%s]', ae_ip)
