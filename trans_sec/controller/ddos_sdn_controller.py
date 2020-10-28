@@ -10,9 +10,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import socket
 from logging import getLogger
 
 import hashlib
+
+import ipaddress
 from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import Ether
 from scapy.sendrecv import sendp
@@ -65,6 +68,11 @@ class DdosSdnController:
         self.http_server.stop()
 
     def create_drop_report(self):
+        if self.get_core_controller():
+            ae_ip = ipaddress.ip_address(self.get_core_controller().get_ae_ip())
+            logger.info('AE IP Address - [%s]', ae_ip)
+        else:
+            ae_ip = "0.0.0.0"
         for controller in self.controllers.values():
             if controller == self.get_agg_controller():
                 logger.info("Creating drop report for controller: %s", controller)
@@ -80,12 +88,14 @@ class DdosSdnController:
                 else:
                     keys = 0
                     drop_count = 0
+                host_name = socket.gethostname()
+                sdn_ip = socket.gethostbyname(host_name)
                 ip_len = IPV4_HDR_LEN + UDP_INT_HDR_LEN + DRPT_LEN + UDP_HDR_LEN + DRPT_PAYLOAD_LEN
                 udp_int_len = ip_len - IPV4_HDR_LEN
                 udp_len = UDP_HDR_LEN + DRPT_PAYLOAD_LEN
                 drop_pkt = Ether(type=consts.IPV4_TYPE)
-                drop_pkt = drop_pkt / IP(dst=self.topo['hosts']['ae']['public_ip'],
-                                         src=self.topo['hosts']['ae']['sdn_ip'], len=ip_len, proto=consts.UDP_PROTO)
+                drop_pkt = drop_pkt / IP(dst=str(ae_ip),
+                                         src=sdn_ip, len=ip_len, proto=consts.UDP_PROTO)
                 drop_pkt = drop_pkt / UdpInt(sport=consts.UDP_INT_SRC_PORT,
                                              dport=consts.UDP_TRPT_DST_PORT, len=udp_int_len)
                 drop_pkt = drop_pkt / DropReport(ver=consts.DRPT_VER,
@@ -243,6 +253,10 @@ class DdosSdnController:
     def get_agg_controller(self):
         agg_controller = self.controllers.get(AGG_CTRL_KEY)
         return agg_controller
+
+    def get_core_controller(self):
+        core_controller = self.controllers.get(CORE_CTRL_KEY)
+        return core_controller
 
     def __get_attack_host(self, attack):
         """

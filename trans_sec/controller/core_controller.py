@@ -71,11 +71,11 @@ class CoreController(AbstractController):
             if trpt_dict['type'] == 'host':
                 host_dict = self.topo['hosts'].get(trpt_dict['name'])
                 if host_dict:
-                    ae_ip = host_dict.get('ip')
+                    ae_ip = host_dict.get('public_ip', 'ip')
             elif trpt_dict['type'] == 'external':
                 ext_dict = self.topo['external'].get(trpt_dict['name'])
                 if ext_dict:
-                    ae_ip = ext_dict.get('ip')
+                    ae_ip = ext_dict.get('public_ip', 'ip')
 
             if ae_ip:
                 logger.info('Telemetry report to be sent to - [%s]', ae_ip)
@@ -92,6 +92,9 @@ class CoreController(AbstractController):
             logger.info('Not inserting anything to data_inspection_t')
 
         logger.info('Completed rules for device [%s]', sw.mac)
+
+    def __get_core_switch(self):
+        return self.switches[0]
 
     @staticmethod
     def __make_int_rules(sw):
@@ -117,3 +120,10 @@ class CoreController(AbstractController):
 
     def count_dropped_packets(self):
         pass
+
+    def get_ae_ip(self):
+        ae_ip = "0.0.0.0"
+        core_switch = self.__get_core_switch()
+        if core_switch:
+            ae_ip = core_switch.read_ae_ip()
+        return ae_ip

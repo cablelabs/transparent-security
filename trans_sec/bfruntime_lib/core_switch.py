@@ -113,6 +113,19 @@ class CoreSwitch(BFRuntimeSwitch):
                                 [KeyTuple(data_inspection_tbl_key,
                                           value=UDP_INT_DST_PORT)])
 
+    def read_ae_ip(self):
+        trpt_table_obj = self.get_table('TpsCoreEgress.setup_telemetry_rpt_t')
+        ae_ip = "0.0.0.0"
+        if trpt_table_obj:
+            try:
+                data, key = next(trpt_table_obj.entry_get(self.target, [],
+                                                          flags={"from_hw": True}))
+                table_data = data.to_dict()
+                ae_ip = table_data["ae_ip"]
+            except Exception as e:
+                logger.info("Unable to access table entry info - [%s]", e)
+        return ae_ip
+
     def setup_telemetry_rpt(self, ae_ip):
         logger.info(
             'Setting up telemetry report on core device [%s] with '
