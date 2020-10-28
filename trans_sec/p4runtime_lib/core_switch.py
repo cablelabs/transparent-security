@@ -141,6 +141,3 @@ class CoreSwitch(P4RuntimeSwitch):
             action_name=action_name,
             action_params=action_params)
         self.write_table_entry(table_entry)
-
-    def read_ae_ip(self):
-        pass
