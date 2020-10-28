@@ -27,7 +27,7 @@
 parser TpsAggParser(
     packet_in packet,
     out headers hdr,
-    out metadata ig_meta,
+    out metadata meta,
     out ingress_intrinsic_metadata_t ig_intr_md) {
 
     TofinoIngressParser() tofino_parser;
@@ -49,6 +49,8 @@ parser TpsAggParser(
 
     state parse_ipv4 {
         packet.extract(hdr.ipv4);
+        meta.ipv6_addr = 0;
+        meta.ipv4_addr = hdr.ipv4.dstAddr;
         transition select(hdr.ipv4.protocol) {
             TYPE_UDP: parse_udp_int;
             TYPE_TCP: parse_tcp;
@@ -58,6 +60,8 @@ parser TpsAggParser(
 
     state parse_ipv6 {
         packet.extract(hdr.ipv6);
+        meta.ipv4_addr = 0;
+        meta.ipv6_addr = hdr.ipv6.dstAddr;
         transition select(hdr.ipv6.next_hdr_proto) {
             TYPE_UDP: parse_udp_int;
             TYPE_TCP: parse_tcp;
@@ -67,6 +71,7 @@ parser TpsAggParser(
 
     state parse_udp_int {
         packet.extract(hdr.udp_int);
+        meta.dst_port = hdr.udp_int.dst_port;
         transition select(hdr.udp_int.dst_port) {
             UDP_INT_DST_PORT: parse_int_shim;
             default: accept;
@@ -117,24 +122,6 @@ control TpsAggIngress(
 
 
     DirectCounter<bit<32>>(CounterType_t.PACKETS) droppedPackets;
-
-    action pack_meta_tcp() {
-        meta.dst_port = hdr.tcp.dst_port;
-    }
-
-    action pack_meta_udp() {
-        meta.dst_port = hdr.udp_int.dst_port;
-    }
-
-    action pack_meta_ipv4() {
-        meta.ipv6_addr = 0;
-        meta.ipv4_addr = hdr.ipv4.dstAddr;
-    }
-
-    action pack_meta_ipv6() {
-        meta.ipv4_addr = 0;
-        meta.ipv6_addr = hdr.ipv6.dstAddr;
-    }
 
     action data_drop() {
         ig_dprsr_md.drop_ctl = 0x1;
@@ -269,49 +256,14 @@ control TpsAggIngress(
         hdr.udp_int.len = hdr.ipv6.payload_len - IPV6_HDR_BYTES;
     }
 
-    /*
-    action generate_learn_notification() {
-        digest<mac_learn_digest>((bit<32>) 1024,
-            { hdr.arp.src_mac,
-              standard_metadata.ingress_port
-            });
-    }
-    */
-
-    /*
-    action arp_flood() {
-        standard_metadata.mcast_grp = 1;
-    }
-
-    table arp_flood_t {
-        key = {
-            hdr.ethernet.dst_mac: exact;
-        }
-        actions = {
-            arp_flood;
-            NoAction;
-        }
-        default_action = NoAction();
-    }
-
-    */
      apply {
+        if (hdr.tcp.isValid()) {
+            meta.dst_port = hdr.tcp.dst_port;
+        }
         if (hdr.int_shim.isValid()) {
             // Add switch ID into existing INT data
             add_switch_id_t.apply();
         } else {
-            // Pack metadata with original header values for data drop
-            if (hdr.udp_int.isValid()) {
-                pack_meta_udp();
-            } else if (hdr.tcp.isValid()) {
-                pack_meta_tcp();
-            }
-            if (hdr.ipv4.isValid()) {
-                pack_meta_ipv4();
-            } else if (hdr.ipv6.isValid()) {
-                pack_meta_ipv6();
-            }
-
             // Check to see if need to add INT
             data_inspection_t.apply();
 
