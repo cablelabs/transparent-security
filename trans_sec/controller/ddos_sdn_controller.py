@@ -46,6 +46,7 @@ class DdosSdnController:
         self.topo = topo
         self.controllers = controllers
         self.http_server = SDNControllerServer(self, http_server_port)
+        self.drop_rpt_thread = threading.Thread(target=self.create_drop_report)
         self.running = False
 
     def start(self, add_di):
@@ -59,7 +60,7 @@ class DdosSdnController:
         logger.info('Starting HTTP server on port - [%s]',
                     self.http_server.port)
         self.http_server.start()
-        self.create_drop_report()
+        self.drop_rpt_thread.start()
         self.__main_loop()
 
     def stop(self):
@@ -68,6 +69,11 @@ class DdosSdnController:
         self.http_server.stop()
 
     def create_drop_report(self):
+        while True:
+            self.send_drop_report()
+            sleep(10)
+
+    def send_drop_report(self):
         if self.get_core_controller():
             ae_ip = ipaddress.ip_address(self.get_core_controller().get_ae_ip())
             logger.info('AE IP Address - [%s]', ae_ip)
@@ -115,7 +121,6 @@ class DdosSdnController:
                     logger.info("Sent Drop Report packet")
                 except Exception as e:
                     logger.info("Unable to send drop report - [%s]", e)
-        threading.Timer(10.0, self.create_drop_report).start()
 
     def __make_switch_rules(self, add_di):
         """
