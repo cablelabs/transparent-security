@@ -240,7 +240,6 @@ control TpsCoreEgress(
     inout egress_intrinsic_metadata_for_deparser_t eg_intr_md_for_dprs,
     inout egress_intrinsic_metadata_for_output_port_t eg_intr_md_for_oport) {
 
-
     /**
     * Adds INT data if data_inspection_t table has a match on hdr.ethernet.src_mac
     */
@@ -318,9 +317,7 @@ control TpsCoreEgress(
     */
     action setup_telem_rpt_ipv4(ip4Addr_t ae_ip) {
         hdr.trpt_ipv4.setValid();
-
         hdr.trpt_eth.etherType = TYPE_IPV4;
-
         hdr.trpt_ipv4.version = 0x4;
         hdr.trpt_ipv4.ihl = 0x5;
         hdr.trpt_ipv4.ttl = DFLT_IPV4_TTL;
@@ -335,26 +332,10 @@ control TpsCoreEgress(
     */
     action setup_telem_rpt_ipv6(ip6Addr_t ae_ip) {
         hdr.trpt_ipv6.setValid();
-
         hdr.trpt_eth.etherType = TYPE_IPV6;
-
         hdr.trpt_ipv6.next_hdr_proto = TYPE_UDP;
         hdr.trpt_ipv6.srcAddr = hdr.ipv6.srcAddr;
         hdr.trpt_ipv6.dstAddr = ae_ip;
-    }
-
-    /**
-    * Updates the TRPT header length value when the underlying packet is IPv4
-    */
-    action update_trpt_hdr_len_ipv4() {
-        hdr.trpt_hdr.rpt_len = hdr.trpt_hdr.rpt_len + 10;
-    }
-
-    /**
-    * Updates the TRPT header length value when the underlying packet is IPv6
-    */
-    action update_trpt_hdr_len_ipv6() {
-        hdr.trpt_hdr.rpt_len = hdr.trpt_hdr.rpt_len + 15;
     }
 
     table setup_telemetry_rpt_t {
@@ -382,15 +363,6 @@ control TpsCoreEgress(
         hdr.int_meta.setInvalid();
     }
 
-    action clear_int_ipv4() {
-        hdr.ipv4.protocol = hdr.int_shim.next_proto;
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen - (UDP_HDR_BYTES + (INT_SHIM_BASE_SIZE * BYTES_PER_SHIM));
-    }
-
-    action clear_int_ipv6() {
-        hdr.ipv6.payload_len = hdr.ipv6.payload_len - (UDP_HDR_BYTES + (INT_SHIM_BASE_SIZE * BYTES_PER_SHIM));
-    }
-
     apply {
         if (meta.pkt_type == PKT_TYPE_MIRROR) {
             data_inspection_t.apply();
@@ -404,9 +376,9 @@ control TpsCoreEgress(
                 }
                 setup_telemetry_rpt_t.apply();
                 if (hdr.ipv4.isValid()) {
-                    update_trpt_hdr_len_ipv4();
+                    hdr.trpt_hdr.rpt_len = hdr.trpt_hdr.rpt_len + 10;
                 } else if (hdr.ipv6.isValid()) {
-                    update_trpt_hdr_len_ipv6();
+                    hdr.trpt_hdr.rpt_len = hdr.trpt_hdr.rpt_len + 15;
                 }
                 // TODO/FIXME - This may simply be a parameter when configuring the mirror table
                 /* Ensure packet is no larger than TRPT_MAX_BYTES
@@ -418,10 +390,19 @@ control TpsCoreEgress(
         } else {
             if(hdr.int_shim.isValid()) {
                 if(hdr.ipv4.isValid()) {
-                    clear_int_ipv4();
+                    hdr.ipv4.protocol = hdr.int_shim.next_proto;
+                    if(hdr.udp_int.isValid()) {
+                        hdr.ipv4.totalLen = hdr.ipv4.totalLen - (UDP_HDR_BYTES + (INT_SHIM_BASE_SIZE * BYTES_PER_SHIM));
+                    } else {
+                        hdr.ipv4.totalLen = hdr.ipv4.totalLen - (TCP_HDR_BYTES + (INT_SHIM_BASE_SIZE * BYTES_PER_SHIM));
+                    }
                 }
                 if(hdr.ipv6.isValid()) {
-                    clear_int_ipv6();
+                    if(hdr.udp_int.isValid()) {
+                        hdr.ipv6.payload_len = hdr.ipv6.payload_len - (UDP_HDR_BYTES + (INT_SHIM_BASE_SIZE * BYTES_PER_SHIM));
+                    } else {
+                        hdr.ipv6.payload_len = hdr.ipv6.payload_len - (TCP_HDR_BYTES + (INT_SHIM_BASE_SIZE * BYTES_PER_SHIM));
+                    }
                 }
                 clear_int_all();
             }
