@@ -139,3 +139,33 @@ class TelemetryReport(Packet):
         fields.ShortField('ds_mds_bits', 0),
         fields.IntField('var_opt_md', 0)
     ]
+
+
+class DropReport(Packet):
+    """
+    This class represents the INT header data being placed onto the packets to
+    help generating and parsing
+    """
+    fields_desc = [
+        fields.BitField('ver', 0, 4),
+        fields.BitField('hw_id', 0, 6),
+        fields.BitField('sequence_no', 0, 22),
+        fields.IntField('node_id', 0),
+        fields.BitField('rep_type', 0, 4),
+        fields.BitField('in_type', 0, 4),
+        fields.ByteField('rpt_len', 0),
+        fields.ByteField('md_len', 0),
+        fields.BitField('d', 0, 1),
+        fields.BitField('q', 0, 1),
+        fields.BitField('f', 0, 1),
+        fields.BitField('i', 0, 1),
+        fields.BitField('reserved', 0, 4),
+        fields.ShortField('rep_md_bits', 0),
+        fields.ShortField('domain_id', 0),
+        fields.ShortField('ds_mdb_bits', 0),
+        fields.ShortField('ds_mds_bits', 0),
+        fields.IntField('var_opt_bsmd', 0),
+        fields.IntField('timestamp', 0),
+        fields.IntField('drop_count', 0),
+        fields.BitField('drop_tbl_keys', 0, 128)
+    ]
