@@ -78,3 +78,9 @@ class CoreController(AbstractController):
 
     def remove_attacker(self, attack, host):
         pass
+
+    def add_attacker(self, attack, host):
+        pass
+
+    def remove_attacker(self, attack, host):
+        pass
