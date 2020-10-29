@@ -55,7 +55,12 @@ class CoreSwitch(BFRuntimeSwitch):
         """
         logger.info('Instantiating BFRT CoreSwitch')
         super(self.__class__, self).__init__(sw_info, client_id, is_master)
+
+    def start(self):
+        super(self.__class__, self).start()
         self.__set_table_field_annotations()
+        self.write_clone_entries(self.sw_info['clone_egress'])
+        self.setup_telemetry_rpt()
 
     def __set_table_field_annotations(self):
         df_table = self.get_table(data_fwd_tbl)
@@ -118,31 +123,39 @@ class CoreSwitch(BFRuntimeSwitch):
         ae_ip = "0.0.0.0"
         if trpt_table_obj:
             try:
-                data, key = next(trpt_table_obj.entry_get(self.target, [],
-                                                          flags={"from_hw": True}))
+                data, key = next(
+                    trpt_table_obj.entry_get(self.target, [],
+                                             flags={"from_hw": True}))
                 table_data = data.to_dict()
                 ae_ip = table_data["ae_ip"]
             except Exception as e:
                 logger.info("Unable to access table entry info - [%s]", e)
         return ae_ip
 
-    def setup_telemetry_rpt(self, ae_ip):
-        logger.info(
-            'Setting up telemetry report on core device [%s] with '
-            'AE IP - [%s]', self.device_id, ae_ip)
+    def setup_telemetry_rpt(self, ae_ip=None):
 
-        ip_addr = ipaddress.ip_address(ae_ip)
-        action_name = 'TpsCoreEgress.setup_telem_rpt_ipv{}'.format(
-            ip_addr.version)
-        try:
-            self.insert_table_entry('TpsCoreEgress.setup_telemetry_rpt_t',
-                                    action_name,
-                                    [KeyTuple('hdr.udp_int.dst_port',
-                                              value=UDP_INT_DST_PORT)],
-                                    [DataTuple('ae_ip',
-                                               val=bytearray(ip_addr.packed))])
-        except Exception as e:
-            if 'ALREADY_EXISTS' in str(e):
-                pass
-            else:
-                raise e
+        if ae_ip is None:
+            ae_ip = self.read_ae_ip()
+
+        if ae_ip:
+            logger.info(
+                'Setting up telemetry report on core device [%s] with '
+                'AE IP - [%s]', self.device_id, ae_ip)
+            ip_addr = ipaddress.ip_address(ae_ip)
+            action_name = 'TpsCoreEgress.setup_telem_rpt_ipv{}'.format(
+                ip_addr.version)
+            try:
+                self.insert_table_entry(
+                    'TpsCoreEgress.setup_telemetry_rpt_t',
+                    action_name,
+                    [KeyTuple('hdr.udp_int.dst_port',
+                              value=UDP_INT_DST_PORT)],
+                    [DataTuple('ae_ip',
+                               val=bytearray(ip_addr.packed))])
+            except Exception as e:
+                if 'ALREADY_EXISTS' in str(e):
+                    pass
+                else:
+                    raise e
+        else:
+            logger.warning('AE IP not found cannot setup telemetry report')

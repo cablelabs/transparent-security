@@ -51,9 +51,6 @@ def get_args():
     parser.add_argument('-s', '--switch-config-dir', dest='switch_config_dir',
                         help='Direction with Switch configurations',
                         required=True)
-    parser.add_argument('-di', '--add-di', dest='add_di', type=str2bool,
-                        help='Direction with Switch configurations',
-                        required=False, default=True)
     parser.add_argument('-dh', '--debug-host', dest='debug_host',
                         help='remote debugging host IP')
     parser.add_argument('-dp', '--debug-port', dest='debug_port', default=5678,
@@ -112,6 +109,7 @@ def main():
     controllers = dict()
     if (args.controller_type == 'gateway'
             or args.controller_type == 'full'):
+        logger.info('Instantiating a GatewayController')
         controllers[GATEWAY_CTRL_KEY] = GatewayController(
             platform=args.platform,
             p4_build_out=args.switch_config_dir,
@@ -121,6 +119,7 @@ def main():
     if (args.controller_type == 'aggregate'
             or args.controller_type == 'lab_trial'
             or args.controller_type == 'full'):
+        logger.info('Instantiating a AggregateController')
         controllers[AGG_CTRL_KEY] = AggregateController(
             platform=args.platform,
             p4_build_out=args.switch_config_dir,
@@ -130,6 +129,7 @@ def main():
     if (args.controller_type == 'core'
             or args.controller_type == 'lab_trial'
             or args.controller_type == 'full'):
+        logger.info('Instantiating a CoreController')
         controllers[CORE_CTRL_KEY] = CoreController(
             platform=args.platform,
             p4_build_out=args.switch_config_dir,
@@ -137,13 +137,10 @@ def main():
             log_dir=args.log_dir,
             load_p4=eval(args.load_p4))
 
-    sdn_controller = DdosSdnController(
+    DdosSdnController(
         topo=topo,
         controllers=controllers,
-        http_server_port=args.http_server_port)
-
-    logger.debug('Add data inspection - [%s]', bool(args.add_di))
-    sdn_controller.start(args.add_di)
+        http_server_port=args.http_server_port).start()
 
 
 if __name__ == '__main__':
