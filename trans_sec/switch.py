@@ -40,6 +40,10 @@ class SwitchConnection(object):
         self.grpc_addr = sw_info['grpc']
         self.digest_thread = Thread(target=self.receive_digests)
 
+    def start(self, topo):
+        self.add_switch_id()
+        self.start_digest_listeners()
+
     @abstractmethod
     def start_digest_listeners(self):
         raise NotImplemented

@@ -54,7 +54,6 @@
     port_to_wait: "{{ sdn_port }}"
     wait_timeout: 30
     load_p4: False
-    add_data_inspection: False
 
 # Start AE
 - import_playbook: ../general/start_service.yml
