@@ -68,6 +68,9 @@ class AggregateSwitch(BFRuntimeSwitch):
         """
         logger.info('Instantiating BFRT AggregateSwitch')
         super(self.__class__, self).__init__(sw_info, client_id, is_master)
+
+    def start(self):
+        super(self.__class__, self).start()
         self.__set_table_field_annotations()
 
     def __set_table_field_annotations(self):
@@ -158,8 +161,8 @@ class AggregateSwitch(BFRuntimeSwitch):
         drop_count = 0
         if drop_table_obj:
             try:
-                data, key = next(drop_table_obj.entry_get(self.target, [],
-                                                          flags={"from_hw": True}))
+                data, key = next(drop_table_obj.entry_get(
+                    self.target, [], flags={"from_hw": True}))
                 match_keys = key.to_dict()
                 drop_count = data.to_dict()["$COUNTER_SPEC_PKTS"]
             except Exception as e:
