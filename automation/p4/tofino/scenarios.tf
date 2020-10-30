@@ -11,10 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-locals {
-  extra_vars = var.p4_arch == "tna" ? "--extra-vars='write_data_forward=True discover_fwd_path=False'" : ""
-}
-
 resource "null_resource" "transparent-security-run-scenario-tests" {
   count = var.test_case == "none" ? 0 : 1
   depends_on = [null_resource.tps-tofino-setup-nodes]
@@ -22,7 +18,7 @@ resource "null_resource" "transparent-security-run-scenario-tests" {
   provisioner "remote-exec" {
     inline = [
       "sudo pip install ansible",
-      "${var.ANSIBLE_CMD} -i ${var.remote_inventory_file} ${var.remote_scenario_pb_dir}/${var.scenario_name}/${var.test_case}.yml ${local.extra_vars}",
+      "${var.ANSIBLE_CMD} -i ${var.remote_inventory_file} ${var.remote_scenario_pb_dir}/${var.scenario_name}/${var.test_case}.yml",
     ]
   }
 
