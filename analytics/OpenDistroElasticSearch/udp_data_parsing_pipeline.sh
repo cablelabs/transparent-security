@@ -5,4 +5,4 @@ if [[ $# -ne 1 ]] ; then
     exit
 fi
 
-curl -H 'Content-Type: application/json' -XPUT 'http://'$1'/_ingest/pipeline//ts_parsing' -d @udp_data_parsing.json
+curl -H 'Content-Type: application/json' -XPUT 'http://'$1'/_ingest/pipeline/ts_parsing' -d @udp_data_parsing.json
