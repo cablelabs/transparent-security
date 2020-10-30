@@ -152,10 +152,9 @@ control TpsAggIngress(
         }
         actions = {
             data_forward;
-            NoAction;
         }
         size = TABLE_SIZE;
-        default_action = NoAction();
+        default_action = data_forward(1);
     }
 
     action add_switch_id(bit<32> switch_id) {
@@ -292,6 +291,9 @@ control TpsAggIngress(
         // Basic forwarding and drop logic
         if (data_drop_t.apply().miss) {
             data_forward_t.apply();
+            if(ig_intr_md.ingress_port == ig_tm_md.ucast_egress_port) {
+                ig_dprsr_md.drop_ctl = 0x1;
+            }
         }
     }
 }

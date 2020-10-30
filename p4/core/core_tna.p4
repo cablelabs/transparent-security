@@ -92,16 +92,19 @@ control TpsCoreIngress(
         }
         actions = {
             data_forward;
-            NoAction;
         }
         size = TABLE_SIZE;
-        default_action = NoAction();
+        default_action = data_forward(1);
     }
 
     apply {
         if (ig_intr_md.resubmit_flag == 0) {
             if(data_forward_t.apply().hit) {
-                mirror_packet_i2e();
+                if(ig_intr_md.ingress_port == ig_tm_md.ucast_egress_port) {
+                    ig_dprsr_md.drop_ctl = 0x1;
+                } else {
+                    mirror_packet_i2e();
+                }
             }
         }
     }

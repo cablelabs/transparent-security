@@ -68,7 +68,7 @@ switches:
     arch: {{ p4_arch }}
     tunnels:
       - host: host1
-        switch_port: 1
+        switch_port: 4
       - host: host2
         switch_port: 2
       - host: clone
@@ -77,13 +77,3 @@ switches:
       type: host
       name: clone
     ipv6_term_host: host2
-{# TODO/FIXME - having p4runtime exceptions with 'single_switch' but not 'full' #}
-{% if p4_prog != 'gateway' %}
-    multicast_entries:
-      - egress_port: 1
-        instance: 1
-      - egress_port: 2
-        instance: 1
-      - egress_port: 3
-        instance: 1
-{% endif %}
