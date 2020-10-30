@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 if [[ $# -ne 1 ]] ; then
-    echo "usage: packet_template.sh node"
+    echo "packet_template.sh : Missing ElasticSearch server address .... "
     exit
 fi
 
