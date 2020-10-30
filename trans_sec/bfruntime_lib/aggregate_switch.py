@@ -152,6 +152,20 @@ class AggregateSwitch(BFRuntimeSwitch):
                                              int(kwargs['dst_port']))
                                 ])
 
+    def get_drop_pkt_count(self):
+        drop_table_obj = self.get_table(data_drop_tbl)
+        match_keys = 0
+        drop_count = 0
+        if drop_table_obj:
+            try:
+                data, key = next(drop_table_obj.entry_get(self.target, [],
+                                                          flags={"from_hw": True}))
+                match_keys = key.to_dict()
+                drop_count = data.to_dict()["$COUNTER_SPEC_PKTS"]
+            except Exception as e:
+                logger.info("Unable to access table entry info - [%s]", e)
+        return match_keys, drop_count
+
     def add_switch_id(self):
         logger.info(
             'Inserting device ID [%s] into add_switch_id_t table',

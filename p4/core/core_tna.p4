@@ -165,7 +165,6 @@ parser TpsCoreEgressParser(
     state parse_ethernet {
         packet.extract(hdr.ethernet);
         transition select(hdr.ethernet.etherType) {
-            TYPE_ARP: parse_arp;
             TYPE_IPV4: parse_ipv4;
             TYPE_IPV6: parse_ipv6;
             default: accept;
@@ -225,11 +224,6 @@ parser TpsCoreEgressParser(
         packet.extract(hdr.int_meta);
         transition accept;
     }
-
-    state parse_arp {
-        packet.extract(hdr.arp);
-        transition accept;
-    }
 }
 
 control TpsCoreEgress(
@@ -239,7 +233,6 @@ control TpsCoreEgress(
     in egress_intrinsic_metadata_from_parser_t eg_intr_md_from_prsr,
     inout egress_intrinsic_metadata_for_deparser_t eg_intr_md_for_dprs,
     inout egress_intrinsic_metadata_for_output_port_t eg_intr_md_for_oport) {
-
 
     /**
     * Adds INT data if data_inspection_t table has a match on hdr.ethernet.src_mac
@@ -281,32 +274,39 @@ control TpsCoreEgress(
         hdr.trpt_hdr.rep_type = TRPT_RPT_TYPE_INT_2;
         hdr.trpt_hdr.in_type = TRPT_HDR_IN_TYPE_ETH;
         hdr.trpt_hdr.md_len = hdr.int_shim.length;
-
-        hdr.trpt_eth.dst_mac = hdr.ethernet.dst_mac;
-        hdr.trpt_eth.src_mac = hdr.ethernet.src_mac;
-
-        hdr.trpt_udp.dst_port = TRPT_INT_DST_PORT;
-
         hdr.trpt_hdr.ver = TRPT_VERSION;
         hdr.trpt_hdr.domain_id = TRPT_HDR_DOMAIN_ID;
-
         hdr.trpt_hdr.sequence_no = 0;
         hdr.trpt_hdr.sequence_pad = 0;
-
-    #ifdef FIX_MATH
-        hdr.trpt_hdr.rpt_len = hdr.trpt_hdr.rpt_len + hdr.int_shim.length + 5; // 5 Reflects TRPT ethernet & udp packets
-    #endif
         hdr.trpt_hdr.sequence_no = hdr.trpt_hdr.sequence_no + 1;
+        hdr.trpt_eth.dst_mac = hdr.ethernet.dst_mac;
+        hdr.trpt_eth.src_mac = hdr.ethernet.src_mac;
+        hdr.trpt_udp.dst_port = TRPT_INT_DST_PORT;
     }
 
     /* Sets the trpt_eth.in_type for IPv4 */
     action set_telem_rpt_in_type_ipv4() {
+        // TODO - write tests to test this action
         hdr.trpt_hdr.in_type = TRPT_HDR_IN_TYPE_IPV4;
+        hdr.trpt_ipv6.payload_len = hdr.ipv4.totalLen + (
+            IPV6_HDR_BYTES + UDP_HDR_BYTES + TRPT_HDR_BASE_BYTES + ETH_HDR_BYTES);
+        hdr.trpt_ipv4.totalLen = hdr.ipv4.totalLen + (
+            IPV4_HDR_BYTES + UDP_HDR_BYTES + (
+                INT_SHIM_BASE_SIZE * BYTES_PER_SHIM) + SWITCH_ID_HDR_BYTES + 6);
+        hdr.trpt_udp.len = hdr.ipv4.totalLen + (UDP_HDR_BYTES + (
+            INT_SHIM_BASE_SIZE * BYTES_PER_SHIM) + SWITCH_ID_HDR_BYTES + 6);
     }
 
     /* Sets the trpt_eth.in_type for IPv6 */
     action set_telem_rpt_in_type_ipv6() {
         hdr.trpt_hdr.in_type = TRPT_HDR_IN_TYPE_IPV6;
+        hdr.trpt_ipv6.payload_len = hdr.ipv6.payload_len + (
+            IPV6_HDR_BYTES + UDP_HDR_BYTES + TRPT_HDR_BASE_BYTES + ETH_HDR_BYTES);
+        hdr.trpt_ipv4.totalLen = hdr.ipv6.payload_len + (
+            IPV4_HDR_BYTES + UDP_HDR_BYTES + (
+                INT_SHIM_BASE_SIZE * BYTES_PER_SHIM) + SWITCH_ID_HDR_BYTES + 6);
+        hdr.trpt_udp.len = hdr.ipv6.payload_len + (UDP_HDR_BYTES + (
+            INT_SHIM_BASE_SIZE * BYTES_PER_SHIM) + SWITCH_ID_HDR_BYTES + 6);
     }
 
     /**
@@ -314,9 +314,7 @@ control TpsCoreEgress(
     */
     action setup_telem_rpt_ipv4(ip4Addr_t ae_ip) {
         hdr.trpt_ipv4.setValid();
-
         hdr.trpt_eth.etherType = TYPE_IPV4;
-
         hdr.trpt_ipv4.version = 0x4;
         hdr.trpt_ipv4.ihl = 0x5;
         hdr.trpt_ipv4.ttl = DFLT_IPV4_TTL;
@@ -324,9 +322,6 @@ control TpsCoreEgress(
         hdr.trpt_ipv4.protocol = TYPE_UDP;
         hdr.trpt_ipv4.srcAddr = hdr.ipv4.srcAddr;
         hdr.trpt_ipv4.dstAddr = ae_ip;
-
-        hdr.trpt_udp.len = hdr.trpt_ipv4.totalLen - IPV4_HDR_BYTES;
-        hdr.trpt_ipv4.totalLen = eg_intr_md.pkt_length + TRPT_IPV4_BYTES;
     }
 
     /**
@@ -334,34 +329,10 @@ control TpsCoreEgress(
     */
     action setup_telem_rpt_ipv6(ip6Addr_t ae_ip) {
         hdr.trpt_ipv6.setValid();
-
         hdr.trpt_eth.etherType = TYPE_IPV6;
-
         hdr.trpt_ipv6.next_hdr_proto = TYPE_UDP;
         hdr.trpt_ipv6.srcAddr = hdr.ipv6.srcAddr;
         hdr.trpt_ipv6.dstAddr = ae_ip;
-    }
-
-    /**
-    * Updates the TRPT header length value when the underlying packet is IPv4
-    */
-    action update_trpt_hdr_len_ipv4() {
-    #ifdef FIX_MATH
-        hdr.trpt_hdr.rpt_len = hdr.trpt_hdr.rpt_len + 5;
-        hdr.trpt_udp.len = hdr.ipv4.totalLen + IPV4_HDR_BYTES + TRPT_HDR_BYTES - 4;
-        hdr.trpt_ipv4.totalLen = eg_intr_md.pkt_length + IPV4_HDR_BYTES + UDP_HDR_BYTES + TRPT_HDR_BASE_BYTES;
-    #endif
-    }
-
-    /**
-    * Updates the TRPT header length value when the underlying packet is IPv6
-    */
-    action update_trpt_hdr_len_ipv6() {
-    #ifdef FIX_MATH
-        hdr.trpt_hdr.rpt_len = hdr.trpt_hdr.rpt_len + 10;
-        hdr.trpt_udp.len = hdr.ipv6.payload_len + IPV6_HDR_BYTES + TRPT_HDR_BYTES - ETH_HDR_BYTES;
-        hdr.trpt_ipv6.payload_len = eg_intr_md.pkt_length + IPV6_HDR_BYTES + UDP_HDR_BYTES + TRPT_HDR_BASE_BYTES;
-    #endif
     }
 
     table setup_telemetry_rpt_t {
@@ -389,18 +360,7 @@ control TpsCoreEgress(
         hdr.int_meta.setInvalid();
     }
 
-    action clear_int_ipv4() {
-        hdr.ipv4.protocol = hdr.int_shim.next_proto;
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen - IPV4_INT_UDP_BYTES;
-    }
-
-    action clear_int_ipv6() {
-        hdr.ipv6.payload_len = hdr.ipv6.payload_len - IPV6_INT_UDP_BYTES;
-    }
-
     apply {
-        //if (eg_intr_md_for_dprs.mirror_type == ING_PORT_MIRROR) {
-        //if (mirror_md.isValid()) {
         if (meta.pkt_type == PKT_TYPE_MIRROR) {
             data_inspection_t.apply();
             if (hdr.int_shim.isValid()) {
@@ -413,11 +373,13 @@ control TpsCoreEgress(
                 }
                 setup_telemetry_rpt_t.apply();
                 if (hdr.ipv4.isValid()) {
-                    update_trpt_hdr_len_ipv4();
+                    hdr.trpt_hdr.rpt_len = hdr.trpt_hdr.rpt_len + 10;
+                    hdr.ipv4.protocol = hdr.int_shim.next_proto;
                 } else if (hdr.ipv6.isValid()) {
-                    update_trpt_hdr_len_ipv6();
+                    hdr.trpt_hdr.rpt_len = hdr.trpt_hdr.rpt_len + 15;
+                    hdr.ipv6.next_hdr_proto = hdr.int_shim.next_proto;
                 }
-                // TODO/FIXME - find TNA equivalent
+                // TODO/FIXME - This may simply be a parameter when configuring the mirror table
                 /* Ensure packet is no larger than TRPT_MAX_BYTES
                 truncate(TRPT_MAX_BYTES);
                 */
@@ -427,10 +389,28 @@ control TpsCoreEgress(
         } else {
             if(hdr.int_shim.isValid()) {
                 if(hdr.ipv4.isValid()) {
-                    clear_int_ipv4();
+                    hdr.ipv4.protocol = hdr.int_shim.next_proto;
+                    if(hdr.udp_int.isValid()) {
+                        hdr.ipv4.totalLen = hdr.ipv4.totalLen - (
+                            UDP_HDR_BYTES + (
+                                INT_SHIM_BASE_SIZE * BYTES_PER_SHIM));
+                    } else {
+                        hdr.ipv4.totalLen = hdr.ipv4.totalLen - (
+                            TCP_HDR_BYTES + (
+                                INT_SHIM_BASE_SIZE * BYTES_PER_SHIM));
+                    }
                 }
                 if(hdr.ipv6.isValid()) {
-                    clear_int_ipv6();
+                    hdr.ipv6.next_hdr_proto = hdr.int_shim.next_proto;
+                    if(hdr.udp_int.isValid()) {
+                        hdr.ipv6.payload_len = hdr.ipv6.payload_len - (
+                            UDP_HDR_BYTES + (
+                                INT_SHIM_BASE_SIZE * BYTES_PER_SHIM));
+                    } else {
+                        hdr.ipv6.payload_len = hdr.ipv6.payload_len - (
+                            TCP_HDR_BYTES + (
+                                INT_SHIM_BASE_SIZE * BYTES_PER_SHIM));
+                    }
                 }
                 clear_int_all();
             }
@@ -448,9 +428,9 @@ control TpsCoreEgressDeparser(
     in custom_metadata_t meta,
     in egress_intrinsic_metadata_for_deparser_t eg_intr_dprsr_md) {
 
-    Checksum() ipv4_checksum;
+    Checksum() checksum;
     apply {
-        hdr.ipv4.hdrChecksum = ipv4_checksum.update(
+        hdr.ipv4.hdrChecksum = checksum.update(
                 {hdr.ipv4.version,
                  hdr.ipv4.ihl,
                  hdr.ipv4.diffserv,
@@ -462,6 +442,29 @@ control TpsCoreEgressDeparser(
                  hdr.ipv4.protocol,
                  hdr.ipv4.srcAddr,
                  hdr.ipv4.dstAddr});
+
+        hdr.trpt_ipv4.hdrChecksum = checksum.update(
+                {hdr.trpt_ipv4.version,
+                 hdr.trpt_ipv4.ihl,
+                 hdr.trpt_ipv4.diffserv,
+                 hdr.trpt_ipv4.totalLen,
+                 hdr.trpt_ipv4.identification,
+                 hdr.trpt_ipv4.flags,
+                 hdr.trpt_ipv4.fragOffset,
+                 hdr.trpt_ipv4.ttl,
+                 hdr.trpt_ipv4.protocol,
+                 hdr.trpt_ipv4.srcAddr,
+                 hdr.trpt_ipv4.dstAddr});
+
+        hdr.udp_int.cksum = checksum.update(
+                {hdr.udp_int.src_port,
+                 hdr.udp_int.dst_port,
+                 hdr.udp_int.len});
+
+        hdr.trpt_udp.cksum = checksum.update(
+                {hdr.trpt_udp.src_port,
+                 hdr.trpt_udp.dst_port,
+                 hdr.trpt_udp.len});
 
         /* For Telemetry Report Packets */
         packet.emit(hdr.trpt_eth);

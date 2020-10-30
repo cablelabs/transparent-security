@@ -96,3 +96,9 @@ class AggregateController(AbstractController):
         agg_switch = self.__get_agg_switch()
         if agg_switch:
             agg_switch.stop_attack(**attack)
+
+    def count_dropped_packets(self):
+        agg_switch = self.__get_agg_switch()
+        if agg_switch:
+            match_keys, drop_count = agg_switch.get_drop_pkt_count()
+        return match_keys, drop_count
