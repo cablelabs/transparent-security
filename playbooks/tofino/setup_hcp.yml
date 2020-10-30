@@ -24,16 +24,6 @@
         - java
         - logstash
 
-#  - name: Logstash input configs
-#    template:
-#      src: templates/logstash_input_template.conf.j2
-#      dest: /etc/logstash/conf.d/02-udp-input.conf
-#
-#  - name: Logstash output configs
-#    template:
-#      src: templates/logstash_output_template.conf.j2
-#      dest: /etc/logstash/conf.d/30-udp-output.conf
-
   - name: Start Elasticsearch
     service:
       name: elasticsearch
@@ -44,20 +34,6 @@
       name: kibana
       state: started
 
-#  - name: Initialize
-#    shell: cd /home/centos/espcap
-#           sudo python3 -m pip install -r requirements-7.x.txt
-
-#  - name: Initialize transparent security data collection pipeline
-#    shell: cd /home/centos/espcap
-#           sudo python3 scripts/packet_template-7.x.sh localhost:9200
-
 #  - name: Setup and start data capture using Espcap
 #    shell: cd /home/centos/espcap
-#           sudo python3 src/espcap.py --nic=ae-tun --node=localhost:9200 --chunk=50
-
-
-#  - name: Start Logstash
-#    shell: cd /etc/logstash/conf.d && nohup /usr/share/logstash/bin/logstash -f /etc/logstash/conf.d/02-udp-input.conf --path.settings /etc/logstash/ &
-
-
+#           sudo python3 src/espcap.py --nic=ae-eth0 --node=localhost:9200 --chunk=1
