@@ -1,0 +1,7 @@
+{
+  properties: {
+    is_ddos_attack: {
+      type: "boolean"
+    }
+  }
+}
