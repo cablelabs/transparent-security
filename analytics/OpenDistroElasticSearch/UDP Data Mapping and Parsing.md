@@ -4,14 +4,14 @@
 - Default configured Kibana instance runs on port 5601.
 
 ## Adding UDP data templates to ElasticSearch for incoming packets
-- To add UDP data templates for incoming UDP packets please run packet_template-7.x.sh script. The script takes ElasticSearch address and port number as first argument.
+- To manually add UDP data templates for incoming UDP packets please run packet_template-7.x.sh script. The script takes ElasticSearch address and port number as first argument.
 - Push it
 ```
  ./packet_template-7.x.sh localhost:9200
 ```
 
 ## Adding UDP data parsing to ElasticSearch for incoming packets
-- To add UDP data parsing using Painless API for incoming UDP packets please run udp_data_parsing_pipeline.sh script. The script takes ElasticSearch address and port number as first argument.
+- To manually add UDP data parsing using Painless API for incoming UDP packets please run udp_data_parsing_pipeline.sh script. The script takes ElasticSearch address and port number as first argument.
 - Push it
 ```
   ./packet_template-7.x.sh localhost:9200
