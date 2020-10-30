@@ -14,7 +14,7 @@
 - To manually add UDP data parsing using Painless API for incoming UDP packets please run udp_data_parsing_pipeline.sh script. The script takes ElasticSearch address and port number as first argument.
 - Push it
 ```
-  ./packet_template-7.x.sh localhost:9200
+  ./udp_data_parsing_pipeline.sh localhost:9200
 ```
 
 ## Commands to test added UDP templates and parsing pipeline for incoming packets
