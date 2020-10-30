@@ -59,11 +59,19 @@ class CoreController(AbstractController):
         return self.switches[0]
 
     def get_ae_ip(self):
-        ae_ip = "0.0.0.0"
         core_switch = self.__get_core_switch()
         if core_switch:
-            ae_ip = core_switch.read_ae_ip()
-        return ae_ip
+            return core_switch.read_ae_ip()
+
+    def setup_telem_rpt(self, **kwargs):
+        for switch in self.switches:
+            if switch.mac == kwargs['switch_mac']:
+                switch.setup_telemetry_rpt(kwargs['ae_ip'], kwargs['port'])
+
+    def remove_telem_rpt(self, **kwargs):
+        for switch in self.switches:
+            if switch.mac == kwargs['switch_mac']:
+                switch.remove_telemetry_rpt(kwargs['ae_ip'], kwargs['port'])
 
     def add_attacker(self, attack, host):
         pass

@@ -13,42 +13,39 @@
 # Simple scenario where packets are sent through 3 devices and only the last
 # one will be demonstrating dropped packets
 ---
-# Add table entry to data_forward_t table
+# Call web services for data_forward and setup_telemetry report
 - hosts: "{{ rec_host }}"
   gather_facts: no
-  vars:
-    execute_insert: "{{ write_data_forward | default(False) }}"
   tasks:
     - block:
-        - name: Data forward structure
+        - name: Web service calls
           debug:
-            var: data_forwards
-        - name: Insert data forward table
+            var: ws_calls
+        - name: Call POST on web services
           uri:
             url: "{{ item.url }}"
             method: POST
             body_format: "{{ item.body_format | default('json') }}"
             body: "{{ item.body }}"
             status_code: "{{ item.ok_status | default('200') }}"
-          with_items: "{{ data_forwards }}"
-      when: execute_insert|bool
+          with_items: "{{ ws_calls }}"
 
-# Enable switches for data inspection
+# Call web services for data_inspection
 - hosts: "{{ rec_host }}"
   gather_facts: no
   tasks:
-    - name: show data inspection requests for enablement
-      debug:
-        var: data_inspections
-
-    - name: Data inspection requests
-      uri:
-        url: "{{ item.url }}"
-        method: POST
-        body_format: "{{ item.body_format | default('json') }}"
-        body: "{{ item.body }}"
-        status_code: "{{ item.ok_status | default('200') }}"
-      with_items: "{{ data_inspections }}"
+    - block:
+        - name: data_inspection calls
+          debug:
+            var: data_inspections
+        - name: Call POST on web services
+          uri:
+            url: "{{ item.url }}"
+            method: POST
+            body_format: "{{ item.body_format | default('json') }}"
+            body: "{{ item.body }}"
+            status_code: "{{ item.ok_status | default('200') }}"
+          with_items: "{{ data_inspections }}"
 
 # Sending packets expect all to be received with configured INT hops sr1_rec_int_hops
 - import_playbook: ../test_cases/send_receive.yml
@@ -66,7 +63,7 @@
 - hosts: "{{ rec_host }}"
   gather_facts: no
   tasks:
-    - name: Data inspection requests
+    - name: DELETE Data inspection requests
       uri:
         url: "{{ item.url }}"
         method: DELETE
@@ -90,15 +87,12 @@
 # Delete table entries from data_forward_t tables
 - hosts: "{{ rec_host }}"
   gather_facts: no
-  vars:
-    execute_insert: "{{ write_data_forward | default(False) }}"
   tasks:
-    - name: Delete data forward table
+    - name: Call DELETE on ws_calls
       uri:
         url: "{{ item.url }}"
         method: DELETE
         body_format: "{{ item.body_format | default('json') }}"
         body: "{{ item.body }}"
         status_code: "{{ item.ok_status | default('200') }}"
-      with_items: "{{ data_forwards }}"
-      when: execute_insert|bool
+      with_items: "{{ ws_calls }}"

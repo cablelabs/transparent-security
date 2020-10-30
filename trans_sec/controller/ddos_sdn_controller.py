@@ -72,12 +72,15 @@ class DdosSdnController:
             sleep(10)
 
     def send_drop_report(self):
+        ae_ip = None
         if self.get_core_controller():
             ae_ip = ipaddress.ip_address(
                 self.get_core_controller().get_ae_ip())
             logger.info('AE IP Address - [%s]', ae_ip)
-        else:
-            ae_ip = "0.0.0.0"
+        if ae_ip:
+            self.__create_drop_report(ae_ip)
+
+    def __create_drop_report(self, ae_ip):
         for controller in self.controllers.values():
             if controller == self.get_agg_controller():
                 logger.info("Creating drop report for controller: %s",
@@ -246,6 +249,36 @@ class DdosSdnController:
         if agg_controller:
             try:
                 agg_controller.add_attacker(attack, None)
+            except Exception as e:
+                logger.error('Error adding attacker with error - [%s])', e)
+        else:
+            logger.warning('Aggregate controller cannot add attack')
+
+    def activate_telem_rpt(self, request):
+        """
+        Adds a device to mitigate an attack
+        :param request: dict of the request
+        """
+        core_controller = self.get_core_controller()
+        logger.info('Adding telemetry report config to core')
+        if core_controller:
+            try:
+                core_controller.setup_telem_rpt(**request)
+            except Exception as e:
+                logger.error('Error adding attacker with error - [%s])', e)
+        else:
+            logger.warning('Aggregate controller cannot add attack')
+
+    def deactivate_telem_rpt(self, request):
+        """
+        Adds a device to mitigate an attack
+        :param request: dict of the request
+        """
+        core_controller = self.get_core_controller()
+        logger.info('Adding telemetry report config to core')
+        if core_controller:
+            try:
+                core_controller.setup_telem_rpt(**request)
             except Exception as e:
                 logger.error('Error adding attacker with error - [%s])', e)
         else:
