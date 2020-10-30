@@ -50,6 +50,13 @@
           port: 555
           ae_ip: "{{ ae_ip }}"
         ok_status: 201
+      - url: "http://{{ sdn_ip }}:{{ sdn_port }}/setupTelemRpt"
+        body:
+          device_id: "{{ switch2.id }}"
+          switch_mac: "{{ switch2.mac }}"
+          port: 555
+          ae_ip: "{{ ae_ip }}"
+        ok_status: 201
     sr1_rec_int_hops: 0
 
 # Basic Data Inspection scenario - receiving packets on core-eth3 (INT packets)
@@ -80,6 +87,13 @@
           device_id: "{{ switch.id }}"
           switch_mac: "{{ switch.mac }}"
           device_mac: "{{ sender.mac }}"
+        ok_status: 201
+      - url: "http://{{ sdn_ip }}:{{ sdn_port }}/setupTelemRpt"
+        body:
+          device_id: "{{ switch2.id }}"
+          switch_mac: "{{ switch2.mac }}"
+          port: 555
+          ae_ip: "{{ ae_ip }}"
         ok_status: 201
       - url: "http://{{ sdn_ip }}:{{ sdn_port }}/setupTelemRpt"
         body:
