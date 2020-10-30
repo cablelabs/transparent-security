@@ -35,7 +35,7 @@ variable "tofino" {
     bfrt_ami = "ami-01a5ff54de23b6739"
   }
 }
-variable "hcp_ami" {default ="ami-04da02f70cbcbe7a5"}
+variable "hcp_ami" {default ="ami-06798bd7f2900cf9e"}
 
 variable "switch_instance_type" {default = "t2.2xlarge"}
 variable "ae_instance_type" {default = "t2.large"}

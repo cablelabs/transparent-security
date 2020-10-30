@@ -140,9 +140,8 @@ resource "aws_instance" "ae" {
   tags = {
     Name = "tps-ae-${var.build_id}"
   }
-
-  security_groups = [aws_security_group.tps.name]
-  associate_public_ip_address = false
+  security_groups = [aws_security_group.tps.name, aws_security_group.transparent-security-hcp-img-sg.name]
+  associate_public_ip_address = true
 }
 
 resource "aws_network_interface" "ae_tun_1" {
