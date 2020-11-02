@@ -37,10 +37,10 @@ from trans_sec.consts import UDP_INT_DST_PORT
 
 logger = logging.getLogger('core_switch')
 
-data_inspection_tbl = 'TpsCoreEgress.data_inspection_t'
-data_inspection_tbl_key = 'hdr.udp_int.dst_port'
-data_inspection_action = 'TpsCoreEgress.data_inspect_packet'
-data_inspection_action_val = 'switch_id'
+add_switch_id_tbl = 'TpsCoreEgress.add_switch_id_t'
+add_switch_id_tbl_key = 'hdr.udp_int.dst_port'
+add_switch_id_action = 'TpsCoreEgress.add_switch_id'
+add_switch_id_action_val = 'switch_id'
 
 data_fwd_tbl = 'TpsCoreIngress.data_forward_t'
 data_fwd_tbl_key = 'hdr.ethernet.dst_mac'
@@ -108,18 +108,23 @@ class CoreSwitch(BFRuntimeSwitch):
         mirror_cfg_table.entry_del([
             mirror_cfg_table.make_key([KeyTuple('$sid', mirror_tbl_key)])])
 
-    def add_data_inspection(self, dev_id, dev_mac):
-        self.insert_table_entry(
-            data_inspection_tbl,
-            data_inspection_action,
-            [KeyTuple(data_inspection_tbl_key, value=UDP_INT_DST_PORT)],
-            [DataTuple(data_inspection_action_val,
-                       val=int(self.int_device_id))])
+    def add_switch_id(self):
+        logger.info(
+            'Inserting device ID [%s] into add_switch_id_t table',
+            self.int_device_id)
 
-    def del_data_inspection(self, dev_id, dev_mac):
-        self.delete_table_entry(
-            data_inspection_tbl,
-            [KeyTuple(data_inspection_tbl_key, value=UDP_INT_DST_PORT)])
+        try:
+            self.insert_table_entry(add_switch_id_tbl,
+                                    add_switch_id_action,
+                                    [KeyTuple(add_switch_id_tbl_key,
+                                              value=UDP_INT_DST_PORT)],
+                                    [DataTuple(add_switch_id_action_val,
+                                               val=self.int_device_id)])
+        except Exception as e:
+            if 'ALREADY_EXISTS' in str(e):
+                pass
+            else:
+                raise e
 
     def read_ae_ip(self, port=UDP_INT_DST_PORT):
         logger.info('Looking up the ae_ip for UDP port value - [%s]', port)

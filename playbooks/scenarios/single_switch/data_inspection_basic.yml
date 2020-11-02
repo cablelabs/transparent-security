@@ -46,6 +46,7 @@
             body: "{{ item.body }}"
             status_code: "{{ item.ok_status | default('200') }}"
           with_items: "{{ data_inspections }}"
+      when: data_inspections is defined
 
 # Sending packets expect all to be received with configured INT hops sr1_rec_int_hops
 - import_playbook: ../test_cases/send_receive.yml
@@ -71,18 +72,7 @@
         body: "{{ item.body }}"
         status_code: "{{ item.ok_status | default('200') }}"
       with_items: "{{ data_inspections }}"
-
-# Sending packets expect all to be received with configured INT hops sr2_rec_int_hops
-- import_playbook: ../test_cases/send_receive.yml
-  vars:
-    int_hops: "{{ sr2_rec_int_hops | default(0) }}"
-    receiver_log_filename: "di_basic_receiver-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}-2.out"
-    sender_log_filename: "di_basic_sender-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}-2.out"
-    send_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 12) }}"
-    send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 13) }}"
-    send_packet_count: "{{ '%s' % 100 | random(seed=now|int + 14) }}"
-    inspection_data: "{{ sr2_data_inspection_int | default(None) }}"
-    max_received_packet_count: "{{ send_packet_count }}"
+      when: data_inspections is defined
 
 # Delete table entries from data_forward_t tables
 - hosts: "{{ rec_host }}"

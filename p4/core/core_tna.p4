@@ -240,7 +240,7 @@ control TpsCoreEgress(
     /**
     * Adds INT data if data_inspection_t table has a match on hdr.ethernet.src_mac
     */
-    action data_inspect_packet(bit<32> switch_id) {
+    action add_switch_id(bit<32> switch_id) {
         hdr.int_meta_3.setValid();
         hdr.int_shim.length = hdr.int_shim.length + INT_SHIM_HOP_SIZE;
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + BYTES_PER_SHIM;
@@ -249,12 +249,12 @@ control TpsCoreEgress(
         hdr.int_meta_3.switch_id = switch_id;
     }
 
-    table data_inspection_t {
+    table add_switch_id_t {
         key = {
             hdr.udp_int.dst_port: exact;
         }
         actions = {
-            data_inspect_packet;
+            add_switch_id;
             NoAction;
         }
         size = TABLE_SIZE;
@@ -365,8 +365,8 @@ control TpsCoreEgress(
 
     apply {
         if (meta.pkt_type == PKT_TYPE_MIRROR) {
-            data_inspection_t.apply();
             if (hdr.int_shim.isValid()) {
+                add_switch_id_t.apply();
                 init_telem_rpt();
                 if (hdr.ipv4.isValid()) {
                     set_telem_rpt_in_type_ipv4();
