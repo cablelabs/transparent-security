@@ -44,22 +44,12 @@
           port: 555
           ae_ip: "{{ ae_ip }}"
         ok_status: 201
-    data_inspections:
-      - url: "http://{{ sdn_ip }}:{{ sdn_port }}/dataInspection"
-        body:
-          device_id: "{{ switch.id }}"
-          switch_mac: "{{ switch.mac }}"
-          device_mac: "{{ sender.mac }}"
-        ok_status: 201
     # For sending INT packets on the #1 of 3 send/receive iteration
     sr1_data_inspection_int:
       - switch_id: 1002
       - switch_id: 1001
         orig_mac: "{{ sender.mac }}"
     sr1_rec_int_hops: 3
-    # For sending INT packets on the #2 of 3 send/receive iteration
-    sr2_data_inspection_int: "{{ sr1_data_inspection_int }}"
-    sr2_rec_int_hops: "{{ sr1_data_inspection_int|length }}"
 
 # Basic Data Inspection scenario for packets on egress port - sending INT packet with two hops expect to result standard packet
 - import_playbook: ../single_switch/data_inspection_basic.yml
@@ -92,19 +82,9 @@
           port: 555
           ae_ip: "{{ ae_ip }}"
         ok_status: 201
-    data_inspections:
-      - url: "http://{{ sdn_ip }}:{{ sdn_port }}/dataInspection"
-        body:
-          device_id: "{{ switch.id }}"
-          switch_mac: "{{ switch.mac }}"
-          device_mac: "{{ sender.mac }}"
-        ok_status: 201
     # For sending INT packets on the #1 of 3 send/receive iteration
     sr1_data_inspection_int:
       - switch_id: 1002
       - switch_id: 1001
         orig_mac: "{{ sender.mac }}"
     sr1_rec_int_hops: 0
-    # For sending INT packets on the #2 of 3 send/receive iteration
-    sr2_data_inspection_int: "{{ sr1_data_inspection_int }}"
-    sr2_rec_int_hops: "{{ sr1_rec_int_hops }}"
