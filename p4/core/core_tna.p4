@@ -92,16 +92,19 @@ control TpsCoreIngress(
         }
         actions = {
             data_forward;
-            NoAction;
         }
         size = TABLE_SIZE;
-        default_action = NoAction();
+        default_action = data_forward(1);
     }
 
     apply {
         if (ig_intr_md.resubmit_flag == 0) {
             if(data_forward_t.apply().hit) {
-                mirror_packet_i2e();
+                if(ig_intr_md.ingress_port == ig_tm_md.ucast_egress_port) {
+                    ig_dprsr_md.drop_ctl = 0x1;
+                } else {
+                    mirror_packet_i2e();
+                }
             }
         }
     }
@@ -237,7 +240,7 @@ control TpsCoreEgress(
     /**
     * Adds INT data if data_inspection_t table has a match on hdr.ethernet.src_mac
     */
-    action data_inspect_packet(bit<32> switch_id) {
+    action add_switch_id(bit<32> switch_id) {
         hdr.int_meta_3.setValid();
         hdr.int_shim.length = hdr.int_shim.length + INT_SHIM_HOP_SIZE;
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + BYTES_PER_SHIM;
@@ -246,12 +249,12 @@ control TpsCoreEgress(
         hdr.int_meta_3.switch_id = switch_id;
     }
 
-    table data_inspection_t {
+    table add_switch_id_t {
         key = {
             hdr.udp_int.dst_port: exact;
         }
         actions = {
-            data_inspect_packet;
+            add_switch_id;
             NoAction;
         }
         size = TABLE_SIZE;
@@ -362,8 +365,8 @@ control TpsCoreEgress(
 
     apply {
         if (meta.pkt_type == PKT_TYPE_MIRROR) {
-            data_inspection_t.apply();
             if (hdr.int_shim.isValid()) {
+                add_switch_id_t.apply();
                 init_telem_rpt();
                 if (hdr.ipv4.isValid()) {
                     set_telem_rpt_in_type_ipv4();

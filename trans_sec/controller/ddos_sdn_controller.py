@@ -25,7 +25,8 @@ from time import sleep
 import threading
 import time
 
-from trans_sec.consts import DRPT_LEN, UDP_HDR_LEN, UDP_INT_HDR_LEN, IPV4_HDR_LEN, DRPT_PAYLOAD_LEN
+from trans_sec.consts import (DRPT_LEN, UDP_HDR_LEN, UDP_INT_HDR_LEN,
+                              IPV4_HDR_LEN, DRPT_PAYLOAD_LEN)
 from trans_sec import consts
 from trans_sec.controller.http_server_flask import SDNControllerServer
 
@@ -49,13 +50,10 @@ class DdosSdnController:
         self.drop_rpt_thread = threading.Thread(target=self.create_drop_report)
         self.running = False
 
-    def start(self, add_di):
+    def start(self):
         logger.info('Starting Controllers - [%s]', self.controllers)
         for controller in self.controllers.values():
             controller.start()
-
-        logger.debug('Making switch rules with data inspection - [%s]', add_di)
-        self.__make_switch_rules(add_di)
 
         logger.info('Starting HTTP server on port - [%s]',
                     self.http_server.port)
@@ -74,14 +72,19 @@ class DdosSdnController:
             sleep(10)
 
     def send_drop_report(self):
+        ae_ip = None
         if self.get_core_controller():
-            ae_ip = ipaddress.ip_address(self.get_core_controller().get_ae_ip())
+            ae_ip = ipaddress.ip_address(
+                self.get_core_controller().get_ae_ip())
             logger.info('AE IP Address - [%s]', ae_ip)
-        else:
-            ae_ip = "0.0.0.0"
+        if ae_ip:
+            self.__create_drop_report(ae_ip)
+
+    def __create_drop_report(self, ae_ip):
         for controller in self.controllers.values():
             if controller == self.get_agg_controller():
-                logger.info("Creating drop report for controller: %s", controller)
+                logger.info("Creating drop report for controller: %s",
+                            controller)
                 match_keys, drop_count = controller.count_dropped_packets()
                 logger.info("Match keys - [%s]", match_keys)
                 logger.info('Dropped packet count - [%s]', drop_count)
@@ -90,30 +93,37 @@ class DdosSdnController:
                     for key, value in match_keys.items():
                         key_list.append(value['value'])
                     logger.info("Match key list - %s", key_list)
-                    keys = int(hashlib.md5(str(key_list).encode()).hexdigest(), 16)
+                    keys = int(hashlib.md5(str(key_list).encode()).hexdigest(),
+                               16)
                 else:
                     keys = 0
                     drop_count = 0
                 host_name = socket.gethostname()
                 sdn_ip = socket.gethostbyname(host_name)
-                ip_len = IPV4_HDR_LEN + UDP_INT_HDR_LEN + DRPT_LEN + UDP_HDR_LEN + DRPT_PAYLOAD_LEN
+                ip_len = (IPV4_HDR_LEN + UDP_INT_HDR_LEN + DRPT_LEN
+                          + UDP_HDR_LEN + DRPT_PAYLOAD_LEN)
                 udp_int_len = ip_len - IPV4_HDR_LEN
                 udp_len = UDP_HDR_LEN + DRPT_PAYLOAD_LEN
                 drop_pkt = Ether(type=consts.IPV4_TYPE)
-                drop_pkt = drop_pkt / IP(dst=str(ae_ip),
-                                         src=sdn_ip, len=ip_len, proto=consts.UDP_PROTO)
+                drop_pkt = drop_pkt / IP(
+                    dst=str(ae_ip), src=sdn_ip, len=ip_len,
+                    proto=consts.UDP_PROTO)
                 drop_pkt = drop_pkt / UdpInt(sport=consts.UDP_INT_SRC_PORT,
-                                             dport=consts.UDP_TRPT_DST_PORT, len=udp_int_len)
-                drop_pkt = drop_pkt / DropReport(ver=consts.DRPT_VER,
-                                                 node_id=self.topo['switches']['aggregate']['int_id'],
-                                                 in_type=consts.DRPT_IN_TYPE,
-                                                 rpt_len=consts.DRPT_REP_LEN, md_len=consts.DRPT_MD_LEN,
-                                                 rep_md_bits=consts.DRPT_MD_BITS, domain_id=consts.TRPT_DOMAIN_ID,
-                                                 var_opt_bsmd=consts.DRPT_BS_MD,
-                                                 timestamp=int(time.time()),
-                                                 drop_count=drop_count,
-                                                 drop_tbl_keys=keys)
-                drop_pkt = drop_pkt / UDP(dport=consts.UDP_DRPT_DST_PORT, sport=consts.UDP_DRPT_SRC_PORT,
+                                             dport=consts.UDP_TRPT_DST_PORT,
+                                             len=udp_int_len)
+                drop_pkt = drop_pkt / DropReport(
+                    ver=consts.DRPT_VER,
+                    node_id=self.topo['switches']['aggregate']['int_id'],
+                    in_type=consts.DRPT_IN_TYPE,
+                    rpt_len=consts.DRPT_REP_LEN, md_len=consts.DRPT_MD_LEN,
+                    rep_md_bits=consts.DRPT_MD_BITS,
+                    domain_id=consts.TRPT_DOMAIN_ID,
+                    var_opt_bsmd=consts.DRPT_BS_MD,
+                    timestamp=int(time.time()),
+                    drop_count=drop_count,
+                    drop_tbl_keys=keys)
+                drop_pkt = drop_pkt / UDP(dport=consts.UDP_DRPT_DST_PORT,
+                                          sport=consts.UDP_DRPT_SRC_PORT,
                                           len=udp_len)
                 drop_pkt = drop_pkt / 'tps drop report'
                 try:
@@ -121,17 +131,6 @@ class DdosSdnController:
                     logger.info("Sent Drop Report packet")
                 except Exception as e:
                     logger.info("Unable to send drop report - [%s]", e)
-
-    def __make_switch_rules(self, add_di):
-        """
-        Creates the rules for each controller
-        :return:
-        """
-        logger.info('Creating switch rules on #%s different controllers',
-                    len(self.controllers))
-        for controller in self.controllers.values():
-            controller.make_switch_rules(add_di)
-        logger.debug('Switch rule creation completed')
 
     def add_data_forward(self, df_req):
         """
@@ -161,8 +160,8 @@ class DdosSdnController:
                                                 df_req['output_port'])
                     return
 
-        logger.warning('Could not find switch with device_id - [%s]',
-                       df_req['device_id'])
+        logger.warning('Could not find switch with switch_mac - [%s]',
+                       df_req['switch_mac'])
 
     def add_data_inspection(self, di_req):
         """
@@ -250,6 +249,36 @@ class DdosSdnController:
         if agg_controller:
             try:
                 agg_controller.add_attacker(attack, None)
+            except Exception as e:
+                logger.error('Error adding attacker with error - [%s])', e)
+        else:
+            logger.warning('Aggregate controller cannot add attack')
+
+    def activate_telem_rpt(self, request):
+        """
+        Adds a device to mitigate an attack
+        :param request: dict of the request
+        """
+        core_controller = self.get_core_controller()
+        logger.info('Adding telemetry report config to core')
+        if core_controller:
+            try:
+                core_controller.setup_telem_rpt(**request)
+            except Exception as e:
+                logger.error('Error adding attacker with error - [%s])', e)
+        else:
+            logger.warning('Aggregate controller cannot add attack')
+
+    def deactivate_telem_rpt(self, request):
+        """
+        Adds a device to mitigate an attack
+        :param request: dict of the request
+        """
+        core_controller = self.get_core_controller()
+        logger.info('Adding telemetry report config to core')
+        if core_controller:
+            try:
+                core_controller.setup_telem_rpt(**request)
             except Exception as e:
                 logger.error('Error adding attacker with error - [%s])', e)
         else:

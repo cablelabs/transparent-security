@@ -97,7 +97,6 @@ switches:
     mac: 00:00:00:02:04:00
     grpc: {{ agg_ip }}:{{ grpc_port }}
     ipv6_term_host: inet
-    multicast_entries:
     tunnels:
       - host: core
         switch_port: 1
@@ -134,37 +133,3 @@ switches:
     mac: 00:00:00:03:05:00
     grpc: {{ core_ip }}:{{ grpc_port }}
     ipv6_term_host: inet
-    multicast_entries:
-      - egress_port: 1
-        instance: 1
-      - egress_port: 2
-        instance: 1
-      - egress_port: 3
-        instance: 1
-links:
-  - north_node: aggregate
-    south_node: host1
-    south_facing_port: 2
-    latency: 0ms
-    bandwidth: null
-  - north_node: aggregate
-    south_node: host2
-    south_facing_port: 3
-    latency: 0ms
-    bandwidth: null
-  - north_node: core
-    south_node: aggregate
-    south_facing_port: 1
-    north_facing_port: 1
-    latency: 0ms
-    bandwidth: null
-  - north_node: inet
-    south_node: core
-    north_facing_port: 2
-    latency: 0ms
-    bandwidth: null
-  - north_node: ae
-    south_node: core
-    north_facing_port: 3
-    latency: 0ms
-    bandwidth: null

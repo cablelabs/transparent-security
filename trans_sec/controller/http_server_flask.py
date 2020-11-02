@@ -47,6 +47,9 @@ class SDNControllerServer:
         self.api.add_resource(
             AggAttack, '/aggAttack',
             resource_class_kwargs={'sdn_controller': self.sdn_controller})
+        self.api.add_resource(
+            TelemetryReport, '/setupTelemRpt',
+            resource_class_kwargs={'sdn_controller': self.sdn_controller})
         self.api.add_resource(Shutdown, '/shutdown')
 
     def stop(self):
@@ -228,6 +231,35 @@ class CoreDataForward(AggDataForward):
 
         logger.info('Attack args - [%s]', args)
         self.sdn_controller.del_agg_data_forward(args)
+        return json.dumps({"success": True}), 201
+
+
+class TelemetryReport(Resource):
+    """
+    Class for exposing web service to issue an attack call to aggregate.p4
+    """
+    def __init__(self, **kwargs):
+        self.sdn_controller = kwargs['sdn_controller']
+        self.parser = reqparse.RequestParser()
+        self.parser.add_argument('device_id', type=int, default=0)
+        self.parser.add_argument('switch_mac', type=str)
+        self.parser.add_argument('port', type=str)
+        self.parser.add_argument('ae_ip', type=str)
+
+    def post(self):
+        logger.info('Activating telemetry report')
+        args = self.parser.parse_args()
+
+        logger.info('Attack args - [%s]', args)
+        self.sdn_controller.activate_telem_rpt(args)
+        return json.dumps({"success": True}), 201
+
+    def delete(self):
+        logger.info('Deactivating telemetry report')
+        args = self.parser.parse_args()
+
+        logger.info('Attack args - [%s]', args)
+        self.sdn_controller.remove_agg_attacker(args)
         return json.dumps({"success": True}), 201
 
 

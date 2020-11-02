@@ -37,15 +37,19 @@ from trans_sec.consts import UDP_INT_DST_PORT
 
 logger = logging.getLogger('core_switch')
 
-data_inspection_tbl = 'TpsCoreEgress.data_inspection_t'
-data_inspection_tbl_key = 'hdr.udp_int.dst_port'
-data_inspection_action = 'TpsCoreEgress.data_inspect_packet'
-data_inspection_action_val = 'switch_id'
+add_switch_id_tbl = 'TpsCoreEgress.add_switch_id_t'
+add_switch_id_tbl_key = 'hdr.udp_int.dst_port'
+add_switch_id_action = 'TpsCoreEgress.add_switch_id'
+add_switch_id_action_val = 'switch_id'
 
 data_fwd_tbl = 'TpsCoreIngress.data_forward_t'
 data_fwd_tbl_key = 'hdr.ethernet.dst_mac'
 data_fwd_action = 'TpsCoreIngress.data_forward'
 data_fwd_action_val = 'port'
+
+telem_rpt_tbl = 'TpsCoreEgress.setup_telemetry_rpt_t'
+telem_rpt_tbl_key = 'hdr.udp_int.dst_port'
+telem_rpt_data = 'ae_ip'
 
 
 class CoreSwitch(BFRuntimeSwitch):
@@ -55,7 +59,11 @@ class CoreSwitch(BFRuntimeSwitch):
         """
         logger.info('Instantiating BFRT CoreSwitch')
         super(self.__class__, self).__init__(sw_info, client_id, is_master)
+
+    def start(self, **kwargs):
+        super(self.__class__, self).start()
         self.__set_table_field_annotations()
+        self.write_clone_entries(self.sw_info['clone_egress'])
 
     def __set_table_field_annotations(self):
         df_table = self.get_table(data_fwd_tbl)
@@ -100,47 +108,71 @@ class CoreSwitch(BFRuntimeSwitch):
         mirror_cfg_table.entry_del([
             mirror_cfg_table.make_key([KeyTuple('$sid', mirror_tbl_key)])])
 
-    def add_data_inspection(self, dev_id, dev_mac):
-        self.insert_table_entry(data_inspection_tbl,
-                                data_inspection_action,
-                                [KeyTuple(data_inspection_tbl_key,
-                                          value=UDP_INT_DST_PORT)],
-                                [DataTuple(data_inspection_action_val,
-                                           val=int(self.int_device_id))])
+    def add_switch_id(self):
+        logger.info(
+            'Inserting device ID [%s] into add_switch_id_t table',
+            self.int_device_id)
 
-    def del_data_inspection(self, dev_id, dev_mac):
-        self.delete_table_entry(data_inspection_tbl,
-                                [KeyTuple(data_inspection_tbl_key,
-                                          value=UDP_INT_DST_PORT)])
+        try:
+            self.insert_table_entry(add_switch_id_tbl,
+                                    add_switch_id_action,
+                                    [KeyTuple(add_switch_id_tbl_key,
+                                              value=UDP_INT_DST_PORT)],
+                                    [DataTuple(add_switch_id_action_val,
+                                               val=self.int_device_id)])
+        except Exception as e:
+            if 'ALREADY_EXISTS' in str(e):
+                pass
+            else:
+                raise e
 
-    def read_ae_ip(self):
-        trpt_table_obj = self.get_table('TpsCoreEgress.setup_telemetry_rpt_t')
-        ae_ip = "0.0.0.0"
+    def read_ae_ip(self, port=UDP_INT_DST_PORT):
+        logger.info('Looking up the ae_ip for UDP port value - [%s]', port)
+        trpt_table_obj = self.get_table(telem_rpt_tbl)
+        ae_ip = None
         if trpt_table_obj:
             try:
-                data, key = next(trpt_table_obj.entry_get(self.target, [],
-                                                          flags={"from_hw": True}))
+                data, key = next(
+                    trpt_table_obj.entry_get(
+                        self.target,
+                        [KeyTuple(telem_rpt_tbl_key, value=int(port))]))
                 table_data = data.to_dict()
+                logger.debug("Table [%s] data [%s]", )
                 ae_ip = table_data["ae_ip"]
             except Exception as e:
                 logger.info("Unable to access table entry info - [%s]", e)
         return ae_ip
 
-    def setup_telemetry_rpt(self, ae_ip):
+    def setup_telemetry_rpt(self, ae_ip, port):
         logger.info(
             'Setting up telemetry report on core device [%s] with '
             'AE IP - [%s]', self.device_id, ae_ip)
-
         ip_addr = ipaddress.ip_address(ae_ip)
+        logger.debug('ip_addr object - [%s]', ip_addr)
         action_name = 'TpsCoreEgress.setup_telem_rpt_ipv{}'.format(
             ip_addr.version)
         try:
-            self.insert_table_entry('TpsCoreEgress.setup_telemetry_rpt_t',
-                                    action_name,
-                                    [KeyTuple('hdr.udp_int.dst_port',
-                                              value=UDP_INT_DST_PORT)],
-                                    [DataTuple('ae_ip',
-                                               val=bytearray(ip_addr.packed))])
+            self.insert_table_entry(
+                telem_rpt_tbl,
+                action_name,
+                [KeyTuple(telem_rpt_tbl_key, value=int(port))],
+                [DataTuple(telem_rpt_data, val=bytearray(ip_addr.packed))])
+        except Exception as e:
+            if 'ALREADY_EXISTS' in str(e):
+                pass
+            else:
+                raise e
+
+    def remove_telemetry_rpt(self, ae_ip, port=UDP_INT_DST_PORT):
+        logger.info(
+            'Removing up telemetry report from core device [%s] with '
+            'AE IP - [%s]', self.device_id, ae_ip)
+        ip_addr = ipaddress.ip_address(ae_ip)
+        logger.debug('ip_addr object - [%s]', ip_addr)
+        try:
+            self.delete_table_entry(
+                telem_rpt_tbl,
+                [KeyTuple(telem_rpt_tbl_key, value=port)])
         except Exception as e:
             if 'ALREADY_EXISTS' in str(e):
                 pass

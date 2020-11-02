@@ -114,6 +114,7 @@ host2_ip=${local.host2_ip}
 host2_tun1_ip=${local.host2_tun1_ip}
 host2_tun1_mac=${local.host2_tun1_mac}
 clone_ip=${local.clone_ip}
+ae_ip=${local.clone_ip}
 clone_tun1_ip=${local.clone_tun1_ip}
 clone_tun1_mac=${local.clone_tun1_mac}
 switch_user=${var.switch_user}
