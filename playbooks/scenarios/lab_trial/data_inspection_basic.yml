@@ -50,8 +50,6 @@
     send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 10) }}"
     send_packet_count: "{{ di_send_packet_count | default('%s' % 100 | random(seed=now|int + 11)) }}"
     inspection_data: "{{ sr1_data_inspection_int | default(None) }}"
-    min_received_packet_count: "{{ di_min_rec_packet_count | default(send_packet_count) }}"
-    max_received_packet_count: "{{ di_max_rec_packet_count | default(send_packet_count) }}"
     send_loops: "{{ di_send_loops | default(1) }}"
     send_loop_delay: "{{ di_send_loop_delay | default(5) }}"
     cleanup_rest_call:
