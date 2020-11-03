@@ -11,7 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import codecs
 import ipaddress
 import logging
 from queue import Queue
@@ -19,9 +18,6 @@ from abc import abstractmethod
 from datetime import datetime
 
 import grpc
-from threading import Thread
-
-from trans_sec.utils.convert import decode_mac
 
 MSG_LOG_MAX_LEN = 1024
 
@@ -38,68 +34,14 @@ class SwitchConnection(object):
         self.device_id = sw_info['id']
         self.int_device_id = sw_info.get('int_id', sw_info['id'])
         self.grpc_addr = sw_info['grpc']
-        self.digest_thread = Thread(target=self.receive_digests)
-
-    def start(self, topo):
-        self.add_switch_id()
-        self.start_digest_listeners()
 
     @abstractmethod
-    def start_digest_listeners(self):
+    def start(self):
         raise NotImplemented
 
     @abstractmethod
-    def stop_digest_listeners(self):
+    def stop(self):
         raise NotImplemented
-
-    def receive_digests(self):
-        """
-        Runnable method for self.digest_thread
-        """
-        logger.info("Started listening digest thread on device [%s] with "
-                    "name [%s]", self.grpc_addr, self.name)
-        while True:
-            try:
-                logger.debug('Requesting digests from device [%s]',
-                             self.grpc_addr)
-                digests = self.digest_list()
-                logger.debug('digests from device [%s] - [%s]',
-                             self.grpc_addr, digests)
-                digest_data = digests.digest.data
-                logger.debug('Received digest data from device [%s]: [%s]',
-                             self.grpc_addr, digest_data)
-                self.interpret_digest(digest_data)
-                logger.debug('Interpreted digest data')
-            except Exception as e:
-                logger.error(
-                    'Unexpected error reading digest from device [%s] - [%s]',
-                    self.grpc_addr, e)
-
-    def interpret_digest(self, digest_data):
-        logger.debug("Digest data from switch [%s] - [%s]",
-                     self.name, digest_data)
-
-        if not digest_data or len(digest_data) == 0:
-            logger.warning('No digest data to process')
-            return
-        for members in digest_data:
-            logger.debug("Digest members: %s", members)
-            if members.WhichOneof('data') == 'struct':
-                source_mac = decode_mac(members.struct.members[0].bitstring)
-                if source_mac:
-                    logger.debug('Digest MAC Address is: %s', source_mac)
-                    ingress_port = int(
-                        codecs.encode(members.struct.members[1].bitstring,
-                                      'hex'), 16)
-                    logger.debug('Digest Ingress Port is %s', ingress_port)
-                    self.add_data_forward(source_mac, ingress_port)
-                else:
-                    logger.warning('Could not retrieve source_mac from digest')
-            else:
-                logger.warning('Digest could not be processed - [%s]',
-                               digest_data)
-
-        logger.info('Completed digest processing')
 
     @staticmethod
     def parse_attack(**kwargs):
@@ -120,133 +62,8 @@ class SwitchConnection(object):
 
         return action_name, dst_ipv4, dst_ipv6
 
-    @abstractmethod
-    def get_table_entry(self, table_name, action_name, match_fields,
-                        action_params, ingress_class=True):
-        raise NotImplemented
-
-    @abstractmethod
-    def add_data_forward(self, dst_mac, egress_port):
-        raise NotImplemented
-
-    @abstractmethod
-    def del_data_forward(self, dst_mac):
-        raise NotImplemented
-
-    @abstractmethod
-    def add_data_inspection(self, dev_id, dev_mac):
-        raise NotImplemented
-
-    @abstractmethod
-    def del_data_inspection(self, dev_id, dev_mac):
-        raise NotImplemented
-
-    def add_attack(self, **kwargs):
-        logger.info('Switch does not support attack mitigation')
-        pass
-
-    def stop_attack(self, **kwargs):
-        logger.info('Switch does not support attack mitigation')
-        pass
-
     def add_switch_id(self):
         pass
-
-    @abstractmethod
-    def build_device_config(self):
-        raise NotImplemented
-
-    @abstractmethod
-    def master_arbitration_update(self):
-        raise NotImplemented
-
-    @abstractmethod
-    def set_forwarding_pipeline_config(self, device_config):
-        raise NotImplemented
-
-    @abstractmethod
-    def write_table_entry(self, **kwargs):
-        raise NotImplemented
-
-    @abstractmethod
-    def delete_table_entry(self, **kwargs):
-        raise NotImplemented
-
-    @abstractmethod
-    def get_data_forward_macs(self):
-        """
-        Returns the key MAC values from the data_forward_t table
-        :return: set dst_mac values
-        """
-        raise NotImplemented
-
-    @abstractmethod
-    def get_data_inspection_src_mac_keys(self):
-        """
-        Returns a set of macs that is a key to the data_inspection_t table
-        :return: set src_mac values
-        """
-        raise NotImplemented
-
-    @abstractmethod
-    def get_match_values(self, table_name):
-        """
-        Returns a dict of match values in a list of dict where the dict
-        objects' keys will be the field name and the value will be the raw
-        byte value to be converted by the client
-        :param table_name: the name of the table to query
-        :return: a list of dict
-        """
-        raise NotImplemented
-
-    @abstractmethod
-    def get_table_entries(self, table_name):
-        """
-        Returns a P4Runtime object for iterating through a table
-        :param table_name:
-        :return:
-        """
-        raise NotImplemented
-
-    @abstractmethod
-    def read_table_entries(self, table_id=None):
-        raise NotImplemented
-
-    @abstractmethod
-    def write_clone_entries(self, pre_entry):
-        raise NotImplemented
-
-    @abstractmethod
-    def delete_clone_entries(self, pre_entry):
-        raise NotImplemented
-
-    @abstractmethod
-    def read_counters(self, counter_id=None, index=None):
-        raise NotImplemented
-
-    @abstractmethod
-    def reset_counters(self, counter_id=None, index=None):
-        raise NotImplemented
-
-    @abstractmethod
-    def write_digest_entry(self, digest_entry):
-        raise NotImplemented
-
-    @abstractmethod
-    def digest_list_ack(self, digest_ack):
-        raise NotImplemented
-
-    @abstractmethod
-    def digest_list(self):
-        raise NotImplemented
-
-    @abstractmethod
-    def write_multicast_entry(self, hosts):
-        raise NotImplemented
-
-    @abstractmethod
-    def write_arp_flood(self):
-        raise NotImplemented
 
 
 class GrpcRequestLogger(grpc.UnaryUnaryClientInterceptor,

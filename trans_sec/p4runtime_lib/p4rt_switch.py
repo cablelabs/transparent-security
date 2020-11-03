@@ -10,10 +10,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import codecs
 import logging
 import struct
 from abc import ABC
+from threading import Thread
 
 import grpc
 from p4.tmp import p4config_pb2
@@ -53,6 +54,7 @@ class P4RuntimeSwitch(SwitchConnection, ABC):
         self.stream_msg_resp = self.client_stub.StreamChannel(
             iter(self.requests_stream))
         self.proto_dump_file = proto_dump_file
+        self.digest_thread = Thread(target=self.receive_digests)
 
     def start_digest_listeners(self):
         logger.info(
@@ -73,6 +75,55 @@ class P4RuntimeSwitch(SwitchConnection, ABC):
             self.requests_stream.close()
             self.stream_msg_resp.cancel()
             self.digest_thread.join()
+
+    def receive_digests(self):
+        """
+        Runnable method for self.digest_thread
+        """
+        logger.info("Started listening digest thread on device [%s] with "
+                    "name [%s]", self.grpc_addr, self.name)
+        while True:
+            try:
+                logger.debug('Requesting digests from device [%s]',
+                             self.grpc_addr)
+                digests = self.digest_list()
+                logger.debug('digests from device [%s] - [%s]',
+                             self.grpc_addr, digests)
+                digest_data = digests.digest.data
+                logger.debug('Received digest data from device [%s]: [%s]',
+                             self.grpc_addr, digest_data)
+                self.interpret_digest(digest_data)
+                logger.debug('Interpreted digest data')
+            except Exception as e:
+                logger.error(
+                    'Unexpected error reading digest from device [%s] - [%s]',
+                    self.grpc_addr, e)
+
+    def interpret_digest(self, digest_data):
+        logger.debug("Digest data from switch [%s] - [%s]",
+                     self.name, digest_data)
+
+        if not digest_data or len(digest_data) == 0:
+            logger.warning('No digest data to process')
+            return
+        for members in digest_data:
+            logger.debug("Digest members: %s", members)
+            if members.WhichOneof('data') == 'struct':
+                source_mac = decode_mac(members.struct.members[0].bitstring)
+                if source_mac:
+                    logger.debug('Digest MAC Address is: %s', source_mac)
+                    ingress_port = int(
+                        codecs.encode(members.struct.members[1].bitstring,
+                                      'hex'), 16)
+                    logger.debug('Digest Ingress Port is %s', ingress_port)
+                    self.add_data_forward(source_mac, ingress_port)
+                else:
+                    logger.warning('Could not retrieve source_mac from digest')
+            else:
+                logger.warning('Digest could not be processed - [%s]',
+                               digest_data)
+
+        logger.info('Completed digest processing')
 
     def get_table_entry(self, table_name, action_name, match_fields,
                         action_params, ingress_class=True):

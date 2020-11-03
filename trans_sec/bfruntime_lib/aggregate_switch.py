@@ -47,6 +47,11 @@ data_fwd_tbl_key = 'hdr.ethernet.dst_mac'
 data_fwd_action = 'TpsAggIngress.data_forward'
 data_fwd_action_val = 'port'
 
+smac_tbl = 'TpsAggIngress.smac'
+smac_tbl_key = 'hdr.ethernet.src_mac'
+smac_action = 'TpsAggIngress.smac_hit'
+smac_action_val = 'port'
+
 data_drop_tbl = 'TpsAggIngress.data_drop_t'
 data_drop_tbl_key_1 = 'hdr.ethernet.src_mac'
 data_drop_tbl_key_2 = 'meta.ipv4_addr'
@@ -73,6 +78,61 @@ class AggregateSwitch(BFRuntimeSwitch):
         super(self.__class__, self).start()
         self.__set_table_field_annotations()
 
+    def receive_digests(self):
+        """
+        Runnable method for self.digest_thread
+        """
+        logger.info("Started listening digest thread on device [%s] with "
+                    "name [%s]", self.grpc_addr, self.name)
+
+        learn_filter = self.bfrt_info.learn_get("smac_digest")
+        learn_filter.info.data_field_annotation_add("src_mac", "mac")
+        learn_filter.info.data_field_annotation_add("port", "bytes")
+
+        while True:
+            logger.debug('Attempting to retrieve digest')
+            digest = None
+            try:
+                digest = self.interface.digest_get()
+            except Exception as e:
+                logger.error('Unexpected error receiving digest - [%s]', e)
+
+            if digest:
+                data_list = learn_filter.make_data_list(digest)
+                logger.debug('Digest list - [%s]', data_list)
+                for data_item in data_list:
+                    data_dict = data_item.to_dict()
+                    src_mac = data_dict['src_mac']
+                    port = int.from_bytes(data_dict['port'], byteorder='big')
+                    logger.info(
+                        'Adding df & smac table entries with key - [%s] '
+                        'value - [%s]', src_mac, port)
+                    try:
+                        self.add_data_forward(src_mac, port)
+                        logger.debug('Added digest to data_forward_t')
+                    except Exception as e:
+                        if 'ALREADY_EXISTS' in str(e):
+                            logger.debug(
+                                'Not inserting digest entry to '
+                                'data_forward_t - [%s]', e)
+                        else:
+                            logger.error(
+                                'Unexpected error processing digest for '
+                                'data_forward_t - [%s]', e)
+                            raise e
+                    try:
+                        self.add_smac(src_mac, port)
+                        logger.debug('Added digest to smac table')
+                    except Exception as e:
+                        if 'ALREADY_EXISTS' in str(e):
+                            logger.debug(
+                                'Not inserting digest entry to smac - [%s]', e)
+                        else:
+                            logger.error(
+                                'Unexpected error processing digest for smac '
+                                '- [%s]', e)
+                            raise e
+
     def __set_table_field_annotations(self):
         fwd_table = self.get_table(data_fwd_tbl)
         fwd_table.info.key_field_annotation_add(data_fwd_tbl_key, 'mac')
@@ -86,9 +146,8 @@ class AggregateSwitch(BFRuntimeSwitch):
         drop_table.info.key_field_annotation_add(data_drop_tbl_key_2, 'ipv4')
         drop_table.info.key_field_annotation_add(data_drop_tbl_key_3, 'ipv6')
 
-    def write_multicast_entry(self, hosts):
-        super(self.__class__, self).write_multicast_entry(hosts)
-        self.write_arp_flood()
+        smac_table = self.get_table(smac_tbl)
+        smac_table.info.key_field_annotation_add(smac_tbl_key, 'mac')
 
     def add_data_inspection(self, dev_id, dev_mac):
         logger.info(
@@ -114,7 +173,7 @@ class AggregateSwitch(BFRuntimeSwitch):
     def add_data_forward(self, dst_mac, ingress_port):
         logger.info(
             'Inserting port - [%s] with key - [%s] into %s',
-            ingress_port, dst_mac, data_fwd_tbl)
+            int(ingress_port), dst_mac, data_fwd_tbl)
         self.insert_table_entry(data_fwd_tbl,
                                 data_fwd_action,
                                 [KeyTuple(data_fwd_tbl_key, dst_mac)],
@@ -127,6 +186,23 @@ class AggregateSwitch(BFRuntimeSwitch):
             dst_mac, data_fwd_tbl)
         self.delete_table_entry(data_fwd_tbl,
                                 [KeyTuple(data_fwd_tbl_key, value=dst_mac)])
+
+    def add_smac(self, src_mac, port):
+        logger.info(
+            'Inserting port - [%s] with key - [%s] into %s',
+            port, src_mac, smac_tbl)
+        self.insert_table_entry(smac_tbl,
+                                smac_action,
+                                [KeyTuple(smac_tbl_key, src_mac)],
+                                [DataTuple(smac_action_val,
+                                           int(port))])
+
+    def del_smac(self, src_mac):
+        logger.info(
+            'Deleting table entry with key - [%s] from %s',
+            src_mac, smac_tbl)
+        self.delete_table_entry(smac_tbl,
+                                [KeyTuple(smac_tbl_key, value=src_mac)])
 
     def add_attack(self, **kwargs):
         logger.info('Adding attack [%s]', kwargs)
@@ -171,8 +247,8 @@ class AggregateSwitch(BFRuntimeSwitch):
 
     def add_switch_id(self):
         logger.info(
-            'Inserting device ID [%s] into add_switch_id_t table',
-            self.int_device_id)
+            'Inserting device ID [%s] into %s table',
+            self.int_device_id, add_switch_id_tbl)
 
         try:
             self.insert_table_entry(add_switch_id_tbl,
@@ -183,6 +259,9 @@ class AggregateSwitch(BFRuntimeSwitch):
                                                val=self.int_device_id)])
         except Exception as e:
             if 'ALREADY_EXISTS' in str(e):
+                logger.debug('Entry exists with key [%s]', UDP_INT_DST_PORT)
                 pass
             else:
+                logger.error('Unexpected error inserting into table %s - [%s]',
+                             add_switch_id_tbl, e)
                 raise e

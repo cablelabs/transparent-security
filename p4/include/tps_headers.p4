@@ -17,7 +17,7 @@
 /*************************************************************************
 *********************** H E A D E R S  ***********************************
 *************************************************************************/
-typedef bit<9>  egressSpec_t;
+typedef PortId_t egressSpec_t;
 typedef bit<48> macAddr_t;
 typedef bit<32> ip4Addr_t;
 typedef bit<128> ip6Addr_t;
@@ -236,7 +236,7 @@ struct headers {
 
 struct mac_learn_digest {
     bit<48> src_mac;
-    bit<9> ingress_port;
+    PortId_t ingress_port;
 }
 
 struct nat_digest {
@@ -246,7 +246,15 @@ struct nat_digest {
 }
 
 struct metadata {
-    ip4Addr_t  ipv4_addr;
-    ip6Addr_t  ipv6_addr;
-    bit<16>    dst_port;
+    ip4Addr_t ipv4_addr;
+    ip6Addr_t ipv6_addr;
+    bit<16>   dst_port;
+    macAddr_t src_mac;
+    macAddr_t dst_mac;
+    PortId_t  ingress_port;
+}
+
+struct digest_t {
+    macAddr_t src_mac;
+    bit<16>  port;
 }

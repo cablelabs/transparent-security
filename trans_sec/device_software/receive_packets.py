@@ -91,6 +91,8 @@ def __log_packet(packet, int_hops):
 
 def __log_std_packet(ether_pkt, ip_pkt, ip_proto, pkt_len):
     logger.info('Protocol to parse - [%s]', ip_proto)
+    logger.debug('IP class - [%s]', ip_pkt.__class__)
+
     if ip_proto == trans_sec.consts.UDP_PROTO:
         logger.info('Parsing UDP Packet')
         tcp_udp_pkt = UDP(_pkt=ip_pkt.payload)
@@ -98,10 +100,6 @@ def __log_std_packet(ether_pkt, ip_pkt, ip_proto, pkt_len):
         logger.info('Parsing TCP Packet')
         tcp_udp_pkt = TCP(_pkt=ip_pkt.payload)
         logger.debug('TCP flags - [%s]', tcp_udp_pkt.flags)
-        logger.debug('IP class - [%s]', ip_pkt.__class__)
-        if tcp_udp_pkt.flags != 0x2 and isinstance(ip_pkt, IP):
-            logger.debug('TCP flags [%s] not 2, skipping', tcp_udp_pkt.flags)
-            return
     else:
         logger.debug('Nothing to log, protocol - [%s] is unsupported',
                      ip_proto)

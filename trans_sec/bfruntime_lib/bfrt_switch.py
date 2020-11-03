@@ -12,7 +12,7 @@
 # limitations under the License.
 
 import logging
-from abc import ABC
+from abc import ABC, abstractmethod
 from threading import Thread
 
 import grpc
@@ -54,95 +54,17 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
         self.digest_thread = Thread(target=self.receive_digests)
 
     def start(self):
+        logger.info('Starting switch - [%s]', self.name)
+        self.interface.clear_all_tables()
         self.add_switch_id()
-        self.start_digest_listeners()
+        self.digest_thread.start()
 
     def stop(self):
-        self.stop_digest_listeners()
+        self.digest_thread.join()
 
-    def start_digest_listeners(self):
-        logger.info('Tofino currently not supporting digests')
-        pass
-
-    def stop_digest_listeners(self):
-        self.interface._tear_down_stream()
-        logger.info('Tofino currently not supporting digests')
-        pass
-
-    def get_table_entry(self, table_name, action_name, match_fields,
-                        action_params, ingress_class=True):
-        raise NotImplementedError
-
-    def add_data_forward(self, dst_mac, ingress_port):
-        raise NotImplementedError
-
-    def del_data_forward(self, dst_mac):
-        raise NotImplementedError
-
-    def add_data_inspection(self, dev_id, dev_mac):
-        raise NotImplementedError
-
-    def del_data_inspection(self, dev_id, dev_mac):
-        raise NotImplementedError
-
-    def set_forwarding_pipeline_config(self, device_config):
-        raise NotImplementedError
-
-    def write_table_entry(self, **kwargs):
-        raise NotImplementedError
-
-    def get_data_forward_macs(self):
-        raise NotImplementedError
-
-    def get_data_inspection_src_mac_keys(self):
-        raise NotImplementedError
-
-    def get_match_values(self, table_name):
-        raise NotImplementedError
-
-    def get_table_entries(self, table_name):
-        raise NotImplementedError
-
-    def read_table_entries(self, table_id=None):
-        raise NotImplementedError
-
-    def write_clone_entries(self, pre_entry):
-        # TODO - determine how to clone on TNA
-        pass
-
-    def delete_clone_entries(self, pre_entry):
-        # TODO - determine how to clone on TNA
-        pass
-
-    def read_counters(self, counter_id=None, index=None):
-        # TODO - determine how to count on TNA
-        raise NotImplementedError
-
-    def reset_counters(self, counter_id=None, index=None):
-        # TODO - determine how to count on TNA
-        raise NotImplementedError
-
-    def write_digest_entry(self, digest_entry):
-        # TODO - determine how to digest on TNA
-        pass
-
-    def digest_list_ack(self, digest_ack):
-        # TODO - determine how to digest on TNA
-        pass
-
-    def digest_list(self):
-        # TODO - determine how to digest on TNA
-        pass
-
-    # TODO - determine if this is available or even necessary on TNA
-    def write_multicast_entry(self, hosts):
-        self.write_arp_flood()
-
-    def write_arp_flood(self):
-        """
-        arp_flood_t has not been implemented in core_tna.p4
-        :return:
-        """
+    @abstractmethod
+    def receive_digests(self):
+        logger.info('Received digest')
         pass
 
     def get_table(self, name):
