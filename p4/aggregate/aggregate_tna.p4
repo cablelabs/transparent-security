@@ -34,11 +34,14 @@ parser TpsAggParser(
 
     state start {
         tofino_parser.apply(packet, ig_intr_md);
+        meta.ingress_port = ig_intr_md.ingress_port;
         transition parse_ethernet;
     }
 
     state parse_ethernet {
         packet.extract(hdr.ethernet);
+        meta.src_mac = hdr.ethernet.src_mac;
+
         transition select(hdr.ethernet.etherType) {
             TYPE_ARP: parse_arp;
             TYPE_IPV4: parse_ipv4;
@@ -123,6 +126,42 @@ control TpsAggIngress(
 
     DirectCounter<bit<32>>(CounterType_t.PACKETS) droppedPackets;
 
+    bool src_miss;
+    PortId_t src_move;
+
+    action smac_hit(PortId_t port) {
+        src_move = port ^ ig_intr_md.ingress_port;
+    }
+
+    action smac_miss() {
+        src_miss = true;
+    }
+
+    table smac {
+        key = { hdr.ethernet.src_mac : exact; }
+        actions = {
+            smac_hit;
+            smac_miss;
+        }
+
+        const default_action = smac_miss;
+        size = 1024;
+    }
+
+    action data_forward(PortId_t port) {
+        ig_tm_md.ucast_egress_port = port;
+    }
+
+    table data_forward_t {
+        key = {
+            hdr.ethernet.dst_mac: exact;
+        }
+        actions = {
+            data_forward;
+        }
+        size = TABLE_SIZE;
+    }
+
     action data_drop() {
         ig_dprsr_md.drop_ctl = 0x1;
         droppedPackets.count();
@@ -140,21 +179,6 @@ control TpsAggIngress(
         }
         counters = droppedPackets;
         size = TABLE_SIZE;
-    }
-
-    action data_forward(PortId_t port) {
-        ig_tm_md.ucast_egress_port = port;
-    }
-
-    table data_forward_t {
-        key = {
-            hdr.ethernet.dst_mac: exact;
-        }
-        actions = {
-            data_forward;
-        }
-        size = TABLE_SIZE;
-        default_action = data_forward(1);
     }
 
     action add_switch_id(bit<32> switch_id) {
@@ -264,6 +288,7 @@ control TpsAggIngress(
         if (hdr.tcp.isValid()) {
             meta.dst_port = hdr.tcp.dst_port;
         }
+
         if (hdr.int_shim.isValid()) {
             // Add switch ID into existing INT data
             add_switch_id_t.apply();
@@ -290,9 +315,24 @@ control TpsAggIngress(
 
         // Basic forwarding and drop logic
         if (data_drop_t.apply().miss) {
-            data_forward_t.apply();
-            if(ig_intr_md.ingress_port == ig_tm_md.ucast_egress_port) {
+            if (ig_intr_md.ingress_port == ig_tm_md.ucast_egress_port) {
+                // Drop the packet
                 ig_dprsr_md.drop_ctl = 0x1;
+            } else {
+                if (data_forward_t.apply().miss) {
+                /* Send a digest if MAC address is unknown or if it is known
+                 * but attached to a different port as long as it does not come
+                 * in port 1, which should only be a switch. Nodes should be
+                 * plugged into the others. */
+                    if (ig_intr_md.ingress_port > 1) {
+                        // Send to NB switch at port 1
+                        smac.apply();
+                        if (src_miss == true || src_move != 0) {
+                            ig_dprsr_md.digest_type = 1;
+                        }
+                        data_forward(1);
+                    }
+                }
             }
         }
     }
@@ -308,7 +348,17 @@ control TpsAggDeparser(
     in metadata meta,
     in ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md) {
 
+    Digest<digest_t>() smac_digest;
+
     apply {
+        // Generate a digest, if digest_type is set in MAU.
+        if (ig_dprsr_md.digest_type == 1) {
+            smac_digest.pack({
+                hdr.ethernet.src_mac,
+                (bit<16>)meta.ingress_port
+            });
+        }
+
         /* For Standard and INT Packets */
         packet.emit(hdr.ethernet);
         packet.emit(hdr.arp);
@@ -358,10 +408,6 @@ control TpsAggEgress(
     apply {
     }
 }
-
-/*************************************************************************
-*************************  D E P A R S E R   *****************************
-*************************************************************************/
 
 control TpsAggEgressDeparser(
     packet_out packet,

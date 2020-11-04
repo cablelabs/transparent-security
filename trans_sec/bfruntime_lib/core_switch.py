@@ -60,10 +60,16 @@ class CoreSwitch(BFRuntimeSwitch):
         logger.info('Instantiating BFRT CoreSwitch')
         super(self.__class__, self).__init__(sw_info, client_id, is_master)
 
-    def start(self, **kwargs):
+    def start(self):
         super(self.__class__, self).start()
         self.__set_table_field_annotations()
         self.write_clone_entries(self.sw_info['clone_egress'])
+
+    def receive_digests(self):
+        """
+        Runnable method for self.digest_thread
+        """
+        pass
 
     def __set_table_field_annotations(self):
         df_table = self.get_table(data_fwd_tbl)
@@ -103,7 +109,7 @@ class CoreSwitch(BFRuntimeSwitch):
             ], '$normal')]
         )
 
-    def delete_clone_entries(self, port, mirror_tbl_key=1):
+    def delete_clone_entries(self, mirror_tbl_key=1):
         mirror_cfg_table = self.get_table("$mirror.cfg")
         mirror_cfg_table.entry_del([
             mirror_cfg_table.make_key([KeyTuple('$sid', mirror_tbl_key)])])

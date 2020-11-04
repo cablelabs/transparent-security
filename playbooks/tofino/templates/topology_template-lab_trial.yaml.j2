@@ -49,7 +49,7 @@ hosts:
   inet:
     name: inet
     id: 4
-    ip: 192.168.1.10
+    ip: 10.0.1.5
 {% if host_user is defined %}
     user: {{ host_user }}
 {% endif %}
@@ -60,7 +60,7 @@ hosts:
       - host: core
     ipv6: 0000:0000:0000:0000:0000:0001:0001:0003
     ip_port: any
-    mac: 00:00:00:00:01:02
+    mac: 00:00:00:00:05:01
     type: nas
   ae:
     name: ae
@@ -76,7 +76,7 @@ hosts:
       - host: core
     ipv6: 0000:0000:0000:0000:0000:0002:0001:0003
     ip_port: any
-    mac: 00:00:00:00:05:08
+    mac: 00:00:00:00:05:02
     type: server
 switches:
   aggregate:

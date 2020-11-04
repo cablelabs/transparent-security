@@ -96,7 +96,7 @@ const bit<3> IPV4_DONT_FRAGMENT = 0x2;
 /* Used for counters and this looks like it should be either compile or runtime configurable */
 const bit<32> MAX_DEVICE_ID = 15;
 /* The drop port to check at the ingress but is this really correct??? */
-const bit<9> DROP_PORT = 511;
+const PortId_t DROP_PORT = 511;
 
 /* Constants for determining BMV2 Packet instance_types */
 const bit<32> BMV2_V1MODEL_INSTANCE_TYPE_NORMAL        = 0;

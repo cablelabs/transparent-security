@@ -65,6 +65,7 @@ class DdosSdnController:
         logger.info('Stopping SDN controller')
         self.running = False
         self.http_server.stop()
+        self.drop_rpt_thread.join()
 
     def create_drop_report(self):
         while True:
