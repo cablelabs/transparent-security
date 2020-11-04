@@ -1,0 +1,80 @@
+{
+  "name": "ddos-api-anomaly-detector",
+  "description": "DDOS API Anomaly Detector",
+  "time_field": "timestamp",
+  "indices": [
+    "packets-*"
+  ],
+  "feature_attributes": [
+    {
+      "feature_name": "UDP2DstPortValueCount",
+      "feature_enabled": true,
+      "aggregation_query": {
+        "UDP2DstPortValueCount": {
+          "value_count": {
+            "field": "ts.UDP2DstPort"
+          }
+        }
+      }
+    },
+    {
+      "feature_name": "IPVDstAddrValueCount",
+      "feature_enabled": true,
+      "aggregation_query": {
+        "IPVDstAddrValueCount": {
+          "value_count": {
+            "field": "ts.IPvDestAddr"
+          }
+        }
+      }
+    },
+    {
+      "feature_name": "OriginatingMacAddressValueCount",
+      "feature_enabled": true,
+      "aggregation_query": {
+        "OriginatingMacAddressValueCount": {
+          "value_count": {
+            "field": "ts.INTMetadataSourceMetadataOriginatingMac"
+          }
+        }
+      }
+    }
+  ],
+  "filter_query": {
+     "bool": {
+        "filter": [
+            {
+                "term": {
+                    "ts.IPVersion": {
+                        "value": "4",
+                        "boost": 1
+                    }
+                }
+            },
+            {
+                "wildcard": {
+                    "ts.INTMetadataSourceMetadataOriginatingMac": {
+                        "wildcard": "*000000000101*",
+                        "boost": 1
+                    }
+                }
+            }
+        ],
+        "adjust_pure_negative": true,
+        "boost": 1
+    }
+  },
+  "detection_interval": {
+    "period": {
+      "interval": 1,
+      "unit": "Minutes"
+    }
+  },
+  "window_delay": {
+    "period": {
+      "interval": 1,
+      "unit": "Minutes"
+    }
+  },
+  "shingle_size" : 1
+}

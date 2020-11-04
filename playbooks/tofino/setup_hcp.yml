@@ -14,8 +14,6 @@
 - hosts: ae
   gather_facts: no
   become: yes
-#  environment:
-#    JAVA_HOME:$(dirname $(dirname $(readlink $(readlink $(which java)))))
   tasks:
   - name: Install yum dependencies
     yum:
