@@ -1,4 +1,4 @@
-# DDOS Detection and Mitigation Pipeline using Open Distro Elasticsearch
+# DDOS Detection and Mitigation Pipeline UDP v4 using Open Distro Elasticsearch
 
 - To add a DDOS Detection pipeline you need to add a monitor and an associated trigger to detect the DDOS attack.
 - To add a DDOS Mitigation pipeline you need add an associated action (custom webhook) with associated trigger.
