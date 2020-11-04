@@ -27,7 +27,7 @@ The transparent security analytics module uses the following components for data
 
 ## Running Examples
 
-- To start a live capture on analytics instance from the network interface `ae-eth0`, get all packets and index them in the Elasticsearch cluster running at localhost:9200 , assuming your present working directory is *espcap*
+- To start a live capture on an analytics instance from the network interface `ae-eth0`, get all packets and index them in the Elasticsearch cluster running at localhost:9200 , assuming your present working directory is *espcap*
   ```
   cd espcap/
   sudo python3 src/espcap.py --nic=ae-eth0 --node=localhost:9200 --chunk=100
@@ -63,7 +63,7 @@ To visualize the indexed packets / incoming data in Kibana you need to create an
 
     1. To access Kibana UI go localhost:5601 => Stack Management => Index Patters => Create index pattern.
     2. Add a name for Index pattern and select the corresponding matching index source.
-    3. Click on next step and choose timestamp as primarry time field for the index pattern.
+    3. Click on next step and choose timestamp as primary time field for the index pattern.
     4. Click create index pattern and navigate to Discover tab to see the incoming packets matching the index pattern.
 
 
