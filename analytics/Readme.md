@@ -1,4 +1,4 @@
-#Analytics Guide
+# Analytics Guide
 
 The transparent security analytics module uses the following components for data capture and data analysis.
 
