@@ -152,20 +152,14 @@ control TpsAggIngress(
         ig_tm_md.ucast_egress_port = port;
     }
 
-    action data_forward_miss() {
-        data_forward(1);
-    }
-
     table data_forward_t {
         key = {
             hdr.ethernet.dst_mac: exact;
         }
         actions = {
             data_forward;
-            data_forward_miss;
         }
         size = TABLE_SIZE;
-        default_action = data_forward_miss();
     }
 
     action data_drop() {
@@ -321,19 +315,22 @@ control TpsAggIngress(
 
         // Basic forwarding and drop logic
         if (data_drop_t.apply().miss) {
-            data_forward_t.apply();
             if (ig_intr_md.ingress_port == ig_tm_md.ucast_egress_port) {
                 // Drop the packet
                 ig_dprsr_md.drop_ctl = 0x1;
             } else {
-                if (ig_intr_md.ingress_port > 1) {
-                    smac.apply();
-                    /* Send a digest if MAC address is unknown or if it is known
-                     * but attached to a different port as long as it does not come
-                     * in port 1, which should only be a switch. Nodes should be
-                     * plugged into the others. */
-                    if ((src_miss == true || src_move != 0)) {
-                        ig_dprsr_md.digest_type = 1;
+                if (data_forward_t.apply().miss) {
+                /* Send a digest if MAC address is unknown or if it is known
+                 * but attached to a different port as long as it does not come
+                 * in port 1, which should only be a switch. Nodes should be
+                 * plugged into the others. */
+                    if (ig_intr_md.ingress_port > 1) {
+                        // Send to NB switch at port 1
+                        smac.apply();
+                        if (src_miss == true || src_move != 0) {
+                            ig_dprsr_md.digest_type = 1;
+                        }
+                        data_forward(1);
                     }
                 }
             }

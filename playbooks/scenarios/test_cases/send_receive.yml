@@ -81,7 +81,6 @@
     protocol: "{{ send_protocol | default('UDP') }}"
     int_hdr_df: "{{ log_dir }}/send_int_data-ip-{{ ip_ver }}-proto-{{ protocol }}-ih-{{ hops }}.yml"
     ip_ver: "{{ ip_version | default('4') }}"
-    sender_ip: "{{ sender.ip if ip_ver == '4' else sender.ipv6 }}"
     receiver_ip: "{{ receiver.ip if ip_ver == '4' else receiver.ipv6 }}"
     int_hdr_tmplt: ../templates/send_int_hdr.yml.j2
     receiver_mac: "{{ receiver.mac }}"
@@ -142,7 +141,6 @@
     hops: "{{ int_hops | default(0) }}"
     ip_ver: "{{ ip_version | default('4') }}"
     receiver_log_file: "{{ log_dir }}/{{ receiver_log_filename }}"
-    sender_ip: "{{ sender.ip if ip_ver == '4' else sender.ipv6 }}"
     receiver_ip: "{{ receiver.ip if ip_ver == '4' else receiver.ipv6 }}"
   tasks:
     - debug:

@@ -205,6 +205,7 @@ def __gen_int_pkt(args, ip_ver, src_mac):
     int_hops = len(int_data['meta'])
     shim_len = 4 + 3 + int_hops - 1
     logger.info('Int data to add to packet - [%s]', int_data)
+    udp_int_len = None
     # TODO - Find a better way to calculate PAYLOAD_LEN using args.msg
     if args.protocol == 'UDP':
         udp_int_len = trans_sec.consts.UDP_INT_HDR_LEN + (shim_len * 4) \
