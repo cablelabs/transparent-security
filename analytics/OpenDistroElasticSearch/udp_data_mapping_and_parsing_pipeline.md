@@ -1,4 +1,4 @@
-# UDP Data Mapping and Parsing Guide for ElasticSearch
+# UDP Data Mapping and Parsing Guide for Open Distro Elasticsearch
 
 - Default configured ElasticSearch instance runs on port 9200.
 - Default configured Kibana instance runs on port 5601.
