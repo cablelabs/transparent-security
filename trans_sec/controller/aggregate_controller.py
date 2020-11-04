@@ -44,41 +44,13 @@ class AggregateController(AbstractController):
 
     def instantiate_switch(self, sw_info):
         if 'arch' in sw_info and sw_info['arch'] == 'tna':
+            logger.info('Instantiating BFRT AggregateSwitch')
             return BFRTSwitch(sw_info=sw_info)
         else:
             return P4RTSwitch(
                 sw_info=sw_info,
                 proto_dump_file='{}/{}-switch-controller.log'.format(
                     self.log_dir, sw_info['name']))
-
-    def make_rules(self, sw, north_facing_links, south_facing_links, add_di):
-        pass
-
-    def make_north_rules(self, sw, north_link):
-        if north_link.get('north_facing_port'):
-            logger.info('Creating north switch rules - [%s]', north_link)
-
-            # north_node = self.topo['switches'][north_link['north_node']]
-            if (self.topo.get('switches')
-                    and north_link['north_node'] in self.topo['switches']):
-                logger.debug('North node from switches')
-                north_node = self.topo['switches'][north_link['north_node']]
-            else:
-                logger.debug('North node from hosts')
-                north_node = self.topo['hosts'][north_link['north_node']]
-
-            logger.info(
-                'Aggregate: %s connects northbound to Core: %s on physical '
-                'port %s to physical port %s',
-                sw.name, north_node,
-                north_link.get('north_facing_port'),
-                north_link.get('south_facing_port'))
-
-            logger.info('Installed Northbound from port %s to port %s',
-                        north_link.get('north_facing_port'),
-                        north_link.get('south_facing_port'))
-        else:
-            logger.info('No north links to install')
 
     def __get_agg_switch(self):
         return self.switches[0]
@@ -100,5 +72,4 @@ class AggregateController(AbstractController):
     def count_dropped_packets(self):
         agg_switch = self.__get_agg_switch()
         if agg_switch:
-            match_keys, drop_count = agg_switch.get_drop_pkt_count()
-        return match_keys, drop_count
+            return agg_switch.get_drop_pkt_count()

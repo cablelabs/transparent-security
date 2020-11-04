@@ -23,16 +23,14 @@
         name: tps-tofino-ae
         state: restarted
 
-# Add table entries into data_forward_t tables
+# Call POST on all WS calls
 - hosts: "{{ rec_host }}"
   gather_facts: no
-  vars:
-    execute_insert: "{{ write_data_forward | default(False) }}"
   tasks:
     - block:
-        - name: Data forward structure
+        - name: Web service calls to make
           debug:
-            var: data_forwards
+            var: ws_calls
         - name: Insert data forward table
           uri:
             url: "{{ item.url }}"
@@ -40,25 +38,7 @@
             body_format: "{{ item.body_format | default('json') }}"
             body: "{{ item.body }}"
             status_code: "{{ item.ok_status | default('200') }}"
-          with_items: "{{ data_forwards }}"
-      when: execute_insert|bool
-
-# Enable switches for data inspection
-- hosts: "{{ rec_host }}"
-  gather_facts: no
-  tasks:
-    - name: show data inspection requests for enablement
-      debug:
-        var: data_inspections
-
-    - name: Data inspection requests
-      uri:
-        url: "{{ item.url }}"
-        method: POST
-        body_format: "{{ item.body_format | default('json') }}"
-        body: "{{ item.body }}"
-        status_code: "{{ item.ok_status | default('200') }}"
-      with_items: "{{ data_inspections }}"
+          with_items: "{{ ws_calls }}"
 
 # Sending packets expect all to be received with configured INT hops sr1_rec_int_hops
 - import_playbook: ../test_cases/send_receive.yml
@@ -70,24 +50,17 @@
     send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 10) }}"
     send_packet_count: "{{ di_send_packet_count | default('%s' % 100 | random(seed=now|int + 11)) }}"
     inspection_data: "{{ sr1_data_inspection_int | default(None) }}"
-    # TODO/FIXME - Have been noticing missing packets on TNA so we should not do the '- 10' (see issue #268)
-    min_received_packet_count: "{{ di_min_rec_packet_count | default(send_packet_count|int - 10) }}"
-    max_received_packet_count: "{{ di_max_rec_packet_count | default(send_packet_count) }}"
     send_loops: "{{ di_send_loops | default(1) }}"
     send_loop_delay: "{{ di_send_loop_delay | default(5) }}"
-    discover_fwd_path: True
     cleanup_rest_call:
       url: "http://{{ sdn_ip }}:{{ sdn_port }}/aggAttack"
       body:
-        src_ip: "{% if scenario_send_ip_version|int == 4 %}{{ sender.ip }}{% else %}{{ sender.ipv6 }}{% endif %}"
-        packet_size: 112
-        attack_type: "{{ send_protocol }} Flood"
-        dst_port: "{{ send_port }}"
-        dst_ip: "{% if scenario_send_ip_version|int == 4 %}{{ receiver.ip }}{% else %}{{ receiver.ipv6 }}{% endif %}"
         src_mac: "{{ sender.mac }}"
+        dst_ip: "{% if scenario_send_ip_version|int == 4 %}{{ receiver.ip }}{% else %}{{ receiver.ipv6 }}{% endif %}"
+        dst_port: "{{ send_port }}"
       ok_status: 201
 
-# Disable switches for data inspection
+# Call DELETE on all WS calls
 - hosts: "{{ rec_host }}"
   gather_facts: no
   tasks:
@@ -98,20 +71,4 @@
         body_format: "{{ item.body_format | default('json') }}"
         body: "{{ item.body }}"
         status_code: "{{ item.ok_status | default('200') }}"
-      with_items: "{{ data_inspections }}"
-
-# Delete table entries from data_forward_t tables
-- hosts: "{{ rec_host }}"
-  gather_facts: no
-  vars:
-    execute_insert: "{{ write_data_forward | default(False) }}"
-  tasks:
-    - name: Delete data forward table
-      uri:
-        url: "{{ item.url }}"
-        method: DELETE
-        body_format: "{{ item.body_format | default('json') }}"
-        body: "{{ item.body }}"
-        status_code: "{{ item.ok_status | default('200') }}"
-      with_items: "{{ data_forwards }}"
-      when: execute_insert|bool
+      with_items: "{{ ws_calls }}"

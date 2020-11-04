@@ -17,31 +17,6 @@
 # Please note that the sender and receiver should not have any more than a single
 # tunnel configured on the topology
 
-# Forwarding Path Discovery
-- hosts: "{{ send_host }}"
-  gather_facts: no
-  vars:
-    # TODO - Change me after IPv6 discovery works
-#    ip_ver: "{{ ip_version | default('4') }}"
-#    receiver_ip: "{{ receiver.ip if ip_ver == '4' else receiver.ipv6 }}"
-    receiver_ip: "{{ receiver.ip }}"
-    sender_intf: "{{ '%s-eth0' % send_host }}"
-    discover_path: "{{ discover_fwd_path | default(True) }}"
-    ping_packet_count: "{{ ping_count | default('3') }}"
-    ping_packet_interval: "{{ ping_interval | default('.5') }}"
-    ping_packet_pause: "{{ discovery_pause_time | default('1') }}"
-  tasks:
-    - debug:
-        var: sender.tunnels
-    - include_tasks: ping_from.yml
-      vars:
-        ip: "{{ receiver_ip }}"
-        intf: "{{ sender_intf }}"
-        count: "{{ ping_packet_count }}"
-        interval: "{{ ping_packet_interval }}"
-        pause_time: "{{ ping_packet_pause }}"
-      when: discover_path|bool
-
 # Create packet sniffer
 - hosts: "{{ rec_host }}"
   become: yes

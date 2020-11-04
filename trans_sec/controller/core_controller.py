@@ -36,17 +36,18 @@ except Exception as e:
 
 
 class CoreController(AbstractController):
+    """
+    Implementation of the controller for a switch running the core.p4 program
+    """
 
     def __init__(self, platform, p4_build_out, topo, log_dir, load_p4=True):
         super(self.__class__, self).__init__(
             platform, p4_build_out, topo, CORE_CTRL_KEY, log_dir, load_p4)
 
-    """
-    Implementation of the controller for a switch running the core.p4 program
-    """
     def instantiate_switch(self, sw_info):
         logger.info('Instantiating switch with arch - [%s]', sw_info)
         if 'arch' in sw_info and sw_info['arch'] == 'tna':
+            logger.info('Instantiating BFRT CoreSwitch')
             return BFRTSwitch(sw_info=sw_info)
         else:
             return P4RTSwitch(
@@ -54,78 +55,32 @@ class CoreController(AbstractController):
                 proto_dump_file='{}/{}-switch-controller.log'.format(
                     self.log_dir, sw_info['name']))
 
-    def make_rules(self, sw, north_facing_links, south_facing_links,
-                   add_di):
-        super(self.__class__, self).make_rules(
-            sw, north_facing_links, south_facing_links, False)
-
-        logger.info('Activating clone on device [%s] to port [%s]',
-                    sw.grpc_addr, sw.sw_info['clone_egress'])
-        sw.write_clone_entries(sw.sw_info['clone_egress'])
-        logger.info('Installed clone on %s' % sw.name)
-
-        ae_ip = None
-        trpt_dict = sw.sw_info.get('telemetry_rpt')
-        if trpt_dict:
-            logger.info('Activating Telem Rpt on device [%s]', sw.grpc_addr)
-            if trpt_dict['type'] == 'host':
-                host_dict = self.topo['hosts'].get(trpt_dict['name'])
-                if host_dict:
-                    default_ae_ip = host_dict.get('ip')
-                    ae_ip = host_dict.get('public_ip', default_ae_ip)
-            elif trpt_dict['type'] == 'external':
-                ext_dict = self.topo['external'].get(trpt_dict['name'])
-                if ext_dict:
-                    default_ae_ip = ext_dict.get('ip')
-                    ae_ip = ext_dict.get('public_ip', default_ae_ip)
-
-            if ae_ip:
-                logger.info('Telemetry report to be sent to - [%s]', ae_ip)
-                sw.setup_telemetry_rpt(ae_ip)
-            else:
-                logger.warning('Telemetry report not to be activated '
-                               'Could not obtain IP to ae')
-        else:
-            logger.warning('Telemetry report not configured')
-
-        if add_di:
-            self.__make_int_rules(sw)
-        else:
-            logger.info('Not inserting anything to data_inspection_t')
-
-        logger.info('Completed rules for device [%s]', sw.mac)
-
     def __get_core_switch(self):
         return self.switches[0]
 
-    @staticmethod
-    def __make_int_rules(sw):
-        logger.info('Adding table entry on core for data_inspection_t')
-        sw.add_data_inspection(sw.device_id, None)
-
-    def make_north_rules(self, sw, north_link):
-        north_device = self.topo['hosts'].get(north_link['north_node'])
-        if north_device:
-            logger.info(
-                'Core: %s connects to Internet: %s on physical port %s to'
-                ' ip %s:%s',
-                sw.name, north_device['name'],
-                north_link.get('north_facing_port'),
-                north_device.get('ip'), str(north_device.get('ip_port')))
-            logger.info(
-                'Adding data_forward entry to forward packets to  port - [%s]',
-                north_link['north_facing_port'])
-
-            logger.info(
-                'Installed Host %s ipv4 cloning rule on %s',
-                north_device.get('ip'), sw.name)
-
-    def count_dropped_packets(self):
-        pass
-
     def get_ae_ip(self):
-        ae_ip = "0.0.0.0"
         core_switch = self.__get_core_switch()
         if core_switch:
-            ae_ip = core_switch.read_ae_ip()
-        return ae_ip
+            return core_switch.read_ae_ip()
+
+    def setup_telem_rpt(self, **kwargs):
+        for switch in self.switches:
+            if switch.mac == kwargs['switch_mac']:
+                switch.setup_telemetry_rpt(kwargs['ae_ip'], kwargs['port'])
+
+    def remove_telem_rpt(self, **kwargs):
+        for switch in self.switches:
+            if switch.mac == kwargs['switch_mac']:
+                switch.remove_telemetry_rpt(kwargs['ae_ip'], kwargs['port'])
+
+    def add_attacker(self, attack, host):
+        pass
+
+    def remove_attacker(self, attack, host):
+        pass
+
+    def add_attacker(self, attack, host):
+        pass
+
+    def remove_attacker(self, attack, host):
+        pass

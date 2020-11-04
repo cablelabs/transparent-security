@@ -13,6 +13,7 @@
 
 import logging
 from abc import ABC
+from threading import Thread
 
 import grpc
 import tofino.bfrt_grpc.client as bfrt_client
@@ -50,8 +51,14 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
         logger.info('Binding pipeline config with - [%s]', p4_name)
         self.interface.bind_pipeline_config(self.bfrt_info.p4_name_get())
 
-        # self.digest_thread = Thread(target=self.receive_digests)
-        self.digest_thread = None
+        self.digest_thread = Thread(target=self.receive_digests)
+
+    def start(self):
+        self.add_switch_id()
+        self.start_digest_listeners()
+
+    def stop(self):
+        self.stop_digest_listeners()
 
     def start_digest_listeners(self):
         logger.info('Tofino currently not supporting digests')
@@ -77,21 +84,6 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
 
     def del_data_inspection(self, dev_id, dev_mac):
         raise NotImplementedError
-
-    def build_device_config(self):
-        """
-        Builds the device config for Tofino
-        """
-        raise NotImplementedError
-
-    def master_arbitration_update(self):
-        logger.info('Master arbitration not implemented on - [%s]',
-                    self.grpc_addr)
-        # request = bfruntime_pb2.StreamMessageRequest()
-        # request.arbitration.device_id = self.device_id
-        # request.arbitration.election_id.high = 0
-        # request.arbitration.election_id.low = 1
-        # self.requests_stream.put(request)
 
     def set_forwarding_pipeline_config(self, device_config):
         raise NotImplementedError

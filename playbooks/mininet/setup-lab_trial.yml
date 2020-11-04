@@ -36,4 +36,3 @@
     port_to_wait: "{{ sdn_port }}"
     p4_platform: bmv2
     load_p4: True
-    add_data_inspection: False
