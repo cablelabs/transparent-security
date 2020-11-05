@@ -14,7 +14,7 @@
 # one will be demonstrating dropped packets
 ---
 # Call web services for data_forward and setup_telemetry report
-- hosts: "{{ rec_host }}"
+- hosts: controller
   gather_facts: no
   tasks:
     - block:
@@ -31,7 +31,7 @@
           with_items: "{{ ws_calls }}"
 
 # Call web services for data_inspection
-- hosts: "{{ rec_host }}"
+- hosts: controller
   gather_facts: no
   tasks:
     - block:
@@ -61,7 +61,7 @@
     max_received_packet_count: "{{ send_packet_count }}"
 
 # Disable switches for data inspection
-- hosts: "{{ rec_host }}"
+- hosts: controller
   gather_facts: no
   tasks:
     - name: DELETE Data inspection requests
@@ -75,7 +75,7 @@
       when: data_inspections is defined
 
 # Delete table entries from data_forward_t tables
-- hosts: "{{ rec_host }}"
+- hosts: controller
   gather_facts: no
   tasks:
     - name: Call DELETE on ws_calls

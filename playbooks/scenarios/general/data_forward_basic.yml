@@ -14,7 +14,7 @@
 # one will be demonstrating dropped packets
 ---
 # Add table entries into data_forward_t tables
-- hosts: "{{ rec_host }}"
+- hosts: controller
   gather_facts: no
   tasks:
     - block:
@@ -43,7 +43,7 @@
     max_received_packet_count: "{{ send_packet_count }}"
 
 # Delete table entries from data_forward_t tables
-- hosts: "{{ rec_host }}"
+- hosts: controller
   gather_facts: no
   tasks:
     - name: Delete data forward table

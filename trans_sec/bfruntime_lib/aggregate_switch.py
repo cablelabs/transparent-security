@@ -85,20 +85,27 @@ class AggregateSwitch(BFRuntimeSwitch):
         logger.info("Started listening digest thread on device [%s] with "
                     "name [%s]", self.grpc_addr, self.name)
 
-        learn_filter = self.bfrt_info.learn_get("smac_digest")
-        learn_filter.info.data_field_annotation_add("src_mac", "mac")
-        learn_filter.info.data_field_annotation_add("port", "bytes")
+        smac_learn_filter = self.bfrt_info.learn_get("smac_digest")
+        smac_learn_filter.info.data_field_annotation_add("src_mac", "mac")
+        smac_learn_filter.info.data_field_annotation_add("port", "bytes")
+
+        arp_learn_filter = self.bfrt_info.learn_get("arp_digest")
+        arp_learn_filter.info.data_field_annotation_add("src_mac", "mac")
+        arp_learn_filter.info.data_field_annotation_add("port", "bytes")
 
         while True:
-            logger.debug('Attempting to retrieve digest')
             digest = None
             try:
                 digest = self.interface.digest_get()
             except Exception as e:
-                logger.error('Unexpected error receiving digest - [%s]', e)
+                if 'Digest list not received' not in str(e):
+                    logger.debug('Unexpected error receiving digest - [%s]', e)
 
             if digest:
-                data_list = learn_filter.make_data_list(digest)
+                data_list = smac_learn_filter.make_data_list(digest)
+                if not data_list or len(data_list) == 0:
+                    data_list = arp_learn_filter.make_data_list(digest)
+
                 logger.debug('Digest list - [%s]', data_list)
                 for data_item in data_list:
                     data_dict = data_item.to_dict()
@@ -259,7 +266,6 @@ class AggregateSwitch(BFRuntimeSwitch):
                                                val=self.int_device_id)])
         except Exception as e:
             if 'ALREADY_EXISTS' in str(e):
-                logger.debug('Entry exists with key [%s]', UDP_INT_DST_PORT)
                 pass
             else:
                 logger.error('Unexpected error inserting into table %s - [%s]',

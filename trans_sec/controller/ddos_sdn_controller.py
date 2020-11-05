@@ -75,9 +75,14 @@ class DdosSdnController:
     def send_drop_report(self):
         ae_ip = None
         if self.get_core_controller():
-            ae_ip = ipaddress.ip_address(
-                self.get_core_controller().get_ae_ip())
-            logger.info('AE IP Address - [%s]', ae_ip)
+            ae_ip_str = self.get_core_controller().get_ae_ip()
+            if ae_ip_str:
+                try:
+                    ae_ip = ipaddress.ip_address(ae_ip_str)
+                    logger.info('AE IP Address - [%s]', ae_ip)
+                except ValueError as e:
+                    logger.warning('Cannot create drop report, ae_ip invalid')
+                    return
         if ae_ip:
             self.__create_drop_report(ae_ip)
 
@@ -157,8 +162,14 @@ class DdosSdnController:
                     if del_flag:
                         switch.del_data_forward(df_req['dst_mac'])
                     else:
-                        switch.add_data_forward(df_req['dst_mac'],
-                                                df_req['output_port'])
+                        try:
+                            switch.add_data_forward(df_req['dst_mac'],
+                                                    df_req['output_port'])
+                        except Exception as e:
+                            if 'ALREADY_EXISTS' in str(e):
+                                pass
+                            else:
+                                raise e
                     return
 
         logger.warning('Could not find switch with switch_mac - [%s]',

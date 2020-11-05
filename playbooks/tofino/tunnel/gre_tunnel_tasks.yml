@@ -82,6 +82,20 @@
       command: "ip link set {{ tunnel1 }} up"
   when: intf_exist is failed and remote_host is defined and remote_host != ""
 
+- name: Dummy Interface "Tunnel"
+  block:
+    - name: Delete dummy interface {{ tunnel1 }} if exists
+      command: "ip link del {{ tunnel1 }} type dummy"
+      ignore_errors: yes
+
+    - name: Create dummy interface {{ tunnel1 }}
+      command: "ip link add {{ tunnel1 }} type dummy"
+
+    # Bring up tunnel
+    - name: set gre tunnel 1 up - {{ tunnel1 }}
+      command: "ip link set {{ tunnel1 }} up"
+  when: item.host == "dummy"
+
 - name: Setup host communication ports to send/receive packets
   block:
     - name: Set interface name for {{ this_host.name }}
@@ -103,6 +117,9 @@
 
     - name: set host mirrored interface up - {{ mirrored_host_intf }}
       command: "ip link set {{ mirrored_host_intf }} up"
+
+    - name: activate ARP on interface - {{ mirrored_host_intf }}
+      command: "ip link set dev {{ mirrored_host_intf }} arp on"
 
     - name: Configure port mirroring for egress traffic
       command: "tc qdisc add dev {{ mirrored_host_intf }} handle 1: root prio"

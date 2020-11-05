@@ -24,7 +24,7 @@
         state: restarted
 
 # Call POST on all WS calls
-- hosts: "{{ rec_host }}"
+- hosts: controller
   gather_facts: no
   tasks:
     - block:
@@ -61,7 +61,7 @@
       ok_status: 201
 
 # Call DELETE on all WS calls
-- hosts: "{{ rec_host }}"
+- hosts: controller
   gather_facts: no
   tasks:
     - name: Data inspection requests

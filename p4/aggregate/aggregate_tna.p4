@@ -315,24 +315,34 @@ control TpsAggIngress(
 
         // Basic forwarding and drop logic
         if (data_drop_t.apply().miss) {
-            if (ig_intr_md.ingress_port == ig_tm_md.ucast_egress_port) {
-                // Drop the packet
-                ig_dprsr_md.drop_ctl = 0x1;
+            if (hdr.arp.isValid()) {
+                ig_dprsr_md.digest_type = DIGEST_TYPE_ARP;
+                data_forward(1);
             } else {
                 if (data_forward_t.apply().miss) {
-                /* Send a digest if MAC address is unknown or if it is known
+                /*
+                 * Send a digest if MAC address is unknown or if it is known
                  * but attached to a different port as long as it does not come
                  * in port 1, which should only be a switch. Nodes should be
-                 * plugged into the others. */
+                 * plugged into the others.
+                 */
                     if (ig_intr_md.ingress_port > 1) {
                         // Send to NB switch at port 1
                         smac.apply();
                         if (src_miss == true || src_move != 0) {
-                            ig_dprsr_md.digest_type = 1;
+                            ig_dprsr_md.digest_type = DIGEST_TYPE_FWD;
                         }
                         data_forward(1);
                     }
                 }
+            }
+
+            /*
+             * Ensure packet gets dropped if we are trying to egress to the
+             * ingress port
+             */
+            if (ig_intr_md.ingress_port == ig_tm_md.ucast_egress_port) {
+                ig_dprsr_md.drop_ctl = 0x1;
             }
         }
     }
@@ -349,12 +359,18 @@ control TpsAggDeparser(
     in ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md) {
 
     Digest<digest_t>() smac_digest;
+    Digest<digest_t>() arp_digest;
 
     apply {
         // Generate a digest, if digest_type is set in MAU.
-        if (ig_dprsr_md.digest_type == 1) {
+        if (ig_dprsr_md.digest_type == DIGEST_TYPE_FWD) {
             smac_digest.pack({
                 hdr.ethernet.src_mac,
+                (bit<16>)meta.ingress_port
+            });
+        } else if (ig_dprsr_md.digest_type == DIGEST_TYPE_ARP) {
+            arp_digest.pack({
+                hdr.arp.src_mac,
                 (bit<16>)meta.ingress_port
             });
         }
