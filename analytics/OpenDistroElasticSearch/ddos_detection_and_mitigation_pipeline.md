@@ -240,7 +240,14 @@ curl -H 'Content-Type: application/json' -XPOST 'http://localhost:9200/ _opendis
       "name": "Sdn-WebHook-Action",
       "destination_id": "jjlCkXUBenaD-0rLO4Cg",
       "message_template": {
-        "source":"{\"event_action\":\"trigger\",\"payload\":{\"attack_type\":\"UDP Flood\",\"dst_ip\":\"192.168.1.10\",\"dst_port\":\"5792\",\"packet_size\":112,\"src_ip\":\"192.168.1.2\",\"src_mac\":\"00:00:00:00:01:01\"}}",
+        "source":"{
+            \"event_action\":\"trigger\",
+             \"payload\": {
+                  \"dst_ip\": {{_source.ts.IPv4DestIP}},
+                   \"dst_port\": {{_source.ts.UDP2DstPort}},
+                    \"src_ip\": {{_source.ts.IPv4SrcIP}},
+                     \"src_mac\": {{_source.ts.INTMetadataSourceMetadataOriginatingMac}}
+             }}",
             "lang": "mustache",
             "options": {
                   "content_type": "application/json"
