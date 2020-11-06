@@ -202,7 +202,7 @@ curl -H 'Content-Type: application/json' -XPOST 'http://localhost:9200/ _opendis
     "search": {
       "indices": ["packets-*"],
       "query": {
-        "size": 0,
+         "size": 0,
         "query": {
         "bool": {
             "filter": [
@@ -217,13 +217,117 @@ curl -H 'Content-Type: application/json' -XPOST 'http://localhost:9200/ _opendis
                             "boost": 1
                         }
                     }
+                },
+                {
+                    "term": {
+                        "ts.IPVersion": {
+                            "value": "4",
+                            "boost": 1
+                        }
+                    }
+                },
+                {
+                    "wildcard": {
+                        "ts.IPvDestAddr": {
+                            "wildcard": "*c0a8010a*",
+                            "boost": 1
+                        }
+                    }
+                },
+                {
+                    "wildcard": {
+                        "ts.UDP2DstPort": {
+                            "wildcard": "*5792*",
+                            "boost": 1
+                        }
+                    }
                 }
             ],
             "adjust_pure_negative": true,
             "boost": 1
         }
+    }
     },
-        "aggregations": {}
+        "_source": {
+        "includes": [
+            "ts.UDP2DstPort",
+            "ts.IPvDestAddr",
+            "ts.INTMetadataSourceMetadataOriginatingMac",
+            "ts.IPv4SrcIP",
+            "ts.IPv4DestIP",
+            "ts.IPv6SrcIP",
+            "ts.IPv6DestIP"
+        ],
+        "excludes": []
+    },
+      "aggregations": {
+        "UDP2DstPortValueCount": {
+            "value_count": {
+                "field": "ts.UDP2DstPort"
+            }
+        },
+        "IPvDestAddrValueCount": {
+            "value_count": {
+                "field": "ts.IPvDestAddr"
+            }
+        },
+        "INTMetadataSourceMetadataOriginatingMacValueCount": {
+            "value_count": {
+                "field": "ts.INTMetadataSourceMetadataOriginatingMac"
+            }
+        },
+        "OriginatingMacAddrUDPv4": {
+            "terms": {
+                "field": "ts.INTMetadataSourceMetadataOriginatingMac",
+                "size": 10,
+                "min_doc_count": 1,
+                "shard_min_doc_count": 0,
+                "show_term_doc_count_error": false,
+                "order": [
+                    {
+                        "_count": "desc"
+                    },
+                    {
+                        "_key": "asc"
+                    }
+                ]
+            }
+        },
+        "IPv4SrcIP": {
+            "terms": {
+                "field": "ts.IPv4SrcIP",
+                "size": 10,
+                "min_doc_count": 1,
+                "shard_min_doc_count": 0,
+                "show_term_doc_count_error": false,
+                "order": [
+                    {
+                        "_count": "desc"
+                    },
+                    {
+                        "_key": "asc"
+                    }
+                ]
+            }
+        },
+        "IPv4DestIP": {
+            "terms": {
+                "field": "ts.IPv4DestIP",
+                "size": 10,
+                "min_doc_count": 1,
+                "shard_min_doc_count": 0,
+                "show_term_doc_count_error": false,
+                "order": [
+                    {
+                        "_count": "desc"
+                    },
+                    {
+                        "_key": "asc"
+                    }
+                ]
+            }
+        }
+    }
       }
     }
   }],
@@ -232,7 +336,7 @@ curl -H 'Content-Type: application/json' -XPOST 'http://localhost:9200/ _opendis
     "severity": "1",
     "condition": {
       "script": {
-        "source": "ctx.results[0].hits.total.value > 1000",
+        "source": "ctx.results[0].aggregations.UDP2DstPortValueCount.value >= 1000 && ctx.results[0].aggregations.IPvDestAddrValueCount.value >= 1000 && ctx.results[0].aggregations.INTMetadataSourceMetadataOriginatingMacValueCount.value >= 1000",
         "lang": "painless"
       }
     },
