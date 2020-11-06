@@ -34,12 +34,3 @@
     - name: Wait a few seconds
       pause:
         seconds: 5
-
-#    - name: Discover L2 path to hosts once more
-#      command: "{{ arp_command }}"
-#      register: arp_cmd_out
-#      failed_when: arp_cmd_out.rc == 0 or arp_cmd.rc > 1
-#
-#    - name: Wait a couple more seconds
-#      pause:
-#        seconds: 2
