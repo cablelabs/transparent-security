@@ -315,9 +315,11 @@ control TpsAggIngress(
 
         // Basic forwarding and drop logic
         if (data_drop_t.apply().miss) {
-            if (hdr.arp.isValid()) {
+            if (hdr.arp.isValid() && hdr.arp.opcode == (bit<16>)0x1) {
                 ig_dprsr_md.digest_type = DIGEST_TYPE_ARP;
-                data_forward(1);
+                if (ig_intr_md.ingress_port != 0x1) {
+                    data_forward(1);
+                }
             } else {
                 if (data_forward_t.apply().miss) {
                 /*
@@ -332,7 +334,9 @@ control TpsAggIngress(
                         if (src_miss == true || src_move != 0) {
                             ig_dprsr_md.digest_type = DIGEST_TYPE_FWD;
                         }
-                        data_forward(1);
+                        if (ig_intr_md.ingress_port != 0x1) {
+                            data_forward(1);
+                        }
                     }
                 }
             }
