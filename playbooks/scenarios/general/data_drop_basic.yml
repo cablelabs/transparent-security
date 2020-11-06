@@ -29,6 +29,7 @@
             body: "{{ item.body }}"
             status_code: "{{ item.ok_status | default('200') }}"
           with_items: "{{ data_forwards }}"
+      when: data_forwards is defined
 
 # Sending UDP packets expect all to be received
 - import_playbook: ../test_cases/send_receive.yml
@@ -103,3 +104,4 @@
         body: "{{ item.body }}"
         status_code: "{{ item.ok_status | default('200') }}"
       with_items: "{{ data_forwards }}"
+      when: data_forwards is defined

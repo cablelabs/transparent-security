@@ -13,6 +13,13 @@
 # Simple scenario where packets are sent through 3 devices and only the last
 # one will be demonstrating dropped packets
 ---
+# Discover path
+- import_playbook: ../general/arping.yml
+  vars:
+    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
+    send_host: host1
+    rec_host: inet
+    receiver: "{{ topo_dict.hosts[rec_host] }}"
 
 # Basic Data Inspection scenario - receiving packets on core-eth2 (non-INT packets)
 - import_playbook: data_inspection_basic.yml
@@ -30,13 +37,6 @@
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     dst_mac: "{{ receiver['mac'] }}"
     ws_calls:
-      - url: "http://{{ sdn_ip }}:{{ sdn_port }}/dataForward"
-        body:
-          device_id: "{{ switch2.id }}"
-          switch_mac: "{{ switch2.mac }}"
-          dst_mac: "{{ receiver.mac }}"
-          output_port: 2
-        ok_status: 201
       - url: "http://{{ sdn_ip }}:{{ sdn_port }}/dataInspection"
         body:
           device_id: "{{ switch.id }}"
@@ -68,13 +68,6 @@
     receiver: "{{ topo_dict.hosts.inet }}"
     dst_mac: "{{ receiver['mac'] }}"
     ws_calls:
-      - url: "http://{{ sdn_ip }}:{{ sdn_port }}/dataForward"
-        body:
-          device_id: "{{ switch2.id }}"
-          switch_mac: "{{ switch2.mac }}"
-          dst_mac: "{{ receiver.mac }}"
-          output_port: 2
-        ok_status: 201
       - url: "http://{{ sdn_ip }}:{{ sdn_port }}/dataInspection"
         body:
           device_id: "{{ switch.id }}"

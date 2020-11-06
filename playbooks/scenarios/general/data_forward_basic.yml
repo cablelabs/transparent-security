@@ -21,7 +21,8 @@
         - name: Data forward structure
           debug:
             var: data_forwards
-        - name: Insert data forward table
+
+        - name: Insert data forward table entries
           uri:
             url: "{{ item.url }}"
             method: POST
@@ -29,6 +30,7 @@
             body: "{{ item.body }}"
             status_code: "{{ item.ok_status | default('200') }}"
           with_items: "{{ data_forwards }}"
+      when: data_forwards is defined
 
 ## Sending UDP packets expect all to be received
 - import_playbook: ../test_cases/send_receive.yml
@@ -46,7 +48,7 @@
 - hosts: controller
   gather_facts: no
   tasks:
-    - name: Delete data forward table
+    - name: Delete data forward table entries
       uri:
         url: "{{ item.url }}"
         method: DELETE
@@ -54,3 +56,4 @@
         body: "{{ item.body }}"
         status_code: "{{ item.ok_status | default('200') }}"
       with_items: "{{ data_forwards }}"
+      when: data_forwards is defined

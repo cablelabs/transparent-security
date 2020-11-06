@@ -31,7 +31,8 @@
         - name: Web service calls to make
           debug:
             var: ws_calls
-        - name: Insert data forward table
+
+        - name: POST WS calls
           uri:
             url: "{{ item.url }}"
             method: POST
@@ -39,6 +40,7 @@
             body: "{{ item.body }}"
             status_code: "{{ item.ok_status | default('200') }}"
           with_items: "{{ ws_calls }}"
+      when: ws_calls is defined
 
 # Sending packets expect all to be received with configured INT hops sr1_rec_int_hops
 - import_playbook: ../test_cases/send_receive.yml
@@ -64,7 +66,7 @@
 - hosts: controller
   gather_facts: no
   tasks:
-    - name: Data inspection requests
+    - name: DELETE WS calls
       uri:
         url: "{{ item.url }}"
         method: DELETE
@@ -72,3 +74,4 @@
         body: "{{ item.body }}"
         status_code: "{{ item.ok_status | default('200') }}"
       with_items: "{{ ws_calls }}"
+      when: ws_calls is defined
