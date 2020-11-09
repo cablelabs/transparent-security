@@ -217,22 +217,125 @@ curl -H 'Content-Type: application/json' -XPOST 'http://localhost:9200/ _opendis
                             "boost": 1
                         }
                     }
+                },
+                {
+                    "term": {
+                        "ts.IPVersion": {
+                            "value": "4",
+                            "boost": 1
+                        }
+                    }
+                },
+                {
+                    "wildcard": {
+                        "ts.IPvDestAddr": {
+                            "wildcard": "*c0a8010a*",
+                            "boost": 1
+                        }
+                    }
+                },
+                {
+                    "wildcard": {
+                        "ts.UDP2DstPort": {
+                            "wildcard": "*5792*",
+                            "boost": 1
+                        }
+                    }
                 }
             ],
             "adjust_pure_negative": true,
             "boost": 1
         }
     },
-        "aggregations": {}
-      }
+        "_source": {
+        "includes": [
+            "ts.UDP2DstPort",
+            "ts.IPvDestAddr",
+            "ts.INTMetadataSourceMetadataOriginatingMac",
+            "ts.IPv4SrcIP",
+            "ts.IPv4DestIP",
+            "ts.IPv6SrcIP",
+            "ts.IPv6DestIP"
+        ],
+        "excludes": []
+    },
+        "aggregations": {
+        "UDP2DstPortValueCount": {
+            "value_count": {
+                "field": "ts.UDP2DstPort"
+            }
+        },
+        "IPvDestAddrValueCount": {
+            "value_count": {
+                "field": "ts.IPvDestAddr"
+            }
+        },
+        "INTMetadataSourceMetadataOriginatingMacValueCount": {
+            "value_count": {
+                "field": "ts.INTMetadataSourceMetadataOriginatingMac"
+            }
+        },
+        "OriginatingMacAddrUDPv4": {
+            "terms": {
+                "field": "ts.INTMetadataSourceMetadataOriginatingMac",
+                "size": 10,
+                "min_doc_count": 1,
+                "shard_min_doc_count": 0,
+                "show_term_doc_count_error": false,
+                "order": [
+                    {
+                        "_count": "desc"
+                    },
+                    {
+                        "_key": "asc"
+                    }
+                ]
+            }
+        },
+        "IPv4SrcIP": {
+            "terms": {
+                "field": "ts.IPv4SrcIP",
+                "size": 10,
+                "min_doc_count": 1,
+                "shard_min_doc_count": 0,
+                "show_term_doc_count_error": false,
+                "order": [
+                    {
+                        "_count": "desc"
+                    },
+                    {
+                        "_key": "asc"
+                    }
+                ]
+            }
+        },
+        "IPv4DestIP": {
+            "terms": {
+                "field": "ts.IPv4DestIP",
+                "size": 10,
+                "min_doc_count": 1,
+                "shard_min_doc_count": 0,
+                "show_term_doc_count_error": false,
+                "order": [
+                    {
+                        "_count": "desc"
+                    },
+                    {
+                        "_key": "asc"
+                    }
+                ]
+            }
+        }
     }
-  }],
+      }
+  }
+    }],
   "triggers": [{
     "name": "DDOS-Trigger",
     "severity": "1",
     "condition": {
       "script": {
-        "source": "ctx.results[0].hits.total.value > 1000",
+        "source": "ctx.results[0].aggregations.UDP2DstPortValueCount.value >= 1000 && ctx.results[0].aggregations.IPvDestAddrValueCount.value >= 1000 && ctx.results[0].aggregations.INTMetadataSourceMetadataOriginatingMacValueCount.value >= 1000",
         "lang": "painless"
       }
     },
@@ -240,10 +343,10 @@ curl -H 'Content-Type: application/json' -XPOST 'http://localhost:9200/ _opendis
       "name": "Sdn-WebHook-Action",
       "destination_id": "jjlCkXUBenaD-0rLO4Cg",
       "message_template": {
-        "source":"{\"event_action\":\"trigger\",\"payload\":{\"attack_type\":\"UDP Flood\",\"dst_ip\":\"192.168.1.10\",\"dst_port\":\"5792\",\"packet_size\":112,\"src_ip\":\"192.168.1.2\",\"src_mac\":\"00:00:00:00:01:01\"}}",
-            "lang": "mustache",
-            "options": {
-                  "content_type": "application/json"
+        "source":"{\"event_action\":\"trigger\",\"payload\":{ \"dst_ip\":\"{{_source.ts.IPv4DestIP}}\",\"dst_port\":\"{{_source.ts.UDP2DstPort}}\",\"src_ip\":\"{{_source.ts.IPv4SrcIP}}\",\"src_mac\":\"{{_source.ts.INTMetadataSourceMetadataOriginatingMac}}\"}}",
+        "lang": "mustache",
+        "options": {
+            "content_type": "application/json"
        }
      },
       "throttle_enabled": false

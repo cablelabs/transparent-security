@@ -374,43 +374,67 @@
       }
     },
     {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        "script" : {
+          "lang" : "painless",
+          "ignore_failure" : true,
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
               if( etherType == '0800' && ipVersion == '4')
               {
-               ctx.ts.IPvSrcAddr = tsRawData.substring(100, 108);
+               String IPv4SrcIPHexString = tsRawData.substring(100, 108);
+               String IPv4SrcIP = "";
+                for(int i = 0; i < IPv4SrcIPHexString.length(); i = i + 2) {
+                     IPv4SrcIP = IPv4SrcIP + Integer.valueOf(IPv4SrcIPHexString.substring(i, i+2), 16) + ".";
+                }
+                IPv4SrcIP = IPv4SrcIP.substring(0, IPv4SrcIP.length()-1);
+                ctx.ts.IPv4SrcIP = IPv4SrcIP;
               }
               if( etherType == '86dd' && ipVersion == '6')
               {
-               ctx.ts.IPvSrcAddr = tsRawData.substring(92,124);
+               String IPv6SrcIPHexString = tsRawData.substring(92,124);
+               String IPv6SrcIP = "";
+                for(int i = 0; i < IPv6SrcIPHexString.length(); i = i + 2) {
+                     IPv6SrcIP = IPv6SrcIP + Integer.valueOf(IPv6SrcIPHexString.substring(i, i+2), 16) + ".";
+                }
+                IPv6SrcIP = IPv6SrcIP.substring(0, IPv6SrcIP.length()-1);
+                ctx.ts.IPv6SrcIP = IPv6SrcIP;
               }
         """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "ignore_failure" : true,
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
               if( etherType == '0800' && ipVersion == '4')
               {
-               ctx.ts.IPvDestAddr = tsRawData.substring(108, 116);
+               String IPv4DestIPHexString = tsRawData.substring(108, 116);
+               String IPv4DestIP = "";
+                for(int i = 0; i < IPv4DestIPHexString.length(); i = i + 2) {
+                     IPv4DestIP = IPv4DestIP + Integer.valueOf(IPv4DestIPHexString.substring(i, i+2), 16) + ".";
+                }
+                IPv4DestIP = IPv4DestIP.substring(0, IPv4DestIP.length()-1);
+                ctx.ts.IPv4DestIP = IPv4DestIP;
               }
               if( etherType == '86dd' && ipVersion == '6')
-              {
-               ctx.ts.IPvDestAddr = tsRawData.substring(124,156);
+             {
+               String IPv6DestIPHexString = tsRawData.substring(124,156);
+               String IPv6DestIP = "";
+                for(int i = 0; i < IPv6DestIPHexString.length(); i = i + 2) {
+                     IPv6DestIP = IPv6DestIP + Integer.valueOf(IPv6DestIPHexString.substring(i, i+2), 16) + ".";
+                }
+                IPv6DestIP = IPv6DestIP.substring(0, IPv6DestIP.length()-1);
+                ctx.ts.IPv6DestIP = IPv6DestIP;
               }
         """
-      }
-    },
+        }
+      },
     {
       "script": {
         "lang": "painless",
