@@ -202,7 +202,7 @@ curl -H 'Content-Type: application/json' -XPOST 'http://localhost:9200/ _opendis
     "search": {
       "indices": ["packets-*"],
       "query": {
-         "size": 0,
+        "size": 0,
         "query": {
         "bool": {
             "filter": [
@@ -246,7 +246,6 @@ curl -H 'Content-Type: application/json' -XPOST 'http://localhost:9200/ _opendis
             "adjust_pure_negative": true,
             "boost": 1
         }
-    }
     },
         "_source": {
         "includes": [
@@ -260,7 +259,7 @@ curl -H 'Content-Type: application/json' -XPOST 'http://localhost:9200/ _opendis
         ],
         "excludes": []
     },
-      "aggregations": {
+        "aggregations": {
         "UDP2DstPortValueCount": {
             "value_count": {
                 "field": "ts.UDP2DstPort"
@@ -329,8 +328,8 @@ curl -H 'Content-Type: application/json' -XPOST 'http://localhost:9200/ _opendis
         }
     }
       }
-    }
-  }],
+  }
+    }],
   "triggers": [{
     "name": "DDOS-Trigger",
     "severity": "1",
@@ -344,17 +343,10 @@ curl -H 'Content-Type: application/json' -XPOST 'http://localhost:9200/ _opendis
       "name": "Sdn-WebHook-Action",
       "destination_id": "jjlCkXUBenaD-0rLO4Cg",
       "message_template": {
-        "source":"{
-            \"event_action\":\"trigger\",
-             \"payload\": {
-                  \"dst_ip\": {{_source.ts.IPv4DestIP}},
-                   \"dst_port\": {{_source.ts.UDP2DstPort}},
-                    \"src_ip\": {{_source.ts.IPv4SrcIP}},
-                     \"src_mac\": {{_source.ts.INTMetadataSourceMetadataOriginatingMac}}
-             }}",
-            "lang": "mustache",
-            "options": {
-                  "content_type": "application/json"
+        "source":"{\"event_action\":\"trigger\",\"payload\":{ \"dst_ip\":\"{{_source.ts.IPv4DestIP}}\",\"dst_port\":\"{{_source.ts.UDP2DstPort}}\",,\"src_ip\":\"{{_source.ts.IPv4SrcIP}}\",\"src_mac\":\"{{_source.ts.INTMetadataSourceMetadataOriginatingMac}}\"}}",
+        "lang": "mustache",
+        "options": {
+            "content_type": "application/json"
        }
      },
       "throttle_enabled": false
