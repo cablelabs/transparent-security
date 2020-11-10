@@ -23,6 +23,7 @@
     send_host: inet
     rec_host: host1
     receiver: "{{ topo_dict.hosts[rec_host] }}"
+    arp_discovery: True
 
 # Data Inspection scenarios for UDP and IPv4
 - import_playbook: data-inspection.yml
@@ -34,6 +35,7 @@
     di_min_rec_packet_count: 99
     di_send_loops: 2
     di_send_loop_delay: 10
+    arp_discovery: True
 
 # Data Inspection scenarios for UDP and IPv6 with AE for testing dropping packets
 - import_playbook: data-inspection.yml
@@ -45,6 +47,7 @@
     di_min_rec_packet_count: 99
     di_send_loops: 2
     di_send_loop_delay: 10
+    arp_discovery: True
 
 # Data Inspection scenarios for TCP and IPv4 with AE for testing dropping packets
 - import_playbook: data-inspection.yml
@@ -56,6 +59,7 @@
     di_min_rec_packet_count: 99
     di_send_loops: 2
     di_send_loop_delay: 10
+    arp_discovery: True
 
 # Data Inspection scenarios for TCP and IPv6 with AE for testing dropping packets
 - import_playbook: data-inspection.yml
@@ -67,3 +71,4 @@
     di_min_rec_packet_count: 99
     di_send_loops: 2
     di_send_loop_delay: 10
+    arp_discovery: True

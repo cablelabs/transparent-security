@@ -82,8 +82,9 @@
     int_hdr_df: "{{ log_dir }}/send_int_data-ip-{{ ip_ver }}-proto-{{ protocol }}-ih-{{ hops }}.yml"
     ip_ver: "{{ ip_version | default('4') }}"
     receiver_ip: "{{ receiver.ip if ip_ver == '4' else receiver.ipv6 }}"
-    int_hdr_tmplt: ../templates/send_int_hdr.yml.j2
     receiver_mac: "{{ receiver.mac }}"
+    receiver_ipv4: "{{ receiver.ip }}"
+    int_hdr_tmplt: ../templates/send_int_hdr.yml.j2
   tasks:
     - debug:
         msg: "Generating packets"
@@ -105,12 +106,22 @@
           -z {{ sender_intf }}
           -f {{ sender_log_file }}
           -sp {{ send_src_port }} -p {{ send_port }}
-          -r {{ receiver_ip }} -s {{ receiver_mac }}
+          -r {{ receiver_ip }}
           -m '{{ send_msg }}'
           -y {{ send_delay }} -i {{ interval }}
           -it {{ loops }} -itd {{ loop_delay }}
           -pr {{ send_protocol }}
           -c {{ send_packet_count }}
+
+    - name: Add receiver ipv4 to send_packets.py call for dst_mac ARP table lookup
+      set_fact:
+        send_cmd: "{{ send_cmd }} -dip4 {{ receiver_ipv4 }}"
+      when: arp_discovery is defined and arp_discovery|bool
+
+    - name: Add known dst_mac to send_packets.py call
+      set_fact:
+        send_cmd: "{{ send_cmd }} -s {{ receiver_mac }}"
+      when: arp_discovery is not defined or not arp_discovery|bool
 
     - name: Configure for Sending INT Packets
       block:
