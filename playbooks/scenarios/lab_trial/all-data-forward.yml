@@ -13,20 +13,29 @@
 # Simple scenario where packets are sent through 3 devices and only the last
 # one will be demonstrating dropped packets
 ---
-# Discover path
-- hosts: "{{ send_host }}"
-  gather_facts: no
-  become: yes
-  tasks:
-    - name: Create ARP command
-      set_fact:
-        arp_command: "arping -c 5 -I {{ send_host }}-eth0 {{ receiver.ip }}"
+# Discover Forwarding Paths
+- import_playbook: discover-paths.yml
 
-    - name: The arping command
-      debug:
-        var: arp_command
+# Data Forward scenarios for UDP and IPv4
+- import_playbook: data-forward.yml
+  vars:
+    scenario_send_protocol: UDP
+    scenario_send_ip_version: 4
 
-    - name: Discover L2 path to hosts
-      command: "{{ arp_command }}"
-      register: arp_cmd_out
-      failed_when: arp_cmd_out.rc > 2
+# Data Forward scenarios for UDP and IPv6
+- import_playbook: data-forward.yml
+  vars:
+    scenario_send_protocol: UDP
+    scenario_send_ip_version: 6
+
+# Data Forward scenarios for TCP and IPv4
+- import_playbook: data-forward.yml
+  vars:
+    scenario_send_protocol: TCP
+    scenario_send_ip_version: 4
+
+# Data Forward scenarios for TCP and IPv6
+- import_playbook: data-forward.yml
+  vars:
+    scenario_send_protocol: TCP
+    scenario_send_ip_version: 6

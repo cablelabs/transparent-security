@@ -64,7 +64,6 @@ class CoreSwitch(BFRuntimeSwitch):
         super(self.__class__, self).start()
         self.__set_table_field_annotations()
         self.__write_clone_entries(self.sw_info['clone_egress'])
-        self.__setup_arp_multicast()
 
     def receive_digests(self):
         """
@@ -78,12 +77,10 @@ class CoreSwitch(BFRuntimeSwitch):
         arp_learn_filter.info.data_field_annotation_add("port", "bytes")
 
         while True:
-            # logger.debug('Listening for arp_digest')
             digest = None
             try:
                 digest = self.interface.digest_get()
-            except Exception as e:
-                # logger.debug('Error getting digest - [%s]', e)
+            except Exception:
                 pass
 
             if digest:
@@ -148,46 +145,6 @@ class CoreSwitch(BFRuntimeSwitch):
                 DataTuple('$session_enable', bool_val=True)
             ], '$normal')]
         )
-
-    def __setup_arp_multicast(self):
-        logger.info('Adding multicast entries to switch')
-        mg_id_table = self.get_table('$pre.node')
-        mg_id_table.entry_add(
-            self.target,
-            [mg_id_table.make_key([KeyTuple('$MULTICAST_NODE_ID', 1)])],
-            [mg_id_table.make_data([
-                DataTuple('$MULTICAST_RID', 1),
-                DataTuple('$DEV_PORT', int_arr_val=self.__find_tunnel_ports()),
-                DataTuple('$MULTICAST_LAG_ID', int_arr_val=[]),
-            ])]
-        )
-        logger.info('Done with node entries')
-
-        mg_id_table = self.get_table('$pre.mgid')
-        mg_id_table.entry_add(
-            self.target,
-            [mg_id_table.make_key([KeyTuple('$MGID', 1)])],
-            [mg_id_table.make_data([
-                DataTuple('$MULTICAST_NODE_ID', int_arr_val=[1]),
-                DataTuple('$MULTICAST_NODE_L1_XID_VALID',
-                          bool_arr_val=[False]),
-                DataTuple('$MULTICAST_NODE_L1_XID', int_arr_val=[0]),
-            ])]
-        )
-        logger.info('Done with MC entries')
-
-    def __find_tunnel_ports(self):
-        """
-        Returns a list of all active ports as configured in the "tunnels" list
-        section of self.sw_info dict that are not == 1
-        :return:
-        """
-        out_list = []
-        for tunnel in self.sw_info['tunnels']:
-            tunnel_port = int(tunnel['switch_port'])
-            if tunnel_port != 1:
-                out_list.append(tunnel_port)
-        return out_list
 
     def delete_clone_entries(self, mirror_tbl_key=1):
         mirror_cfg_table = self.get_table("$mirror.cfg")

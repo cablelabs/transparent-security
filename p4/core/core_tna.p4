@@ -108,27 +108,29 @@ control TpsCoreIngress(
 
     apply {
         if (ig_intr_md.resubmit_flag == 0) {
-            if (hdr.arp.isValid()) {
+            if (hdr.arp.isValid() && hdr.arp.opcode == (bit<16>)0x1
+                    && ig_intr_md.ingress_port == (bit<9>)0x1) {
                 // ARP Request - multicast out to all configured nodes
-                if (hdr.arp.opcode == (bit<16>)0x1) {
-                    ig_tm_md.mcast_grp_a = (bit<16>)0x1;
-                }
-
-                /*
-                 * ARP Response to insert mac/port into data_forward_t
-                 * send to port 1 containing a switch (aggregate_tna.p4 switch)
-                 */
-                if (hdr.arp.opcode == (bit<16>)0x2) {
-                    ig_dprsr_md.digest_type = DIGEST_TYPE_ARP;
-                    data_forward(1);
-                }
-                // Send to multicast group
+                ig_tm_md.mcast_grp_a = (bit<16>)0x1;
             } else if (data_forward_t.apply().hit) {
-                if (ig_intr_md.ingress_port == ig_tm_md.ucast_egress_port) {
-                    ig_dprsr_md.drop_ctl = 0x1;
-                } else {
-                    mirror_packet_i2e();
+                if (ig_intr_md.ingress_port != ig_tm_md.ucast_egress_port) {
+                    if (! hdr.arp.isValid()) {
+                        mirror_packet_i2e();
+                    }
                 }
+            } else {
+                if (hdr.arp.isValid() && hdr.arp.opcode == (bit<16>)0x1
+                        && ig_intr_md.ingress_port != (bit<9>)0x1) {
+                    ig_dprsr_md.digest_type = DIGEST_TYPE_ARP;
+                }
+            }
+
+            /*
+             * Ensure packet gets dropped if we are trying to egress to the
+             * ingress port
+             */
+            if (ig_intr_md.ingress_port == ig_tm_md.ucast_egress_port) {
+                ig_dprsr_md.drop_ctl = 0x1;
             }
         }
     }

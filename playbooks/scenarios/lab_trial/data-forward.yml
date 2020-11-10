@@ -13,14 +13,6 @@
 # Simple scenario where packets are sent through 3 devices and only the last
 # one will be demonstrating dropped packets
 ---
-# Discover path
-- import_playbook: ../general/arping.yml
-  vars:
-    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-    send_host: host1
-    rec_host: inet
-    receiver: "{{ topo_dict.hosts[rec_host] }}"
-
 # Basic Data Forward scenario for standard Packets to the inet
 - import_playbook: ../general/data_forward_basic.yml
   vars:
