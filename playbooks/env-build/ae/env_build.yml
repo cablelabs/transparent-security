@@ -10,3 +10,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# https://github.com/p4lang/tutorials/blob/master/vm/user-bootstrap.sh
+# Project and script derived in part from the script in the link above
+---
+- import_playbook: ../../tofino/setup_nodes_ae.yml

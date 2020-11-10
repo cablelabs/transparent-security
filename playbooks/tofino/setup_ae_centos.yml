@@ -13,7 +13,7 @@
 ---
 #Import playbook
 
-- hosts: ae
+- hosts: all
   gather_facts: no
   become: yes
   tasks:
@@ -72,8 +72,8 @@
             mkdir build
             cd build
             cmake ../wireshark-3.2.6
-            make
-            make install
+            sudo make
+            sudo make install
 
 
 
@@ -84,6 +84,6 @@
             tar -xzf Python-3.8.5.tgz
             cd Python-3.8.5/
             ./configure --enable-optimizations
-            make altinstall
-            ln -s /usr/local/bin/python3.8 /usr/bin/python3
+            sudo make altinstall
+            sudo ln -s /usr/local/bin/python3.8 /usr/bin/python3
 
