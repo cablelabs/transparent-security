@@ -17,15 +17,13 @@
   gather_facts: no
   become: yes
   tasks:
-
-  - name: Install yum dependencies
+  - name: Install yum dependencies for AE base image
     yum:
       name:
         - tcpdump
         - vim
         - wget
-        - java-1.8.0-openjdk.x86_64
-        - logstash
+        - java-1.8.0-openjdk
         - git
         - gcc
         - gcc-c++
@@ -46,46 +44,49 @@
         - libffi-devel
         - libgcrypt-devel
 
-
-
-  - name: Install pre-dependencies for specific version of Wireshark
+  - name: Install pre-dependencies for specific version of Wireshark for AE base image
     shell: |
-        cd /home/centos
-        wget https://www.wireshark.org/download/src/all-versions/wireshark-3.2.6.tar.xz
-        tar -xf wireshark-3.2.6.tar.xz
-        cd wireshark-3.2.6/tools
-        ./rpm-setup.sh
+          cd /home/centos;
+          wget https://www.wireshark.org/download/src/all-versions/wireshark-3.2.6.tar.xz;
+          tar -xf wireshark-3.2.6.tar.xz;
+          cd wireshark-3.2.6/tools;
+          ./rpm-setup.sh
 
-
-  - name: Install specific version of CMake
+  - name: Install specific version of CMake for AE base image
     shell: |
-            cd /home/centos
-            wget https://cmake.org/files/v3.5/cmake-3.5.2.tar.gz
-            tar xvf cmake-3.5.2.tar.gz
-            cd cmake-3.5.2
-            ./bootstrap --prefix=/usr
-            sudo make install
+            cd /home/centos;
+            wget https://cmake.org/files/v3.5/cmake-3.5.2.tar.gz;
+            tar xvf cmake-3.5.2.tar.gz;
+            cd cmake-3.5.2;
+            ./bootstrap --prefix=/usr;
+            make install;
             cmake --version
 
 
-  - name: Install specific version of Wireshark
+
+  - name: Install specific version of Wireshark for AE base image
     shell: |
-            cd /home/centos
-            mkdir build
-            cd build
-            cmake ../wireshark-3.2.6
-            sudo make
-            sudo make install
+            cd /home/centos;
+            mkdir build;
+            cd build;
+            cmake ../wireshark-3.2.6;
+            make;
+            make install
 
-
-
-  - name: Download and install a specific version of Python
+  - name: Download and install a specific version of Python for AE base image
     shell: |
-            cd /home/centos
-            curl -O https://www.python.org/ftp/python/3.8.5/Python-3.8.5.tgz
-            tar -xzf Python-3.8.5.tgz
-            cd Python-3.8.5/
-            ./configure --enable-optimizations
-            sudo make altinstall
-            sudo ln -s /usr/local/bin/python3.8 /usr/bin/python3
+            cd /home/centos;
+            curl -O https://www.python.org/ftp/python/3.8.5/Python-3.8.5.tgz;
+            tar -xzf Python-3.8.5.tgz;
+            cd Python-3.8.5/;
+            ./configure --enable-optimizations;
+            make altinstall;
+            ln -s /usr/local/bin/python3.8 /usr/bin/python3
+
+
+  - name: Download and install a Open Distro for Elasticsearch v1.10.1-1 for AE base image
+    shell: |
+        cd /home/centos;
+        yum install opendistroforelasticsearch-1.10.1-1
+
 

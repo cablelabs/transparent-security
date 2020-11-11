@@ -15,12 +15,12 @@
   gather_facts: no
   become: yes
   tasks:
-  - name: Install yum dependencies
+  - name: Install setup hcp yum dependencies
     yum:
       name:
         - tcpdump
         - java
-        - logstash
+
 
   - name: Start Elasticsearch
     service:

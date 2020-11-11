@@ -12,7 +12,8 @@
 # limitations under the License.
 ---
 #Import playbook
-- import_playbook: setup_hcp.yml
+#- import_playbook: setup_hcp.yml
+
 
 # Copy TPS source from orchestrator to all nodes
 - import_playbook: ../general/setup_source.yml
