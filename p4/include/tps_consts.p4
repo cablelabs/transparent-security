@@ -100,7 +100,6 @@ const PortId_t DROP_PORT = 511;
 
 /* Digest constants */
 const bit<3> DIGEST_TYPE_ARP = 0x1;
-const bit<3> DIGEST_TYPE_FWD = 0x2;
 
 /* Constants for determining BMV2 Packet instance_types */
 const bit<32> BMV2_V1MODEL_INSTANCE_TYPE_NORMAL        = 0;

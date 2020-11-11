@@ -129,25 +129,6 @@ control TpsAggIngress(
     bool src_miss;
     PortId_t src_move;
 
-    action smac_hit(PortId_t port) {
-        src_move = port ^ ig_intr_md.ingress_port;
-    }
-
-    action smac_miss() {
-        src_miss = true;
-    }
-
-    table smac {
-        key = { hdr.ethernet.src_mac : exact; }
-        actions = {
-            smac_hit;
-            smac_miss;
-        }
-
-        const default_action = smac_miss;
-        size = 1024;
-    }
-
     action data_forward(PortId_t port) {
         ig_tm_md.ucast_egress_port = port;
     }
@@ -325,13 +306,6 @@ control TpsAggIngress(
                 if (hdr.arp.isValid() && hdr.arp.opcode == (bit<16>)0x1
                         && ig_intr_md.ingress_port != (bit<9>)0x1) {
                     ig_dprsr_md.digest_type = DIGEST_TYPE_ARP;
-                } else {
-                    if (ig_intr_md.ingress_port > 1) {
-                        smac.apply();
-                        if (src_miss == true || src_move != 0) {
-                            ig_dprsr_md.digest_type = DIGEST_TYPE_FWD;
-                        }
-                    }
                 }
             }
 
@@ -356,17 +330,11 @@ control TpsAggDeparser(
     in metadata meta,
     in ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md) {
 
-    Digest<digest_t>() smac_digest;
     Digest<digest_t>() arp_digest;
 
     apply {
         // Generate a digest, if digest_type is set in MAU.
-        if (ig_dprsr_md.digest_type == DIGEST_TYPE_FWD) {
-            smac_digest.pack({
-                hdr.ethernet.src_mac,
-                (bit<16>)meta.ingress_port
-            });
-        } else if (ig_dprsr_md.digest_type == DIGEST_TYPE_ARP) {
+        if (ig_dprsr_md.digest_type == DIGEST_TYPE_ARP) {
             arp_digest.pack({
                 hdr.arp.src_mac,
                 (bit<16>)meta.ingress_port
