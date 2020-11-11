@@ -13,4 +13,4 @@
 ---
 #Import playbook
 - import_playbook: setup_ae_centos.yml
-- import_playbook: setup_ae_elasticsearch.yml
+#- import_playbook: setup_ae_elasticsearch.yml

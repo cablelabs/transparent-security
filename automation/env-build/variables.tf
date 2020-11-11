@@ -32,6 +32,7 @@ variable "ubuntu_version" {default = "18"}
 variable "python_version" {default = "3.6"}
 # ubuntu 16
 variable "base_16_ami" {default = "ami-08692d171e3cf02d6"}
+variable "centos7_ami" {default="ami-01ed306a12b7d1c96"}
 # ubuntu 18
 variable "base_18_ami" {default = "ami-06f2f779464715dc5"}
 variable "instance_type" {default = "t2.2xlarge"}
