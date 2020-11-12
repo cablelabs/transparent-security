@@ -31,18 +31,27 @@ const bit<32> INT_CTR_SIZE = 1;
 parser TpsCoreParser(
     packet_in packet,
     out headers hdr,
-    out custom_metadata_t ig_meta,
+    out custom_metadata_t meta,
     out ingress_intrinsic_metadata_t ig_intr_md) {
 
     TofinoIngressParser() tofino_parser;
 
     state start {
         tofino_parser.apply(packet, ig_intr_md);
+        meta.ingress_port = ig_intr_md.ingress_port;
         transition parse_ethernet;
     }
 
     state parse_ethernet {
         packet.extract(hdr.ethernet);
+        transition select(hdr.ethernet.etherType) {
+            TYPE_ARP: parse_arp;
+            default: accept;
+        }
+    }
+
+    state parse_arp {
+        packet.extract(hdr.arp);
         transition accept;
     }
 }
@@ -99,12 +108,29 @@ control TpsCoreIngress(
 
     apply {
         if (ig_intr_md.resubmit_flag == 0) {
-            if(data_forward_t.apply().hit) {
-                if(ig_intr_md.ingress_port == ig_tm_md.ucast_egress_port) {
-                    ig_dprsr_md.drop_ctl = 0x1;
-                } else {
-                    mirror_packet_i2e();
+            if (hdr.arp.isValid() && hdr.arp.opcode == (bit<16>)0x1
+                    && ig_intr_md.ingress_port == (bit<9>)0x1) {
+                // ARP Request - multicast out to all configured nodes
+                ig_tm_md.mcast_grp_a = (bit<16>)0x1;
+            } else if (data_forward_t.apply().hit) {
+                if (ig_intr_md.ingress_port != ig_tm_md.ucast_egress_port) {
+                    if (! hdr.arp.isValid()) {
+                        mirror_packet_i2e();
+                    }
                 }
+            } else {
+                if (hdr.arp.isValid() && hdr.arp.opcode == (bit<16>)0x1
+                        && ig_intr_md.ingress_port != (bit<9>)0x1) {
+                    ig_dprsr_md.digest_type = DIGEST_TYPE_ARP;
+                }
+            }
+
+            /*
+             * Ensure packet gets dropped if we are trying to egress to the
+             * ingress port
+             */
+            if (ig_intr_md.ingress_port == ig_tm_md.ucast_egress_port) {
+                ig_dprsr_md.drop_ctl = 0x1;
             }
         }
     }
@@ -121,12 +147,23 @@ control TpsCoreIngressDeparser(
     in ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md) {
 
     Mirror() ing_port_mirror;
+    Digest<digest_t>() arp_digest;
 
     apply {
+        // Block requried for creating the telemtry report
         if (ig_dprsr_md.mirror_type == ING_PORT_MIRROR) {
             ing_port_mirror.emit<mirror_h>(
                 meta.mirror_session, {meta.pkt_type});
         }
+
+        // Block required for learning NB routes
+        if (ig_dprsr_md.digest_type == DIGEST_TYPE_ARP) {
+            arp_digest.pack({
+                hdr.arp.src_mac,
+                (bit<16>)meta.ingress_port
+            });
+        }
+
         /* For Standard and INT Packets */
         packet.emit(hdr);
     }

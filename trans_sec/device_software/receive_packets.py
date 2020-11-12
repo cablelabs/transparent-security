@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import argparse
+from python_arptable import ARPTABLE
 import logging
 import sys
 
@@ -49,6 +50,10 @@ def get_args():
         '-l', '--loglevel',
         help='Log Level <DEBUG|INFO|WARNING|ERROR> defaults to INFO',
         required=False, default='DEBUG', dest='log_level')
+    parser.add_argument(
+        '-dip4', '--dst_ipv4',
+        help='Destination ipv4 for ARP table lookup for interface to use',
+        required=False)
     return parser.parse_args()
 
 
@@ -100,6 +105,13 @@ def __log_std_packet(ether_pkt, ip_pkt, ip_proto, pkt_len):
         logger.info('Parsing TCP Packet')
         tcp_udp_pkt = TCP(_pkt=ip_pkt.payload)
         logger.debug('TCP flags - [%s]', tcp_udp_pkt.flags)
+        logger.debug('IP class - [%s]', ip_pkt.__class__)
+
+        # TODO/REMOVE ME once TCP has been fixed as we are currently picking
+        #  up resends
+        if tcp_udp_pkt.flags != 0x2 and isinstance(ip_pkt, IP):
+            logger.debug('TCP flags [%s] not 2, skipping', tcp_udp_pkt.flags)
+            return
     else:
         logger.debug('Nothing to log, protocol - [%s] is unsupported',
                      ip_proto)
@@ -255,6 +267,13 @@ def device_sniff(iface, duration, int_hops):
               prn=lambda packet: __log_packet(packet, int_hops))
 
 
+def __get_iface_from_arptable(ipv4):
+    for arp_entry in ARPTABLE:
+        if arp_entry['IP address'] == ipv4:
+            logger.info('Returning device name from entry - [%s]', arp_entry)
+            return arp_entry['Device']
+
+
 if __name__ == '__main__':
     args = get_args()
 
@@ -268,4 +287,11 @@ if __name__ == '__main__':
 
     logger.info('Logger initialized')
 
-    device_sniff(args.iface, args.duration, args.int_hops)
+    iface = None
+    if args.dst_ipv4:
+        iface = __get_iface_from_arptable(args.dst_ipv4)
+    if not iface:
+        iface = args.iface
+
+    logger.info('Sniffing for packets on interface - [%s]', iface)
+    device_sniff(iface, args.duration, args.int_hops)

@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Cable Television Laboratories, Inc.
+# Copyright (c) 2020 Cable Television Laboratories, Inc.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -13,14 +13,11 @@
 # Simple scenario where packets are sent through 3 devices and only the last
 # one will be demonstrating dropped packets
 ---
-# Data Forward scenarios
-- import_playbook: all-data-forward.yml
+# Restart all services
+- import_playbook: restart_services-lab_trial.yml
 
-# Data Inspection scenarios
-- import_playbook: all-data-inspection.yml
+# Discover SB path
+- import_playbook: discover-paths.yml
 
-# Data Drop scenarios
-- import_playbook: all-data-drop.yml
-
-# Packet Flood scenarios
-- import_playbook: all-pkt-flood.yml
+# Configure the switches
+- import_playbook: configure_switches-lab_trial.yml

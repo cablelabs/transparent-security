@@ -26,6 +26,7 @@
         update_cache: yes
         name:
           - python3-pip
+          - arping
       register: apt_rc
       retries: 3
       delay: 10

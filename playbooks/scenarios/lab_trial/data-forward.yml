@@ -13,7 +13,6 @@
 # Simple scenario where packets are sent through 3 devices and only the last
 # one will be demonstrating dropped packets
 ---
-
 # Basic Data Forward scenario for standard Packets to the inet
 - import_playbook: ../general/data_forward_basic.yml
   vars:
@@ -26,12 +25,6 @@
     rec_host: inet
     sender: "{{ topo_dict.hosts[send_host] }}"
     receiver: "{{ topo_dict.hosts[rec_host] }}"
+    sender_intf_name: aggregate-tun1
+    rec_intf_name: core-tun1
     dst_mac: "{{ receiver.mac }}"
-    data_forwards:
-      - url: "http://{{ sdn_ip }}:{{ sdn_port }}/dataForward"
-        body:
-          device_id: "{{ switch2.id }}"
-          switch_mac: "{{ switch2.mac }}"
-          dst_mac: "{{ receiver.mac }}"
-          output_port: 2
-        ok_status: 201
