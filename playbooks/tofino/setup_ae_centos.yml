@@ -15,9 +15,11 @@
 
 - hosts: all
   gather_facts: no
-  become: yes
+  vars:
+    - CENTOS_HOME: "/home/centos"
   tasks:
-  - name: Install yum dependencies for AE base image
+  - name: Install yum dependencies on AE CENTOS base image
+    become: yes
     yum:
       name:
         - tcpdump
@@ -43,50 +45,103 @@
         - bzip2-devel
         - libffi-devel
         - libgcrypt-devel
+        - ncurses-devel
 
-  - name: Install pre-dependencies for specific version of Wireshark for AE base image
-    shell: |
-          cd /home/centos;
-          wget https://www.wireshark.org/download/src/all-versions/wireshark-3.2.6.tar.xz;
-          tar -xf wireshark-3.2.6.tar.xz;
-          cd wireshark-3.2.6/tools;
-          ./rpm-setup.sh
+  - name: Get Wireshark repository v3.2.6 tar to install Wireshark on AE CENTOS base image
+    shell: wget https://www.wireshark.org/download/src/all-versions/wireshark-3.2.6.tar.xz
+    args:
+      chdir: /home/centos/
 
-  - name: Install specific version of CMake for AE base image
-    shell: |
-            cd /home/centos;
-            wget https://cmake.org/files/v3.5/cmake-3.5.2.tar.gz;
-            tar xvf cmake-3.5.2.tar.gz;
-            cd cmake-3.5.2;
-            ./bootstrap --prefix=/usr;
-            make install;
-            cmake --version
+  - name: Untar Wireshark repository v3.2.6 to install Wireshark for AE image
+    shell: "tar -xf {{CENTOS_HOME}}/wireshark-3.2.6.tar.xz"
 
+  - name: Run rpm-setup script in Wireshark repository to install unmet dependencies for AE image
+    become: yes
+    shell: ./rpm-setup.sh -y
+    args:
+      chdir: /home/centos/wireshark-3.2.6/tools
 
+  - name: Change Directory to home directory to install CMAKE v3.5.2 for AE image
+    command: chdir=/home/centos ls
 
-  - name: Install specific version of Wireshark for AE base image
-    shell: |
-            cd /home/centos;
-            mkdir build;
-            cd build;
-            cmake ../wireshark-3.2.6;
-            make;
-            make install
+  - name: Get CMAKE repository using wget for AE images
+    command: wget https://cmake.org/files/v3.5/cmake-3.5.2.tar.gz
 
-  - name: Download and install a specific version of Python for AE base image
-    shell: |
-            cd /home/centos;
-            curl -O https://www.python.org/ftp/python/3.8.5/Python-3.8.5.tgz;
-            tar -xzf Python-3.8.5.tgz;
-            cd Python-3.8.5/;
-            ./configure --enable-optimizations;
-            make altinstall;
-            ln -s /usr/local/bin/python3.8 /usr/bin/python3
+  - name: Untar CMAKE repository
+    shell: "tar -xf {{CENTOS_HOME}}/cmake-3.5.2.tar.gz"
 
+  - name: Change directory to run CMAKE command for AE image
+    command: chdir=/home/centos/cmake-3.5.2 ls
 
-  - name: Download and install a Open Distro for Elasticsearch v1.10.1-1 for AE base image
-    shell: |
-        cd /home/centos;
-        yum install opendistroforelasticsearch-1.10.1-1
+  - name: Bootstrap prefix usr before executing make for CMAKE installation on AE image
+    become: yes
+    shell: ./bootstrap --prefix=/usr
+    args:
+      chdir: /home/centos/cmake-3.5.2
+
+  - name: Run make command for CMAKE installation for AE image
+    become: yes
+    shell: make install
+    args:
+      chdir: /home/centos/cmake-3.5.2
 
 
+  - name: Verify CMAKE installed version on AE image
+    become: yes
+    command: cmake --version
+
+  - name: Create build directory for Wireshark installation
+    shell: mkdir build
+    args:
+        chdir: /home/centos
+
+  - name: Run CMAKE command for wireshark installation for AE image
+    become: yes
+    shell: cmake ../wireshark-3.2.6
+    args:
+        chdir: /home/centos/build
+
+  - name: Run MAKE command for wireshark installation for AE image
+    become: yes
+    shell: make
+    args:
+        chdir: /home/centos/build
+
+  - name: Run INSTALL command for wireshark installation for AE image
+    become: yes
+    shell: make install
+    args:
+        chdir: /home/centos/build
+
+  - name: Download and install a specific version of Python v3.8.5 for AE base image
+    shell: curl -O https://www.python.org/ftp/python/3.8.5/Python-3.8.5.tgz
+    args:
+      chdir: /home/centos
+
+  - name: Untar Python directory
+    shell: "tar -xf {{CENTOS_HOME}}/Python-3.8.5.tgz"
+
+
+  - name: Configure Python optimizations for Python 3.8 install
+    become: yes
+    shell: ./configure --enable-optimizations;
+    args:
+      chdir: /home/centos/Python-3.8.5
+
+  - name: Run INSTALL command for python 3.8 installation
+    become: yes
+    shell: make altinstall
+    args:
+     chdir: /home/centos/Python-3.8.5
+
+  - name: Remove previously existing python3 configuration
+    become: yes
+    shell: rm -f /usr/bin/python3
+    args:
+      chdir: /home/centos
+
+  - name: Reset Python3 version to Python3.8 installation
+    become: yes
+    shell: ln -s /usr/local/bin/python3.8 /usr/bin/python3
+    args:
+      chdir: /home/centos
