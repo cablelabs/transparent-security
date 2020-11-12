@@ -24,22 +24,8 @@
 - import_playbook: ../general/arping.yml
   vars:
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-    send_host: host1
-    rec_host: ae
-    receiver: "{{ topo_dict.hosts[rec_host] }}"
-
-- import_playbook: ../general/arping.yml
-  vars:
-    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     send_host: host2
     rec_host: inet
-    receiver: "{{ topo_dict.hosts[rec_host] }}"
-
-- import_playbook: ../general/arping.yml
-  vars:
-    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-    send_host: host2
-    rec_host: ae
     receiver: "{{ topo_dict.hosts[rec_host] }}"
 
 # Discover SB paths
@@ -54,20 +40,6 @@
   vars:
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     send_host: inet
-    rec_host: host2
-    receiver: "{{ topo_dict.hosts[rec_host] }}"
-
-- import_playbook: ../general/arping.yml
-  vars:
-    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-    send_host: ae
-    rec_host: host1
-    receiver: "{{ topo_dict.hosts[rec_host] }}"
-
-- import_playbook: ../general/arping.yml
-  vars:
-    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-    send_host: ae
     rec_host: host2
     receiver: "{{ topo_dict.hosts[rec_host] }}"
 

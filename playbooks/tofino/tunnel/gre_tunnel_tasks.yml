@@ -96,45 +96,11 @@
       command: "ip link set {{ tunnel1 }} up"
   when: item.host == "dummy"
 
-- name: Setup host communication ports to send/receive packets
+- name: Setup host tunnel to switch port with expected IP/MAC
   block:
-    - name: Set interface name for {{ this_host.name }}
-      set_fact:
-        mirrored_host_intf: "{{ this_host.name }}-eth0"
-
-    - name: Delete final output port {{ mirrored_host_intf }} if exists
-      command: "ip link del {{ mirrored_host_intf }} type dummy"
-      ignore_errors: yes
-
-    - name: Create final output port {{ mirrored_host_intf }}
-      command: "ip link add {{ mirrored_host_intf }} type dummy"
-
     - name: set MAC {{ this_host.mac }} on {{ mirrored_host_intf }}
-      command: "ip link set dev {{ mirrored_host_intf }} address {{ this_host.mac }}"
+      command: "ip link set dev {{ tunnel1 }} address {{ this_host.mac }}"
 
     - name: Set IP {{ this_host.ip }}/24 on {{ mirrored_host_intf }}
-      command: "ip addr add {{ this_host.ip }}/24 dev {{ mirrored_host_intf }}"
-
-    - name: set host mirrored interface up - {{ mirrored_host_intf }}
-      command: "ip link set {{ mirrored_host_intf }} up"
-
-    - name: activate ARP on interface - {{ mirrored_host_intf }}
-      command: "ip link set dev {{ mirrored_host_intf }} arp on"
-
-    - name: Configure port mirroring for egress traffic
-      command: "tc qdisc add dev {{ mirrored_host_intf }} handle 1: root prio"
-
-    - name: Set qdisc filter for egress traffic directed into tunnel
-      command: >
-        tc filter add dev {{ mirrored_host_intf }} parent 1: protocol all
-        u32 match u32 0 0 action mirred egress mirror dev {{ tunnel1 }}
-
-    - name: Configure port mirroring for ingress traffic
-      command: "tc qdisc add dev {{ tunnel1 }} handle ffff: ingress"
-
-    - name: Set qdisc filter for ingress traffic directed from tunnel
-      command: >
-        tc filter add dev {{ tunnel1 }} parent ffff: protocol all
-        u32 match u32 0 0 action mirred ingress mirror dev {{ mirrored_host_intf }}
+      command: "ip addr add {{ this_host.ip }}/24 dev {{ tunnel1 }}"
   when: item.switch_port is not defined
-

@@ -27,6 +27,8 @@
     rec_host: "{{ remote_rec_host }}"
     sender: "{{ topo_dict.hosts[remote_send_host] }}"
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
+    sender_intf_name: aggregate-tun1
+    rec_intf_name: core-tun1
     dst_mac: "{{ receiver['mac'] }}"
     ws_calls:
       - url: "http://{{ sdn_ip }}:{{ sdn_port }}/dataInspection"
@@ -58,6 +60,8 @@
     rec_host: "{{ remote_rec_host }}"
     sender: "{{ topo_dict.hosts[remote_send_host] }}"
     receiver: "{{ topo_dict.hosts.inet }}"
+    sender_intf_name: aggregate-tun1
+    rec_intf_name: core-tun1
     dst_mac: "{{ receiver['mac'] }}"
     ws_calls:
       - url: "http://{{ sdn_ip }}:{{ sdn_port }}/dataInspection"

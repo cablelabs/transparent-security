@@ -28,6 +28,8 @@
     send_port: 4321
     sender: "{{ topo_dict.hosts[remote_send_host] }}"
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
+    sender_intf_name: aggregate-tun1
+    rec_intf_name: core-tun1
     dst_mac: "{{ receiver.mac }}"
     attack:
       url: "http://{{ sdn_ip }}:{{ sdn_port }}/aggAttack"

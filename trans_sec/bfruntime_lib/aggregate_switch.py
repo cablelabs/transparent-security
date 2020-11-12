@@ -87,6 +87,7 @@ class AggregateSwitch(BFRuntimeSwitch):
         while True:
             digest = None
             try:
+                logger.debug('Agg digest iter')
                 digest = self.interface.digest_get()
             except Exception as e:
                 if 'Digest list not received' not in str(e):
@@ -117,18 +118,6 @@ class AggregateSwitch(BFRuntimeSwitch):
                             logger.error(
                                 'Unexpected error processing digest for '
                                 'data_forward_t - [%s]', e)
-                            raise e
-                    try:
-                        self.add_smac(src_mac, port)
-                        logger.debug('Added digest to smac table')
-                    except Exception as e:
-                        if 'ALREADY_EXISTS' in str(e):
-                            logger.debug(
-                                'Not inserting digest entry to smac - [%s]', e)
-                        else:
-                            logger.error(
-                                'Unexpected error processing digest for smac '
-                                '- [%s]', e)
                             raise e
 
     def __set_table_field_annotations(self):

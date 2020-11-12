@@ -25,7 +25,8 @@
     receive_timeout: "{{ receiver_timeout_seconds | default(60) }}"
     hops: "{{ int_hops | default(0) }}"
     ip_ver: "{{ ip_version | default('4') }}"
-    receiver_intf: "{{ '%s-eth0' % rec_host }}"
+    receiver_intf: "{{ rec_intf_name | default(None) }}"
+    receiver_ipv4: "{{ rec_ipv4 | default(None) }}"
     receiver_log_file: "{{ log_dir }}/{{ receiver_log_filename }}"
   tasks:
     - debug:
@@ -46,13 +47,32 @@
         path: "{{ receiver_log_file }}"
         state: touch
 
-    - name: Create receive packets command
+    - debug:
+        var: receiver_intf
+    - debug:
+        var: receiver_ipv4
+
+    - name: Create receive packets command with the receiver_intf variable
       set_fact:
         receive_cmd: >
           {{ trans_sec_dir }}/trans_sec/device_software/receive_packets.py
           -i {{ receiver_intf }} -f {{ receiver_log_file }} -d {{ receive_timeout }} -ih {{ hops }}
+      when: receiver_intf is defined and receiver_intf | length > 0
 
-    - debug:
+    - name: Create receive packets command with the receiver_ipv4 variable
+      set_fact:
+        receive_cmd: >
+          {{ trans_sec_dir }}/trans_sec/device_software/receive_packets.py
+          -dip4 {{ receiver_ipv4 }} -f {{ receiver_log_file }} -d {{ receive_timeout }} -ih {{ hops }}
+      when: receiver_ipv4 is defined and receiver_ipv4 | length > 0
+
+    - name: Fail when receive command was not created
+      fail:
+        msg: 'Receive command could not be generated'
+      when: receive_cmd is not defined or receive_cmd | length < 1
+
+    - name: The receive command
+      debug:
         var: receive_cmd
 
     - name: >
@@ -76,7 +96,7 @@
     loops: "{{ send_loops | default(1) }}"
     loop_delay: "{{ send_loop_delay | default(0) }}"
     hops: "{{ int_hops | default(0) }}"
-    sender_intf: "{{ '%s-eth0' % send_host }}"
+    sender_intf: "{{ sender_intf_name | default(None) }}"
     sender_log_file: "{{ log_dir }}/{{ sender_log_filename }}"
     protocol: "{{ send_protocol | default('UDP') }}"
     int_hdr_df: "{{ log_dir }}/send_int_data-ip-{{ ip_ver }}-proto-{{ protocol }}-ih-{{ hops }}.yml"
