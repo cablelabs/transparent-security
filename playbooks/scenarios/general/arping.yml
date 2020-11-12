@@ -1,0 +1,36 @@
+# Copyright (c) 2020 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# Simple scenario where packets are sent through 3 devices and only the last
+# one will be demonstrating dropped packets
+---
+# Discover path
+- hosts: "{{ send_host }}"
+  gather_facts: no
+  become: yes
+  tasks:
+    - name: Manually create ARP cache entry
+      command: "arp -s {{ receiver.ip }} {{ receiver.mac }}"
+
+# TODO/FIXME - Determine why the dummy interface does not create the proper
+# ARP cache entry with the reply on the dummy interfaces being created with
+# the tunnel/nic config routines execute
+    - name: Create ARP command
+      set_fact:
+        arp_command: "arping -c 5 {{ receiver.ip }}"
+
+    - name: The arping command
+      debug:
+        var: arp_command
+
+    - name: Discover L2 path to hosts
+      command: "{{ arp_command }}"

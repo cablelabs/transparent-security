@@ -17,6 +17,7 @@ from threading import Thread
 
 import grpc
 import tofino.bfrt_grpc.client as bfrt_client
+from bfrt_grpc.client import KeyTuple, DataTuple
 from google.rpc import code_pb2, status_pb2
 from tofino.bfrt_grpc import bfruntime_pb2
 
@@ -58,9 +59,52 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
         self.interface.clear_all_tables()
         self.add_switch_id()
         self.digest_thread.start()
+        self.__setup_arp_multicast(self.__find_tunnel_ports())
 
     def stop(self):
         self.digest_thread.join()
+
+    def __setup_arp_multicast(self, ports, node_id=1, rid=1, lags=[], mgid=1,
+                              mc_nids=[1], l1_xids=[0]):
+        logger.info('Adding multicast entries to switch')
+        mg_id_table = self.get_table('$pre.node')
+        mg_id_table.entry_add(
+            self.target,
+            [mg_id_table.make_key([KeyTuple('$MULTICAST_NODE_ID', node_id)])],
+            [mg_id_table.make_data([
+                DataTuple('$MULTICAST_RID', rid),
+                DataTuple('$DEV_PORT', int_arr_val=ports),
+                DataTuple('$MULTICAST_LAG_ID', int_arr_val=lags),
+            ])]
+        )
+        logger.info('Done with node entries')
+
+        mg_id_table = self.get_table('$pre.mgid')
+        mg_id_table.entry_add(
+            self.target,
+            [mg_id_table.make_key([KeyTuple('$MGID', mgid)])],
+            [mg_id_table.make_data([
+                DataTuple('$MULTICAST_NODE_ID', int_arr_val=mc_nids),
+                DataTuple('$MULTICAST_NODE_L1_XID_VALID',
+                          bool_arr_val=[False]),
+                DataTuple('$MULTICAST_NODE_L1_XID', int_arr_val=l1_xids),
+            ])]
+        )
+        logger.info('Done with MC entries')
+
+    def __find_tunnel_ports(self):
+        """
+        Returns a list of all active ports as configured in the "tunnels" list
+        section of self.sw_info dict that are not == 1
+        :return:
+        """
+        out_list = []
+        for tunnel in self.sw_info['tunnels']:
+            tunnel_port = int(tunnel['switch_port'])
+            # out_list.append(tunnel_port)
+            if tunnel_port != 1:
+                out_list.append(tunnel_port)
+        return out_list
 
     @abstractmethod
     def receive_digests(self):

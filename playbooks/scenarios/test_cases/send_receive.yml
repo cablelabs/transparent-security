@@ -25,7 +25,8 @@
     receive_timeout: "{{ receiver_timeout_seconds | default(60) }}"
     hops: "{{ int_hops | default(0) }}"
     ip_ver: "{{ ip_version | default('4') }}"
-    receiver_intf: "{{ '%s-eth0' % rec_host }}"
+    receiver_intf: "{{ rec_intf_name | default(None) }}"
+    receiver_ipv4: "{{ rec_ipv4 | default(None) }}"
     receiver_log_file: "{{ log_dir }}/{{ receiver_log_filename }}"
   tasks:
     - debug:
@@ -46,13 +47,32 @@
         path: "{{ receiver_log_file }}"
         state: touch
 
-    - name: Create receive packets command
+    - debug:
+        var: receiver_intf
+    - debug:
+        var: receiver_ipv4
+
+    - name: Create receive packets command with the receiver_intf variable
       set_fact:
         receive_cmd: >
           {{ trans_sec_dir }}/trans_sec/device_software/receive_packets.py
           -i {{ receiver_intf }} -f {{ receiver_log_file }} -d {{ receive_timeout }} -ih {{ hops }}
+      when: receiver_intf is defined and receiver_intf | length > 0
 
-    - debug:
+    - name: Create receive packets command with the receiver_ipv4 variable
+      set_fact:
+        receive_cmd: >
+          {{ trans_sec_dir }}/trans_sec/device_software/receive_packets.py
+          -dip4 {{ receiver_ipv4 }} -f {{ receiver_log_file }} -d {{ receive_timeout }} -ih {{ hops }}
+      when: receiver_ipv4 is defined and receiver_ipv4 | length > 0
+
+    - name: Fail when receive command was not created
+      fail:
+        msg: 'Receive command could not be generated'
+      when: receive_cmd is not defined or receive_cmd | length < 1
+
+    - name: The receive command
+      debug:
         var: receive_cmd
 
     - name: >
@@ -76,14 +96,15 @@
     loops: "{{ send_loops | default(1) }}"
     loop_delay: "{{ send_loop_delay | default(0) }}"
     hops: "{{ int_hops | default(0) }}"
-    sender_intf: "{{ '%s-eth0' % send_host }}"
+    sender_intf: "{{ sender_intf_name | default(None) }}"
     sender_log_file: "{{ log_dir }}/{{ sender_log_filename }}"
     protocol: "{{ send_protocol | default('UDP') }}"
     int_hdr_df: "{{ log_dir }}/send_int_data-ip-{{ ip_ver }}-proto-{{ protocol }}-ih-{{ hops }}.yml"
     ip_ver: "{{ ip_version | default('4') }}"
     receiver_ip: "{{ receiver.ip if ip_ver == '4' else receiver.ipv6 }}"
-    int_hdr_tmplt: ../templates/send_int_hdr.yml.j2
     receiver_mac: "{{ receiver.mac }}"
+    receiver_ipv4: "{{ receiver.ip }}"
+    int_hdr_tmplt: ../templates/send_int_hdr.yml.j2
   tasks:
     - debug:
         msg: "Generating packets"
@@ -105,12 +126,22 @@
           -z {{ sender_intf }}
           -f {{ sender_log_file }}
           -sp {{ send_src_port }} -p {{ send_port }}
-          -r {{ receiver_ip }} -s {{ receiver_mac }}
+          -r {{ receiver_ip }}
           -m '{{ send_msg }}'
           -y {{ send_delay }} -i {{ interval }}
           -it {{ loops }} -itd {{ loop_delay }}
           -pr {{ send_protocol }}
           -c {{ send_packet_count }}
+
+    - name: Add receiver ipv4 to send_packets.py call for dst_mac ARP table lookup
+      set_fact:
+        send_cmd: "{{ send_cmd }} -dip4 {{ receiver_ipv4 }}"
+      when: arp_discovery is defined and arp_discovery|bool
+
+    - name: Add known dst_mac to send_packets.py call
+      set_fact:
+        send_cmd: "{{ send_cmd }} -s {{ receiver_mac }}"
+      when: arp_discovery is not defined or not arp_discovery|bool
 
     - name: Configure for Sending INT Packets
       block:

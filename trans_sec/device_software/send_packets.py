@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import argparse
+from python_arptable import ARPTABLE
 import logging
 import random
 import time
@@ -85,8 +86,12 @@ def get_args():
         help='Linux named ethernet device. Defaults to first one found')
     parser.add_argument(
         '-s', '--switch_ethernet',
-        help='Switch Ethernet Interface. Defaults to ff:ff:ff:ff:ff:ff',
+        help='Destination MAC. Defaults to ff:ff:ff:ff:ff:ff',
         required=False, default='ff:ff:ff:ff:ff:ff')
+    parser.add_argument(
+        '-dip4', '--dst_ipv4',
+        help='Destination ipv4 for ARP table lookup for dest mac',
+        required=False)
     parser.add_argument(
         '-ih', '--int-hdr-file', required=False,
         help='Switch Ethernet Interface. Defaults to ff:ff:ff:ff:ff:ff')
@@ -187,17 +192,37 @@ def __gen_std_pkt(args, ip_ver, src_mac):
             ip_hdr = IPv6(dst=args.destination, src=args.source_addr,
                           nh=trans_sec.consts.UDP_PROTO)
 
+    dst_mac = __get_dst_mac(args)
+
+    logger.info('Making packet with dst_mac - [%s]', dst_mac)
     if ip_ver == 4:
-        pkt = Ether(src=src_mac, dst=args.switch_ethernet,
+        pkt = Ether(src=src_mac, dst=dst_mac,
                     type=trans_sec.consts.IPV4_TYPE)
     else:
-        pkt = Ether(src=src_mac, dst=args.switch_ethernet,
+        pkt = Ether(src=src_mac, dst=dst_mac,
                     type=trans_sec.consts.IPV6_TYPE)
 
     if ip_hdr:
         pkt = pkt / ip_hdr
 
     return pkt
+
+
+def __get_dst_mac(args):
+    # Determine the destination MAC
+    dst_mac = None
+    if args.dst_ipv4:
+        dst_mac = __get_dst_mac_from_arptable(args.dst_ipv4)
+        logger.info('MAC from ARP table - [%s]', dst_mac)
+    if not dst_mac:
+        dst_mac = args.switch_ethernet
+    return dst_mac
+
+
+def __get_dst_mac_from_arptable(ipv4):
+    for arp_entry in ARPTABLE:
+        if arp_entry['IP address'] == ipv4:
+            return arp_entry['HW address']
 
 
 def __gen_int_pkt(args, ip_ver, src_mac):
@@ -215,13 +240,14 @@ def __gen_int_pkt(args, ip_ver, src_mac):
                       + trans_sec.consts.TCP_HDR_LEN + trans_sec.consts.PAYLOAD_LEN
     ipv4_len = trans_sec.consts.IPV4_HDR_LEN + udp_int_len
     ipv6_len = trans_sec.consts.IPV6_HDR_LEN + udp_int_len
+    dst_mac = __get_dst_mac(args)
     if ip_ver == 4:
-        pkt = (Ether(src=src_mac, dst=args.switch_ethernet,
+        pkt = (Ether(src=src_mac, dst=dst_mac,
                      type=trans_sec.consts.IPV4_TYPE) /
                IP(dst=args.destination, src=args.source_addr, len=ipv4_len,
                   proto=trans_sec.consts.UDP_PROTO))
     else:
-        pkt = (Ether(src=src_mac, dst=args.switch_ethernet,
+        pkt = (Ether(src=src_mac, dst=dst_mac,
                      type=trans_sec.consts.IPV6_TYPE) /
                IPv6(dst=args.destination, src=args.source_addr,
                     nh=trans_sec.consts.UDP_PROTO, plen=ipv6_len))

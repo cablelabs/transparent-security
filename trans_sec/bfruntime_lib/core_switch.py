@@ -63,13 +63,50 @@ class CoreSwitch(BFRuntimeSwitch):
     def start(self):
         super(self.__class__, self).start()
         self.__set_table_field_annotations()
-        self.write_clone_entries(self.sw_info['clone_egress'])
+        self.__write_clone_entries(self.sw_info['clone_egress'])
 
     def receive_digests(self):
         """
         Runnable method for self.digest_thread
         """
-        pass
+        logger.info("Started listening digest thread on device [%s] with "
+                    "name [%s]", self.grpc_addr, self.name)
+
+        arp_learn_filter = self.bfrt_info.learn_get("arp_digest")
+        arp_learn_filter.info.data_field_annotation_add("src_mac", "mac")
+        arp_learn_filter.info.data_field_annotation_add("port", "bytes")
+
+        while True:
+            digest = None
+            try:
+                digest = self.interface.digest_get()
+            except Exception:
+                pass
+
+            if digest:
+                logger.info('Processing digest from core switch - [%s]',
+                            digest)
+                data_list = arp_learn_filter.make_data_list(digest)
+
+                logger.debug('Digest list - [%s]', data_list)
+                for data_item in data_list:
+                    data_dict = data_item.to_dict()
+                    src_mac = data_dict['src_mac']
+                    port = int.from_bytes(data_dict['port'], byteorder='big')
+                    logger.info(
+                        'Adding df & smac table entries with key - [%s] '
+                        'value - [%s]', src_mac, port)
+                    try:
+                        self.add_data_forward(src_mac, port)
+                        logger.debug('Added digest to data_forward_t')
+                    except Exception as e:
+                        if 'ALREADY_EXISTS' in str(e):
+                            pass
+                        else:
+                            logger.error(
+                                'Unexpected error processing digest for '
+                                'data_forward_t - [%s]', e)
+                            raise e
 
     def __set_table_field_annotations(self):
         df_table = self.get_table(data_fwd_tbl)
@@ -93,7 +130,7 @@ class CoreSwitch(BFRuntimeSwitch):
         self.delete_table_entry(data_fwd_tbl,
                                 [KeyTuple(data_fwd_tbl_key, value=dst_mac)])
 
-    def write_clone_entries(self, port, mirror_tbl_key=1):
+    def __write_clone_entries(self, port, mirror_tbl_key=1):
         logger.info('Start mirroring operations on table [%s] to port [%s]',
                     "$mirror.cfg", port)
         mirror_cfg_table = self.get_table("$mirror.cfg")
@@ -133,7 +170,6 @@ class CoreSwitch(BFRuntimeSwitch):
                 raise e
 
     def read_ae_ip(self, port=UDP_INT_DST_PORT):
-        logger.info('Looking up the ae_ip for UDP port value - [%s]', port)
         trpt_table_obj = self.get_table(telem_rpt_tbl)
         ae_ip = None
         if trpt_table_obj:
@@ -146,7 +182,8 @@ class CoreSwitch(BFRuntimeSwitch):
                 logger.debug("Table [%s] data [%s]", )
                 ae_ip = table_data["ae_ip"]
             except Exception as e:
-                logger.info("Unable to access table entry info - [%s]", e)
+                if 'field_dict' not in str(e):
+                    logger.debug("Unable to access table entry info - [%s]", e)
         return ae_ip
 
     def setup_telemetry_rpt(self, ae_ip, port):
