@@ -13,8 +13,8 @@
 # Simple scenario where packets are sent through 3 devices and only the last
 # one will be demonstrating dropped packets
 ---
-# Discover Forwarding Paths
-- import_playbook: discover-paths.yml
+# Refresh lab_trial environment config
+- import_playbook: restart-lab_trial.yml
 
 # Data Forward scenarios for UDP and IPv4
 - import_playbook: data-forward.yml

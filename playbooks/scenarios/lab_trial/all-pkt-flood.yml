@@ -13,17 +13,8 @@
 # Simple scenario where packets are sent through 3 devices and only the last
 # one will be demonstrating dropped packets
 ---
-# Discover Forwarding Paths
-- import_playbook: discover-paths.yml
-
-# Discover SB path
-- import_playbook: ../general/arping.yml
-  vars:
-    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-    send_host: inet
-    rec_host: host1
-    receiver: "{{ topo_dict.hosts[rec_host] }}"
-    arp_discovery: True
+# Refresh lab_trial environment config
+- import_playbook: restart-lab_trial.yml
 
 # Data Inspection scenarios for UDP and IPv4
 - import_playbook: data-inspection.yml
