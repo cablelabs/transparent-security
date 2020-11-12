@@ -15,6 +15,8 @@
 ---
 # Refresh lab_trial environment config
 - import_playbook: restart-lab_trial.yml
+  vars:
+    ae_state: stopped
 
 # Data Inspection scenarios for UDP and IPv4
 - import_playbook: data-inspection.yml
@@ -22,6 +24,7 @@
     scenario_send_protocol: UDP
     scenario_send_ip_version: 4
     arp_discovery: True
+    ae_state: stopped
 
 # Data Inspection scenarios for UDP and IPv6
 - import_playbook: data-inspection.yml
@@ -29,6 +32,7 @@
     scenario_send_protocol: UDP
     scenario_send_ip_version: 6
     arp_discovery: True
+    ae_state: stopped
 
 # Data Inspection scenarios for TCP and IPv4
 - import_playbook: data-inspection.yml
@@ -36,6 +40,7 @@
     scenario_send_protocol: TCP
     scenario_send_ip_version: 4
     arp_discovery: True
+    ae_state: stopped
 
 # Data Inspection scenarios for TCP and IPv6
 - import_playbook: data-inspection.yml
@@ -43,3 +48,4 @@
     scenario_send_protocol: TCP
     scenario_send_ip_version: 6
     arp_discovery: True
+    ae_state: stopped
