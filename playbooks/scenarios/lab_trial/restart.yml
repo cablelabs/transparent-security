@@ -14,7 +14,7 @@
 # one will be demonstrating dropped packets
 ---
 # Restart all services
-- import_playbook: restart_services-lab_trial.yml
+- import_playbook: restart_services.yml
 
 # Discover SB path
 - import_playbook: discover-paths.yml

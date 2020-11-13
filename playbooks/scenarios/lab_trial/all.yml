@@ -24,3 +24,6 @@
 
 # Packet Flood scenarios
 - import_playbook: all-pkt-flood.yml
+
+# Packet Flood scenarios
+- import_playbook: iperf.yml

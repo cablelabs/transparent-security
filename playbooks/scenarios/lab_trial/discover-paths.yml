@@ -19,6 +19,7 @@
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     send_host: host1
     rec_host: inet
+    arp_intf: aggregate-tun1
     receiver: "{{ topo_dict.hosts[rec_host] }}"
 
 - import_playbook: ../general/arping.yml
@@ -26,6 +27,23 @@
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     send_host: host2
     rec_host: inet
+    arp_intf: aggregate-tun1
+    receiver: "{{ topo_dict.hosts[rec_host] }}"
+
+- import_playbook: ../general/arping.yml
+  vars:
+    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
+    send_host: host1
+    rec_host: ae
+    arp_intf: aggregate-tun1
+    receiver: "{{ topo_dict.hosts[rec_host] }}"
+
+- import_playbook: ../general/arping.yml
+  vars:
+    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
+    send_host: host2
+    rec_host: ae
+    arp_intf: aggregate-tun1
     receiver: "{{ topo_dict.hosts[rec_host] }}"
 
 # Discover SB paths
@@ -34,6 +52,7 @@
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     send_host: inet
     rec_host: host1
+    arp_intf: core-tun1
     receiver: "{{ topo_dict.hosts[rec_host] }}"
 
 - import_playbook: ../general/arping.yml
@@ -41,6 +60,23 @@
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     send_host: inet
     rec_host: host2
+    arp_intf: core-tun1
+    receiver: "{{ topo_dict.hosts[rec_host] }}"
+
+- import_playbook: ../general/arping.yml
+  vars:
+    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
+    send_host: ae
+    rec_host: host1
+    arp_intf: core-tun1
+    receiver: "{{ topo_dict.hosts[rec_host] }}"
+
+- import_playbook: ../general/arping.yml
+  vars:
+    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
+    send_host: ae
+    rec_host: host2
+    arp_intf: core-tun1
     receiver: "{{ topo_dict.hosts[rec_host] }}"
 
 - hosts: localhost

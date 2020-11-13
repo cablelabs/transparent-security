@@ -18,10 +18,10 @@
   gather_facts: no
   become: yes
   tasks:
-    - name: Restart tps-tofino-ae
+    - name: Restart tps-tofino-ae with state {{ ae_state | default('restarted') }}
       systemd:
         name: tps-tofino-ae
-        state: restarted
+        state: "{{ ae_state | default('restarted') }}"
 
 # Call POST on all WS calls
 - hosts: controller

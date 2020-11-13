@@ -27,6 +27,7 @@
         name:
           - python3-pip
           - arping
+          - iperf3
       register: apt_rc
       retries: 3
       delay: 10
@@ -42,6 +43,8 @@
           - gcc-c++
           - tcpdump
           - net-tools
+          - iputils
+          - iperf3
       register: apt_rc
       retries: 3
       delay: 10
