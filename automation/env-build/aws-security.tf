@@ -45,6 +45,20 @@ resource "aws_security_group" "transparent-security-img-sg" {
 
   ingress {
     cidr_blocks = ["0.0.0.0/0"]
+    from_port = 9200
+    to_port = 9200
+    protocol = "tcp"
+  }
+
+  ingress {
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 5601
+    to_port = 5601
+    protocol = "tcp"
+  }
+
+  ingress {
+    cidr_blocks = ["0.0.0.0/0"]
     from_port = 3000
     to_port = 3000
     protocol = "tcp"
