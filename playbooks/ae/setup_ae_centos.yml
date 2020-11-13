@@ -191,5 +191,5 @@
        dest: ~/tps-py-requirements.txt
 
     - name: Install TPS Python requirements
-      command: sudo pip3 install -r ~/tps-py-requirements.txt
+      command: sudo python3 -m pip install -r ~/tps-py-requirements.txt
 
