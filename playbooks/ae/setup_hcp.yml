@@ -21,7 +21,6 @@
         - tcpdump
         - java
 
-
   - name: Start Elasticsearch
     service:
       name: elasticsearch
