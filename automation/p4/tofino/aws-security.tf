@@ -115,6 +115,13 @@ resource "aws_security_group" "transparent-security-hcp-img-sg" {
     protocol = "tcp"
   }
 
+  ingress {
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 9200
+    to_port = 9200
+    protocol = "tcp"
+  }
+
 
   // Terraform removes the default rule
   egress {

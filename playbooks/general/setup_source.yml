@@ -51,6 +51,17 @@
       until: apt_rc is not failed
       when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
 
+    - name: Downgrade pip3 scapy version to 2.4.3 due to 2.4.4 bug when running receive_packets.py on centos
+      pip:
+        name:
+          - scapy==2.4.3
+        executable: pip3
+      register: pip_rc
+      retries: 3
+      delay: 10
+      until: pip_rc is not failed
+      when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+
     - name: Copy local transparent-security source
       become: no
       synchronize:
