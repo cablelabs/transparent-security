@@ -15,22 +15,16 @@
 ---
 # Discover path
 - hosts: "{{ send_host }}"
-  gather_facts: no
+  gather_facts: yes
   become: yes
   tasks:
-    - name: Manually create ARP cache entry
-      command: "arp -s {{ receiver.ip }} {{ receiver.mac }}"
-
-# TODO/FIXME - Determine why the dummy interface does not create the proper
-# ARP cache entry with the reply on the dummy interfaces being created with
-# the tunnel/nic config routines execute
-    - name: Create ARP command
-      set_fact:
-        arp_command: "arping -c 5 {{ receiver.ip }}"
-
-    - name: The arping command
-      debug:
-        var: arp_command
+    - name: Clear expected ARP cache entry if exists
+      command: "arp -d {{ receiver.ip }} {{ receiver.mac }}"
+      ignore_errors: yes
 
     - name: Discover L2 path to hosts
-      command: "{{ arp_command }}"
+      command: "arping -I {{ arp_intf }} {{ receiver.ip }} -c 5"
+      register: out
+      retries: 3
+      delay: 3
+      until: out is not failed

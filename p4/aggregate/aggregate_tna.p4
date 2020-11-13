@@ -275,8 +275,9 @@ control TpsAggIngress(
             // Add switch ID into existing INT data
             add_switch_id_t.apply();
         } else {
-            // Add IP & Protocol specific data to new INT data
-            if (! hdr.arp.isValid()) {
+            // Add INT data to packet
+            if (! hdr.arp.isValid() &&
+                    (hdr.tcp.isValid() || hdr.udp_int.isValid())) {
                 if (data_inspection_t.apply().hit) {
                     if (hdr.udp_int.isValid()) {
                         insert_udp_int_for_udp();
