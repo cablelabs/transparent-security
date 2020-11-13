@@ -184,3 +184,12 @@
         dest: /etc/kibana/kibana.yml
         force: yes
 
+
+    - name: Copy TPS requirements.txt
+      copy:
+      src: ../../requirements.txt
+      dest: ~/tps-py-requirements.txt
+
+    - name: Install TPS Python requirements
+      command: sudo pip3 install -r ~/tps-py-requirements.txt
+
