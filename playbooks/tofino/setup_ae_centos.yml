@@ -155,8 +155,7 @@
 
     - name: Install OpenDistro Elasticsearch via RPM package
       become: yes
-      yum:
-        name: opendistroforelasticsearch-1.11.0-1 -y
+      shell: yum install opendistroforelasticsearch-1.11.0-1 -y
       args:
         chdir: /home/centos
 
@@ -174,13 +173,11 @@
 
     - name: Install OpenDistro Elasticsearch Kibana via RPM
       become: yes
-      yum:
-        name:
-          - opendistroforelasticsearch-kibana -y
+      shell: yum install opendistroforelasticsearch-kibana -y
       args:
         chdir: /home/centos
 
-    - name: Install OpenDistro Elasticsearch Kibana via RPM
+    - name: Update OpenDistro Elasticsearch Kibana config file
       become: yes
       copy:
         src: ./templates/opendistro_kibana.sh
