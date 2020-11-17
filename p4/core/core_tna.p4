@@ -60,6 +60,11 @@ parser TpsCoreParser(
 **************  I N G R E S S   P R O C E S S I N G   ********************
 *************************************************************************/
 
+struct packet_count_t {
+    bit<32> count;
+    bit<32> rate;
+}
+
 control TpsCoreIngress(
     inout headers hdr,
     inout custom_metadata_t meta,
@@ -67,6 +72,21 @@ control TpsCoreIngress(
     in ingress_intrinsic_metadata_from_parser_t ig_prsr_md,
     inout ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md,
     inout ingress_intrinsic_metadata_for_tm_t ig_tm_md) {
+
+    // Determining whether or not to mirror for Telemetry Report Sample Rate support
+    bool mirror;
+    Register<packet_count_t, bit<32>>(1) mirror_sampler;
+    RegisterAction<packet_count_t, bit<8>, bool>(mirror_sampler) mirror_sampler_action = {
+        void apply(inout packet_count_t counter, out bool clone) {
+            if (counter.count > 0) {
+                counter.count = counter.count - 1;
+                clone = false;
+            } else {
+                counter.count = counter.rate;
+                clone = true;
+            }
+        }
+    };
 
     /**
     * Responsible for cloning a packet as ingressed
@@ -115,7 +135,10 @@ control TpsCoreIngress(
             } else if (data_forward_t.apply().hit) {
                 if (ig_intr_md.ingress_port != ig_tm_md.ucast_egress_port) {
                     if (! hdr.arp.isValid()) {
-                        mirror_packet_i2e();
+                        mirror = mirror_sampler_action.execute(0);
+                        if (mirror) {
+                            mirror_packet_i2e();
+                        }
                     }
                 }
             } else {
