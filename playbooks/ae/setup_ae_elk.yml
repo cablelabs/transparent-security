@@ -1,0 +1,99 @@
+# Copyright (c) 2020 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+- hosts: ae
+  gather_facts: no
+  tasks:
+    - name: "Start Elasticsearch service"
+      become: yes
+      shell: "service elasticcsearch start"
+
+    - name: "Start Kibana service"
+      become: yes
+      shell: "service kibana start"
+
+
+    - name: "Validate if a DNS tps.sdn.org is present in /etc/hosts file"
+      become: yes
+      tags: sdnDnsName
+      lineinfile:
+        path: /etc/hosts
+        regexp: "tps.sdn.org"
+        line: "tps.sdn.org {{sdn_ip}}"
+        state: present
+        backup: yes
+      register: sdnDnsNameOut
+
+    - name: POST call to create data mapping template for incoming data in Elasticsearch
+      uri:
+        url: "http://localhost:9200/_template/packets"
+        method: PUT
+        return_content: yes
+        body: "{{ lookup('template','udp_data_mapping.json.j2') }}"
+        body_format: json
+      register: udp_template_response
+
+    - name: POST call to create data parsing pipeline for UDP v4 and UDP v6 for incoming data in Elasticsearch
+      uri:
+        url: "http://localhost:9200/_ingest/pipeline/ts_parsing"
+        method: PUT
+        return_content: yes
+        body: "{{ lookup('file','./templates/udp_data_parsing.json') }}"
+        body_format: json
+      register: ts_pipeline_response
+
+    - name: POST call to create SDN Aggregate attack webhook to attach to UDP monitor for incoming data in Elasticsearch
+      uri:
+        url: "http://localhost:9200/_opendistro/_alerting/destinations"
+        method: POST
+        return_content: yes
+        status_code: 201
+        body: "{{ lookup('file','./templates/sdn_attack_webhook.json') }}"
+        body_format: json
+      register: sdn_webhook_response
+
+    - name: Set SDN Webhook call response
+      set_fact:
+        sdn_webhook_response: "{{ sdn_webhook_response.json }}"
+
+    - name: Set SDN Webhook ID from response
+      set_fact:
+        sdn_webhook_id: "{{ sdn_webhook_response._id }}"
+
+    - name: Fetch created SDN webhook ID for creating associated monitor
+      debug:
+        msg: " SDN Webhook response Id : {{ sdn_webhook_id }}"
+
+    - file:
+        path: /home/centos/transparent-security/playbooks/ae/templates/udp_monitor_def.json
+        state: touch
+    - name: Replace SDN Webhook ID in monitor definition file
+      lineinfile:
+        path: /home/centos/transparent-security/playbooks/ae/templates/udp_monitor_def.json
+        regex: 'sdnWebhookResponseId'
+        line: ' "destination_id": "{{sdn_webhook_id}}",'
+
+    - name: POST call to create Monitor,trigger and action for UDP DDOS Detection and Mitigation Pipeline for incoming data in Elasticsearch
+      uri:
+        url: "http://localhost:9200/_opendistro/_alerting/monitors"
+        method: POST
+        return_content: yes
+        status_code: 201
+        body: "{{ lookup('file','./templates/udp_monitor_def.json') }}"
+        body_format: json
+      register: udp_monitor_response
+
+
+
+
+
