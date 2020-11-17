@@ -16,11 +16,16 @@
   tasks:
     - name: "Start Elasticsearch service"
       become: yes
-      shell: "service elasticcsearch start"
+      service:
+        name: elasticsearch
+        state: started
+
 
     - name: "Start Kibana service"
       become: yes
-      shell: "service kibana start"
+      service:
+        name: kibana
+        state: started
 
 
     - name: "Validate if a DNS tps.sdn.org is present in /etc/hosts file"
