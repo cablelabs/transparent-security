@@ -167,15 +167,29 @@
 
     - name: Remove opendistro_security plugin for current OpenDistro Elasticsearch installation
       become: yes
-      shell:  bin/elasticsearch-plugin remove opendistro_security
+      shell: bin/elasticsearch-plugin remove opendistro_security
       args:
         chdir: /usr/share/elasticsearch/
+
+
+    - name: Update OpenDistro Elasticsearch config file to disable security
+      become: yes
+      copy:
+          src: ./templates/opendistro_elasticsearch.sh
+          dest: /etc/elasticsearch/elasticsearch.yml
+          force: yes
 
     - name: Install OpenDistro Elasticsearch Kibana via RPM
       become: yes
       shell: yum install opendistroforelasticsearch-kibana -y
       args:
         chdir: /home/centos
+
+    - name: Remove opendistro_security plugin for current OpenDistro Kibana installation
+      become: yes
+      shell: bin/kibana-plugin remove opendistro_security --allow-root
+      args:
+          chdir: /usr/share/kibana/
 
     - name: Update OpenDistro Elasticsearch Kibana config file
       become: yes
