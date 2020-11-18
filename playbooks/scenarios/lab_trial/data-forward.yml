@@ -25,6 +25,6 @@
     rec_host: inet
     sender: "{{ topo_dict.hosts[send_host] }}"
     receiver: "{{ topo_dict.hosts[rec_host] }}"
-    sender_intf_name: aggregate-tun1
-    rec_intf_name: core-tun1
+    sender_intf_name: "{{ sender.intf_name }}"
+    rec_intf_name: "{{ receiver.intf_name }}"
     dst_mac: "{{ receiver.mac }}"
