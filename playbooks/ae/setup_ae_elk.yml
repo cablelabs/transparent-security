@@ -35,16 +35,16 @@
 
     - name: POST call to create data mapping template for incoming data in Elasticsearch
       uri:
-        url: "http://{{ae_ip}}:9200/_template/packets"
+        url: "http://localhost:9200/_template/packets"
         method: PUT
         return_content: yes
-        body: "{{ lookup('template','udp_data_mapping.json.j2') }}"
+        body: "{{ lookup('file','./templates/udp_data_mapping.json') }}"
         body_format: json
       register: udp_template_response
 
     - name: POST call to create data parsing pipeline for UDP v4 and UDP v6 for incoming data in Elasticsearch
       uri:
-        url: "http://{{ae_ip}}:9200/_ingest/pipeline/ts_parsing"
+        url: "http://localhost:9200/_ingest/pipeline/ts_parsing"
         method: PUT
         return_content: yes
         body: "{{ lookup('file','./templates/udp_data_parsing.json') }}"
@@ -53,7 +53,7 @@
 
     - name: POST call to create SDN Aggregate attack webhook to attach to UDP monitor for incoming data in Elasticsearch
       uri:
-        url: "http://{{ae_ip}}:9200/_opendistro/_alerting/destinations"
+        url: "http://localhost:9200/_opendistro/_alerting/destinations"
         method: POST
         return_content: yes
         status_code: 201
@@ -92,7 +92,7 @@
 
     - name: POST call to create Monitor,trigger and action for UDP DDOS Detection and Mitigation Pipeline for incoming data in Elasticsearch
       uri:
-        url: "http://{{ae_ip}}:9200/_opendistro/_alerting/monitors"
+        url: "http://localhost:9200/_opendistro/_alerting/monitors"
         method: POST
         return_content: yes
         status_code: 201
