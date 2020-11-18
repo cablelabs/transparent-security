@@ -100,7 +100,18 @@
         body_format: json
       register: udp_monitor_response
 
-
+    - name: POST call to create Index Pattern
+      uri:
+        url: "http://localhost:5601/api/saved_objects/index-pattern/packets-*"
+        method: POST
+        headers:
+          kbn-xsrf: "true"
+          Content-Type: "application/json"
+        return_content: yes
+        status_code: 201
+        body: "{{ lookup('file','./templates/index_pattern_request_body.json') }}"
+        body_format: json
+      register: index_pattern_response
 
 
 
