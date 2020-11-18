@@ -213,6 +213,7 @@
         chdir: /home/centos
 
     - name: Install requirements for Espcap Elasticsearch v7.x
+      become: yes
       shell: python3 -m pip install -r requirements-7.x.txt
       args:
         chdir: /home/centos/espcap
