@@ -167,8 +167,8 @@
 - hosts: "{{ rec_host }}"
   gather_facts: no
   vars:
-    min_packet_count: "{{ min_received_packet_count | default(send_packet_count) | int }}"
-    max_packet_count: "{{ max_received_packet_count | default(send_packet_count) | int }}"
+    min_packet_count: "{{ min_received_packet_count | default(send_packet_count|int - 1) }}"
+    max_packet_count: "{{ max_received_packet_count | default(send_packet_count|int)}}"
     hops: "{{ int_hops | default(0) }}"
     ip_ver: "{{ ip_version | default('4') }}"
     receiver_log_file: "{{ log_dir }}/{{ receiver_log_filename }}"

@@ -27,11 +27,16 @@
     rec_host: "{{ remote_rec_host }}"
     sender: "{{ topo_dict.hosts[remote_send_host] }}"
     receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
-    sender_intf_name: aggregate-tun1
-    rec_intf_name: core-tun1
+    sender_intf_name: "{{ sender.intf_name }}"
+    rec_intf_name: "{{ receiver.intf_name }}"
     dst_mac: "{{ receiver['mac'] }}"
     sr1_rec_int_hops: 0
-    count_div: 1
+    expected_rate: 0
+    ws_calls:
+      - url: "http://{{ sdn_ip }}:{{ sdn_port }}/telemRptSample"
+        body:
+          sample: "{{ sample_rate }}"
+        ok_status: 201
 
 # Basic Data Inspection scenario - receiving packets on core-eth3 (INT packets)
 - import_playbook: data_inspection_basic.yml
@@ -47,15 +52,13 @@
     rec_host: "{{ remote_rec_host }}"
     sender: "{{ topo_dict.hosts[remote_send_host] }}"
     receiver: "{{ topo_dict.hosts.inet }}"
-    sender_intf_name: aggregate-tun1
-    rec_intf_name: core-tun1
+    sender_intf_name: "{{ sender.intf_name }}"
+    rec_intf_name: "{{ receiver.intf_name }}"
     dst_mac: "{{ receiver['mac'] }}"
     sr1_rec_int_hops: 2
-    count_div: 2
+    expected_rate: "{{ sample_rate }}"
     ws_calls:
       - url: "http://{{ sdn_ip }}:{{ sdn_port }}/telemRptSample"
         body:
-          sample: 1
-          switch_mac: "{{ switch.mac }}"
-          device_mac: "{{ sender.mac }}"
+          sample: "{{ sample_rate }}"
         ok_status: 201

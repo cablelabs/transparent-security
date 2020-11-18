@@ -3,6 +3,7 @@ hosts:
     name: host1
     id: 1
     ip: 192.168.1.2
+    intf_name: {{ p4_prog }}-tun1
 {% if host_user is defined %}
     user: {{ host_user }}
 {% endif %}
@@ -19,6 +20,7 @@ hosts:
     name: host2
     id: 2
     ip: 192.168.1.6
+    intf_name: {{ p4_prog }}-tun1
 {% if host_user is defined %}
     user: {{ host_user }}
 {% endif %}
@@ -35,6 +37,7 @@ hosts:
     name: clone
     id: 3
     ip: 192.168.1.10
+    intf_name: {{ p4_prog }}-tun1
 {% if host_user is defined %}
     user: {{ host_user }}
 {% endif %}
