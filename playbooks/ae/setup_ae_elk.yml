@@ -16,17 +16,11 @@
   tasks:
     - name: "Start Elasticsearch service"
       become: yes
-      service:
-        name: elasticsearch
-        state: started
-
+      shell : service elasticsearch start
 
     - name: "Start Kibana service"
       become: yes
-      service:
-        name: kibana
-        state: started
-
+      shell : service kibana start
 
     - name: "Validate if a DNS tps.sdn.org is present in /etc/hosts file"
       become: yes
@@ -79,14 +73,22 @@
       debug:
         msg: " SDN Webhook response Id : {{ sdn_webhook_id }}"
 
-    - file:
-        path: /home/centos/transparent-security/playbooks/ae/templates/udp_monitor_def.json
-        state: touch
+    - name: Copy file udp_monitor_def to remote location from local file system
+      copy:
+        src: ./templates/udp_monitor_def.json
+        dest: /home/centos
+        force: yes
+
     - name: Replace SDN Webhook ID in monitor definition file
+      become: yes
+      tags: monitorUpdate
       lineinfile:
-        path: /home/centos/transparent-security/playbooks/ae/templates/udp_monitor_def.json
+        path: /home/centos/udp_monitor_def.json
         regex: 'sdnWebhookResponseId'
         line: ' "destination_id": "{{sdn_webhook_id}}",'
+        state: present
+        backup: yes
+      register: monitorUpdateOut
 
     - name: POST call to create Monitor,trigger and action for UDP DDOS Detection and Mitigation Pipeline for incoming data in Elasticsearch
       uri:
