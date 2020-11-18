@@ -35,7 +35,7 @@
 
     - name: POST call to create data mapping template for incoming data in Elasticsearch
       uri:
-        url: "http://localhost:9200/_template/packets"
+        url: "http://{{ae_ip}}:9200/_template/packets"
         method: PUT
         return_content: yes
         body: "{{ lookup('template','udp_data_mapping.json.j2') }}"
@@ -44,7 +44,7 @@
 
     - name: POST call to create data parsing pipeline for UDP v4 and UDP v6 for incoming data in Elasticsearch
       uri:
-        url: "http://localhost:9200/_ingest/pipeline/ts_parsing"
+        url: "http://{{ae_ip}}:9200/_ingest/pipeline/ts_parsing"
         method: PUT
         return_content: yes
         body: "{{ lookup('file','./templates/udp_data_parsing.json') }}"
@@ -53,7 +53,7 @@
 
     - name: POST call to create SDN Aggregate attack webhook to attach to UDP monitor for incoming data in Elasticsearch
       uri:
-        url: "http://localhost:9200/_opendistro/_alerting/destinations"
+        url: "http://{{ae_ip}}:9200/_opendistro/_alerting/destinations"
         method: POST
         return_content: yes
         status_code: 201
@@ -75,15 +75,15 @@
 
     - name: Copy file udp_monitor_def to remote location from local file system
       copy:
-        src: ./templates/udp_monitor_def.json
-        dest: /home/centos
+        src: "{{trans_sec_dir}}/playbooks/ae/templates/udp_monitor_def.json"
+        dest: "{{remote_scripts_dir}}"
         force: yes
 
     - name: Replace SDN Webhook ID in monitor definition file
       become: yes
       tags: monitorUpdate
       lineinfile:
-        path: /home/centos/udp_monitor_def.json
+        path: "{{remote_scripts_dir}}/udp_monitor_def.json"
         regex: 'sdnWebhookResponseId'
         line: ' "destination_id": "{{sdn_webhook_id}}",'
         state: present
@@ -92,7 +92,7 @@
 
     - name: POST call to create Monitor,trigger and action for UDP DDOS Detection and Mitigation Pipeline for incoming data in Elasticsearch
       uri:
-        url: "http://localhost:9200/_opendistro/_alerting/monitors"
+        url: "http://{{ae_ip}}:9200/_opendistro/_alerting/monitors"
         method: POST
         return_content: yes
         status_code: 201
