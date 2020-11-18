@@ -31,6 +31,7 @@
     rec_intf_name: core-tun1
     dst_mac: "{{ receiver['mac'] }}"
     sr1_rec_int_hops: 0
+    count_div: 1
 
 # Basic Data Inspection scenario - receiving packets on core-eth3 (INT packets)
 - import_playbook: data_inspection_basic.yml
@@ -50,3 +51,11 @@
     rec_intf_name: core-tun1
     dst_mac: "{{ receiver['mac'] }}"
     sr1_rec_int_hops: 2
+    count_div: 2
+    ws_calls:
+      - url: "http://{{ sdn_ip }}:{{ sdn_port }}/telemRptSample"
+        body:
+          sample: 1
+          switch_mac: "{{ switch.mac }}"
+          device_mac: "{{ sender.mac }}"
+        ok_status: 201

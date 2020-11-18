@@ -81,7 +81,8 @@ class DdosSdnController:
                     ae_ip = ipaddress.ip_address(ae_ip_str)
                     logger.info('AE IP Address - [%s]', ae_ip)
                 except ValueError as e:
-                    logger.warning('Cannot create drop report, ae_ip invalid')
+                    logger.warning(
+                        'Cannot create drop report, ae_ip invalid - [%s]', e)
                     return
         if ae_ip:
             self.__create_drop_report(ae_ip)
@@ -272,12 +273,31 @@ class DdosSdnController:
         :param request: dict of the request
         """
         core_controller = self.get_core_controller()
-        logger.info('Adding telemetry report config to core')
+        logger.info('Activating telemetry report for core')
         if core_controller:
             try:
                 core_controller.setup_telem_rpt(**request)
             except Exception as e:
-                logger.error('Error adding attacker with error - [%s])', e)
+                logger.error(
+                    'Error setting up telemetry report with error - [%s])', e)
+        else:
+            logger.warning('Aggregate controller cannot add attack')
+
+    def set_trpt_sampling_value(self, request):
+        """
+        Adds a device to mitigate an attack
+        :param request: dict of the request
+        """
+        core_controller = self.get_core_controller()
+        logger.info('Setting telemetry report sampling value to core')
+        sample_size = request.get('sample')
+        if core_controller and sample_size:
+            try:
+                logger.info('Adding sample_size - [%s]', sample_size)
+                core_controller.set_trpt_sampling_value(int(sample_size))
+            except Exception as e:
+                logger.error(
+                    'Error setting TRPT sample value with error - [%s])', e)
         else:
             logger.warning('Aggregate controller cannot add attack')
 
@@ -287,7 +307,7 @@ class DdosSdnController:
         :param request: dict of the request
         """
         core_controller = self.get_core_controller()
-        logger.info('Adding telemetry report config to core')
+        logger.info('Deactivating telemetry report config to core')
         if core_controller:
             try:
                 core_controller.setup_telem_rpt(**request)
