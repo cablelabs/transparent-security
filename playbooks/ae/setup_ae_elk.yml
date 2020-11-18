@@ -16,11 +16,15 @@
   tasks:
     - name: "Start Elasticsearch service"
       become: yes
-      shell : service elasticsearch start
+      service:
+        name: elasticsearch
+        state: started
 
     - name: "Start Kibana service"
       become: yes
-      shell : service kibana start
+      service:
+        name: kibana
+        state: started
 
     - name: "Validate if a DNS tps.sdn.org is present in /etc/hosts file"
       become: yes
@@ -73,9 +77,16 @@
       debug:
         msg: " SDN Webhook response Id : {{ sdn_webhook_id }}"
 
+    - name: Make remote scripts directory
+      become: yes
+      shell: mkdir transparent-security
+      args:
+        chdir: /etc
+
     - name: Copy file udp_monitor_def to remote location from local file system
+      become: yes
       copy:
-        src: "{{trans_sec_dir}}/playbooks/ae/templates/udp_monitor_def.json"
+        src: "./templates/udp_monitor_def.json"
         dest: "{{remote_scripts_dir}}"
         force: yes
 
