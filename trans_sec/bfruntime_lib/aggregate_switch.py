@@ -36,9 +36,9 @@ from trans_sec.consts import UDP_INT_DST_PORT
 
 logger = logging.getLogger('aggregate_switch')
 
-data_inspection_tbl = 'TpsAggIngress.data_inspection_t'
+data_inspection_tbl = 'TpsAggEgress.data_inspection_t'
 data_inspection_tbl_key = 'hdr.ethernet.src_mac'
-data_inspection_action = 'TpsAggIngress.data_inspect_packet'
+data_inspection_action = 'TpsAggEgress.data_inspect_packet'
 data_inspection_action_val_1 = 'device'
 data_inspection_action_val_2 = 'switch_id'
 
@@ -54,9 +54,9 @@ data_drop_tbl_key_3 = 'meta.ipv6_addr'
 data_drop_tbl_key_4 = 'meta.dst_port'
 data_drop_action = 'TpsAggIngress.data_drop'
 
-add_switch_id_tbl = 'TpsAggIngress.add_switch_id_t'
+add_switch_id_tbl = 'TpsAggEgress.add_switch_id_t'
 add_switch_id_tbl_key = 'hdr.udp_int.dst_port'
-add_switch_id_action = 'TpsAggIngress.add_switch_id'
+add_switch_id_action = 'TpsAggEgress.add_switch_id'
 add_switch_id_action_val = 'switch_id'
 
 
