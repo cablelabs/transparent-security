@@ -19,12 +19,39 @@
       service:
         name: elasticsearch
         state: started
+        enabled: yes
+
+    - name: "Start Elasticsearch service"
+      become: yes
+      service:
+          name: elasticsearch
+          state: started
+          enabled: yes
 
     - name: "Start Kibana service"
       become: yes
       service:
         name: kibana
         state: started
+        enabled: yes
+
+#    - name: "Start Kibana service"
+#      become: yes
+#      command: service kibana start
+#      register: kibana_start_res
+#      retries: 25
+#      until: kibana_start_res.stdout_lines
+
+    - name: Wait for Kibana to startup at port 5601
+      wait_for:
+        port: 5601
+        timeout: 600
+
+    - name: Sleep for 300 seconds to help Kibana service up and running
+      tags: sleep300
+      wait_for:
+          delay: 300
+          timeout: 0
 
     - name: "Validate if a DNS tps.sdn.org is present in /etc/hosts file"
       become: yes
@@ -77,11 +104,6 @@
       debug:
         msg: " SDN Webhook response Id : {{ sdn_webhook_id }}"
 
-    - name: Make remote scripts directory
-      become: yes
-      shell: mkdir transparent-security
-      args:
-        chdir: /etc
 
     - name: Copy file udp_monitor_def to remote location from local file system
       become: yes
@@ -119,7 +141,7 @@
           kbn-xsrf: "true"
           Content-Type: "application/json"
         return_content: yes
-        status_code: 201
+        status_code: 200
         body: "{{ lookup('file','./templates/index_pattern_request_body.json') }}"
         body_format: json
       register: index_pattern_response
