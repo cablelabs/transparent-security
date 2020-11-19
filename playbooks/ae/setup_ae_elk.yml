@@ -145,5 +145,3 @@
         body_format: json
       register: index_pattern_response
 
-
-
