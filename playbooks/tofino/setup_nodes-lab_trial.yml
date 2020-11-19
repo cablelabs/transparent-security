@@ -10,8 +10,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
----
-#Import playbook
 
 # Copy TPS source from orchestrator to all nodes
 - import_playbook: ../general/setup_source.yml
@@ -21,6 +19,9 @@
       - hosts
     trans_sec_source_dir: "{{ orch_trans_sec_dir }}"
     python_unit_tests: false
+
+#Import playbook to setup and load AE pipelines
+- import_playbook: ../ae/setup_ae_elk.yml
 
 # Create virtual interfaces on switches
 - import_playbook: setup_virt_eth.yml
