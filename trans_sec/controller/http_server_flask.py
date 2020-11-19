@@ -50,6 +50,9 @@ class SDNControllerServer:
         self.api.add_resource(
             TelemetryReport, '/setupTelemRpt',
             resource_class_kwargs={'sdn_controller': self.sdn_controller})
+        self.api.add_resource(
+            TelemetryReportSampling, '/telemRptSample',
+            resource_class_kwargs={'sdn_controller': self.sdn_controller})
         self.api.add_resource(Shutdown, '/shutdown')
 
     def stop(self):
@@ -260,6 +263,26 @@ class TelemetryReport(Resource):
 
         logger.info('Attack args - [%s]', args)
         self.sdn_controller.remove_agg_attacker(args)
+        return json.dumps({"success": True}), 201
+
+
+class TelemetryReportSampling(Resource):
+    """
+    Class for exposing web service to change the Telemetry Report sampling
+    value. i.e. When "count" == 0, every INT packet will generate a Telem rpt
+                when "count" == 1, every other; 2 - every third etc
+    """
+    def __init__(self, **kwargs):
+        self.sdn_controller = kwargs['sdn_controller']
+        self.parser = reqparse.RequestParser()
+        self.parser.add_argument('sample', type=int, default=0)
+
+    def post(self):
+        logger.info('Setting Telemetry report sampling value')
+        args = self.parser.parse_args()
+
+        logger.info('Attack args - [%s]', args)
+        self.sdn_controller.set_trpt_sampling_value(args)
         return json.dumps({"success": True}), 201
 
 

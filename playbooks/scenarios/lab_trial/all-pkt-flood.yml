@@ -15,6 +15,8 @@
 ---
 # Refresh lab_trial environment config
 - import_playbook: restart.yml
+  vars:
+    ae_state: restarted
 
 # Data Inspection scenarios for UDP and IPv4
 - import_playbook: data-inspection.yml
@@ -27,6 +29,8 @@
     di_send_loops: 2
     di_send_loop_delay: 10
     arp_discovery: True
+    sample_rate: 0
+    ae_state: restarted
 
 # Data Inspection scenarios for UDP and IPv6 with AE for testing dropping packets
 - import_playbook: data-inspection.yml
@@ -39,6 +43,8 @@
     di_send_loops: 2
     di_send_loop_delay: 10
     arp_discovery: True
+    sample_rate: 0
+    ae_state: restarted
 
 # Data Inspection scenarios for TCP and IPv4 with AE for testing dropping packets
 - import_playbook: data-inspection.yml
@@ -51,6 +57,8 @@
     di_send_loops: 2
     di_send_loop_delay: 10
     arp_discovery: True
+    sample_rate: 0
+    ae_state: restarted
 
 # Data Inspection scenarios for TCP and IPv6 with AE for testing dropping packets
 - import_playbook: data-inspection.yml
@@ -63,3 +71,5 @@
     di_send_loops: 2
     di_send_loop_delay: 10
     arp_discovery: True
+    sample_rate: 0
+    ae_state: restarted

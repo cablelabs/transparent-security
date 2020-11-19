@@ -87,7 +87,6 @@ class AggregateSwitch(BFRuntimeSwitch):
         while True:
             digest = None
             try:
-                logger.debug('Agg digest iter')
                 digest = self.interface.digest_get()
             except Exception as e:
                 if 'Digest list not received' not in str(e):
