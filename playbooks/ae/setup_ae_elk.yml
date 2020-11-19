@@ -33,7 +33,7 @@
         port: 5601
         timeout: 600
 
-    - name: Sleep for 180 seconds to help Kibana service up and running
+    - name: Service check sleep 180 seconds to help Kibana service be ready
       tags: sleep180
       wait_for:
         delay: 180
@@ -90,19 +90,31 @@
       debug:
         msg: " SDN Webhook response Id : {{ sdn_webhook_id }}"
 
-
-    - name: Copy file udp_monitor_def to remote location from local file system
+    - name: Ensures {{ remote_scripts_dir }} exists
       become: yes
+      file:
+        path: "{{ remote_scripts_dir }}"
+        state: directory
+
+    - name: Ensure {{ remote_scripts_dir }} directories are 777
+      become: yes
+      shell: "chmod -R 777 transparent-security"
+      args:
+        chdir: "/etc"
+
+
+    - name: Copy file udp_monitor_def.json to  {{ remote_scripts_dir }} for updates
       copy:
-        src: "./templates/udp_monitor_def.json"
-        dest: "{{remote_scripts_dir}}"
+        src: "{{ trans_sec_dir }}/playbooks/ae/templates/udp_monitor_def.json"
+        dest: "{{ remote_scripts_dir }}/udp_monitor_def.json"
+        remote_src: yes
         force: yes
 
     - name: Replace SDN Webhook ID in monitor definition file
       become: yes
       tags: monitorUpdate
       lineinfile:
-        path: "{{remote_scripts_dir}}/udp_monitor_def.json"
+        path: "{{ remote_scripts_dir }}/udp_monitor_def.json"
         regex: 'sdnWebhookResponseId'
         line: ' "destination_id": "{{sdn_webhook_id}}",'
         state: present
@@ -111,7 +123,7 @@
 
     - name: Slurp updated monitor definition and save it to be used in POST request.
       slurp:
-        src: "{{remote_scripts_dir}}/udp_monitor_def.json"
+        src: "{{ remote_scripts_dir }}/udp_monitor_def.json"
       register: slurped_updated_udp_monitor_def
 
     - name: Set updated_udp_monitor_def as fact
@@ -131,6 +143,7 @@
         body: "{{ updated_udp_monitor_def_contents }}"
         body_format: json
       register: udp_monitor_response
+
 
     - name: POST call to create Index Pattern
       uri:
