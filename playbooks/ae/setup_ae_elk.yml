@@ -16,11 +16,28 @@
   tasks:
     - name: "Start Elasticsearch service"
       become: yes
-      shell : service elasticsearch start
+      service:
+        name: elasticsearch
+        state: started
+        enabled: yes
 
     - name: "Start Kibana service"
       become: yes
-      shell : service kibana start
+      service:
+        name: kibana
+        state: started
+        enabled: yes
+
+    - name: Wait for Kibana to startup at port 5601
+      wait_for:
+        port: 5601
+        timeout: 600
+
+    - name: Sleep for 180 seconds to help Kibana service up and running
+      tags: sleep180
+      wait_for:
+        delay: 180
+        timeout: 0
 
     - name: "Validate if a DNS tps.sdn.org is present in /etc/hosts file"
       become: yes
@@ -74,8 +91,9 @@
         msg: " SDN Webhook response Id : {{ sdn_webhook_id }}"
 
     - name: Copy file udp_monitor_def to remote location from local file system
+      become: yes
       copy:
-        src: "{{trans_sec_dir}}/playbooks/ae/templates/udp_monitor_def.json"
+        src: "./templates/udp_monitor_def.json"
         dest: "{{remote_scripts_dir}}"
         force: yes
 
@@ -90,17 +108,25 @@
         backup: yes
       register: monitorUpdateOut
 
+    - name: Slurp updated monitor definition and save it to be used in POST request.
+      slurp:
+        src: "{{remote_scripts_dir}}/udp_monitor_def.json"
+      register: slurped_updated_udp_monitor_def
+
+    - name: Set updated_udp_monitor_def as fact
+      set_fact:
+        updated_udp_monitor_def_contents: "{{ slurped_updated_udp_monitor_def.content | b64decode }}"
+
+    - name: Show Updated monitor definition
+      debug:
+        var: updated_udp_monitor_def_contents
+
     - name: POST call to create Monitor,trigger and action for UDP DDOS Detection and Mitigation Pipeline for incoming data in Elasticsearch
       uri:
         url: "http://localhost:9200/_opendistro/_alerting/monitors"
         method: POST
         return_content: yes
         status_code: 201
-        body: "{{ lookup('file','./templates/udp_monitor_def.json') }}"
+        body: "{{ updated_udp_monitor_def_contents }}"
         body_format: json
       register: udp_monitor_response
-
-
-
-
-
