@@ -68,16 +68,14 @@ class CoreController(AbstractController):
             if switch.mac == kwargs['switch_mac']:
                 switch.setup_telemetry_rpt(kwargs['ae_ip'], kwargs['port'])
 
+    def set_trpt_sampling_value(self, sample_size):
+        for switch in self.switches:
+            switch.set_trpt_sampling_value(sample_size)
+
     def remove_telem_rpt(self, **kwargs):
         for switch in self.switches:
             if switch.mac == kwargs['switch_mac']:
                 switch.remove_telemetry_rpt(kwargs['ae_ip'], kwargs['port'])
-
-    def add_attacker(self, attack, host):
-        pass
-
-    def remove_attacker(self, attack, host):
-        pass
 
     def add_attacker(self, attack, host):
         pass

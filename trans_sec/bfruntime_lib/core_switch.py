@@ -51,6 +51,10 @@ telem_rpt_tbl = 'TpsCoreEgress.setup_telemetry_rpt_t'
 telem_rpt_tbl_key = 'hdr.udp_int.dst_port'
 telem_rpt_data = 'ae_ip'
 
+trpt_sample_tbl = 'TpsCoreIngress.mirror_sampler'
+trpt_sample_key = '$REGISTER_INDEX'
+trpt_rate_field = 'TpsCoreIngress.mirror_sampler.rate'
+
 
 class CoreSwitch(BFRuntimeSwitch):
     def __init__(self, sw_info, client_id=0, is_master=True):
@@ -221,3 +225,17 @@ class CoreSwitch(BFRuntimeSwitch):
                 pass
             else:
                 raise e
+
+    def set_trpt_sampling_value(self, sample_size):
+        logger.info(
+            'Setting up telemetry report sample size core device [%s] to [%s]',
+            self.device_id, sample_size)
+
+        sample_tbl = self.get_table(trpt_sample_tbl)
+        sample_tbl.entry_add(
+            self.target,
+            [sample_tbl.make_key([KeyTuple(trpt_sample_key, 0)])],
+            [sample_tbl.make_data([
+                DataTuple(trpt_rate_field, sample_size),
+            ])]
+        )
