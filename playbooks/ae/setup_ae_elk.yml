@@ -144,4 +144,3 @@
         body: "{{ lookup('file','./templates/index_pattern_request_body.json') }}"
         body_format: json
       register: index_pattern_response
-
