@@ -21,13 +21,6 @@
         state: started
         enabled: yes
 
-    - name: "Start Elasticsearch service"
-      become: yes
-      service:
-          name: elasticsearch
-          state: started
-          enabled: yes
-
     - name: "Start Kibana service"
       become: yes
       service:
@@ -35,23 +28,16 @@
         state: started
         enabled: yes
 
-#    - name: "Start Kibana service"
-#      become: yes
-#      command: service kibana start
-#      register: kibana_start_res
-#      retries: 25
-#      until: kibana_start_res.stdout_lines
-
     - name: Wait for Kibana to startup at port 5601
       wait_for:
         port: 5601
         timeout: 600
 
-    - name: Sleep for 300 seconds to help Kibana service up and running
-      tags: sleep300
+    - name: Sleep for 180 seconds to help Kibana service up and running
+      tags: sleep180
       wait_for:
-          delay: 300
-          timeout: 0
+        delay: 180
+        timeout: 0
 
     - name: "Validate if a DNS tps.sdn.org is present in /etc/hosts file"
       become: yes
@@ -123,13 +109,26 @@
         backup: yes
       register: monitorUpdateOut
 
+    - name: Slurp updated monitor definition and save it to be used in POST request.
+      slurp:
+        src: "{{remote_scripts_dir}}/udp_monitor_def.json"
+      register: slurped_updated_udp_monitor_def
+
+    - name: Set updated_udp_monitor_def as fact
+      set_fact:
+        updated_udp_monitor_def_contents: "{{ slurped_updated_udp_monitor_def.content | b64decode }}"
+
+    - name: Show Updated monitor definition
+      debug:
+        var: updated_udp_monitor_def_contents
+
     - name: POST call to create Monitor,trigger and action for UDP DDOS Detection and Mitigation Pipeline for incoming data in Elasticsearch
       uri:
         url: "http://localhost:9200/_opendistro/_alerting/monitors"
         method: POST
         return_content: yes
         status_code: 201
-        body: "{{ lookup('file','{{remote_scripts_dir}}/udp_monitor_def.json') }}"
+        body: "{{ updated_udp_monitor_def_contents }}"
         body_format: json
       register: udp_monitor_response
 
