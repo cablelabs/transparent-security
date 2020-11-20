@@ -20,9 +20,6 @@
     trans_sec_source_dir: "{{ orch_trans_sec_dir }}"
     python_unit_tests: false
 
-#Import playbook to setup and load AE pipelines
-- import_playbook: ../ae/setup_ae_elk.yml
-
 # Create virtual interfaces on switches
 - import_playbook: setup_virt_eth.yml
   vars:
@@ -70,3 +67,6 @@
     packet_count: 100
     sample_interval: 60
     sdn_attack_context: aggAttack
+
+#Import playbook to setup and load AE pipelines
+- import_playbook: ../ae/setup_ae_elk.yml
