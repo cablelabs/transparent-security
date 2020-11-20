@@ -40,9 +40,7 @@
             "INTMetadataSourceMetadataReserved" : {
               "type" : "keyword"
             },
-            "UDP2SrcPort" : {
-              "type" : "keyword"
-            },
+
             "UDPIntShimHeaderType" : {
               "type" : "keyword"
             },
@@ -107,9 +105,7 @@
             "INTMetadataSourceMetadataOriginatingMac" : {
               "type" : "keyword"
             },
-            "UDP2Checksum" : {
-              "type" : "keyword"
-            },
+
             "UDPIntMetaDataHeaderInstructionBitmap" : {
               "type" : "keyword"
             },
@@ -164,9 +160,7 @@
             "telemetryHwdId" : {
               "type" : "keyword"
             },
-            "UDP2Length" : {
-              "type" : "keyword"
-            },
+
             "telemetryVarOpt" : {
               "type" : "keyword"
             },
@@ -206,9 +200,7 @@
             "UDPIntMetaDataHeaderM" : {
               "type" : "keyword"
             },
-            "UDP2DstPort" : {
-              "type" : "keyword"
-            },
+
             "telemetryD" : {
               "type" : "keyword"
             },

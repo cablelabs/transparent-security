@@ -269,42 +269,6 @@
           "ignore_failure" : true
         }
       },
-      {
-        "script" : {
-          "lang" : "painless",
-          "source" : """
-               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
-                String etherType = tsRawData.substring(72, 76);
-                String ipVersion = tsRawData.substring(76, 77);
-
-                if( etherType == '0800' && ipVersion == '4')
-                {
-                  String nextProtoStr = tsRawData.substring(138, 140);
-                   BigInteger nextProtoBigInt =  new BigInteger(nextProtoStr, 16);
-                  if(nextProtoBigInt == '6')
-                  {
-                    ctx.ts.isTCP = true;
-                  }else {
-                   ctx.ts.isTCP = false;
-                 }
-                }
-
-                if( etherType == '86dd' && ipVersion == '6')
-                {
-                  String nextProtoStr = tsRawData.substring(178, 180);
-                   BigInteger nextProtoBigInt =  new BigInteger(nextProtoStr, 16);
-                    if(nextProtoBigInt == '6')
-                  {
-                    ctx.ts.isTCP = true;
-                  }else {
-                   ctx.ts.isTCP = false;
-                 }
-                }
-
-        """,
-          "ignore_failure" : true
-        }
-      },
        {
         "script" : {
           "lang" : "painless",
@@ -317,7 +281,44 @@
                 {
                   String nextProtoStr = tsRawData.substring(138, 140);
                    BigInteger nextProtoBigInt =  new BigInteger(nextProtoStr, 16);
-                  if(nextProtoBigInt == '17')
+                  if(ctx.ts.UDPIntShimHeaderNextProto == '6')
+                  {
+                    ctx.ts.isTCP = true;
+                  }else {
+                   ctx.ts.isTCP = false;
+                 }
+                }
+
+                if( etherType == '86dd' && ipVersion == '6')
+                {
+                  String nextProtoStr = tsRawData.substring(178, 180);
+                   BigInteger nextProtoBigInt =  new BigInteger(nextProtoStr, 16);
+                    if(ctx.ts.UDPIntShimHeaderNextProto == '6')
+                  {
+                    ctx.ts.isTCP = true;
+                  }else {
+                   ctx.ts.isTCP = false;
+                 }
+                }
+
+        """,
+          "ignore_failure" : true
+        }
+      },
+
+       {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
+               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
+                String etherType = tsRawData.substring(72, 76);
+                String ipVersion = tsRawData.substring(76, 77);
+
+                if( etherType == '0800' && ipVersion == '4')
+                {
+                  String nextProtoStr = tsRawData.substring(138, 140);
+                   BigInteger nextProtoBigInt =  new BigInteger(nextProtoStr, 16);
+                  if(ctx.ts.UDPIntShimHeaderNextProto == '17')
                   {
                     ctx.ts.isUDP = true;
                   }else {
@@ -329,7 +330,7 @@
                 {
                   String nextProtoStr = tsRawData.substring(178, 180);
                    BigInteger nextProtoBigInt =  new BigInteger(nextProtoStr, 16);
-                    if(nextProtoBigInt == '17')
+                    if(ctx.ts.UDPIntShimHeaderNextProto == '17')
                   {
                     ctx.ts.isUDP = true;
                   }else {
