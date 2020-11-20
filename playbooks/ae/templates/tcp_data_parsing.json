@@ -281,7 +281,8 @@
                 {
                   String nextProtoStr = tsRawData.substring(138, 140);
                    BigInteger nextProtoBigInt =  new BigInteger(nextProtoStr, 16);
-                  if(ctx.ts.UDPIntShimHeaderNextProto == '6')
+                  String UDPNextProtoStr = ctx.ts.UDPIntShimHeaderNextProto.toString(16);
+                  if(UDPNextProtoStr == '6')
                   {
                     ctx.ts.isTCP = true;
                   }else {
@@ -293,7 +294,8 @@
                 {
                   String nextProtoStr = tsRawData.substring(178, 180);
                    BigInteger nextProtoBigInt =  new BigInteger(nextProtoStr, 16);
-                    if(ctx.ts.UDPIntShimHeaderNextProto == '6')
+                   String UDPNextProtoStr = ctx.ts.UDPIntShimHeaderNextProto.toString(16);
+                    if(UDPNextProtoStr == '6')
                   {
                     ctx.ts.isTCP = true;
                   }else {
@@ -318,7 +320,8 @@
                 {
                   String nextProtoStr = tsRawData.substring(138, 140);
                    BigInteger nextProtoBigInt =  new BigInteger(nextProtoStr, 16);
-                  if(ctx.ts.UDPIntShimHeaderNextProto == '17')
+                   String UDPNextProtoStr = ctx.ts.UDPIntShimHeaderNextProto.toString(16);
+                  if(UDPNextProtoStr == '17')
                   {
                     ctx.ts.isUDP = true;
                   }else {
@@ -330,7 +333,8 @@
                 {
                   String nextProtoStr = tsRawData.substring(178, 180);
                    BigInteger nextProtoBigInt =  new BigInteger(nextProtoStr, 16);
-                    if(ctx.ts.UDPIntShimHeaderNextProto == '17')
+                   String UDPNextProtoStr = ctx.ts.UDPIntShimHeaderNextProto.toString(16);
+                    if(UDPNextProtoStr == '17')
                   {
                     ctx.ts.isUDP = true;
                   }else {
