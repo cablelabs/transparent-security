@@ -21,13 +21,6 @@
         state: started
         enabled: yes
 
-    - name: "Start Elasticsearch service"
-      become: yes
-      service:
-          name: elasticsearch
-          state: started
-          enabled: yes
-
     - name: "Start Kibana service"
       become: yes
       service:
@@ -35,23 +28,16 @@
         state: started
         enabled: yes
 
-#    - name: "Start Kibana service"
-#      become: yes
-#      command: service kibana start
-#      register: kibana_start_res
-#      retries: 25
-#      until: kibana_start_res.stdout_lines
-
     - name: Wait for Kibana to startup at port 5601
       wait_for:
         port: 5601
         timeout: 600
 
-    - name: Sleep for 300 seconds to help Kibana service up and running
-      tags: sleep300
+    - name: Service check sleep 180 seconds to help Kibana service be ready
+      tags: sleep180
       wait_for:
-          delay: 300
-          timeout: 0
+        delay: 180
+        timeout: 0
 
     - name: "Validate if a DNS tps.sdn.org is present in /etc/hosts file"
       become: yes
@@ -104,24 +90,49 @@
       debug:
         msg: " SDN Webhook response Id : {{ sdn_webhook_id }}"
 
-
-    - name: Copy file udp_monitor_def to remote location from local file system
+    - name: Ensures {{ remote_scripts_dir }} exists
       become: yes
+      file:
+        path: "{{ remote_scripts_dir }}"
+        state: directory
+
+    - name: Ensure {{ remote_scripts_dir }} directories are 777
+      become: yes
+      shell: "chmod -R 777 transparent-security"
+      args:
+        chdir: "/etc"
+
+
+    - name: Copy file udp_monitor_def.json to  {{ remote_scripts_dir }} for updates
       copy:
-        src: "./templates/udp_monitor_def.json"
-        dest: "{{remote_scripts_dir}}"
+        src: "{{ trans_sec_dir }}/playbooks/ae/templates/udp_monitor_def.json"
+        dest: "{{ remote_scripts_dir }}/udp_monitor_def.json"
+        remote_src: yes
         force: yes
 
     - name: Replace SDN Webhook ID in monitor definition file
       become: yes
       tags: monitorUpdate
       lineinfile:
-        path: "{{remote_scripts_dir}}/udp_monitor_def.json"
+        path: "{{ remote_scripts_dir }}/udp_monitor_def.json"
         regex: 'sdnWebhookResponseId'
         line: ' "destination_id": "{{sdn_webhook_id}}",'
         state: present
         backup: yes
       register: monitorUpdateOut
+
+    - name: Slurp updated monitor definition and save it to be used in POST request.
+      slurp:
+        src: "{{ remote_scripts_dir }}/udp_monitor_def.json"
+      register: slurped_updated_udp_monitor_def
+
+    - name: Set updated_udp_monitor_def as fact
+      set_fact:
+        updated_udp_monitor_def_contents: "{{ slurped_updated_udp_monitor_def.content | b64decode }}"
+
+    - name: Show Updated monitor definition
+      debug:
+        var: updated_udp_monitor_def_contents
 
     - name: POST call to create Monitor,trigger and action for UDP DDOS Detection and Mitigation Pipeline for incoming data in Elasticsearch
       uri:
@@ -129,9 +140,10 @@
         method: POST
         return_content: yes
         status_code: 201
-        body: "{{ lookup('file','{{remote_scripts_dir}}/udp_monitor_def.json') }}"
+        body: "{{ updated_udp_monitor_def_contents }}"
         body_format: json
       register: udp_monitor_response
+
 
     - name: POST call to create Index Pattern
       uri:
@@ -145,6 +157,3 @@
         body: "{{ lookup('file','./templates/index_pattern_request_body.json') }}"
         body_format: json
       register: index_pattern_response
-
-
-
