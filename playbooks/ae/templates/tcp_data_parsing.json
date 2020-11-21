@@ -276,13 +276,39 @@
                String tsRawData = ctx.layers.data.data_data_data.replace(':','');
                 String etherType = tsRawData.substring(72, 76);
                 String ipVersion = tsRawData.substring(76, 77);
+               if( etherType == '0800' && ipVersion == '4')
+              {
+                 String nextProtoStr = tsRawData.substring(138, 140);
+                 BigInteger nextProtoBigInt =  new BigInteger(nextProtoStr, 16);
+                ctx.ts.nextProto = nextProtoBigInt.intValue();
+              }
+              if( etherType == '86dd' && ipVersion == '6')
+              {
+                   String nextProtoStr = tsRawData.substring(178, 180);
+                   BigInteger nextProtoBigInt =  new BigInteger(nextProtoStr, 16);
+                  ctx.ts.nextProto = nextProtoBigInt.intValue();
+              }
+        """,
+          "ignore_failure" : true
+        }
+      },
+
+       {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
+               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
+                String etherType = tsRawData.substring(72, 76);
+                String ipVersion = tsRawData.substring(76, 77);
+                String tcpNextProtoStr = '6';
+                int tcpNextProtoInt = Integer.parseInt(tcpNextProtoStr);
 
                 if( etherType == '0800' && ipVersion == '4')
                 {
                   String nextProtoStr = tsRawData.substring(138, 140);
-                   BigInteger nextProtoBigInt =  new BigInteger(nextProtoStr, 16);
-                  String UDPNextProtoStr = ctx.ts.UDPIntShimHeaderNextProto.toString(16);
-                  if(UDPNextProtoStr == '6')
+                  BigInteger nextProtoBigInt =  new BigInteger(nextProtoStr, 16);
+
+                  if( ctx.ts.nextProto == tcpNextProtoInt )
                   {
                     ctx.ts.isTCP = true;
                   }else {
@@ -294,8 +320,8 @@
                 {
                   String nextProtoStr = tsRawData.substring(178, 180);
                    BigInteger nextProtoBigInt =  new BigInteger(nextProtoStr, 16);
-                   String UDPNextProtoStr = ctx.ts.UDPIntShimHeaderNextProto.toString(16);
-                    if(UDPNextProtoStr == '6')
+                   String UDPNextProtoStr = ctx.ts.UDPIntShimHeaderNextProto.toString();
+                    if( ctx.ts.nextProto == tcpNextProtoInt )
                   {
                     ctx.ts.isTCP = true;
                   }else {
@@ -315,13 +341,14 @@
                String tsRawData = ctx.layers.data.data_data_data.replace(':','');
                 String etherType = tsRawData.substring(72, 76);
                 String ipVersion = tsRawData.substring(76, 77);
-
+                String udpNextProtoStr = '17';
+                int udpNextProtoInt = Integer.parseInt(udpNextProtoStr);
                 if( etherType == '0800' && ipVersion == '4')
                 {
                   String nextProtoStr = tsRawData.substring(138, 140);
                    BigInteger nextProtoBigInt =  new BigInteger(nextProtoStr, 16);
-                   String UDPNextProtoStr = ctx.ts.UDPIntShimHeaderNextProto.toString(16);
-                  if(UDPNextProtoStr == '17')
+                   String UDPNextProtoStr = ctx.ts.UDPIntShimHeaderNextProto.toString();
+                  if(ctx.ts.nextProto == udpNextProtoInt )
                   {
                     ctx.ts.isUDP = true;
                   }else {
@@ -333,8 +360,8 @@
                 {
                   String nextProtoStr = tsRawData.substring(178, 180);
                    BigInteger nextProtoBigInt =  new BigInteger(nextProtoStr, 16);
-                   String UDPNextProtoStr = ctx.ts.UDPIntShimHeaderNextProto.toString(16);
-                    if(UDPNextProtoStr == '17')
+                   String UDPNextProtoStr = ctx.ts.UDPIntShimHeaderNextProto.toString();
+                    if(ctx.ts.nextProto == udpNextProtoInt )
                   {
                     ctx.ts.isUDP = true;
                   }else {
