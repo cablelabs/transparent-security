@@ -73,6 +73,8 @@ control TpsCoreIngress(
     inout ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md,
     inout ingress_intrinsic_metadata_for_tm_t ig_tm_md) {
 
+    PortId_t dflt_port;
+
     // Determining whether or not to mirror for Telemetry Report Sample Rate support
     bool mirror;
     Register<packet_count_t, bit<32>>(1) mirror_sampler;
@@ -107,6 +109,18 @@ control TpsCoreIngress(
         meta.ingress_global_tstamp = ig_prsr_md.global_tstamp;
     }
 
+    action get_default_port(PortId_t port) {
+        dflt_port = port;
+    }
+
+    table default_port_t {
+        actions = {
+            get_default_port;
+        }
+        size = 1;
+        default_action = get_default_port(1);
+    }
+
     /**
     * Prepares a packet to be forwarded when data_forward tables have a match
     * on dstAddr
@@ -123,13 +137,13 @@ control TpsCoreIngress(
             data_forward;
         }
         size = TABLE_SIZE;
-        default_action = data_forward(1);
     }
 
     apply {
+        default_port_t.apply();
         if (ig_intr_md.resubmit_flag == 0) {
-            if (hdr.arp.isValid() && hdr.arp.opcode == (bit<16>)0x1
-                    && ig_intr_md.ingress_port == (bit<9>)0x1) {
+            if (hdr.arp.isValid() && hdr.arp.opcode == ARP_REQUEST
+                    && ig_intr_md.ingress_port == dflt_port) {
                 // ARP Request - multicast out to all configured nodes
                 ig_tm_md.mcast_grp_a = (bit<16>)0x1;
             } else if (data_forward_t.apply().hit) {
@@ -142,8 +156,9 @@ control TpsCoreIngress(
                     }
                 }
             } else {
-                if (hdr.arp.isValid() && hdr.arp.opcode == (bit<16>)0x1
-                        && ig_intr_md.ingress_port != (bit<9>)0x1) {
+                data_forward(dflt_port);
+                if (hdr.arp.isValid() && hdr.arp.opcode == ARP_REQUEST
+                        && ig_intr_md.ingress_port != dflt_port) {
                     ig_dprsr_md.digest_type = DIGEST_TYPE_ARP;
                 }
             }
@@ -153,7 +168,7 @@ control TpsCoreIngress(
              * ingress port
              */
             if (ig_intr_md.ingress_port == ig_tm_md.ucast_egress_port) {
-                ig_dprsr_md.drop_ctl = 0x1;
+                ig_dprsr_md.drop_ctl = TNA_DROP_CTL;
             }
         }
     }
@@ -322,7 +337,7 @@ control TpsCoreEgress(
     }
 
     action control_drop() {
-        eg_intr_md_for_dprs.drop_ctl = 0x1;
+        eg_intr_md_for_dprs.drop_ctl = TNA_DROP_CTL;
     }
 
     /**
