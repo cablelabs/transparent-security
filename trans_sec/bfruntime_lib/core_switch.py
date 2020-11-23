@@ -42,6 +42,10 @@ add_switch_id_tbl_key = 'hdr.udp_int.dst_port'
 add_switch_id_action = 'TpsCoreEgress.add_switch_id'
 add_switch_id_action_val = 'switch_id'
 
+dflt_port_tbl = 'TpsCoreIngress.default_port_t'
+dflt_port_action = 'TpsCoreIngress.get_default_port'
+dflt_port_action_val = 'port'
+
 data_fwd_tbl = 'TpsCoreIngress.data_forward_t'
 data_fwd_tbl_key = 'hdr.ethernet.dst_mac'
 data_fwd_action = 'TpsCoreIngress.data_forward'
@@ -115,6 +119,14 @@ class CoreSwitch(BFRuntimeSwitch):
     def __set_table_field_annotations(self):
         df_table = self.get_table(data_fwd_tbl)
         df_table.info.key_field_annotation_add(data_fwd_tbl_key, "mac")
+
+    def update_default_port(self, dflt_port):
+        logger.info('Setting default port to - [%s]', dflt_port)
+        dflt_tbl = self.get_table(dflt_port_tbl)
+        data = dflt_tbl.make_data(
+            [DataTuple(dflt_port_action_val, int(dflt_port))],
+            dflt_port_action)
+        dflt_tbl.default_entry_set(self.target, data)
 
     def add_data_forward(self, dst_mac, ingress_port):
         logger.info(

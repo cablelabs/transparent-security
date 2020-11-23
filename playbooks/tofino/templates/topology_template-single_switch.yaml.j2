@@ -58,7 +58,7 @@ switches:
     runtime_p4info: {{ remote_scripts_dir }}/p4/{{ p4_prog }}.tofino/p4info.pb.txt
     tofino_bin: {{ remote_scripts_dir }}/p4/{{ p4_prog }}.tofino/pipe/tofino.bin
     ctx_json: {{ remote_scripts_dir }}/p4/{{ p4_prog }}.tofino/pipe/context.json
-    clone_egress: 3
+    clone_egress: 152
     ip: {{ switch_ip }}
 {% if switch_user is defined %}
     user: {{ switch_user }}
@@ -71,13 +71,14 @@ switches:
     arch: {{ p4_arch }}
     tunnels:
       - host: dummy
-        switch_port: 1
+        switch_port: 128
+        type: default
       - host: host1
-        switch_port: 4
+        switch_port: 136
       - host: host2
-        switch_port: 2
+        switch_port: 144
       - host: clone
-        switch_port: 3
+        switch_port: 152
     telemetry_rpt:
       type: host
       name: clone
