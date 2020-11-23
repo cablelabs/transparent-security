@@ -19,26 +19,16 @@ typedef bit<8> pkt_type_t;
 
 /* Ingress mirroring information */
 const bit<3> ING_PORT_MIRROR = 1;
-//const bit<3> EGR_PORT_MIRROR = 2;
 
 /*** Internal Headers ***/
 
 typedef bit<4> header_type_t;
 typedef bit<4> header_info_t;
 
-//const header_type_t HEADER_TYPE_BRIDGE         = 0xB;
+const header_type_t HEADER_TYPE_BRIDGE         = 0xB;
 const header_type_t HEADER_TYPE_MIRROR_INGRESS = 0xC;
 //const header_type_t HEADER_TYPE_MIRROR_EGRESS  = 0xD;
 //const header_type_t HEADER_TYPE_RESUBMIT       = 0xA;
-
-/*
-@flexible
-header mirror_bridged_metadata_h {
-    pkt_type_t pkt_type;
-    bit<1> do_egr_mirroring;  //  Enable egress mirroring
-    MirrorId_t egr_mir_ses;   // Egress mirror session ID
-}
-*/
 
 header mirror_h {
     pkt_type_t  pkt_type;
