@@ -21,29 +21,225 @@
 #include "../include/tps_checksum.p4"
 #include "../include/tofino_util.p4"
 
+
+@flexible
+header bridge_meta_h {
+    PortId_t       ingress_port;
+}
+
+struct agg_metadata_t {
+    ip4Addr_t ipv4_addr;
+    ip6Addr_t ipv6_addr;
+    bit<16>   dst_port;
+    bridge_meta_h  bridge_md;
+}
+
+
 /*************************************************************************
 ****************** Aggregate TPS P A R S E R  ****************************
 *************************************************************************/
 parser TpsAggParser(
     packet_in packet,
     out headers hdr,
-    out metadata meta,
+    out agg_metadata_t meta,
     out ingress_intrinsic_metadata_t ig_intr_md) {
 
     TofinoIngressParser() tofino_parser;
 
     state start {
         tofino_parser.apply(packet, ig_intr_md);
-        meta.ingress_port = ig_intr_md.ingress_port;
+        meta.bridge_md.setValid();
+        meta.bridge_md.ingress_port = ig_intr_md.ingress_port;
         transition parse_ethernet;
     }
 
     state parse_ethernet {
         packet.extract(hdr.ethernet);
-        meta.src_mac = hdr.ethernet.src_mac;
-
         transition select(hdr.ethernet.etherType) {
             TYPE_ARP: parse_arp;
+            TYPE_IPV4: parse_ipv4;
+            TYPE_IPV6: parse_ipv6;
+            default: accept;
+        }
+    }
+
+    state parse_ipv4 {
+        packet.extract(hdr.ipv4);
+        meta.ipv6_addr = 0;
+        meta.ipv4_addr = hdr.ipv4.dstAddr;
+        transition select(hdr.ipv4.protocol) {
+            TYPE_UDP: parse_udp;
+            TYPE_TCP: parse_tcp;
+            default: accept;
+        }
+    }
+
+    state parse_ipv6 {
+        packet.extract(hdr.ipv6);
+        meta.ipv4_addr = 0;
+        meta.ipv6_addr = hdr.ipv6.dstAddr;
+        transition select(hdr.ipv6.next_hdr_proto) {
+            TYPE_UDP: parse_udp;
+            TYPE_TCP: parse_tcp;
+            default: accept;
+        }
+    }
+
+    state parse_udp {
+        packet.extract(hdr.udp);
+        meta.dst_port = hdr.udp.dst_port;
+        transition accept;
+    }
+
+    state parse_tcp {
+        packet.extract(hdr.tcp);
+        meta.dst_port = hdr.tcp.dst_port;
+        transition accept;
+    }
+
+    state parse_arp {
+        packet.extract(hdr.arp);
+        transition accept;
+    }
+}
+
+/*************************************************************************
+**************  I N G R E S S   P R O C E S S I N G   ********************
+*************************************************************************/
+
+control TpsAggIngress(
+    inout headers hdr,
+    inout agg_metadata_t meta,
+    in ingress_intrinsic_metadata_t ig_intr_md,
+    in ingress_intrinsic_metadata_from_parser_t ig_prsr_md,
+    inout ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md,
+    inout ingress_intrinsic_metadata_for_tm_t ig_tm_md) {
+
+
+    DirectCounter<bit<32>>(CounterType_t.PACKETS) droppedPackets;
+
+    bool src_miss;
+    PortId_t src_move;
+
+    action data_forward(PortId_t port) {
+        ig_tm_md.ucast_egress_port = port;
+    }
+
+    table data_forward_t {
+        key = {
+            hdr.ethernet.dst_mac: exact;
+        }
+        actions = {
+            data_forward;
+        }
+        size = TABLE_SIZE;
+        default_action = data_forward(1);
+    }
+
+    action data_drop() {
+        ig_dprsr_md.drop_ctl = 0x1;
+        droppedPackets.count();
+    }
+
+    table data_drop_t {
+        key = {
+            hdr.ethernet.src_mac: exact;
+            meta.ipv4_addr: exact;
+            meta.ipv6_addr: exact;
+            meta.dst_port: exact;
+        }
+        actions = {
+            data_drop;
+        }
+        counters = droppedPackets;
+        size = TABLE_SIZE;
+    }
+
+    apply {
+        /* Value will be set with the udp_int.dst_port in the parser
+           which would be incorrect in this case */
+        if (hdr.tcp.isValid()) {
+            meta.dst_port = hdr.tcp.dst_port;
+        }
+
+        // Basic forwarding and drop logic
+        if (data_drop_t.apply().miss) {
+            if (hdr.arp.isValid() && hdr.arp.opcode == (bit<16>)0x1
+                    && ig_intr_md.ingress_port == (bit<9>)0x1) {
+                // ARP Request - multicast out to all configured nodes
+                ig_tm_md.mcast_grp_a = (bit<16>)0x1;
+            } else if (data_forward_t.apply().miss) {
+                if (hdr.arp.isValid() && hdr.arp.opcode == (bit<16>)0x1
+                        && ig_intr_md.ingress_port != (bit<9>)0x1) {
+                    ig_dprsr_md.digest_type = DIGEST_TYPE_ARP;
+                }
+            }
+
+            /*
+             * Ensure packet gets dropped if we are trying to egress to the
+             * ingress port
+             */
+            if (ig_intr_md.ingress_port == ig_tm_md.ucast_egress_port) {
+                ig_dprsr_md.drop_ctl = 0x1;
+            }
+        }
+    }
+}
+
+/*************************************************************************
+***********************  D E P A R S E R  ********************************
+*************************************************************************/
+
+control TpsAggDeparser(
+    packet_out packet,
+    inout headers hdr,
+    in agg_metadata_t meta,
+    in ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md) {
+
+    Digest<digest_t>() arp_digest;
+
+    apply {
+        // Generate a digest, if digest_type is set in MAU.
+        if (ig_dprsr_md.digest_type == DIGEST_TYPE_ARP) {
+            arp_digest.pack({
+                hdr.arp.src_mac,
+                (bit<16>)meta.bridge_md.ingress_port
+            });
+        }
+
+        packet.emit(meta.bridge_md);
+        packet.emit(hdr);
+    }
+}
+
+/*************************************************************************
+****************  E G R E S S   P R O C E S S I N G   ********************
+*************************************************************************/
+
+/* The Egress Parser */
+parser TpsAggEgressParser(
+    packet_in packet,
+    out headers hdr,
+    out agg_metadata_t meta,
+    out egress_intrinsic_metadata_t eg_intr_md) {
+
+    TofinoEgressParser() tofino_parser;
+    bridge_meta_h bridge;
+
+    state start {
+        packet.extract(eg_intr_md);
+        transition parse_bridge_md;
+    }
+
+    state parse_bridge_md {
+        packet.extract(bridge);
+        meta.bridge_md.ingress_port = bridge.ingress_port;
+        transition parse_ethernet;
+    }
+
+    state parse_ethernet {
+        packet.extract(hdr.ethernet);
+        transition select(hdr.ethernet.etherType) {
             TYPE_IPV4: parse_ipv4;
             TYPE_IPV6: parse_ipv6;
             default: accept;
@@ -105,63 +301,16 @@ parser TpsAggParser(
         transition accept;
     }
 
-    state parse_arp {
-        packet.extract(hdr.arp);
-        transition accept;
-    }
 }
 
-/*************************************************************************
-**************  I N G R E S S   P R O C E S S I N G   ********************
-*************************************************************************/
-
-control TpsAggIngress(
+/* The Egress Control */
+control TpsAggEgress(
     inout headers hdr,
-    inout metadata meta,
-    in ingress_intrinsic_metadata_t ig_intr_md,
-    in ingress_intrinsic_metadata_from_parser_t ig_prsr_md,
-    inout ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md,
-    inout ingress_intrinsic_metadata_for_tm_t ig_tm_md) {
-
-
-    DirectCounter<bit<32>>(CounterType_t.PACKETS) droppedPackets;
-
-    bool src_miss;
-    PortId_t src_move;
-
-    action data_forward(PortId_t port) {
-        ig_tm_md.ucast_egress_port = port;
-    }
-
-    table data_forward_t {
-        key = {
-            hdr.ethernet.dst_mac: exact;
-        }
-        actions = {
-            data_forward;
-        }
-        size = TABLE_SIZE;
-        default_action = data_forward(1);
-    }
-
-    action data_drop() {
-        ig_dprsr_md.drop_ctl = 0x1;
-        droppedPackets.count();
-    }
-
-    table data_drop_t {
-        key = {
-            hdr.ethernet.src_mac: exact;
-            meta.ipv4_addr: exact;
-            meta.ipv6_addr: exact;
-            meta.dst_port: exact;
-        }
-        actions = {
-            data_drop;
-        }
-        counters = droppedPackets;
-        size = TABLE_SIZE;
-    }
+    inout agg_metadata_t meta,
+    in egress_intrinsic_metadata_t eg_intr_md,
+    in egress_intrinsic_metadata_from_parser_t eg_intr_md_from_prsr,
+    inout egress_intrinsic_metadata_for_deparser_t eg_intr_md_for_dprs,
+    inout egress_intrinsic_metadata_for_output_port_t eg_intr_md_for_oport) {
 
     action add_switch_id(bit<32> switch_id) {
         hdr.int_meta_2.setValid();
@@ -264,14 +413,10 @@ control TpsAggIngress(
         hdr.udp_int.len = hdr.ipv6.payload_len;
     }
 
-     apply {
-        /* Value will be set with the udp_int.dst_port in the parser
-           which would be incorrect in this case */
-        if (hdr.tcp.isValid()) {
-            meta.dst_port = hdr.tcp.dst_port;
-        }
-
-        if (hdr.int_shim.isValid()) {
+    apply {
+        if (meta.bridge_md.ingress_port == eg_intr_md.egress_port) {
+            eg_intr_md_for_dprs.drop_ctl = 1;
+        } else if (hdr.int_shim.isValid()) {
             // Add switch ID into existing INT data
             add_switch_id_t.apply();
         } else {
@@ -296,52 +441,17 @@ control TpsAggIngress(
                 }
             }
         }
-
-        // Basic forwarding and drop logic
-        if (data_drop_t.apply().miss) {
-            if (hdr.arp.isValid() && hdr.arp.opcode == (bit<16>)0x1
-                    && ig_intr_md.ingress_port == (bit<9>)0x1) {
-                // ARP Request - multicast out to all configured nodes
-                ig_tm_md.mcast_grp_a = (bit<16>)0x1;
-            } else if (data_forward_t.apply().miss) {
-                if (hdr.arp.isValid() && hdr.arp.opcode == (bit<16>)0x1
-                        && ig_intr_md.ingress_port != (bit<9>)0x1) {
-                    ig_dprsr_md.digest_type = DIGEST_TYPE_ARP;
-                }
-            }
-
-            /*
-             * Ensure packet gets dropped if we are trying to egress to the
-             * ingress port
-             */
-            if (ig_intr_md.ingress_port == ig_tm_md.ucast_egress_port) {
-                ig_dprsr_md.drop_ctl = 0x1;
-            }
-        }
     }
 }
 
-/*************************************************************************
-***********************  D E P A R S E R  ********************************
-*************************************************************************/
-
-control TpsAggDeparser(
+/* The Egress Deparser */
+control TpsAggEgressDeparser(
     packet_out packet,
     inout headers hdr,
-    in metadata meta,
-    in ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md) {
-
-    Digest<digest_t>() arp_digest;
+    in agg_metadata_t meta,
+    in egress_intrinsic_metadata_for_deparser_t eg_intr_dprsr_md) {
 
     apply {
-        // Generate a digest, if digest_type is set in MAU.
-        if (ig_dprsr_md.digest_type == DIGEST_TYPE_ARP) {
-            arp_digest.pack({
-                hdr.arp.src_mac,
-                (bit<16>)meta.ingress_port
-            });
-        }
-
         /* For Standard and INT Packets */
         packet.emit(hdr.ethernet);
         packet.emit(hdr.arp);
@@ -354,52 +464,6 @@ control TpsAggDeparser(
         packet.emit(hdr.int_meta);
         packet.emit(hdr.udp);
         packet.emit(hdr.tcp);
-    }
-}
-
-/*************************************************************************
-****************  E G R E S S   P R O C E S S I N G   ********************
-*************************************************************************/
-
-parser TpsAggEgressParser(
-    packet_in packet,
-    out headers hdr,
-    out metadata meta,
-    out egress_intrinsic_metadata_t eg_intr_md) {
-
-    TofinoEgressParser() tofino_parser;
-
-    state start {
-        tofino_parser.apply(packet, eg_intr_md);
-        transition parse_ethernet;
-    }
-    state parse_ethernet {
-        packet.extract(hdr.ethernet);
-        transition accept;
-    }
-
-}
-
-control TpsAggEgress(
-    inout headers hdr,
-    inout metadata meta,
-    in egress_intrinsic_metadata_t eg_intr_md,
-    in egress_intrinsic_metadata_from_parser_t eg_intr_md_from_prsr,
-    inout egress_intrinsic_metadata_for_deparser_t eg_intr_md_for_dprs,
-    inout egress_intrinsic_metadata_for_output_port_t eg_intr_md_for_oport) {
-
-    apply {
-    }
-}
-
-control TpsAggEgressDeparser(
-    packet_out packet,
-    inout headers hdr,
-    in metadata meta,
-    in egress_intrinsic_metadata_for_deparser_t eg_intr_dprsr_md) {
-
-    apply {
-        packet.emit(hdr);
     }
 }
 
