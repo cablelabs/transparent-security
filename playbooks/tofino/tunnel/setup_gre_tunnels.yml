@@ -19,54 +19,56 @@
   gather_facts: no
   become: yes
   tasks:
-    - name: uninstall ip_gre module
-      modprobe:
-        name: ip_gre
-        state: absent
-      async: 10
-      ignore_errors: yes
+    - block:
+        - name: uninstall ip_gre module
+          modprobe:
+            name: ip_gre
+            state: absent
+          async: 10
+          ignore_errors: yes
 
-    - name: install ip_gre module
-      modprobe:
-        name: ip_gre
-        state: present
+        - name: install ip_gre module
+          modprobe:
+            name: ip_gre
+            state: present
 
-    - name: install ip_gre module
-      lineinfile:
-        path: /etc/sysctl.conf
-        line: "net.ipv4.ip_forward=1"
+        - name: install ip_gre module
+          lineinfile:
+            path: /etc/sysctl.conf
+            line: "net.ipv4.ip_forward=1"
 
-    - name: Retrieve setup_switch from topology
-      set_fact:
-        setup_switch: "{{ topo_dict.switches.get(ansible_host) }}"
-        setup_host: "{{ topo_dict.hosts.get(ansible_host) }}"
+        - name: Retrieve setup_switch from topology
+          set_fact:
+            setup_switch: "{{ topo_dict.switches.get(ansible_host) }}"
+            setup_host: "{{ topo_dict.hosts.get(ansible_host) }}"
 
-    - name: Retrieve setup_switch tunnel IPs
-      set_fact:
-        tun1_ip: "{{ setup_switch.tun1_ip }}"
-      when: setup_switch and setup_switch != ""
+        - name: Retrieve setup_switch tunnel IPs
+          set_fact:
+            tun1_ip: "{{ setup_switch.tun1_ip }}"
+          when: setup_switch and setup_switch != ""
 
-    - name: Retrieve setup_host tunnel IPs
-      set_fact:
-        tun1_ip: "{{ setup_host.tun1_ip }}"
-      when: setup_host and setup_host != ""
+        - name: Retrieve setup_host tunnel IPs
+          set_fact:
+            tun1_ip: "{{ setup_host.tun1_ip }}"
+          when: setup_host and setup_host != ""
 
-    # TODO - The associated MAC address is now available and should be used to
-    #  determine the interface on which to add this IP address
-    - name: delete IP {{ tun1_ip }}/24 on eth1 for tunnel 1 if exists
-      command: "ip addr del {{ tun1_ip }}/24 dev eth1"
-      ignore_errors: yes
+        # TODO - The associated MAC address is now available and should be used to
+        #  determine the interface on which to add this IP address
+        - name: delete IP {{ tun1_ip }}/24 on eth1 for tunnel 1 if exists
+          command: "ip addr del {{ tun1_ip }}/24 dev eth1"
+          ignore_errors: yes
 
-    - name: set IP {{ tun1_ip }}/24 on eth1 for tunnel 1
-      command: "ip addr add {{ tun1_ip }}/24 dev eth1"
+        - name: set IP {{ tun1_ip }}/24 on eth1 for tunnel 1
+          command: "ip addr add {{ tun1_ip }}/24 dev eth1"
 
-    - name: set eth1 up
-      command: "ip link set eth1 up"
+        - name: set eth1 up
+          command: "ip link set eth1 up"
 
-    - include_tasks: gre_tunnel_tasks.yml
-      loop: "{{ setup_switch.tunnels | list }}"
-      when: setup_switch is defined and setup_switch != ""
+        - include_tasks: gre_tunnel_tasks.yml
+          loop: "{{ setup_switch.tunnels | list }}"
+          when: setup_switch is defined and setup_switch != ""
 
-    - include_tasks: gre_tunnel_tasks.yml
-      loop: "{{ setup_host.tunnels | list }}"
-      when: setup_host is defined and setup_host != ""
+        - include_tasks: gre_tunnel_tasks.yml
+          loop: "{{ setup_host.tunnels | list }}"
+          when: setup_host is defined and setup_host != ""
+      when: not from_hw | bool

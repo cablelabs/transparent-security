@@ -15,20 +15,13 @@ all:
           ansible_connection: ssh
           trans_sec_dir: /home/admin/transparent-security
           ansible_user: admin
-        inet:
+        clone:
           ansible_connection: ssh
           trans_sec_dir: /home/admin/transparent-security
           ansible_user: admin
-        ae:
-          ansible_connection: ssh
-          trans_sec_dir: /home/admin/transparent-security
-          ansible_user: admin
+
     switches:
       hosts:
-        aggregate:
-          ansible_connection: ssh
-          ansible_user: admin
-          trans_sec_dir: /home/admin/transparent-security
         core:
           ansible_connection: ssh
           ansible_user: admin
@@ -36,7 +29,7 @@ all:
   vars:
     orch_trans_sec_dir: /home/ubuntu/transparent-security
     from_hw: True
-    scenario_name: lab_trial
+    scenario_name: core
     topo_file_loc: /etc/transparent-security/tofino-sim-topology.yaml
     remote_scripts_dir: /etc/transparent-security
     log_dir: /var/log/transparent-security
@@ -49,4 +42,4 @@ all:
     grpc_port: 50052
     p4_platform: tofino
     p4_arch: tna
-    ae_monitor_intf: core-tun1
+    ae_monitor_intf: core-tun
