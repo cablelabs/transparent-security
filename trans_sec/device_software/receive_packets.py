@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import argparse
-from python_arptable import ARPTABLE
 import logging
 import sys
 
@@ -50,10 +49,6 @@ def get_args():
         '-l', '--loglevel',
         help='Log Level <DEBUG|INFO|WARNING|ERROR> defaults to INFO',
         required=False, default='DEBUG', dest='log_level')
-    parser.add_argument(
-        '-dip4', '--dst_ipv4',
-        help='Destination ipv4 for ARP table lookup for interface to use',
-        required=False)
     return parser.parse_args()
 
 
@@ -267,13 +262,6 @@ def device_sniff(iface, duration, int_hops):
               prn=lambda packet: __log_packet(packet, int_hops))
 
 
-def __get_iface_from_arptable(ipv4):
-    for arp_entry in ARPTABLE:
-        if arp_entry['IP address'] == ipv4:
-            logger.info('Returning device name from entry - [%s]', arp_entry)
-            return arp_entry['Device']
-
-
 if __name__ == '__main__':
     args = get_args()
 
@@ -287,11 +275,5 @@ if __name__ == '__main__':
 
     logger.info('Logger initialized')
 
-    iface = None
-    if args.dst_ipv4:
-        iface = __get_iface_from_arptable(args.dst_ipv4)
-    if not iface:
-        iface = args.iface
-
-    logger.info('Sniffing for packets on interface - [%s]', iface)
-    device_sniff(iface, args.duration, args.int_hops)
+    logger.info('Sniffing for packets on interface - [%s]', args.iface)
+    device_sniff(args.iface, args.duration, args.int_hops)

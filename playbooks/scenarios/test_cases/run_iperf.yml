@@ -32,12 +32,34 @@
   vars:
     receive_timeout: "{{ iperf3_receive_timeout | default(60) }}"
   tasks:
-    - name: Checking speed with iperf3 against {{ iperf_server_ip }}
-      command: "iperf3 -c {{ iperf_server_ip }}"
-      register: cmd_out
-      changed_when: cmd_out is not failed
-      async: "{{ receive_timeout }}"
+    - name: Run when IPv4 address is defined
+      block:
+        - name: Checking speed with iperf3 against {{ iperf_server_ip | ansible.netcommon.ipaddr }}
+          command: "iperf3 -c {{ iperf_server_ip }}"
+          register: cmd_out
+          changed_when: cmd_out is not failed
+          async: "{{ receive_timeout }}"
 
-    - name: Iperf results
-      debug:
-        var: cmd_out
+        - name: Iperf results
+          debug:
+            var: cmd_out
+      when: iperf_server_ip is defined
+
+# Start iperf client
+- hosts: "{{ iperf_client }}"
+  gather_facts: no
+  vars:
+    receive_timeout: "{{ iperf3_receive_timeout | default(60) }}"
+  tasks:
+    - name: Run when IPv6 address is defined
+      block:
+      - name: Checking speed with iperf3 against {{ iperf_server_ipv6 | ansible.netcommon.ipaddr }}
+        command: "iperf3 -c {{ iperf_server_ipv6 | ansible.netcommon.ipaddr }}"
+        register: cmd_out
+        changed_when: cmd_out is not failed
+        async: "{{ receive_timeout }}"
+
+      - name: Iperf results
+        debug:
+          var: cmd_out
+      when: iperf_server_ipv6 is defined
