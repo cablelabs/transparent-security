@@ -1,0 +1,66 @@
+hosts:
+  host1:
+    name: host1
+    id: 1
+    ip: 192.168.1.2
+    intf_name: ens1f0
+    user: admin
+    public_ip: 10.197.123.14
+    tunnels:
+      - host: aggregate
+    ipv6: 0000:0000:0000:0000:0000:0001:0001:0002
+    ip_port: any
+    mac: 00:00:00:00:01:01
+    type: webcam
+  host2:
+    name: host2
+    id: 2
+    ip: 192.168.1.6
+    intf_name: ens1f0
+    user: admin
+    public_ip: 10.197.123.16
+    tunnels:
+      - host: aggregate
+    ipv6: 0000:0000:0000:0000:0000:0002:0001:0002
+    ip_port: any
+    mac: 00:00:00:00:01:02
+    type: server
+  clone:
+    name: clone
+    id: 3
+    ip: 192.168.1.10
+    intf_name: ens1f0
+    user: admin
+    public_ip: 10.197.123.12
+    tunnels:
+      - host: aggregate
+    ipv6: 0000:0000:0000:0000:0000:0002:0001:0003
+    ip_port: any
+    mac: 00:00:00:00:05:08
+    type: server
+switches:
+  aggregate:
+    name: aggregate
+    id: 0
+    tofino_bin: /etc/transparent-security/p4/aggregate.tofino/pipe/tofino.bin
+    ctx_json: /etc/transparent-security/p4/aggregate.tofino/pipe/context.json
+    clone_egress: 3
+    ip: 10.197.1.13
+    user: admin
+    mac: 00:00:00:01:01:00
+    grpc: 10.197.1.13:50052
+    type: core
+    arch: tna
+    tunnels:
+      - host: dummy
+        switch_port: 1
+      - host: host1
+        switch_port: 4
+      - host: host2
+        switch_port: 2
+      - host: clone
+        switch_port: 3
+    telemetry_rpt:
+      type: host
+      name: clone
+    ipv6_term_host: host2
