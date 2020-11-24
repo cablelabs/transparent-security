@@ -75,6 +75,7 @@ variable "ae_monitor_intf" {default = "core-tun"}
 variable "ae_lab_intf" {default = "core-tun1"}
 variable "clone_egress_port" {default = "3"}
 variable "p4_arch" {default = "tna"}
+variable "from_hw" {default = "False"}
 
 variable "setup_nodes_pb" {default = "setup_nodes.yml"}
 variable "scenario_name" {default = "full"}
