@@ -125,7 +125,7 @@
 
     - name: Configure Python optimizations for Python 3.8 install
       become: yes
-      command: ./configure --enable-optimizations
+      shell: ./configure --enable-optimizations;
       args:
         chdir: /home/centos/Python-3.8.5
 

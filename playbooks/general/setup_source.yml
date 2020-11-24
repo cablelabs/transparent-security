@@ -19,7 +19,6 @@
     orig_src_dir: "{{ trans_sec_source_dir | default('../../..') }}/"
     dest_dir: "/home/{{ ansible_user }}/transparent-security"
     run_tests: "{{ python_unit_tests | default(false) }}"
-    install_python: "{{ install_tps_python | default(true) }}"
 
   tasks:
     - name: Install apt dependencies
@@ -78,26 +77,24 @@
           - "--exclude=*.tfstate"
           - "--exclude=*.eggs"
 
-    - block:
-        - name: Install TPS dependencies into python runtime
-          command: "pip3 install -r {{ dest_dir }}/requirements.txt"
-          register: cmd_out
-          changed_when: cmd_out is not failed
-          until: cmd_out is not failed
-          retries: 3
-          delay: 5
+    - name: Install TPS dependencies into python runtime
+      command: "pip3 install -r {{ dest_dir }}/requirements.txt"
+      register: cmd_out
+      changed_when: cmd_out is not failed
+      until: cmd_out is not failed
+      retries: 3
+      delay: 5
 
-        - name: Install TPS into python runtime
-          command: "pip3 install -e {{ dest_dir }}"
-          register: cmd_out
-          changed_when: cmd_out is not failed
-          until: cmd_out is not failed
-          retries: 3
-          delay: 5
+    - name: Install TPS into python runtime
+      command: "pip3 install -e {{ dest_dir }}"
+      register: cmd_out
+      changed_when: cmd_out is not failed
+      until: cmd_out is not failed
+      retries: 3
+      delay: 5
 
-        - name: Run python unit tests
-          command: python setup.py test
-          args:
-            chdir: "{{ dest_dir }}"
-          when: run_tests
-      when: install_python | bool
+    - name: Run python unit tests
+      command: python setup.py test
+      args:
+        chdir: "{{ dest_dir }}"
+      when: run_tests
