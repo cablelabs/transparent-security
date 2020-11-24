@@ -1300,11 +1300,13 @@
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
-              if( ctx.ts.IPVersion == '4' && ctx.ts.isTCP == 'true')
+              String tcpNextProtoStr = '6';
+              int tcpNextProtoInt = Integer.parseInt(tcpNextProtoStr);
+              if( etherType == '0800' && ipVersion == '4' &&  ctx.ts.nextProto == tcpNextProtoInt)
               {
                  ctx.ts.dataII = tsRawData.substring(236, 288);
               }
-              if( ctx.ts.IPVersion == '6' && ctx.ts.isTCP == 'true')
+              if(etherType == '86dd' && ipVersion == '6' &&  ctx.ts.nextProto == tcpNextProtoInt)
               {
                  ctx.ts.dataII = tsRawData.substring(252, 304);
               }
