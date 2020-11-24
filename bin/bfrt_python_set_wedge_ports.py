@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Cable Television Laboratories, Inc.
+# Copyright (c) 2020 Cable Television Laboratories, Inc.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -10,18 +10,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
----
 
-# Create configured GRE tunnels on the switch VMs
-- hosts: "{{ host_val }}"
-  gather_facts: no
-  become: yes
-
-  environment:
-    SDE: "{{ remote_sde_dir }}"
-    SDE_INSTALL: "{{ remote_sde_dir }}/install"
-
-  tasks:
-    - name: Setup DMA
-      command: $SDE/pkgsrc/ptf-modules/ptf-utils/dma_setup.sh
-      when: not from_hw | bool
+port = bfrt.port.port
+port.add(dev_port=0x00000088, speed="BF_SPEED_10G", port_enable=True, fec="BF_FEC_TYP_NONE")
+port.add(dev_port=0x00000090, speed="BF_SPEED_10G", port_enable=True, fec="BF_FEC_TYP_NONE")
+port.add(dev_port=0x00000098, speed="BF_SPEED_10G", port_enable=True, fec="BF_FEC_TYP_NONE")
