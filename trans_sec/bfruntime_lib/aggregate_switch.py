@@ -42,6 +42,10 @@ data_inspection_action = 'TpsAggEgress.data_inspect_packet'
 data_inspection_action_val_1 = 'device'
 data_inspection_action_val_2 = 'switch_id'
 
+dflt_port_tbl = 'TpsAggIngress.default_port_t'
+dflt_port_action = 'TpsAggIngress.get_default_port'
+dflt_port_action_val = 'port'
+
 data_fwd_tbl = 'TpsAggIngress.data_forward_t'
 data_fwd_tbl_key = 'hdr.ethernet.dst_mac'
 data_fwd_action = 'TpsAggIngress.data_forward'
@@ -152,6 +156,14 @@ class AggregateSwitch(BFRuntimeSwitch):
             dev_id, dev_mac, data_inspection_tbl)
         self.delete_table_entry(data_inspection_tbl,
                                 [KeyTuple(data_inspection_tbl_key, dev_mac)])
+
+    def update_default_port(self, dflt_port):
+        logger.info('Setting default port to - [%s]', dflt_port)
+        dflt_tbl = self.get_table(dflt_port_tbl)
+        data = dflt_tbl.make_data(
+            [DataTuple(dflt_port_action_val, int(dflt_port))],
+            dflt_port_action)
+        dflt_tbl.default_entry_set(self.target, data)
 
     def add_data_forward(self, dst_mac, ingress_port):
         logger.info(

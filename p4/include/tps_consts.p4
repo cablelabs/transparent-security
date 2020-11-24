@@ -100,6 +100,7 @@ const PortId_t DROP_PORT = 511;
 
 /* Digest constants */
 const bit<3> DIGEST_TYPE_ARP = 0x1;
+const bit<16> ARP_REQUEST = 0x1;
 
 /* Constants for determining BMV2 Packet instance_types */
 const bit<32> BMV2_V1MODEL_INSTANCE_TYPE_NORMAL        = 0;
@@ -118,3 +119,5 @@ const bit<32> E2E_CLONE_SESSION_ID = 11;
 #define IS_RESUBMITTED(std_meta) (std_meta.instance_type == BMV2_V1MODEL_INSTANCE_TYPE_RESUBMIT)
 #define IS_I2E_CLONE(std_meta) (std_meta.instance_type == BMV2_V1MODEL_INSTANCE_TYPE_INGRESS_CLONE)
 #define IS_E2E_CLONE(std_meta) (std_meta.instance_type == BMV2_V1MODEL_INSTANCE_TYPE_EGRESS_CLONE)
+
+const bit<3> TNA_DROP_CTL = 0x1;

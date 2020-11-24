@@ -13,7 +13,7 @@
 # Simple scenario where packets are sent through 3 devices and only the last
 # one will be demonstrating dropped packets
 ---
-# Basic Data Inspection scenario - receiving packets on core-eth2 (non-INT packets)
+# Basic Data Inspection scenario - receiving packets on inet host
 - import_playbook: data_inspection_basic.yml
   vars:
     send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
@@ -21,12 +21,10 @@
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch: "{{ topo_dict.switches.aggregate }}"
     switch2: "{{ topo_dict.switches.core }}"
-    remote_send_host: host1
-    remote_rec_host: inet
-    send_host: "{{ remote_send_host }}"
-    rec_host: "{{ remote_rec_host }}"
-    sender: "{{ topo_dict.hosts[remote_send_host] }}"
-    receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
+    send_host: host1
+    rec_host: inet
+    sender: "{{ topo_dict.hosts[send_host] }}"
+    receiver: "{{ topo_dict.hosts[rec_host] }}"
     sender_intf_name: "{{ sender.intf_name }}"
     rec_intf_name: "{{ receiver.intf_name }}"
     dst_mac: "{{ receiver['mac'] }}"
@@ -38,7 +36,7 @@
           sample: "{{ sample_rate }}"
         ok_status: 201
 
-# Basic Data Inspection scenario - receiving packets on core-eth3 (INT packets)
+# Basic Data Inspection scenario - receiving packets on AE/clone port
 - import_playbook: data_inspection_basic.yml
   vars:
     send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
@@ -46,12 +44,10 @@
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch: "{{ topo_dict.switches.aggregate }}"
     switch2: "{{ topo_dict.switches.core }}"
-    remote_send_host: host1
-    remote_rec_host: ae
-    send_host: "{{ remote_send_host }}"
-    rec_host: "{{ remote_rec_host }}"
-    sender: "{{ topo_dict.hosts[remote_send_host] }}"
-    receiver: "{{ topo_dict.hosts.inet }}"
+    send_host: host1
+    rec_host: ae
+    sender: "{{ topo_dict.hosts[send_host] }}"
+    receiver: "{{ topo_dict.hosts[rec_host] }}"
     sender_intf_name: "{{ sender.intf_name }}"
     rec_intf_name: "{{ receiver.intf_name }}"
     dst_mac: "{{ receiver['mac'] }}"

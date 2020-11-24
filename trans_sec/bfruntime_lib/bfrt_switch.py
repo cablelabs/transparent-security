@@ -59,13 +59,15 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
         self.interface.clear_all_tables()
         self.add_switch_id()
         self.digest_thread.start()
-        self.__setup_arp_multicast(self.__find_tunnel_ports())
+        self.__setup_arp_multicast()
+        self.__setup_default_port()
 
     def stop(self):
         self.digest_thread.join()
 
-    def __setup_arp_multicast(self, ports, node_id=1, rid=1, lags=[], mgid=1,
+    def __setup_arp_multicast(self, node_id=1, rid=1, lags=[], mgid=1,
                               mc_nids=[1], l1_xids=[0]):
+        ports = self.__find_node_ports()
         logger.info('Adding multicast entries to switch')
         mg_id_table = self.get_table('$pre.node')
         mg_id_table.entry_add(
@@ -92,24 +94,46 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
         )
         logger.info('Done with MC entries')
 
-    def __find_tunnel_ports(self):
+    def __setup_default_port(self):
+        dflt_port = self.__find_dflt_port()
+        if dflt_port:
+            self.update_default_port(dflt_port[0])
+
+    def __find_node_ports(self):
         """
         Returns a list of all active ports as configured in the "tunnels" list
         section of self.sw_info dict that are not == 1
         :return:
         """
-        out_list = []
+        return self.__find_tunnel_ports()
+
+    def __find_dflt_port(self):
+        """
+        Returns the default port number or None if not defined
+        :return:
+        """
+        return self.__find_tunnel_ports('default')
+
+    def __find_tunnel_ports(self, port_type=None):
+        """
+        Returns a list of all active ports as configured in the "tunnels" list
+        section of self.sw_info dict that are not == 1
+        :return:
+        """
+        out = list()
         for tunnel in self.sw_info['tunnels']:
             tunnel_port = int(tunnel['switch_port'])
-            # out_list.append(tunnel_port)
-            if tunnel_port != 1:
-                out_list.append(tunnel_port)
-        return out_list
+            if tunnel_port != 1 and tunnel.get('type', None) == port_type:
+                out.append(tunnel_port)
+        return out
 
     @abstractmethod
     def receive_digests(self):
-        logger.info('Received digest')
-        pass
+        raise NotImplemented
+
+    @abstractmethod
+    def update_default_port(self, dflt_port):
+        raise NotImplemented
 
     def get_table(self, name):
         return self.bfrt_info.table_get(name)
