@@ -15,6 +15,14 @@ all:
           ansible_connection: ssh
           trans_sec_dir: /home/admin/transparent-security
           ansible_user: admin
+        inet:
+          ansible_connection: ssh
+          trans_sec_dir: /home/admin/transparent-security
+          ansible_user: admin
+        ae:
+          ansible_connection: ssh
+          trans_sec_dir: /home/admin/transparent-security
+          ansible_user: admin
     switches:
       hosts:
         aggregate:
