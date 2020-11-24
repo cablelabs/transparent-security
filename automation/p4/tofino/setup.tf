@@ -205,7 +205,7 @@ resource "null_resource" "tps-tofino-setup-nodes" {
   provisioner "remote-exec" {
     inline = [
       "sudo pip install ansible",
-      "${var.ANSIBLE_CMD} -i ${var.remote_inventory_file} ${var.remote_pb_dir}/tofino/${local.setup_pb} --extra-vars='scenario_name=${var.scenario_name} from_hw=${var.from_hw}'"
+      "${var.ANSIBLE_CMD} -i ${var.remote_inventory_file} ${var.remote_pb_dir}/tofino/${local.setup_pb} --extra-vars='scenario_name=${var.scenario_name}'"
     ]
   }
 

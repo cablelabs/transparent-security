@@ -24,4 +24,3 @@
   tasks:
     - name: Setup DMA
       command: $SDE/pkgsrc/ptf-modules/ptf-utils/dma_setup.sh
-      when: not from_hw | bool
