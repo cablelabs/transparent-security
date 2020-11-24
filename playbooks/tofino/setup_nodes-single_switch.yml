@@ -44,7 +44,6 @@
       - "{{ scenario_name }}"
     p4_pkg: "{{ scenario_name }}"
 
-
 # Start SDN Controller
 - import_playbook: ../general/start_service.yml
   vars:
