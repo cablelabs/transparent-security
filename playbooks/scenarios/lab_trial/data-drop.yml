@@ -21,13 +21,11 @@
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch: "{{ topo_dict.switches.aggregate }}"
     switch2: "{{ topo_dict.switches.core }}"
-    remote_send_host: host1
-    remote_rec_host: inet
-    send_host: "{{ remote_send_host }}"
-    rec_host: "{{ remote_rec_host }}"
+    send_host: host1
+    rec_host: inet
+    sender: "{{ topo_dict.hosts[send_host] }}"
+    receiver: "{{ topo_dict.hosts[rec_host] }}"
     send_port: 4321
-    sender: "{{ topo_dict.hosts[remote_send_host] }}"
-    receiver: "{{ topo_dict.hosts[remote_rec_host] }}"
     sender_intf_name: "{{ sender.intf_name }}"
     rec_intf_name: "{{ receiver.intf_name }}"
     dst_mac: "{{ receiver.mac }}"

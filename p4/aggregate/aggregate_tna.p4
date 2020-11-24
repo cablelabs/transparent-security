@@ -120,9 +120,22 @@ control TpsAggIngress(
 
     bool src_miss;
     PortId_t src_move;
+    PortId_t dflt_port;
 
     action data_forward(PortId_t port) {
         ig_tm_md.ucast_egress_port = port;
+    }
+
+    action get_default_port(PortId_t port) {
+        dflt_port = port;
+    }
+
+    table default_port_t {
+        actions = {
+            get_default_port;
+        }
+        size = 1;
+        default_action = get_default_port(1);
     }
 
     table data_forward_t {
@@ -133,11 +146,10 @@ control TpsAggIngress(
             data_forward;
         }
         size = TABLE_SIZE;
-        default_action = data_forward(1);
     }
 
     action data_drop() {
-        ig_dprsr_md.drop_ctl = 0x1;
+        ig_dprsr_md.drop_ctl = TNA_DROP_CTL;
         droppedPackets.count();
     }
 
@@ -164,13 +176,16 @@ control TpsAggIngress(
 
         // Basic forwarding and drop logic
         if (data_drop_t.apply().miss) {
-            if (hdr.arp.isValid() && hdr.arp.opcode == (bit<16>)0x1
-                    && ig_intr_md.ingress_port == (bit<9>)0x1) {
+            default_port_t.apply();
+
+            if (hdr.arp.isValid() && hdr.arp.opcode == ARP_REQUEST
+                    && ig_intr_md.ingress_port == dflt_port) {
                 // ARP Request - multicast out to all configured nodes
                 ig_tm_md.mcast_grp_a = (bit<16>)0x1;
             } else if (data_forward_t.apply().miss) {
-                if (hdr.arp.isValid() && hdr.arp.opcode == (bit<16>)0x1
-                        && ig_intr_md.ingress_port != (bit<9>)0x1) {
+                data_forward(dflt_port);
+                if (hdr.arp.isValid() && hdr.arp.opcode == ARP_REQUEST
+                        && ig_intr_md.ingress_port != dflt_port) {
                     ig_dprsr_md.digest_type = DIGEST_TYPE_ARP;
                 }
             }
@@ -180,7 +195,7 @@ control TpsAggIngress(
              * ingress port
              */
             if (ig_intr_md.ingress_port == ig_tm_md.ucast_egress_port) {
-                ig_dprsr_md.drop_ctl = 0x1;
+                ig_dprsr_md.drop_ctl = TNA_DROP_CTL;
             }
         }
     }
