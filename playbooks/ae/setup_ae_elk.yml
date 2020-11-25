@@ -13,6 +13,8 @@
 
 - hosts: ae
   gather_facts: no
+  vars:
+    - CENTOS_HOME: "/home/centos"
   tasks:
     - name: "Start Elasticsearch service"
       become: yes
