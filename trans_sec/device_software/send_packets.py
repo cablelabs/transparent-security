@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import argparse
+import getmac
 from python_arptable import ARPTABLE
 import logging
 import random
@@ -62,7 +63,7 @@ def get_args():
         '-y', '--delay', help='Delay before starting run (Default = 0',
         type=int, required=False, default=0)
     parser.add_argument(
-        '-r', '--destination', help='Destination IPv4 address', required=True)
+        '-r', '--destination', help='Destination IP address', required=True)
     parser.add_argument(
         '-e', '--src-mac', help='Source MAC Address', required=False,
         default=None)
@@ -88,10 +89,6 @@ def get_args():
         '-s', '--switch_ethernet',
         help='Destination MAC. Defaults to ff:ff:ff:ff:ff:ff',
         required=False, default='ff:ff:ff:ff:ff:ff')
-    parser.add_argument(
-        '-dip4', '--dst_ipv4',
-        help='Destination ipv4 for ARP table lookup for dest mac',
-        required=False)
     parser.add_argument(
         '-ih', '--int-hdr-file', required=False,
         help='Switch Ethernet Interface. Defaults to ff:ff:ff:ff:ff:ff')
@@ -210,19 +207,30 @@ def __gen_std_pkt(args, ip_ver, src_mac):
 
 def __get_dst_mac(args):
     # Determine the destination MAC
-    dst_mac = None
-    if args.dst_ipv4:
-        dst_mac = __get_dst_mac_from_arptable(args.dst_ipv4)
-        logger.info('MAC from ARP table - [%s]', dst_mac)
-    if not dst_mac:
+    dst_mac = __get_dst_mac_from_ip(args.destination)
+    logger.info('MAC from ARP table - [%s]', dst_mac)
+    if not dst_mac or dst_mac == 'ff:ff:ff:ff:ff:ff':
         dst_mac = args.switch_ethernet
+
+    logger.info('DST MAC - [%s]', dst_mac)
     return dst_mac
 
 
-def __get_dst_mac_from_arptable(ipv4):
-    for arp_entry in ARPTABLE:
-        if arp_entry['IP address'] == ipv4:
-            return arp_entry['HW address']
+def __get_dst_mac_from_ip(ip_addr_str):
+    ip_addr = ipaddress.ip_address(ip_addr_str)
+    logger.info('ip_addr class - [%s]', ip_addr.__class__)
+    out_mac = None
+    if ip_addr.version == 4:
+        logger.info('MAC from ipv4 ARPTABLE')
+        for arp_entry in ARPTABLE:
+            if arp_entry['IP address'] == ip_addr_str:
+                out_mac = arp_entry['HW address']
+    else:
+        logger.info('mac from ipv6 - [%s]', ip_addr_str)
+        out_mac = getmac.get_mac_address(ip=str(ip_addr), network_request=True)
+
+    logger.info('out_mac - [%s]', out_mac)
+    return out_mac
 
 
 def __gen_int_pkt(args, ip_ver, src_mac):
