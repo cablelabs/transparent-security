@@ -13,6 +13,8 @@
 
 - hosts: ae
   gather_facts: no
+  vars:
+    - CENTOS_HOME: "/home/centos"
   tasks:
     - name: "Start Elasticsearch service"
       become: yes
@@ -110,7 +112,7 @@
         remote_src: yes
         force: yes
 
-    - name: Replace SDN Webhook ID in monitor definition file
+    - name: Replace SDN Webhook ID in UDP monitor definition file
       become: yes
       tags: monitorUpdate
       lineinfile:
