@@ -1,0 +1,122 @@
+{
+  "type": "monitor",
+  "name": "DDOS-TCP-Monitor",
+  "enabled": true,
+  "schedule": {
+    "period": {
+      "interval": 1,
+      "unit": "MINUTES"
+    }
+  },
+  "inputs": [{
+    "search": {
+      "indices": ["packets-*"],
+      "query": {
+        "size": 0,
+        "query": {
+        "bool": {
+            "filter": [
+                {
+                    "range": {
+                        "timestamp": {
+                            "from": "{{period_end}}||-1m",
+                            "to": "{{period_end}}",
+                            "include_lower": true,
+                            "include_upper": true,
+                            "format": "epoch_millis",
+                            "boost": 1
+                        }
+                    }
+                },
+                {
+                    "wildcard": {
+                        "ts.UDP2DstPort": {
+                            "wildcard": "*5792*",
+                            "boost": 1
+                        }
+                    }
+                }
+            ],
+            "adjust_pure_negative": true,
+            "boost": 1
+        }
+    },
+        "_source": {
+        "includes": [
+            "ts.TCPDestPort",
+            "ts.IPvDestAddr",
+            "ts.INTMetadataSourceMetadataOriginatingMac",
+            "ts.IPv4SrcIP",
+            "ts.IPv4DestIP",
+            "ts.IPv6SrcIP",
+            "ts.IPv6DestIP"
+        ],
+        "excludes": []
+    },
+        "aggregations": {
+        "TCPDestPortValueCount": {
+            "value_count": {
+                "field": "ts.TCPDestPort"
+            }
+        },
+        "IPv4SrcIP": {
+            "terms": {
+                "field": "ts.IPv4SrcIP",
+                "size": 10,
+                "min_doc_count": 1,
+                "shard_min_doc_count": 0,
+                "show_term_doc_count_error": false,
+                "order": [
+                    {
+                        "_count": "desc"
+                    },
+                    {
+                        "_key": "asc"
+                    }
+                ]
+            }
+        },
+        "IPv4DestIP": {
+            "terms": {
+                "field": "ts.IPv4DestIP",
+                "size": 10,
+                "min_doc_count": 1,
+                "shard_min_doc_count": 0,
+                "show_term_doc_count_error": false,
+                "order": [
+                    {
+                        "_count": "desc"
+                    },
+                    {
+                        "_key": "asc"
+                    }
+                ]
+            }
+        }
+    }
+      }
+  }
+    }],
+  "triggers": [{
+    "name": "DDOS-Trigger",
+    "severity": "1",
+    "condition": {
+      "script": {
+        "source": "ctx.results[0].aggregations.TCPDestPortValueCount.value >= 1000",
+        "lang": "painless"
+      }
+    },
+    "actions": [{
+      "name": "Sdn-WebHook-Action",
+      "destination_id": "sdnWebhookResponseId",
+      "message_template": {
+        "source":"{\"event_action\":\"trigger\",\"payload\":{ \"dst_ip\":\"{{_source.ts.IPv4DestIP}}\",\"dst_port\":\"{{_source.ts.TCPDestPort}}\",\"src_ip\":\"{{_source.ts.IPv4SrcIP}}\",\"src_mac\":\"{{_source.ts.INTMetadataSourceMetadataOriginatingMac}}\"}}",
+        "lang": "mustache",
+        "options": {
+            "content_type": "application/json"
+       }
+     },
+      "throttle_enabled": false
+    }]
+  }]
+}
