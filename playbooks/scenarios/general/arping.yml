@@ -28,3 +28,13 @@
       retries: 3
       delay: 3
       until: out is not failed
+
+    - name: Delete add IPv6 neighbor if exists
+      command: "sudo ip -6 neigh del {{ receiver.ipv6 }} lladdr {{ receiver.mac }} dev {{ arp_intf }}"
+      ignore_errors: yes
+
+    - name: Manually add IPv6 neighbor
+      command: "sudo ip -6 neigh add {{ receiver.ipv6 }} lladdr {{ receiver.mac }} dev {{ arp_intf }}"
+
+    - name: Make neighbor reachable
+      command: "sudo ip -6 neigh chg {{ receiver.ipv6 }} dev {{ arp_intf }} nud reachable"

@@ -16,3 +16,4 @@ ipaddress
 netaddr
 mock==4.0.2
 python_arptable
+get-mac

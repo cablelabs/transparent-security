@@ -98,9 +98,15 @@
 
 - name: Setup host tunnel to switch port with expected IP/MAC
   block:
-    - name: set MAC {{ this_host.mac }} on {{ mirrored_host_intf }}
+    - name: set MAC {{ this_host.mac }} on {{ tunnel1 }}
       command: "ip link set dev {{ tunnel1 }} address {{ this_host.mac }}"
 
-    - name: Set IP {{ this_host.ip }}/24 on {{ mirrored_host_intf }}
+    - name: Set IP {{ this_host.ip }}/24 on {{ tunnel1 }}
       command: "ip addr add {{ this_host.ip }}/24 dev {{ tunnel1 }}"
+
+    - name: Set IP {{ this_host.ipv6 }}/64 on {{ tunnel1 }}
+      command: "ip -6 addr add {{ this_host.ipv6 }}/64 dev {{ tunnel1 }}"
+
+    - name: Set ipv6 route - TODO - make me dynamic
+      command: "ip -6 route add ::1:0:0 dev {{ tunnel1 }}"
   when: item.switch_port is not defined
