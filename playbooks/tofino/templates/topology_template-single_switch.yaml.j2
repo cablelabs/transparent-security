@@ -72,13 +72,17 @@ switches:
     tunnels:
       - host: dummy
         switch_port: 128
+        speed: BF_SPEED_10G
         type: default
       - host: host1
         switch_port: 136
+        speed: BF_SPEED_10G
       - host: host2
         switch_port: 144
+        speed: BF_SPEED_10G
       - host: clone
         switch_port: 152
+        speed: BF_SPEED_10G
     telemetry_rpt:
       type: host
       name: clone

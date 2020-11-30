@@ -40,7 +40,7 @@ class AbstractController(object):
         self.load_p4 = load_p4
         self.switches = list()
 
-    def start(self):
+    def start(self, ansible_inventory, controller_user):
         logger.info('Adding helpers to switch of type - [%s]',
                     self.switch_type)
         self.__setup_switches()
@@ -48,7 +48,7 @@ class AbstractController(object):
         logger.info('Start switch processes')
         for switch in self.switches:
             logger.info('Starting switch at - [%s]', switch.grpc_addr)
-            switch.start()
+            switch.start(ansible_inventory, controller_user)
 
     def stop(self):
         for switch in self.switches:

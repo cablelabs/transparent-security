@@ -36,7 +36,7 @@ class SwitchConnection(object):
         self.grpc_addr = sw_info['grpc']
 
     @abstractmethod
-    def start(self):
+    def start(self, ansible_inventory, controller_user):
         raise NotImplemented
 
     @abstractmethod

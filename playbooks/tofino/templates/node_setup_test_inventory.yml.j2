@@ -4,6 +4,8 @@ all:
       hosts:
         localhost:
           ansible_connection: local
+          ansible_user: {{ host_user }}
+          ansible_inventory_file: {{ remote_ansible_inventory }}
           trans_sec_dir: /home/ubuntu/transparent-security
     hosts:
       hosts:
