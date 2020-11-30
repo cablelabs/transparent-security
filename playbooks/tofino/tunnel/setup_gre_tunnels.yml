@@ -16,9 +16,15 @@
 - hosts:
     - switches
     - hosts
-  gather_facts: no
+  gather_facts: yes
   become: yes
+  vars:
+    setup_tunnels: "{{ not from_hw|bool | default(True) }}"
   tasks:
+    - debug:
+        var: from_hw
+    - debug:
+        var: setup_tunnels
     - block:
         - name: uninstall ip_gre module
           modprobe:
@@ -71,4 +77,4 @@
         - include_tasks: gre_tunnel_tasks.yml
           loop: "{{ setup_host.tunnels | list }}"
           when: setup_host is defined and setup_host != ""
-      when: not from_hw | bool
+      when: setup_tunnels|bool

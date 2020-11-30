@@ -42,18 +42,21 @@ class DdosSdnController:
     """
     SDN controller for quelling DDoS attacks
     """
-    def __init__(self, topo, controllers, http_server_port):
+    def __init__(self, topo, controllers, http_server_port, ansible_inventory,
+                 controller_user):
 
         self.topo = topo
         self.controllers = controllers
         self.http_server = SDNControllerServer(self, http_server_port)
         self.drop_rpt_thread = threading.Thread(target=self.create_drop_report)
+        self.ansible_inventory = ansible_inventory
+        self.controller_user = controller_user
         self.running = False
 
     def start(self):
         logger.info('Starting Controllers - [%s]', self.controllers)
         for controller in self.controllers.values():
-            controller.start()
+            controller.start(self.ansible_inventory, self.controller_user)
 
         logger.info('Starting HTTP server on port - [%s]',
                     self.http_server.port)

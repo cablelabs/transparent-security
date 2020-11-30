@@ -31,7 +31,6 @@
     prog_name: "{{ p4_pkg }}"
     additional_tmplt_file: "{{ trans_sec_dir }}/playbooks/tofino/templates/tofino-model-veth-port-mapping.json.j2"
     additional_tmplt_out_file: "{{ remote_scripts_dir }}/port-mapping.json"
-  when: not from_hw | bool
 
 # Start switchd
 - import_playbook: ../general/start_service.yml
@@ -49,18 +48,6 @@
     log_file: "{{ log_dir }}/tofino-switchd.log"
     # TODO/FIXME - Fix the status of the service
     service_status_running: false
-
-# Start wedge port setup
-- import_playbook: ../general/start_service.yml
-  vars:
-    host_val: "{{ switches }}"
-    service_name: tps-tofino-wedge-ports
-    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-    switch_arch: "{{ topo_dict.switches[p4_pkg].arch }}"
-    local_srvc_script_tmplt_file: ../tofino/templates/setup_wedge_ports_service.sh.j2
-    prog_name: "{{ p4_pkg }}"
-    srvc_start_pause_time: 30
-  when: from_hw | bool
 
 # Load P4-RT
 - import_playbook: ../general/start_service.yml
