@@ -7,7 +7,7 @@
       "Content-Type": "application/json"
     },
     "scheme": "HTTP",
-    "port": 9998,
-    "host": "tps.sdn.org"
+    "port": "sdn_port",
+    "host": "sdn_ip"
   }
 }

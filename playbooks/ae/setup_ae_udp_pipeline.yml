@@ -36,13 +36,67 @@
         body_format: json
       register: ts_pipeline_response
 
+    - name: Ensures {{ remote_scripts_dir }} exists
+      become: yes
+      file:
+        path: "{{ remote_scripts_dir }}"
+        state: directory
+
+    - name: Ensure {{ remote_scripts_dir }} directories are 777
+      become: yes
+      shell: "chmod -R 777 transparent-security"
+      args:
+        chdir: "/etc"
+
+    - name: Copy file sdn_attack_webhook.json to  {{ remote_scripts_dir }} for updates
+      copy:
+        src: "{{ trans_sec_dir }}/playbooks/ae/templates/sdn_attack_webhook.json"
+        dest: "{{ remote_scripts_dir }}/sdn_attack_webhook.json"
+        remote_src: yes
+        force: yes
+
+    - name: Replace SDN Attack Webhook definition file for SDN port
+      become: yes
+      tags: sdnWebhookUpdateForPort
+      lineinfile:
+        path: "{{ remote_scripts_dir }}/sdn_attack_webhook.json"
+        regex: 'sdn_port'
+        line: '"port": "{{sdn_port}}",'
+        state: present
+        backup: yes
+      register: sdnWebhookUpdateForPort
+
+    - name: Replace SDN Attack Webhook definition file for SDN IP
+      become: yes
+      tags: sdnWebhookUpdateForIP
+      lineinfile:
+        path: "{{ remote_scripts_dir }}/sdn_attack_webhook.json"
+        regex: 'sdn_ip'
+        line: '"host": "{{sdn_ip}}"'
+        state: present
+        backup: yes
+      register: sdnWebhookUpdateForIP
+
+    - name: Slurp updated sdn webhook definition and save it to be used in POST request.
+      slurp:
+          src: "{{ remote_scripts_dir }}/sdn_attack_webhook.json"
+      register: slurped_updated_sdn_webhook_def
+
+    - name: Set updated_sdn_webhook_def as fact
+      set_fact:
+        updated_sdn_webhook_def_contents: "{{ slurped_updated_sdn_webhook_def.content | b64decode }}"
+
+    - name: Show SDN Webhook definition
+      debug:
+        var: updated_sdn_webhook_def_contents
+
     - name: POST call to create SDN Aggregate attack webhook to attach to monitor for incoming data in Elasticsearch
       uri:
          url: "http://localhost:9200/_opendistro/_alerting/destinations"
          method: POST
          return_content: yes
          status_code: 201
-         body: "{{ lookup('file','./templates/sdn_attack_webhook.json') }}"
+         body: "{{ updated_sdn_webhook_def_contents }}"
          body_format: json
       register: sdn_webhook_response
 
@@ -58,17 +112,6 @@
       debug:
         msg: " SDN Webhook response Id : {{ sdn_webhook_id }}"
 
-    - name: Ensures {{ remote_scripts_dir }} exists
-      become: yes
-      file:
-        path: "{{ remote_scripts_dir }}"
-        state: directory
-
-    - name: Ensure {{ remote_scripts_dir }} directories are 777
-      become: yes
-      shell: "chmod -R 777 transparent-security"
-      args:
-        chdir: "/etc"
 
     - name: Copy file udp_monitor_def.json to  {{ remote_scripts_dir }} for updates
       copy:
