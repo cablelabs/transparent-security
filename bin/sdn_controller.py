@@ -41,6 +41,13 @@ def get_args():
     parser.add_argument('-f', '--logfile',
                         help='File to log to defaults to console',
                         required=False, default=None)
+    parser.add_argument('-a', '--ansible-inventory',
+                        help='The ansible inventory for applying playbooks to '
+                             'the switches',
+                        required=True, default=None)
+    parser.add_argument('-u', '--controller-user',
+                        help='The ansible user to apply playbooks to switches',
+                        required=True, default=None)
     parser.add_argument('-ld', '--log-dir', type=str, required=True,
                         default=default_logs)
     parser.add_argument('-t', '--topo', help='Path to topology json',
@@ -140,7 +147,9 @@ def main():
     DdosSdnController(
         topo=topo,
         controllers=controllers,
-        http_server_port=args.http_server_port).start()
+        http_server_port=args.http_server_port,
+        ansible_inventory=args.ansible_inventory,
+        controller_user=args.controller_user).start()
 
 
 if __name__ == '__main__':

@@ -73,8 +73,8 @@ class AggregateSwitch(BFRuntimeSwitch):
         logger.info('Instantiating BFRT AggregateSwitch')
         super(self.__class__, self).__init__(sw_info, client_id, is_master)
 
-    def start(self):
-        super(self.__class__, self).start()
+    def start(self, ansible_inventory, controller_user):
+        super(self.__class__, self).start(ansible_inventory, controller_user)
         self.__set_table_field_annotations()
 
     def receive_digests(self):
