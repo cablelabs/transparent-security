@@ -41,7 +41,7 @@ def get_args():
     parser.add_argument('-f', '--logfile',
                         help='File to log to defaults to console',
                         required=False, default=None)
-    parser.add_argument('-a', '--ansible-inventory',
+    parser.add_argument('-ainv', '--ansible-inventory',
                         help='The ansible inventory for applying playbooks to '
                              'the switches',
                         required=True, default=None)
@@ -58,7 +58,7 @@ def get_args():
     parser.add_argument('-s', '--switch-config-dir', dest='switch_config_dir',
                         help='Direction with Switch configurations',
                         required=True)
-    parser.add_argument('-a', '--ae-ip', dest='ae_ip',
+    parser.add_argument('-aip', '--ae-ip', dest='ae_ip',
                         help='The IP of the machine to send drop reports',
                         required=False)
     parser.add_argument('-drf', '--drop-rpt-freq', dest='drop_rpt_freq',
