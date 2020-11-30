@@ -29,7 +29,7 @@
 
     - name: POST call to create data parsing pipeline for TCP v4 and UDP v6 for incoming data in Elasticsearch
       uri:
-        url: "http://localhost:9200/_ingest/pipeline/ts_parsing"
+        url: "http://localhost:9200/_ingest/pipeline/ts_tcp_parsing"
         method: PUT
         return_content: yes
         body: "{{ lookup('file','./templates/tcp/tcp_data_parsing.json') }}"
