@@ -91,7 +91,7 @@
     - name: Slurp updated monitor definition and save it to be used in POST request.
       slurp:
         src: "{{ remote_scripts_dir }}/udp_monitor_def.json"
-        register: slurped_updated_udp_monitor_def
+      register: slurped_updated_udp_monitor_def
 
     - name: Set updated_udp_monitor_def as fact
       set_fact:
