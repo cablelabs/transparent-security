@@ -24,7 +24,7 @@ hosts:
       - host: core
     ipv6: 0000:0000:0000:0000:0000:0001:0001:0002
     ip_port: any
-    mac: 00:00:00:00:01:01
+    mac: 00:11:0a:68:75:20
     type: webcam
   host2:
     name: host2
@@ -37,7 +37,7 @@ hosts:
       - host: core
     ipv6: 0000:0000:0000:0000:0000:0002:0001:0002
     ip_port: any
-    mac: 00:00:00:00:01:02
+    mac: 8c:dc:d4:af:6f:0c
     type: server
   clone:
     name: clone
@@ -50,7 +50,7 @@ hosts:
       - host: core
     ipv6: 0000:0000:0000:0000:0000:0002:0001:0003
     ip_port: any
-    mac: 00:00:00:00:05:08
+    mac: 8c:dc:d4:af:75:e4
     type: server
 switches:
   core:
@@ -61,20 +61,24 @@ switches:
     clone_egress: 3
     ip: 10.197.1.13
     user: admin
-    mac: 00:00:00:01:01:00
+    mac: 00:90:fb:62:c5:69
     grpc: 10.197.1.13:50052
     type: core
     arch: tna
     tunnels:
       - host: dummy
         switch_port: 128
+        speed: BF_SPEED_10G
         type: default
       - host: host1
         switch_port: 152
+        speed: BF_SPEED_10G
       - host: host2
         switch_port: 136
+        speed: BF_SPEED_10G
       - host: clone
         switch_port: 144
+        speed: BF_SPEED_10G
     telemetry_rpt:
       type: host
       name: clone
