@@ -1,6 +1,6 @@
 {
   "type": "monitor",
-  "name": "DDOS-Monitor",
+  "name": "DDOS-UDP-Monitor",
   "enabled": true,
   "schedule": {
     "period": {
@@ -24,22 +24,6 @@
                             "include_lower": true,
                             "include_upper": true,
                             "format": "epoch_millis",
-                            "boost": 1
-                        }
-                    }
-                },
-                {
-                    "term": {
-                        "ts.IPVersion": {
-                            "value": "4",
-                            "boost": 1
-                        }
-                    }
-                },
-                {
-                    "wildcard": {
-                        "ts.IPvDestAddr": {
-                            "wildcard": "*c0a8010a*",
                             "boost": 1
                         }
                     }
@@ -145,7 +129,7 @@
     "severity": "1",
     "condition": {
       "script": {
-        "source": "ctx.results[0].aggregations.UDP2DstPortValueCount.value >= 1000 && ctx.results[0].aggregations.IPvDestAddrValueCount.value >= 1000 && ctx.results[0].aggregations.INTMetadataSourceMetadataOriginatingMacValueCount.value >= 1000",
+        "source": "ctx.results[0].aggregations.UDP2DstPortValueCount.value >= 10",
         "lang": "painless"
       }
     },
