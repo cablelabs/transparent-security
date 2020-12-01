@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #Import playbook
-- import_playbook: setup_ae_elk.yml
+- import_playbook: conf_ae_elk.yml
 
 - hosts: ae
   gather_facts: no

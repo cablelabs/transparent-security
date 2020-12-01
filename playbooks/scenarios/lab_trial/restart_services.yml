@@ -64,7 +64,7 @@
   gather_facts: no
   become: yes
   tasks:
-    - name: Restart tps-tofino-ae with state {{ ae_state | default('restarted') }}
+    - name: Restart tps-tofino-ae with state {{ ae_state | default('stopped') }}
       systemd:
         name: tps-tofino-ae
-        state: "{{ ae_state | default('restarted') }}"
+        state: "{{ ae_state | default('stopped') }}"
