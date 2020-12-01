@@ -32,6 +32,7 @@
         systemd:
           name: tps-tofino-model
           state: restarted
+        when: not from_hw | bool
 
       - name: Restart tps-tofino-switchd
         systemd:
