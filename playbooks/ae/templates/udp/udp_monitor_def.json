@@ -129,7 +129,7 @@
     "severity": "1",
     "condition": {
       "script": {
-        "source": "ctx.results[0].aggregations.UDP2DstPortValueCount.value >= 1000",
+        "source": "ctx.results[0].aggregations.UDP2DstPortValueCount.value >= 10",
         "lang": "painless"
       }
     },
