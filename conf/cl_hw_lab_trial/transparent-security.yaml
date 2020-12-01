@@ -4,14 +4,12 @@ all:
       hosts:
         localhost:
           ansible_connection: local
+          ansible_user: ubuntu
+          ansible_inventory_file: /home/ubuntu/transparent-security.yaml
           trans_sec_dir: /home/ubuntu/transparent-security
     hosts:
       hosts:
         host1:
-          ansible_connection: ssh
-          trans_sec_dir: /home/admin/transparent-security
-          ansible_user: admin
-        host2:
           ansible_connection: ssh
           trans_sec_dir: /home/admin/transparent-security
           ansible_user: admin
