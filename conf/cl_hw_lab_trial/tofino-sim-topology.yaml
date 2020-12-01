@@ -25,7 +25,7 @@ hosts:
       - host: aggregate
     ipv6: 0000:0000:0000:0000:0000:0001:0001:0002
     ip_port: any
-    mac: 00:00:00:00:01:01
+    mac: 00:11:0a:68:75:20
     type: webcam
   inet:
     name: inet
@@ -38,7 +38,7 @@ hosts:
       - host: core
     ipv6: 0000:0000:0000:0000:0000:0001:0001:0003
     ip_port: any
-    mac: 00:00:00:00:05:01
+    mac: 8c:dc:d4:af:6f:0c
     type: nas
   ae:
     name: ae
@@ -51,7 +51,7 @@ hosts:
       - host: core
     ipv6: 0000:0000:0000:0000:0000:0002:0001:0003
     ip_port: any
-    mac: 00:00:00:00:05:02
+    mac: 8c:dc:d4:af:75:e4
     type: server
 switches:
   aggregate:
@@ -64,17 +64,17 @@ switches:
     user: admin
     type: aggregate
     arch: tna
-    mac: 00:00:00:02:04:00
+    mac: 00:90:fb:62:c5:69
     grpc: 10.197.1.13:50052
     ipv6_term_host: inet
     tunnels:
       - host: core
         switch_port: 128
+        speed: BF_SPEED_10G
         type: default
       - host: host1
         switch_port: 136
-      - host: host2
-        switch_port: 144
+        speed: BF_SPEED_10G
   core:
     name: core
     id: 0
@@ -92,11 +92,14 @@ switches:
     tunnels:
       - host: aggregate
         switch_port:  128
+        speed: BF_SPEED_10G
         type: default
       - host: inet
         switch_port:  136
+        speed: BF_SPEED_10G
       - host: ae
         switch_port:  144
-    mac: 00:00:00:03:05:00
+        speed: BF_SPEED_10G
+    mac: 00:90:fb:62:c4:a9
     grpc: 10.197.1.21:50052
     ipv6_term_host: inet
