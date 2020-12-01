@@ -29,7 +29,8 @@ class SDNControllerServer:
         self.host = host
         self.thread = threading.Thread(target=self.flask_thread)
         self.http_server = Flask('sdn_controller_api_server')
-        self.api = Api(self.http_server)
+        self.api = Api(self.http_server, title='TPS Controller API',
+                       description='APIs for some basic P4 CRUD operations')
         self.server_start = None
 
     def start(self):
@@ -100,7 +101,7 @@ class DataForward(Resource):
 
     @swagger.tags(['dataForwardDelete'])
     @swagger.response(response_code=201,
-                      description='Delete data_forward entry')
+                      description='Deleted data_forward entry')
     @swagger.reqparser(name='DataForwardParser', parser=parser)
     def delete(self):
         logger.info('Data forward entry to remove')
@@ -138,7 +139,7 @@ class DataInspection(Resource):
 
     @swagger.tags(['dataInspectionDelete'])
     @swagger.response(response_code=201,
-                      description='Added data_inspection deletion')
+                      description='Deleted data_inspection deletion')
     @swagger.reqparser(name='DataInspectionParser', parser=parser)
     def delete(self):
         logger.info('Attacker to remove')
@@ -167,7 +168,7 @@ class GwAttack(Resource):
 
     @swagger.tags(['gatewayAttackStart'])
     @swagger.response(response_code=201,
-                      description='Mitigate attack')
+                      description='Mitigated attack on gateway')
     @swagger.reqparser(name='GwAttackParser', parser=parser)
     def post(self):
         logger.info('Attack requested')
@@ -179,7 +180,7 @@ class GwAttack(Resource):
 
     @swagger.tags(['gatewayAttackStop'])
     @swagger.response(response_code=201,
-                      description='Unmitigate attack')
+                      description='Unmitigated attacks from gateway')
     @swagger.reqparser(name='GwAttackParser', parser=parser)
     def delete(self):
         logger.info('Attacker to remove')
@@ -205,7 +206,7 @@ class AggDataForward(Resource):
 
     @swagger.tags(['aggDataForwardAdd'])
     @swagger.response(response_code=201,
-                      description='Add data forward to aggregate')
+                      description='Added data forward entry to aggregate')
     @swagger.reqparser(name='AggDataForwardParser', parser=parser)
     def post(self):
         logger.info('Attack requested')
@@ -217,7 +218,7 @@ class AggDataForward(Resource):
 
     @swagger.tags(['aggDataForwardDelete'])
     @swagger.response(response_code=201,
-                      description='Delete data forward from aggregate')
+                      description='Deleted data forward entry from aggregate')
     @swagger.reqparser(name='AggDataForwardParser', parser=parser)
     def delete(self):
         logger.info('Attacker to remove')
@@ -242,7 +243,7 @@ class AggAttack(Resource):
 
     @swagger.tags(['aggAttackStart'])
     @swagger.response(response_code=201,
-                      description='Mitigate attack on aggregate')
+                      description='Mitigated attacks from aggregate')
     @swagger.reqparser(name='AggAttackParser', parser=parser)
     def post(self):
         logger.info('Attack requested')
@@ -254,7 +255,7 @@ class AggAttack(Resource):
 
     @swagger.tags(['aggAttackStop'])
     @swagger.response(response_code=201,
-                      description='Unmitigate attack on aggregate')
+                      description='Unmitigated attacks from aggregate')
     @swagger.reqparser(name='AggAttackParser', parser=parser)
     def delete(self):
         logger.info('Attacker to remove')
@@ -277,7 +278,7 @@ class CoreDataForward(Resource):
 
     @swagger.tags(['coreDataForwardAdd'])
     @swagger.response(response_code=201,
-                      description='Add data forward to core')
+                      description='Added data forward entry to core')
     @swagger.reqparser(name='CoreDataForwardParser', parser=parser)
     def post(self):
         logger.info('Attack requested')
@@ -289,7 +290,7 @@ class CoreDataForward(Resource):
 
     @swagger.tags(['coreDataForwardDel'])
     @swagger.response(response_code=201,
-                      description='Delete data forward entry in core')
+                      description='Deleted data forward entry from core')
     @swagger.reqparser(name='CoreDataForwardParser', parser=parser)
     def delete(self):
         logger.info('Attacker to remove')
@@ -327,7 +328,7 @@ class TelemetryReport(Resource):
 
     @swagger.tags(['telemetryRptDel'])
     @swagger.response(response_code=201,
-                      description='Unconfigure endpoint for Telemetry Report')
+                      description='Remove Telemetry Report endpoint config')
     @swagger.reqparser(name='TelemRptParser', parser=parser)
     def delete(self):
         logger.info('Deactivating telemetry report')
@@ -356,7 +357,7 @@ class TelemetryReportSampling(Resource):
                                   'Telemetry Report')
     @swagger.reqparser(name='TelemRptSampleParser', parser=parser)
     def post(self):
-        logger.info('Setting Telemetry report sampling value')
+        logger.info('Set Telemetry report sampling value')
         args = self.parser.parse_args()
 
         logger.info('Attack args - [%s]', args)
