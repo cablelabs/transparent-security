@@ -26,13 +26,13 @@
     iperf_server_ip: "{{ topo_dict.hosts[iperf_server].ip }}"
     iperf_server_ipv6: "{{ topo_dict.hosts[iperf_server].ipv6 }}"
 
-- import_playbook: ../test_cases/run_iperf.yml
-  vars:
-    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-    iperf_server: inet
-    iperf_client: host2
-    iperf_server_ip: "{{ topo_dict.hosts[iperf_server].ip }}"
-    iperf_server_ipv6: "{{ topo_dict.hosts[iperf_server].ipv6 }}"
+#- import_playbook: ../test_cases/run_iperf.yml
+#  vars:
+#    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
+#    iperf_server: inet
+#    iperf_client: host2
+#    iperf_server_ip: "{{ topo_dict.hosts[iperf_server].ip }}"
+#    iperf_server_ipv6: "{{ topo_dict.hosts[iperf_server].ipv6 }}"
 
 - import_playbook: ../test_cases/run_iperf.yml
   vars:
@@ -42,13 +42,13 @@
     iperf_server_ip: "{{ topo_dict.hosts[iperf_server].ip }}"
     iperf_server_ipv6: "{{ topo_dict.hosts[iperf_server].ipv6 }}"
 
-- import_playbook: ../test_cases/run_iperf.yml
-  vars:
-    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-    iperf_server: ae
-    iperf_client: host2
-    iperf_server_ip: "{{ topo_dict.hosts[iperf_server].ip }}"
-    iperf_server_ipv6: "{{ topo_dict.hosts[iperf_server].ipv6 }}"
+#- import_playbook: ../test_cases/run_iperf.yml
+#  vars:
+#    topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
+#    iperf_server: ae
+#    iperf_client: host2
+#    iperf_server_ip: "{{ topo_dict.hosts[iperf_server].ip }}"
+#    iperf_server_ipv6: "{{ topo_dict.hosts[iperf_server].ipv6 }}"
 
 - import_playbook: ../test_cases/run_iperf.yml
   vars:
