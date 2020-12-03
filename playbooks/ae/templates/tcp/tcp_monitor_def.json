@@ -92,8 +92,42 @@
                     }
                 ]
             }
+        },
+        "TCPDestPortValue": {
+            "terms": {
+                "field": "ts.TCPDestPort",
+                "size": 10,
+                "min_doc_count": 1,
+                "shard_min_doc_count": 0,
+                "show_term_doc_count_error": false,
+                "order": [
+                    {
+                        "_count": "desc"
+                    },
+                    {
+                        "_key": "asc"
+                    }
+                ]
+            }
+        },
+        "OriginatingMacAddrTCPv4": {
+            "terms": {
+                "field": "ts.INTMetadataSourceMetadataOriginatingMac",
+                "size": 10,
+                "min_doc_count": 1,
+                "shard_min_doc_count": 0,
+                "show_term_doc_count_error": false,
+                "order": [
+                    {
+                        "_count": "desc"
+                    },
+                    {
+                        "_key": "asc"
+                    }
+                ]
+            }
         }
-    }
+        }
       }
   }
     }],
@@ -102,7 +136,7 @@
     "severity": "1",
     "condition": {
       "script": {
-        "source": "ctx.results[0].aggregations.TCPDestPortValueCount.value >= 1000",
+        "source": "ctx.results[0].aggregations.TCPDestPortValueCount.value >= 10",
         "lang": "painless"
       }
     },
@@ -110,7 +144,7 @@
       "name": "Sdn-WebHook-Action",
       "destination_id": "sdnWebhookResponseId",
       "message_template": {
-        "source":"{\"event_action\":\"trigger\",\"payload\":{ \"dst_ip\":\"{{_source.ts.IPv4DestIP}}\",\"dst_port\":\"{{_source.ts.TCPDestPort}}\",\"src_ip\":\"{{_source.ts.IPv4SrcIP}}\",\"src_mac\":\"{{_source.ts.INTMetadataSourceMetadataOriginatingMac}}\"}}",
+        "source":"{\"event_action\":\"trigger\",\"payload\":{ \"dst_ip\":\"{{ctx.results.0.aggregations.IPv4DestIP.buckets.0.key}}\",\"dst_port\":\"{{ctx.results.0.aggregations.TCPDestPortValue.buckets.0.key}}\",\"src_ip\":\"{{ctx.results.0.aggregations.IPv4SrcIP.buckets.0.key}}\",\"src_mac\":\"{{ctx.results.0.aggregations.OriginatingMacAddrTCPv4.buckets.0.key}}\"}}",
         "lang": "mustache",
         "options": {
             "content_type": "application/json"
