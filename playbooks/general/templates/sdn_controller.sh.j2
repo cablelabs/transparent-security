@@ -19,6 +19,8 @@
 -f {{ log_dir }}/sdn.log \
 -ld {{ log_dir }} \
 -s {{ remote_scripts_dir }}/p4 \
+-a {{ ae_ip }} \
+-drf 10 \
 -p {{ p4_platform }} \
 -hsp {{ sdn_port }} \
 -lp {{ load_p4 }} \

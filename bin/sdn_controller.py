@@ -51,6 +51,12 @@ def get_args():
     parser.add_argument('-s', '--switch-config-dir', dest='switch_config_dir',
                         help='Direction with Switch configurations',
                         required=True)
+    parser.add_argument('-a', '--ae-ip', dest='ae_ip',
+                        help='The IP of the machine to send drop reports',
+                        required=False)
+    parser.add_argument('-drf', '--drop-rpt-freq', dest='drop_rpt_freq',
+                        help='The number of seconds between drop reports',
+                        required=False, default=10, type=int)
     parser.add_argument('-dh', '--debug-host', dest='debug_host',
                         help='remote debugging host IP')
     parser.add_argument('-dp', '--debug-port', dest='debug_port', default=5678,
@@ -140,7 +146,8 @@ def main():
     DdosSdnController(
         topo=topo,
         controllers=controllers,
-        http_server_port=args.http_server_port).start()
+        http_server_port=args.http_server_port,
+        ae_ip_str=args.ae_ip).start()
 
 
 if __name__ == '__main__':
