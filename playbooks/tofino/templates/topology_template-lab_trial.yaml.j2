@@ -104,11 +104,14 @@ switches:
     tunnels:
       - host: core
         switch_port: 128
+        speed: BF_SPEED_10G
         type: default
       - host: host1
         switch_port: 136
+        speed: BF_SPEED_10G
       - host: host2
         switch_port: 144
+        speed: BF_SPEED_10G
   core:
     name: core
     id: 0
@@ -131,11 +134,14 @@ switches:
     tunnels:
       - host: aggregate
         switch_port:  128
+        speed: BF_SPEED_10G
         type: default
       - host: inet
         switch_port:  136
+        speed: BF_SPEED_10G
       - host: ae
         switch_port:  144
+        speed: BF_SPEED_10G
     mac: 00:00:00:03:05:00
     grpc: {{ core_ip }}:{{ grpc_port }}
     ipv6_term_host: inet

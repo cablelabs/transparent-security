@@ -1,0 +1,50 @@
+# Copyright (c) 2020 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+- hosts: "{{ host_val }}"
+  gather_facts: no
+  become: yes
+  environment:
+    SDE: "{{ sde_dir }}"
+    SDE_INSTALL: "{{ sde_dir }}/install"
+  vars:
+    bfrt_python_port_script: "{{ remote_scripts_dir }}/bfrt_python_port_conf.py"
+  tasks:
+    - name: Remove bfrt python port config script if exists
+      file:
+        path: "{{ bfrt_python_port_script }}"
+        state: absent
+
+    - name: Create bfrt python port config script
+      file:
+        path: "{{ bfrt_python_port_script }}"
+        state: touch
+
+    - name: Create bfrt_python script
+      lineinfile:
+        path: "{{ bfrt_python_port_script }}"
+        line: "port = bfrt.port.port"
+
+    - name: Add port bfrt_python script
+      lineinfile:
+        path: "{{ bfrt_python_port_script }}"
+        line: >
+          port.add(dev_port={{ item.switch_port }},
+          speed="{{ item.speed | default('BF_SPEED_10G') }}",
+          port_enable={{ item.enable | default('True') }},
+          fec="{{ item.fec | default('BF_FEC_TYP_NONE') }}")
+      with_items: "{{ ports }}"
+
+    - name: Execute bfrt_python port config script
+      become: no
+      command: "$SDE/run_bfshell.sh -b {{ bfrt_python_port_script }}"

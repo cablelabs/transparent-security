@@ -16,11 +16,16 @@
 - hosts: "{{ host_val }}"
   gather_facts: no
   become: yes
-
   environment:
     SDE: "{{ remote_sde_dir }}"
     SDE_INSTALL: "{{ remote_sde_dir }}/install"
-
+  vars:
+    setup_veth: "{{ not from_hw|bool | default(True) }}"
   tasks:
+    - debug:
+        var: from_hw
+    - debug:
+        var: setup_veth
     - name: Setup DMA
       command: $SDE/pkgsrc/ptf-modules/ptf-utils/dma_setup.sh
+      when: setup_veth|bool
