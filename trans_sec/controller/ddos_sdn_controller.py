@@ -42,13 +42,19 @@ class DdosSdnController:
     """
     SDN controller for quelling DDoS attacks
     """
-    def __init__(self, topo, controllers, http_server_port):
+    def __init__(self, topo, controllers, http_server_port, ae_ip_str=None,
+                 drop_rpt_freq=10):
 
         self.topo = topo
         self.controllers = controllers
         self.http_server = SDNControllerServer(self, http_server_port)
         self.drop_rpt_thread = threading.Thread(target=self.create_drop_report)
         self.running = False
+        if ae_ip_str:
+            self.ae_ip = ipaddress.ip_address(ae_ip_str)
+        else:
+            self.ae_ip = None
+        self.drop_rpt_freq = drop_rpt_freq
 
     def start(self):
         logger.info('Starting Controllers - [%s]', self.controllers)
@@ -70,24 +76,16 @@ class DdosSdnController:
     def create_drop_report(self):
         while True:
             self.send_drop_report()
-            sleep(10)
+            sleep(self.drop_rpt_freq)
 
     def send_drop_report(self):
-        ae_ip = None
-        if self.get_core_controller():
-            ae_ip_str = self.get_core_controller().get_ae_ip()
-            if ae_ip_str:
-                try:
-                    ae_ip = ipaddress.ip_address(ae_ip_str)
-                    logger.info('AE IP Address - [%s]', ae_ip)
-                except ValueError as e:
-                    logger.warning(
-                        'Cannot create drop report, ae_ip invalid - [%s]', e)
-                    return
-        if ae_ip:
-            self.__create_drop_report(ae_ip)
+        logger.info('Attempting to send drop report')
+        if self.ae_ip:
+            self.__create_drop_report()
+        else:
+            logger.debug('No configured AE IP to send drop report')
 
-    def __create_drop_report(self, ae_ip):
+    def __create_drop_report(self):
         for controller in self.controllers.values():
             if controller == self.get_agg_controller():
                 logger.info("Creating drop report for controller: %s",
@@ -113,7 +111,7 @@ class DdosSdnController:
                 udp_len = UDP_HDR_LEN + DRPT_PAYLOAD_LEN
                 drop_pkt = Ether(type=consts.IPV4_TYPE)
                 drop_pkt = drop_pkt / IP(
-                    dst=str(ae_ip), src=sdn_ip, len=ip_len,
+                    dst=str(self.ae_ip), src=sdn_ip, len=ip_len,
                     proto=consts.UDP_PROTO)
                 drop_pkt = drop_pkt / UdpInt(sport=consts.UDP_INT_SRC_PORT,
                                              dport=consts.UDP_TRPT_DST_PORT,

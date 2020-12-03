@@ -58,11 +58,6 @@ class CoreController(AbstractController):
     def __get_core_switch(self):
         return self.switches[0]
 
-    def get_ae_ip(self):
-        core_switch = self.__get_core_switch()
-        if core_switch:
-            return core_switch.read_ae_ip()
-
     def setup_telem_rpt(self, **kwargs):
         for switch in self.switches:
             if switch.mac == kwargs['switch_mac']:

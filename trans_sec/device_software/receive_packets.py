@@ -25,7 +25,7 @@ import trans_sec.consts
 from trans_sec import consts
 from trans_sec.packet.inspect_layer import (
     IntShim, IntHeader, IntMeta1, IntMeta2, SourceIntMeta, UdpInt,
-    TelemetryReport, EthInt)
+    TelemetryReport, EthInt, DropReport)
 
 logger = logging.getLogger('receive_packets')
 FORMAT = '%(levelname)s %(asctime)-15s %(filename)s %(message)s'
@@ -43,7 +43,12 @@ def get_args():
         '-ih', '--int-hops', help='Number of expected INT hops, no INT when 0',
         required=False, default=0, dest='int_hops', type=int)
     parser.add_argument(
+        '-dr', '--drop-rpt',
+        help='When true, parse the drop report instead',
+        required=False, default=False, dest='drop_rpt', type=bool)
+    parser.add_argument(
         '-d', '--duration', default=0, dest='duration', type=int,
+        required=False,
         help='Number of seconds to sniff - 0 is indefinite')
     parser.add_argument(
         '-l', '--loglevel',
@@ -52,7 +57,7 @@ def get_args():
     return parser.parse_args()
 
 
-def __log_packet(packet, int_hops):
+def __log_packet(packet, int_hops, drop_rpt=False):
     logger.info('Expected INT Hops - [%s] on packet - [%s]',
                 int_hops, packet.summary())
 
@@ -81,16 +86,23 @@ def __log_packet(packet, int_hops):
             return
 
     logger.info('IP Protocol - [%s] hops - [%s]', ip_proto, int_hops)
-    if int_hops > 0 and ip_proto == trans_sec.consts.UDP_PROTO:
-        __log_int_packet(ether_pkt, ip_pkt, int_hops, len(packet))
-    elif int_hops < 1:
-        __log_std_packet(ether_pkt, ip_pkt, ip_proto, len(packet))
-    else:
-        logger.debug('Nothing to log here')
+    if drop_rpt and ip_proto == trans_sec.consts.UDP_PROTO:
+        logger.debug('Attempting to log Drop Report')
+        __log_drop_rpt(ip_pkt)
+
+    if not drop_rpt:
+        if int_hops > 0 and ip_proto == trans_sec.consts.UDP_PROTO:
+            logger.debug('Attempting to log INT Packet')
+            __log_int_packet(ether_pkt, ip_pkt, int_hops, len(packet))
+        elif int_hops < 1:
+            logger.debug('Attempting to log Standard Packet')
+            __log_std_packet(ether_pkt, ip_pkt, ip_proto, len(packet))
+        else:
+            logger.debug('Nothing to log here')
 
 
 def __log_std_packet(ether_pkt, ip_pkt, ip_proto, pkt_len):
-    logger.info('Protocol to parse - [%s]', ip_proto)
+    logger.info('Protocol to parse for standard packet - [%s]', ip_proto)
     logger.debug('IP class - [%s]', ip_pkt.__class__)
 
     if ip_proto == trans_sec.consts.UDP_PROTO:
@@ -125,7 +137,27 @@ def __log_std_packet(ether_pkt, ip_pkt, ip_proto, pkt_len):
     logger.warning('Packet data - [%s]', int_data)
 
 
+def __log_drop_rpt(ip_pkt):
+    logger.info('Logging Drop Report packet')
+    udp_pkt = UDP(_pkt=ip_pkt.payload)
+
+    if not udp_pkt:
+        logger.debug('Packet is not')
+        return
+
+    logger.debug('UdpInt - sport - [%s], dport - [%s], len - [%s]',
+                 udp_pkt.sport, udp_pkt.dport, udp_pkt.len)
+    if udp_pkt.dport == 556:
+        drop_rpt_pkt = DropReport(_pkt=udp_pkt.payload)
+        int_data = dict(
+            key_hash=drop_rpt_pkt.drop_tbl_keys,
+            drop_count=drop_rpt_pkt.drop_count,
+        )
+        logger.warning('Drop Report data - [%s]', int_data)
+
+
 def __log_int_packet(ether_pkt, ip_pkt, int_hops, pkt_len):
+    logger.info('Logging INT packet')
     ip_pkt, udp_int_pkt = __get_ip_udp_int_pkt(ip_pkt)
     if not ip_pkt or not udp_int_pkt:
         logger.error('Unable to locate INT UDP Packet')
@@ -223,7 +255,7 @@ def __get_ip_udp_int_pkt(ip_pkt):
         return None, None
 
 
-def device_sniff(iface, duration, int_hops):
+def device_sniff(iface, duration, int_hops, drop_report=False):
     if int_hops > 0:
         logger.info('Binding layers for INT with hops - [%s]', int_hops)
 
@@ -254,12 +286,12 @@ def device_sniff(iface, duration, int_hops):
     if duration > 0:
         logger.info('Running sniffer for [%s] seconds', duration)
         sniff(iface=iface,
-              prn=lambda packet: __log_packet(packet, int_hops),
+              prn=lambda packet: __log_packet(packet, int_hops, drop_report),
               timeout=duration)
     else:
         logger.info('Running sniffer indefinitely')
         sniff(iface=iface,
-              prn=lambda packet: __log_packet(packet, int_hops))
+              prn=lambda packet: __log_packet(packet, int_hops, drop_report))
 
 
 if __name__ == '__main__':
@@ -276,4 +308,4 @@ if __name__ == '__main__':
     logger.info('Logger initialized')
 
     logger.info('Sniffing for packets on interface - [%s]', args.iface)
-    device_sniff(args.iface, args.duration, args.int_hops)
+    device_sniff(args.iface, args.duration, args.int_hops, args.drop_rpt)
