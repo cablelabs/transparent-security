@@ -20,6 +20,7 @@
     send_host: host1
     rec_host: inet
     sender: "{{ topo_dict.hosts[send_host] }}"
+    receiver: "{{ topo_dict.hosts[rec_host] }}"
     arp_intf: "{{ sender.intf_name }}"
 
 - import_playbook: ../general/arping.yml
@@ -28,6 +29,7 @@
     send_host: host1
     rec_host: ae
     sender: "{{ topo_dict.hosts[send_host] }}"
+    receiver: "{{ topo_dict.hosts[rec_host] }}"
     arp_intf: "{{ sender.intf_name }}"
 
 # Discover SB paths
@@ -37,6 +39,7 @@
     send_host: inet
     rec_host: host1
     sender: "{{ topo_dict.hosts[send_host] }}"
+    receiver: "{{ topo_dict.hosts[rec_host] }}"
     arp_intf: "{{ sender.intf_name }}"
 
 - import_playbook: ../general/arping.yml
@@ -45,6 +48,7 @@
     send_host: ae
     rec_host: host1
     sender: "{{ topo_dict.hosts[send_host] }}"
+    receiver: "{{ topo_dict.hosts[rec_host] }}"
     arp_intf: "{{ sender.intf_name }}"
 
 - hosts: localhost
