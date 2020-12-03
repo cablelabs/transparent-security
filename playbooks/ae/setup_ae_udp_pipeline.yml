@@ -11,12 +11,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #Import playbook
-- import_playbook: setup_ae_elk.yml
+- import_playbook: conf_ae_elk.yml
 
 - hosts: ae
   gather_facts: no
-  vars:
-    - CENTOS_HOME: "/home/centos"
   tasks:
     - name: POST call to create data mapping template for incoming data in Elasticsearch
       uri:

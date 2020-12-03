@@ -15,8 +15,6 @@
 
 - hosts: ae
   gather_facts: no
-  vars:
-    - CENTOS_HOME: "/home/centos"
   tasks:
     - name: POST call to create TCP data mapping template for incoming data in Elasticsearch
       uri:

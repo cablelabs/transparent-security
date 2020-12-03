@@ -31,6 +31,13 @@
   vars:
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
 
+# Startup ElasticSearch and Kibana
+#   note: if done after switch startup the wait value needs to be 180 for taking
+#   in configuration
+- import_playbook: ../ae/start_ae_elk.yml
+  vars:
+    wait_for_kibana: 0
+
 # TODO/FIXME - Call setup_tofino_switch playbook so it can run in parallel
 # Start tofino-model and tofino-switchd on the aggregate switch
 - import_playbook: setup_tofino_switch.yml
@@ -52,7 +59,7 @@
     scenario_name: full
     local_srvc_script_tmplt_file: "{{ orch_trans_sec_dir }}/playbooks/general/templates/sdn_controller.sh.j2"
     port_to_wait: "{{ sdn_port }}"
-    wait_timeout: 30
+    wait_timeout: 60
     load_p4: False
 
 # Start AE

@@ -10,11 +10,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+---
 - hosts: ae
   gather_facts: no
   vars:
-    - CENTOS_HOME: "/home/centos"
+    kibana_wait: "{{ wait_for_kibana | default(180) }}"
   tasks:
     - name: "Start Elasticsearch service"
       become: yes
@@ -35,33 +35,6 @@
         port: 5601
         timeout: 600
 
-    - name: Service check sleep 180 seconds to help Kibana service be ready
-      tags: sleep180
-      wait_for:
-        delay: 180
-        timeout: 0
-
-    - name: "Validate if a DNS tps.sdn.org is present in /etc/hosts file"
-      become: yes
-      tags: sdnDnsName
-      lineinfile:
-        path: /etc/hosts
-        regexp: "tps.sdn.org"
-        line: "tps.sdn.org {{sdn_ip}}"
-        state: present
-        backup: yes
-      register: sdnDnsNameOut
-
-
-    - name: POST call to create Index Pattern
-      uri:
-        url: "http://localhost:5601/api/saved_objects/index-pattern/packets-*"
-        method: POST
-        headers:
-          kbn-xsrf: "true"
-          Content-Type: "application/json"
-        return_content: yes
-        status_code: 200
-        body: "{{ lookup('file','./templates/index_pattern_request_body.json') }}"
-        body_format: json
-      register: index_pattern_response
+    - name: Wait for kibana
+      pause:
+        seconds: "{{ kibana_wait }}"
