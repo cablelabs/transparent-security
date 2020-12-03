@@ -15,13 +15,13 @@
 #
 # Runs the SDN controller for Mininet simulation
 {{ trans_sec_dir }}/bin/sdn_controller.py -l {{ log_level }} \
--a {{ ansible_inventory_file }} \
+-ainv {{ ansible_inventory_file }} \
 -u {{ ansible_user }} \
 -t {{ topo_file_loc }} \
 -f {{ log_dir }}/sdn.log \
 -ld {{ log_dir }} \
 -s {{ remote_scripts_dir }}/p4 \
--a {{ ae_ip }} \
+-aip {{ ae_ip }} \
 -drf 10 \
 -p {{ p4_platform }} \
 -hsp {{ sdn_port }} \
