@@ -26,7 +26,6 @@
     hops: "{{ int_hops | default(0) }}"
     ip_ver: "{{ ip_version | default('4') }}"
     receiver_intf: "{{ rec_intf_name | default(None) }}"
-    receiver_ipv4: "{{ rec_ipv4 | default(None) }}"
     receiver_log_file: "{{ log_dir }}/{{ receiver_log_filename }}"
   tasks:
     - debug:
@@ -46,11 +45,6 @@
       file:
         path: "{{ receiver_log_file }}"
         state: touch
-
-    - debug:
-        var: receiver_intf
-    - debug:
-        var: receiver_ipv4
 
     - name: Create receive packets command with the receiver_intf variable
       set_fact:
@@ -88,7 +82,6 @@
     ip_ver: "{{ ip_version | default('4') }}"
     receiver_ip: "{{ receiver.ip if ip_ver == '4' else receiver.ipv6 }}"
     receiver_mac: "{{ receiver.mac }}"
-    receiver_ipv4: "{{ receiver.ip }}"
     int_hdr_tmplt: ../templates/send_int_hdr.yml.j2
   tasks:
     - debug:
