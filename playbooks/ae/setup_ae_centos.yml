@@ -16,9 +16,20 @@
 - hosts: all
   gather_facts: no
   vars:
-    - CENTOS_HOME: "/home/centos"
+    USER_HOME: "/home/centos"
+    CMAKE_DIR: "{{ USER_HOME }}/cmake-3.5.2"
+    WIRESHARK_DIR: "{{ USER_HOME }}/wireshark-3.2.6"
+    PYTHON_DIR: "{{ USER_HOME }}/Python-3.8.5"
   tasks:
-    - name: Install yum dependencies on AE CENTOS base image
+    - name: Uninstall python3-pip & python-pip
+      become: yes
+      yum:
+        name:
+          - python3-pip
+          - python-pip
+        state: absent
+
+    - name: Install yum dependencies
       become: yes
       yum:
         name:
@@ -48,172 +59,184 @@
           - libgcrypt-devel
           - ncurses-devel
 
-    - name: Get Wireshark repository v3.2.6 tar to install Wireshark on AE CENTOS base image
-      shell: wget https://www.wireshark.org/download/src/all-versions/wireshark-3.2.6.tar.xz
-      args:
-        chdir: /home/centos/
+    - name: Get Wireshark v3.2.6 tar
+      get_url:
+          url: https://www.wireshark.org/download/src/all-versions/wireshark-3.2.6.tar.xz
+          dest: "{{ USER_HOME }}"
 
-    - name: Untar Wireshark repository v3.2.6 to install Wireshark for AE image
-      shell: "tar -xf {{CENTOS_HOME}}/wireshark-3.2.6.tar.xz"
+    - name: Create directory for Wireshark
+      file:
+        path: "{{ WIRESHARK_DIR }}"
+        state: directory
 
-    - name: Run rpm-setup script in Wireshark repository to install unmet dependencies for AE image
+    - name: Extract Wireshark
+      unarchive:
+        src: "{{ USER_HOME }}/wireshark-3.2.6.tar.xz"
+        dest: "{{ USER_HOME }}"
+        remote_src: yes
+
+    - name: Run rpm-setup script in Wireshark repository to install unmet dependencies
       become: yes
-      shell: ./rpm-setup.sh -y
+      command: "{{ WIRESHARK_DIR }}/tools/rpm-setup.sh -y"
+
+    - name: Retrieve cmake tarball
+      get_url:
+        url: https://cmake.org/files/v3.5/cmake-3.5.2.tar.gz
+        dest: "{{ USER_HOME }}"
+
+    - name: Create directory for cmake
+      file:
+        path: "{{ CMAKE_DIR }}"
+        state: directory
+
+    - name: Extract cmake
+      unarchive:
+        src: "{{ USER_HOME }}/cmake-3.5.2.tar.gz"
+        dest: "{{ USER_HOME }}"
+        remote_src: yes
+
+    - name: Bootstrap prefix usr before executing make for cmake
+      command: ./bootstrap --prefix=/usr
       args:
-        chdir: /home/centos/wireshark-3.2.6/tools
+        chdir: "{{ CMAKE_DIR }}"
 
-    - name: Change Directory to home directory to install CMAKE v3.5.2 for AE image
-      command: chdir=/home/centos ls
-
-    - name: Get CMAKE repository using wget for AE images
-      command: wget https://cmake.org/files/v3.5/cmake-3.5.2.tar.gz
-
-    - name: Untar CMAKE repository
-      shell: "tar -xf {{CENTOS_HOME}}/cmake-3.5.2.tar.gz"
-
-    - name: Change directory to run CMAKE command for AE image
-      command: chdir=/home/centos/cmake-3.5.2 ls
-
-    - name: Bootstrap prefix usr before executing make for CMAKE installation on AE image
+    - name: Run cmake make install
       become: yes
-      shell: ./bootstrap --prefix=/usr
+      command: make -j4 install
       args:
-        chdir: /home/centos/cmake-3.5.2
+        chdir: "{{ CMAKE_DIR }}"
 
-    - name: Run make command for CMAKE installation for AE image
-      become: yes
-      shell: make install
-      args:
-        chdir: /home/centos/cmake-3.5.2
-
-
-    - name: Verify CMAKE installed version on AE image
-      become: yes
+    - name: Verify cmake installed
       command: cmake --version
+      register: cmake_out
+      args:
+        chdir: "{{ CMAKE_DIR }}"
+
+    - name: Fail when cmake version is incorrect
+      fail:
+        msg: "cmake version is incorrect {{ cmake_out }}"
+      when: cmake_out.stdout is not search('3.5.2')
 
     - name: Create build directory for Wireshark installation
-      shell: mkdir build
-      args:
-        chdir: /home/centos
+      file:
+        path: "{{ WIRESHARK_DIR }}/build"
+        state: directory
 
-    - name: Run CMAKE command for wireshark installation for AE image
+    - name: Run CMAKE command for Wireshark installation
+      command: "cmake {{ WIRESHARK_DIR }}"
+      args:
+        chdir: "{{ WIRESHARK_DIR }}/build"
+
+    - name: Run make Wireshark
+      command: make -j4
+      args:
+        chdir: "{{ WIRESHARK_DIR }}/build"
+
+    - name: Install Wireshark
       become: yes
-      shell: cmake ../wireshark-3.2.6
+      command: make -j4 install
       args:
-        chdir: /home/centos/build
+        chdir: "{{ WIRESHARK_DIR }}/build"
 
-    - name: Run MAKE command for wireshark installation for AE image
-      become: yes
-      shell: make
-      args:
-        chdir: /home/centos/build
+    - name: Download and install a specific version of Python v3.8.5
+      get_url:
+        url: https://www.python.org/ftp/python/3.8.5/Python-3.8.5.tgz
+        dest: "{{ USER_HOME }}"
 
-    - name: Run INSTALL command for wireshark installation for AE image
-      become: yes
-      shell: make install
-      args:
-        chdir: /home/centos/build
+    - name: Create directory for Python
+      file:
+        path: "{{ PYTHON_DIR }}"
+        state: directory
 
-    - name: Download and install a specific version of Python v3.8.5 for AE base image
-      shell: curl -O https://www.python.org/ftp/python/3.8.5/Python-3.8.5.tgz
-      args:
-        chdir: /home/centos
-
-    - name: Untar Python directory
-      shell: "tar -xf {{CENTOS_HOME}}/Python-3.8.5.tgz"
-
+    - name: Extract Python-3.8.5
+      unarchive:
+        src: "{{ USER_HOME }}/Python-3.8.5.tgz"
+        dest: "{{ USER_HOME }}"
+        remote_src: yes
 
     - name: Configure Python optimizations for Python 3.8 install
-      become: yes
-      shell: ./configure --enable-optimizations;
+      command: ./configure --enable-optimizations
       args:
-        chdir: /home/centos/Python-3.8.5
+        chdir: "{{ PYTHON_DIR }}"
 
     - name: Run INSTALL command for python 3.8 installation
       become: yes
-      shell: make altinstall
+      command: make -j4 altinstall
       args:
-        chdir: /home/centos/Python-3.8.5
+        chdir: "{{ PYTHON_DIR }}"
 
     - name: Remove previously existing python3 configuration
       become: yes
-      shell: rm -f /usr/bin/python3
-      args:
-        chdir: /home/centos
+      file:
+        path: /usr/bin/python3
+        state: absent
 
     - name: Reset Python3 version to Python3.8 installation
       become: yes
       shell: ln -s /usr/local/bin/python3.8 /usr/bin/python3
-      args:
-        chdir: /home/centos
 
     - name: Get repo OpenDistro Elasticsearch via RPM package
       become: yes
-      shell: curl https://d3g5vo6xdbdb9a.cloudfront.net/yum/opendistroforelasticsearch-artifacts.repo -o /etc/yum.repos.d/opendistroforelasticsearch-artifacts.repo
-      args:
-        chdir: /home/centos
+      get_url:
+        url: https://d3g5vo6xdbdb9a.cloudfront.net/yum/opendistroforelasticsearch-artifacts.repo
+        dest: /etc/yum.repos.d
 
-    - name: Install OpenDistro Elasticsearch via RPM package
+    - name: Install OpenDistro Elasticsearch
       become: yes
-      shell: yum install opendistroforelasticsearch-1.11.0-1 -y
-      args:
-        chdir: /home/centos
+      yum:
+        name: opendistroforelasticsearch-1.11.0-1
 
-    - name: Update links for OpenDistro Elasticsearch installation
+    - name: Remove link for OpenDistro Elasticsearch installation
       become: yes
-      shell: ln -s /usr/lib/jvm/java-1.8.0/lib/tools.jar /usr/share/elasticsearch/lib/
-      args:
-        chdir: /home/centos
+      file:
+        path: /usr/share/elasticsearch/lib/tools.jar
+        state: absent
+
+    - name: Add link for OpenDistro Elasticsearch installation
+      become: yes
+      command: ln -s /usr/lib/jvm/java-1.8.0/lib/tools.jar /usr/share/elasticsearch/lib/tools.jar
 
     - name: Remove opendistro_security plugin for current OpenDistro Elasticsearch installation
       become: yes
-      shell: bin/elasticsearch-plugin remove opendistro_security
-      args:
-        chdir: /usr/share/elasticsearch/
-
+      command: /usr/share/elasticsearch/bin/elasticsearch-plugin remove opendistro_security
 
     - name: Update OpenDistro Elasticsearch config file to disable security
       become: yes
       copy:
-          src: ./templates/opendistro_elasticsearch.sh
-          dest: /etc/elasticsearch/elasticsearch.yml
-          force: yes
+        src: ./templates/opendistro_elasticsearch.sh
+        dest: /etc/elasticsearch/elasticsearch.yml
+        force: yes
 
-    - name: Install OpenDistro Elasticsearch Kibana via RPM
+    - name: Install OpenDistro Kibana
       become: yes
-      shell: yum install opendistroforelasticsearch-kibana -y
-      args:
-        chdir: /home/centos
+      yum:
+        name: opendistroforelasticsearch-kibana
 
     - name: Remove opendistro_security plugin for current OpenDistro Kibana installation
       become: yes
-      shell: bin/kibana-plugin remove opendistro_security --allow-root
-      args:
-          chdir: /usr/share/kibana/
+      command: /usr/share/kibana/bin/kibana-plugin remove opendistro_security --allow-root
 
-    - name: Update OpenDistro Elasticsearch Kibana config file
+    - name: Update OpenDistro Kibana config file
       become: yes
       copy:
         src: ./templates/opendistro_kibana.sh
         dest: /etc/kibana/kibana.yml
         force: yes
 
+    - name: Get Espcap repository
+      git:
+        repo: https://github.com/vichargrave/espcap
+        dest: "{{ USER_HOME }}/espcap"
+
+    - name: Install requirements for Espcap Elasticsearch v7.x
+      become: yes
+      command: "pip3 install -r {{ USER_HOME }}/espcap/requirements-7.x.txt"
 
     - name: Copy TPS requirements.txt
       copy:
         src: ../../requirements.txt
-        dest: ~/tps-py-requirements.txt
+        dest: "{{ USER_HOME }}/tps-py-requirements.txt"
 
     - name: Install TPS Python requirements
-      command: sudo python3 -m pip install -r ~/tps-py-requirements.txt
-
-    - name: Get Espcap repository
-      shell: git clone https://github.com/vichargrave/espcap
-      args:
-        chdir: /home/centos
-
-    - name: Install requirements for Espcap Elasticsearch v7.x
       become: yes
-      shell: python3 -m pip install -r requirements-7.x.txt
-      args:
-        chdir: /home/centos/espcap
+      command: "pip3 install -r {{ USER_HOME }}/tps-py-requirements.txt"
