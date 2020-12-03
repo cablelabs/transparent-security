@@ -21,7 +21,6 @@
     aggregate: "{{ topo_dict.switches.aggregate }}"
     core: "{{ topo_dict.switches.core }}"
     host1: "{{ topo_dict.hosts.host1 }}"
-#    host2: "{{ topo_dict.hosts.host2 }}"
     inet: "{{ topo_dict.hosts.inet }}"
     ae: "{{ topo_dict.hosts.ae }}"
     ws_calls:
@@ -38,12 +37,6 @@
           switch_mac: "{{ aggregate.mac }}"
           device_mac: "{{ host1.mac }}"
         ok_status: 201
-#      - url: "http://{{ sdn_ip }}:{{ sdn_port }}/dataInspection"
-#        body:
-#          device_id: "{{ aggregate.id }}"
-#          switch_mac: "{{ aggregate.mac }}"
-#          device_mac: "{{ host2.mac }}"
-#        ok_status: 201
   tasks:
     - name: Web service calls to make
       debug:
