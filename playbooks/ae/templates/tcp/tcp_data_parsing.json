@@ -1191,11 +1191,25 @@
               String ipVersion = tsRawData.substring(76, 77);
               if( etherType == '0800' && ipVersion == '4')
               {
-                 ctx.ts.INTMetadataSourceMetadataOriginatingMac = tsRawData.substring(180, 192);
+                   String rawOriginatingMac = tsRawData.substring(180, 192);
+                StringBuilder formattedOriginatingMac = new StringBuilder();
+                for(int i = 0; i < rawOriginatingMac.length();)
+                  {
+                      formattedOriginatingMac.append(rawOriginatingMac.substring(i++, ++i));
+                         if(i < rawOriginatingMac.length()) formattedOriginatingMac.append(":");
+                }
+              ctx.ts.INTMetadataSourceMetadataOriginatingMac = formattedOriginatingMac.toString();
               }
               if( etherType == '86dd' && ipVersion == '6')
               {
-                  ctx.ts.INTMetadataSourceMetadataOriginatingMac = tsRawData.substring(220, 232);
+                   String rawOriginatingMac = tsRawData.substring(220, 232);
+                  StringBuilder formattedOriginatingMac = new StringBuilder();
+                  for(int i = 0; i < rawOriginatingMac.length();)
+                  {
+                      formattedOriginatingMac.append(rawOriginatingMac.substring(i++, ++i));
+                         if(i < rawOriginatingMac.length()) formattedOriginatingMac.append(":");
+                }
+                  ctx.ts.INTMetadataSourceMetadataOriginatingMac = formattedOriginatingMac.toString();
               }
         """,
           "ignore_failure" : true

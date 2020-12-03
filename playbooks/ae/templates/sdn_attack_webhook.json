@@ -2,7 +2,7 @@
   "type": "custom_webhook",
   "name": "SDN_Webhook",
   "custom_webhook": {
-    "path": "/aggAttack",
+    "path": "aggAttack",
     "header_params": {
       "Content-Type": "application/json"
     },

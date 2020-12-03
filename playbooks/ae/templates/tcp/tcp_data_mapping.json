@@ -105,6 +105,18 @@
             "isIpv6" : {
               "type" : "keyword"
             },
+            "IPv4SrcIP": {
+               "type" : "keyword"
+            },
+            "IPv6SrcIP": {
+               "type" : "keyword"
+            },
+          "IPv4DestIP":{
+              "type" : "keyword"
+            },
+          "IPv6DestIP":{
+              "type" : "keyword"
+            },
             "INTMetadataSourceMetadataOriginatingMac" : {
               "type" : "keyword"
             },
