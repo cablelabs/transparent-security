@@ -11,7 +11,7 @@ cygrpc
 grpcio
 python-dateutil
 flask
-flask_restful
+flask-restful-swagger-3
 ipaddress
 netaddr
 mock==4.0.2
