@@ -105,9 +105,21 @@
           "IPVersion": {
             "type": "keyword"
           },
+          "IPv4SrcIP": {
+               "type" : "keyword"
+            },
           "IPvClass": {
             "type": "keyword"
           },
+          "IPv6SrcIP": {
+               "type" : "keyword"
+            },
+          "IPv4DestIP":{
+              "type" : "keyword"
+            },
+          "IPv6DestIP":{
+              "type" : "keyword"
+            },
           "IPvFlow": {
             "type": "keyword"
           },
