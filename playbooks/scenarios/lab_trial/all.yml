@@ -22,6 +22,9 @@
 # Data Drop scenarios
 - import_playbook: all-data-drop.yml
 
+# Drop Reporting scenarios
+- import_playbook: all-drop-rpt.yml
+
 # Packet Flood scenarios
 - import_playbook: all-pkt-flood.yml
 

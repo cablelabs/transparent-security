@@ -1,0 +1,41 @@
+# Copyright (c) 2020 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# Simple scenario where packets are sent through 3 devices and only the last
+# one will be demonstrating dropped packets
+---
+## Refresh lab_trial environment config
+- import_playbook: restart.yml
+
+# Data Drop scenarios for UDP and IPv4
+- import_playbook: drop-rpt.yml
+  vars:
+    scenario_send_protocol: UDP
+    scenario_send_ip_version: 4
+
+# Data Drop scenarios for UDP and IPv6
+- import_playbook: drop-rpt.yml
+  vars:
+    scenario_send_protocol: UDP
+    scenario_send_ip_version: 6
+
+# Data Drop scenarios for TCP and IPv4
+- import_playbook: drop-rpt.yml
+  vars:
+    scenario_send_protocol: TCP
+    scenario_send_ip_version: 4
+
+# Data Drop scenarios for TCP and IPv6
+- import_playbook: drop-rpt.yml
+  vars:
+    scenario_send_protocol: TCP
+    scenario_send_ip_version: 6
