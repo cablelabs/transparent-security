@@ -11,13 +11,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
+# Copy TPS source from orchestrator to all hosts
+- import_playbook: ../general/setup_source.yml
+  vars:
+    host_val:
+      - hosts
+    trans_sec_source_dir: "{{ orch_trans_sec_dir }}"
+    python_unit_tests: false
+
+# Copy TPS source from orchestrator to all switches
 - import_playbook: ../general/setup_source.yml
   vars:
     host_val:
       - switches
-      - hosts
     trans_sec_source_dir: "{{ orch_trans_sec_dir }}"
     python_unit_tests: false
+    install_tps_python: false
 
 # Create virtual interfaces on switches
 - import_playbook: setup_virt_eth.yml
@@ -36,6 +45,7 @@
     switches:
       - "{{ scenario_name }}"
     p4_pkg: "{{ scenario_name }}"
+
 
 # Start SDN Controller
 - import_playbook: ../general/start_service.yml

@@ -137,8 +137,8 @@ def __log_std_packet(ether_pkt, ip_pkt, ip_proto, pkt_len):
     logger.warning('Packet data - [%s]', int_data)
 
 
-def __log_drop_rpt(ip_pkt):
-    logger.info('Logging Drop Report packet')
+def __log_drop_rpt(ip_pkt, end_proc_upon_receipt=True):
+    logger.info('Logging Drop Report packet then exit')
     udp_pkt = UDP(_pkt=ip_pkt.payload)
 
     if not udp_pkt:
@@ -154,6 +154,12 @@ def __log_drop_rpt(ip_pkt):
             drop_count=drop_rpt_pkt.drop_count,
         )
         logger.warning('Drop Report data - [%s]', int_data)
+
+        if end_proc_upon_receipt:
+            # Output as json string to stdout
+            #  (i.e. for parsing by ansible playbook)
+            print(int_data)
+            exit(0)
 
 
 def __log_int_packet(ether_pkt, ip_pkt, int_hops, pkt_len):

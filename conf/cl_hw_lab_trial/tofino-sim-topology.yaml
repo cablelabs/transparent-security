@@ -1,0 +1,105 @@
+# Copyright (c) 2020 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+
+# IP values must be the third address in an IPv4 /30 CIDR block for running CI
+hosts:
+  host1:
+    name: host1
+    id: 2
+    ip: 192.168.1.2
+    intf_name: ens1f0
+    user: admin
+    public_ip: 10.197.123.14
+    tunnels:
+      - host: aggregate
+    ipv6: 0000:0000:0000:0000:0000:0001:0001:0002
+    ip_port: any
+    mac: 00:11:0a:68:75:20
+    type: webcam
+  inet:
+    name: inet
+    id: 4
+    ip: 192.168.1.10
+    intf_name: ens1f0
+    user: admin
+    public_ip: 10.197.123.16
+    tunnels:
+      - host: core
+    ipv6: 0000:0000:0000:0000:0000:0001:0001:0003
+    ip_port: any
+    mac: 8c:dc:d4:af:6f:0c
+    type: nas
+  ae:
+    name: ae
+    id: 13
+    ip: 192.168.1.14
+    intf_name: ens1f0
+    user: admin
+    public_ip: 10.197.123.12
+    tunnels:
+      - host: core
+    ipv6: 0000:0000:0000:0000:0000:0002:0001:0003
+    ip_port: any
+    mac: 8c:dc:d4:af:75:e4
+    type: server
+switches:
+  aggregate:
+    name: aggregate
+    id: 0
+    int_id: 123
+    tofino_bin: /etc/transparent-security/p4/aggregate.tofino/pipe/tofino.bin
+    ctx_json: /etc/transparent-security/p4/aggregate.tofino/pipe/context.json
+    ip: 10.197.1.13
+    user: admin
+    type: aggregate
+    arch: tna
+    mac: 00:90:fb:62:c5:69
+    grpc: 10.197.1.13:50052
+    ipv6_term_host: inet
+    tunnels:
+      - host: core
+        switch_port: 128
+        speed: BF_SPEED_10G
+        type: default
+      - host: host1
+        switch_port: 136
+        speed: BF_SPEED_10G
+  core:
+    name: core
+    id: 0
+    int_id: 234
+    tofino_bin: /etc/transparent-security/p4/core.tofino/pipe/tofino.bin
+    ctx_json: /etc/transparent-security/p4/core.tofino/pipe/context.json
+    ip: 10.197.1.21
+    user: admin
+    clone_egress: 144
+    telemetry_rpt:
+      type: host
+      name: ae
+    type: core
+    arch: tna
+    tunnels:
+      - host: aggregate
+        switch_port:  128
+        speed: BF_SPEED_10G
+        type: default
+      - host: inet
+        switch_port:  136
+        speed: BF_SPEED_10G
+      - host: ae
+        switch_port:  144
+        speed: BF_SPEED_10G
+    mac: 00:90:fb:62:c4:a9
+    grpc: 10.197.1.21:50052
+    ipv6_term_host: inet

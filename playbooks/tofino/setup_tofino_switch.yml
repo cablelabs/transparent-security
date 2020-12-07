@@ -40,7 +40,7 @@
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     switch_arch: "{{ topo_dict.switches[p4_pkg].arch }}"
     tmplt_dir: "{{ trans_sec_dir }}/playbooks/tofino/templates"
-    local_srvc_script_tmplt_file: "{{ tmplt_dir }}/switchd_service.sh.j2"
+    local_srvc_script_tmplt_file: ../tofino/templates/switchd_service.sh.j2
     port_to_wait: "{{ grpc_port }}"
     wait_timeout: 90
     prog_name: "{{ p4_pkg }}"

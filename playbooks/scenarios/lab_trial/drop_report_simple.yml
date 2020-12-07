@@ -1,0 +1,150 @@
+# Copyright (c) 2020 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# Simple scenario where packets are sent through 3 devices and only the last
+# one will be demonstrating dropped packets
+---
+# Start packet mitigation
+- hosts: controller
+  gather_facts: no
+  tasks:
+    - name: Start packet mitigation
+      uri:
+        url: "http://{{ sdn_ip }}:{{ sdn_port }}/aggAttack"
+        method: POST
+        body_format: "{{ attack.body_format | default('json') }}"
+        body:
+          src_mac: "{{ sender.mac }}"
+          dst_ip: "{% if ip_version|int == 4 %}{{ receiver.ip }}{% else %}{{ receiver.ipv6 }}{% endif %}"
+          dst_port: "{{ send_port }}"
+        status_code: 201
+
+# Generate packets from the sender
+- hosts: "{{ send_host }}"
+  become: yes
+  gather_facts: no
+  vars:
+    send_msg: "{{ the_message | default('To generate drop report') }}"
+    sender_intf: "{{ sender.intf_name }}"
+    sender_log_file: "{{ log_dir }}/dr-ip-{{ ip_ver }}-proto-{{ protocol }}.log"
+    protocol: "{{ send_protocol | default('UDP') }}"
+    ip_ver: "{{ ip_version | default('4') }}"
+    receiver_ip: "{{ receiver.ip if ip_ver == '4' else receiver.ipv6 }}"
+    receiver_mac: "{{ receiver.mac }}"
+    src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 1) }}"
+  tasks:
+    - debug:
+        msg: "Generating packets"
+
+    - name: Create sender log directory {{ log_dir }}
+      file:
+        path: "{{ log_dir }}"
+        state: directory
+
+    - name: Create sender log file {{ sender_log_file }}
+      file:
+        path: "{{ sender_log_file }}"
+        state: touch
+
+    - name: Create send command
+      set_fact:
+        send_cmd: >-
+          {{ trans_sec_dir }}/trans_sec/device_software/send_packets.py
+          -z {{ sender_intf }}
+          -f {{ sender_log_file }}
+          -sp {{ src_port }} -p {{ send_port }}
+          -r {{ receiver_ip }}
+          -m '{{ send_msg }}'
+          -pr {{ send_protocol }}
+          -c {{ send_packet_count }}
+          -i 0.005
+
+    - name: Add known {{ receiver_mac }} to send_packets.py call
+      set_fact:
+        send_cmd: "{{ send_cmd }} -s {{ receiver_mac }}"
+      when: arp_discovery is not defined or not arp_discovery|bool
+
+    - name: Sending packets with command {{ send_cmd }}
+      command: "{{ send_cmd }}"
+      register: cmd_out
+      changed_when: cmd_out is not failed
+      async: 180
+
+# Listen and wait for Drop report
+- hosts: ae
+  become: yes
+  gather_facts: no
+  vars:
+    receive_timeout: "{{ receiver_timeout_seconds | default(30) }}"
+    ip_ver: "{{ ip_version | default('4') }}"
+    receiver_intf: "{{ ae_ip_intf | default('eth0') }}"
+    protocol: "{{ send_protocol | default('UDP') }}"
+    receiver_log_file: "{{ log_dir }}/dr-ip-{{ ip_ver }}-proto-{{ protocol }}.log"
+  tasks:
+    - debug:
+        msg: "Wait for drop report for up to {{ receive_timeout }} seconds"
+
+    - name: Create receiver log directory {{ log_dir }}
+      file:
+        path: "{{ log_dir }}"
+        state: directory
+
+    - name: Delete {{ receiver_log_file }}
+      file:
+        path: "{{ receiver_log_file }}"
+        state: absent
+
+    - name: Create receiver log file {{ receiver_log_file }}
+      file:
+        path: "{{ receiver_log_file }}"
+        state: touch
+
+    - name: Create receive packets command with the receiver_intf variable
+      set_fact:
+        receive_cmd: >
+          {{ trans_sec_dir }}/trans_sec/device_software/receive_packets.py
+          -i {{ receiver_intf }} -f {{ receiver_log_file }} -d {{ receive_timeout }} -dr True
+        register: receive_out
+
+    - name: Receive and log packets with {{ receive_cmd }}
+      command: "{{ receive_cmd }}"
+      register: receive_out
+      changed_when: receive_out is not failed
+
+    ## hash {{ send_port }} {{ sender.mac }} {{ receiver.ip }} {{ receiver.ipv6 }}
+    - name: Display the receive stdout
+      debug:
+        var: receive_out.stdout
+
+    - name: Get count & hash from stdout
+      set_fact:
+        drop_stats: "{{ receive_out.stdout }}"
+
+    - name: Fail when {{ drop_stats.drop_count }} != {{ send_packet_count }}
+      fail:
+        msg: "{{ drop_stats.drop_count }} != {{ send_packet_count }}"
+      when: drop_stats.drop_count != send_packet_count
+
+# Stop packet mitigation
+- hosts: controller
+  gather_facts: no
+  tasks:
+    - name: Stop packet mitigation
+      uri:
+        url: "http://{{ sdn_ip }}:{{ sdn_port }}/aggAttack"
+        method: DELETE
+        body_format: "{{ attack.body_format | default('json') }}"
+        body:
+          src_mac: "{{ sender.mac }}"
+          dst_ip: "{% if ip_version|int == 4 %}{{ receiver.ip }}{% else %}{{ receiver.ipv6 }}{% endif %}"
+          dst_port: "{{ send_port }}"
+        status_code: 201

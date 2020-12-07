@@ -4,6 +4,8 @@ all:
       hosts:
         localhost:
           ansible_connection: local
+          ansible_user: {{ host_user }}
+          ansible_inventory_file: {{ remote_ansible_inventory }}
           trans_sec_dir: /home/ubuntu/transparent-security
     hosts:
       hosts:
@@ -35,6 +37,7 @@ all:
     sde_dir: {{ sde_dir }}
     sdn_ip: {{ sdn_ip }}
     ae_ip: {{ ae_ip }}
+    ae_ip_intf: eth0
     sdn_port: {{ sdn_port | default('9998') }}
     tofino_model_port: {{ tofino_model_port | default('8000') }}
     grpc_port: {{ grpc_port | default('50052') }}

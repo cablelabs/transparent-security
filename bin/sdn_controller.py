@@ -41,6 +41,13 @@ def get_args():
     parser.add_argument('-f', '--logfile',
                         help='File to log to defaults to console',
                         required=False, default=None)
+    parser.add_argument('-ainv', '--ansible-inventory',
+                        help='The ansible inventory for applying playbooks to '
+                             'the switches',
+                        required=True, default=None)
+    parser.add_argument('-u', '--controller-user',
+                        help='The ansible user to apply playbooks to switches',
+                        required=True, default=None)
     parser.add_argument('-ld', '--log-dir', type=str, required=True,
                         default=default_logs)
     parser.add_argument('-t', '--topo', help='Path to topology json',
@@ -51,7 +58,7 @@ def get_args():
     parser.add_argument('-s', '--switch-config-dir', dest='switch_config_dir',
                         help='Direction with Switch configurations',
                         required=True)
-    parser.add_argument('-a', '--ae-ip', dest='ae_ip',
+    parser.add_argument('-aip', '--ae-ip', dest='ae_ip',
                         help='The IP of the machine to send drop reports',
                         required=False)
     parser.add_argument('-drf', '--drop-rpt-freq', dest='drop_rpt_freq',
@@ -147,6 +154,8 @@ def main():
         topo=topo,
         controllers=controllers,
         http_server_port=args.http_server_port,
+        ansible_inventory=args.ansible_inventory,
+        controller_user=args.controller_user,
         ae_ip_str=args.ae_ip).start()
 
 

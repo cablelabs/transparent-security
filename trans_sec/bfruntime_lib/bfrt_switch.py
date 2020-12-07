@@ -10,13 +10,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import logging
+import os
 from abc import ABC, abstractmethod
 from threading import Thread
 
 import grpc
 import tofino.bfrt_grpc.client as bfrt_client
+import yaml
 from bfrt_grpc.client import KeyTuple, DataTuple
 from google.rpc import code_pb2, status_pb2
 from tofino.bfrt_grpc import bfruntime_pb2
@@ -54,9 +55,10 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
 
         self.digest_thread = Thread(target=self.receive_digests)
 
-    def start(self):
+    def start(self, ansible_inventory, controller_user):
         logger.info('Starting switch - [%s]', self.name)
         self.interface.clear_all_tables()
+        self.__configure_ports(ansible_inventory, controller_user)
         self.add_switch_id()
         self.digest_thread.start()
         self.__setup_arp_multicast()
@@ -64,6 +66,28 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
 
     def stop(self):
         self.digest_thread.join()
+
+    def __configure_ports(self, ansible_inventory, controller_user):
+        logger.info('Configuring switch ports using inventory - [%s]',
+                    ansible_inventory)
+        with open(ansible_inventory, 'r') as inv_file:
+            inv_dict = yaml.safe_load(inv_file)
+
+        trans_sec_dir = inv_dict['all']['vars']['orch_trans_sec_dir']
+        playbook = "{}/playbooks/tofino/conf_switch_ports.yml".format(
+            trans_sec_dir)
+        extra_vars = {
+            "host_val": self.name,
+            "ports": self.sw_info['tunnels']
+        }
+        cmd = 'su - {} -c "/usr/local/bin/ansible-playbook -i {} {} '\
+              '--extra-vars=\\"{}\\""'.format(
+                controller_user, ansible_inventory, playbook, str(extra_vars))
+        ret_val = os.system(cmd)
+        if ret_val != 0:
+            logger.error('os.system command [%s] failed with - [%s]',
+                         cmd, ret_val)
+        logger.info('Playbook command [%s] return value - [%s]', cmd, ret_val)
 
     def __setup_arp_multicast(self, node_id=1, rid=1, lags=[], mgid=1,
                               mc_nids=[1], l1_xids=[0]):
@@ -97,7 +121,7 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
     def __setup_default_port(self):
         dflt_port = self.__find_dflt_port()
         if dflt_port:
-            self.update_default_port(dflt_port[0])
+            self.update_default_port(dflt_port)
 
     def __find_node_ports(self):
         """
@@ -112,7 +136,7 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
         Returns the default port number or None if not defined
         :return:
         """
-        return self.__find_tunnel_ports('default')
+        return self.__find_tunnel_ports('default')[0]
 
     def __find_tunnel_ports(self, port_type=None):
         """
