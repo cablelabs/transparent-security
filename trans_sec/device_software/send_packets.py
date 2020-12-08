@@ -132,7 +132,8 @@ def device_send(args):
                         args.count, interface, args.interval)
             sendp(pkt, iface=interface, verbose=2, count=args.count,
                   inter=args.interval)
-            time.sleep(args.iter_delay)
+            if i != args.iterations - 1:
+                time.sleep(args.iter_delay)
 
     logger.info('Done')
     return
@@ -242,10 +243,12 @@ def __gen_int_pkt(args, ip_ver, src_mac):
     # TODO - Find a better way to calculate PAYLOAD_LEN using args.msg
     if args.protocol == 'UDP':
         udp_int_len = trans_sec.consts.UDP_INT_HDR_LEN + (shim_len * 4) \
-                      + trans_sec.consts.UDP_HDR_LEN + trans_sec.consts.PAYLOAD_LEN
+                      + trans_sec.consts.UDP_HDR_LEN \
+                      + trans_sec.consts.PAYLOAD_LEN
     elif args.protocol == 'TCP':
         udp_int_len = trans_sec.consts.UDP_INT_HDR_LEN + (shim_len * 4) \
-                      + trans_sec.consts.TCP_HDR_LEN + trans_sec.consts.PAYLOAD_LEN
+                      + trans_sec.consts.TCP_HDR_LEN \
+                      + trans_sec.consts.PAYLOAD_LEN
     ipv4_len = trans_sec.consts.IPV4_HDR_LEN + udp_int_len
     ipv6_len = trans_sec.consts.IPV6_HDR_LEN + udp_int_len
     dst_mac = __get_dst_mac(args)

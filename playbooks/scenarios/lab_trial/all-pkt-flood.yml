@@ -27,7 +27,7 @@
     di_send_packet_count: 150
     di_min_rec_packet_count: 99
     di_send_loops: 2
-    di_send_loop_delay: 10
+    di_send_loop_delay: 15
     arp_discovery: True
     sample_rate: 0
     ae_state: restarted
@@ -41,7 +41,7 @@
     di_send_packet_count: 150
     di_min_rec_packet_count: 99
     di_send_loops: 2
-    di_send_loop_delay: 10
+    di_send_loop_delay: 15
     arp_discovery: True
     sample_rate: 0
     ae_state: restarted
@@ -55,7 +55,7 @@
     di_send_packet_count: 150
     di_min_rec_packet_count: 99
     di_send_loops: 2
-    di_send_loop_delay: 10
+    di_send_loop_delay: 15
     arp_discovery: True
     sample_rate: 0
     ae_state: restarted
@@ -69,7 +69,7 @@
     di_send_packet_count: 150
     di_min_rec_packet_count: 99
     di_send_loops: 2
-    di_send_loop_delay: 10
+    di_send_loop_delay: 15
     arp_discovery: True
     sample_rate: 0
     ae_state: restarted
