@@ -25,6 +25,15 @@
         body_format: json
       register: udp_template_response
 
+    - name: POST call to create script function to generrate drop report hash
+      uri:
+          url: "http://localhost:9200/_scripts/calculateKeyHash"
+          method: POST
+          return_content: yes
+          body: "{{ lookup('file','./templates/drop_report_hash_script.json') }}"
+          body_format: json
+      register: drop_report_hash_response
+
     - name: POST call to create data parsing pipeline for UDP v4 and UDP v6 for incoming data in Elasticsearch
       uri:
         url: "http://localhost:9200/_ingest/pipeline/ts_parsing"
