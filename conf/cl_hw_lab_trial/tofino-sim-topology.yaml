@@ -70,7 +70,7 @@ switches:
     tunnels:
       - host: core
         switch_port: 128
-        speed: BF_SPEED_10G
+        speed: BF_SPEED_40G
         type: default
       - host: host1
         switch_port: 136
@@ -83,7 +83,7 @@ switches:
     ctx_json: /etc/transparent-security/p4/core.tofino/pipe/context.json
     ip: 10.197.1.21
     user: admin
-    clone_egress: 144
+    clone_egress: 148
     telemetry_rpt:
       type: host
       name: ae
@@ -91,15 +91,15 @@ switches:
     arch: tna
     tunnels:
       - host: aggregate
-        switch_port:  128
-        speed: BF_SPEED_10G
+        switch_port:  132
+        speed: BF_SPEED_40G
         type: default
       - host: inet
-        switch_port:  136
+        switch_port:  140
         speed: BF_SPEED_10G
       - host: ae
-        switch_port:  144
+        switch_port:  148
         speed: BF_SPEED_10G
     mac: 00:90:fb:62:c4:a9
-    grpc: 10.197.1.21:50052
+    grpc: 10.197.1.14:50052
     ipv6_term_host: inet
