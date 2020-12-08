@@ -12,6 +12,7 @@
 # limitations under the License.
 import abc
 import datetime
+import ipaddress
 import logging
 import threading
 import time
@@ -22,11 +23,12 @@ from scapy.layers.inet import IP, UDP, TCP
 from scapy.layers.inet6 import IPv6
 from scapy.layers.l2 import Ether
 
-from trans_sec.consts import UDP_PROTO, UDP_TRPT_DST_PORT, IPV4_TYPE, \
-    UDP_INT_DST_PORT, IPV6_TYPE
+from trans_sec.consts import (UDP_PROTO, UDP_TRPT_DST_PORT, IPV4_TYPE,
+                              UDP_INT_DST_PORT, IPV6_TYPE)
 from trans_sec.packet.inspect_layer import (
     IntHeader, IntMeta1, IntMeta2, IntShim, SourceIntMeta, TelemetryReport,
     EthInt)
+from trans_sec.utils import tps_utils
 
 logger = logging.getLogger('oinc')
 
@@ -54,16 +56,25 @@ class PacketAnalytics(object):
         logger.debug("Started AE with attack call to [%s/%s]",
                      self.sdn_interface, self.sdn_attack_context)
 
-    def start_sniffing(self, iface, udp_dport=UDP_TRPT_DST_PORT):
+    def start_sniffing(self, iface, drop_iface=None,
+                       udp_dport=UDP_TRPT_DST_PORT):
         """
         Starts the sniffer thread
-        :param iface: the interface to sniff
+        :param iface: the interface to sniff for telemetry reports
+        :param drop_iface: the interface to sniff for drop reports
         :param udp_dport: the UDP dport to sniff (default 555)
         """
-        logger.info("AE monitoring iface %s", iface)
+        logger.info("AE monitoring iface [%s], drop iface [%s]",
+                    iface, drop_iface)
         sniff(iface=iface,
               prn=lambda packet: self.handle_packet(packet, udp_dport),
               stop_filter=lambda p: self.sniff_stop.is_set())
+
+        # TODO - Implement with Issue #351
+        # if drop_iface:
+        #     sniff(iface=drop_iface,
+        #           prn=lambda packet: self.handle_drop_rpt(packet, udp_dport),
+        #           stop_filter=lambda p: self.sniff_stop.is_set())
 
     def stop_sniffing(self):
         """
@@ -80,6 +91,16 @@ class PacketAnalytics(object):
         """
         return self.process_packet(packet, udp_dport)
 
+    # TODO - Implement with Issue #351
+    # def handle_drop_rpt(self, packet, udp_dport):
+    #     """
+    #     Determines whether or not to process this packet
+    #     :param packet: the packet to process
+    #     :param udp_dport: the UDP protocol dport value to filter
+    #     :return T/F - True when an attack has been triggered
+    #     """
+    #     return self.process_drop_rpt(packet, udp_dport)
+
     def _send_attack(self, **attack_dict):
         """
         Sends an HTTP POST to the SDN controllers HTTP interface 'attack'
@@ -88,6 +109,15 @@ class PacketAnalytics(object):
         """
         logger.info('Start attack - %s', attack_dict)
         self.sdn_interface.post(self.sdn_attack_context, attack_dict)
+
+    def _stop_attack(self, **attack_dict):
+        """
+        Sends an HTTP POST to the SDN controllers HTTP interface 'attack'
+        :param attack_dict: the data to send
+        :raises Exception: due to the remote HTTP POST
+        """
+        logger.info('Start attack - %s', attack_dict)
+        self.sdn_interface.delete(self.sdn_attack_context, attack_dict)
 
     @abc.abstractmethod
     def process_packet(self, packet, udp_dport=UDP_INT_DST_PORT):
@@ -98,6 +128,17 @@ class PacketAnalytics(object):
         :return: T/F - True when an attack has been triggered
         """
         return
+
+    # TODO - Implement with Issue #351
+    # @abc.abstractmethod
+    # def process_drop_rpt(self, packet, udp_dport=UDP_INT_DST_PORT):
+    #     """
+    #     Processes a drop packet to determine if an attack no longer occurring
+    #     :param packet: the packet to process
+    #     :param udp_dport: the UDP port value on which to filter
+    #     :return: T/F - True when an attack should no longer be triggered
+    #     """
+    #     return
 
 
 def extract_int_data(ether_pkt):
@@ -195,6 +236,7 @@ class Oinc(PacketAnalytics):
     """
     Oinc implementation of PacketAnalytics
     """
+
     def __init__(self, sdn_interface, packet_count=100, sample_interval=60):
         super(self.__class__, self).__init__(sdn_interface, packet_count,
                                              sample_interval)
@@ -208,6 +250,10 @@ class Oinc(PacketAnalytics):
                 self.__packet_with_mac(mac, src_ip, dst_ip, dst_port,
                                        packet_size)
         self.__manage_tree()
+
+    # TODO - Implement with Issue #351
+    # def process_drop_rpt(self, packet, udp_dport=UDP_INT_DST_PORT):
+    #     pass
 
     def __parse_tree(self, packet):
         """
@@ -229,12 +275,12 @@ class Oinc(PacketAnalytics):
             mac = macs[0]
             src_ips = search.findall_by_attr(
                 mac, info.get('srcIP'), name='name', maxlevel=2, maxcount=1)
-            if len(src_ips) is not 0:
+            if len(src_ips) != 0:
                 src_ip = src_ips[0]
                 dst_ips = search.findall_by_attr(
                     src_ip, info.get('dstIP'), name='name', maxlevel=2,
                     maxcount=1)
-                if len(dst_ips) is not 0:
+                if len(dst_ips) != 0:
                     dst_ip = dst_ips[0]
                     logger.info('Processing source IPs - %s', src_ips)
                     dst_ports = search.findall_by_attr(
@@ -284,11 +330,8 @@ class Oinc(PacketAnalytics):
             try:
                 self._send_attack(**dict(
                     src_mac=mac.name,
-                    src_ip=src_ip.name,
                     dst_ip=dst_ip.name,
-                    dst_port=dst_port.name,
-                    packet_size=packet_size.name,
-                    attack_type='UDP Flood'))
+                    dst_port=dst_port.name))
             except Exception as e:
                 logger.error('Unexpected error [%s]', e)
 
@@ -303,11 +346,18 @@ class SimpleAE(PacketAnalytics):
     attack notifications is based on the unique hash of the extracted INT data
     """
     def __init__(self, sdn_interface, packet_count=100, sample_interval=60,
-                 sdn_attack_context='gwAttack'):
+                 sdn_attack_context='gwAttack', drop_count=3):
         super(self.__class__, self).__init__(
             sdn_interface, packet_count, sample_interval, sdn_attack_context)
         # Holds the last time an attack call was issued to the SDN controller
         self.attack_map = dict()
+        self.attack_payload = dict()
+
+        # same key as above, value tuple (int, int) first holds the drop count
+        # and the second holds the number of drop reports without receiving
+        # any associated packets
+        self.drop_rpt_map = dict()
+        self.drop_count = drop_count
 
     def process_packet(self, packet, udp_dport=UDP_INT_DST_PORT):
         """
@@ -362,8 +412,29 @@ class SimpleAE(PacketAnalytics):
         :param int_data: the data to process
         :return:
         """
-        attack_map_key = hash(str(int_data))
+        ip_addr = ipaddress.ip_address(int_data['dstAddr'])
+        ipv4 = '0.0.0.0'
+        ipv6 = '::'
+        if ip_addr.version == 4:
+            ipv4 = str(ip_addr)
+        else:
+            ipv6 = str(ip_addr)
+        attack_map_key = tps_utils.create_attack_hash(
+            mac=int_data['devMac'], port=int_data['dstPort'], ip_addr=ipv4,
+            ipv6_addr=ipv6)
         logger.debug('Attack map key - [%s]', attack_map_key)
+
+        if not self.drop_rpt_map.get(attack_map_key):
+            logger.debug('Updating drop_rpt_map entry with zeros - [%s]',
+                         attack_map_key)
+            self.drop_rpt_map[attack_map_key] = (0, 0)
+        else:
+            logger.debug('Creating drop_rpt_map entry with key - [%s]',
+                         attack_map_key)
+            tuple_val = self.drop_rpt_map[attack_map_key]
+            new_tuple = (tuple_val[0], 0)
+            self.drop_rpt_map[attack_map_key] = new_tuple
+
         if not self.count_map.get(attack_map_key):
             self.count_map[attack_map_key] = list()
 
@@ -384,11 +455,8 @@ class SimpleAE(PacketAnalytics):
 
             attack_dict = dict(
                 src_mac=int_data['devMac'],
-                src_ip=int_data['devAddr'],
-                dst_ip=int_data['dstAddr'],
                 dst_port=int_data['dstPort'],
-                packet_size=int_data['packetLen'],
-                attack_type='UDP Flood')
+                dst_ip=int_data['dstAddr'])
 
             # Send to SDN
             last_attack = self.attack_map.get(attack_map_key)
@@ -397,6 +465,7 @@ class SimpleAE(PacketAnalytics):
                             last_attack)
                 try:
                     self.attack_map[attack_map_key] = time.time()
+                    self.attack_payload[attack_map_key] = attack_dict
                     self._send_attack(**attack_dict)
                     return True
                 except Exception as e:
@@ -412,6 +481,60 @@ class SimpleAE(PacketAnalytics):
             logger.debug('No attack detected - count [%s]', count)
             return False
 
+    # TODO - Implement with Issue #351
+    # def process_drop_rpt(self, packet, udp_dport=UDP_INT_DST_PORT):
+    #     """
+    #     Processes a drop report packet to determine if an attack stopped
+    #     :param packet: the packet to process
+    #     :param udp_dport: the UDP port value on which to filter
+    #     :return: T/F - True when an attack has been triggered
+    #     """
+    #     logger.debug('Packet data - [%s]', packet.summary())
+    #     ip_pkt = None
+    #     protocol = None
+    #     try:
+    #         if packet[Ether].type == IPV4_TYPE:
+    #             ip_pkt = IP(_pkt=packet[Ether].payload)
+    #             protocol = ip_pkt.proto
+    #         elif packet[Ether].type == IPV6_TYPE:
+    #             ip_pkt = IPv6(_pkt=packet[Ether].payload)
+    #             protocol = ip_pkt.nh
+    #     except Exception as e:
+    #         logger.error('Unexpected error processing packet - [%s]', e)
+    #
+    #     if ip_pkt and protocol and protocol == UDP_PROTO:
+    #         udp_packet = UDP(_pkt=ip_pkt.payload)
+    #         logger.debug(
+    #             'udp sport - [%s] dport - [%s] - expected dport - [%s]',
+    #             udp_packet.sport, udp_packet.dport, udp_dport)
+    #         if (udp_packet.dport == udp_dport
+    #                 and udp_dport == UDP_TRPT_DST_PORT):
+    #             drop_rpt_pkt = DropReport(_pkt=udp_packet.payload)
+    #             drop_data = dict(
+    #                 key_hash=drop_rpt_pkt.drop_tbl_keys,
+    #                 drop_count=drop_rpt_pkt.drop_count,
+    #             )
+    #
+    #             if self.drop_rpt_map.get(drop_data['key_hash']):
+    #                 old_count = self.drop_rpt_map[drop_data['key_hash']][0]
+    #                 if old_count != int(drop_data['drop_count']):
+    #                     self.drop_rpt_map[drop_data['key_hash']][0] = int(
+    #                         drop_data['drop_count'])
+    #                 else:
+    #                     self.drop_rpt_map[drop_data['key_hash']][1] += 1
+    #                     if (self.drop_rpt_map[drop_data['key_hash']][1]
+    #                             > self.drop_count):
+    #                         self._stop_attack(
+    #                             **self.attack_map[drop_data['key_hash']][1])
+    #                         return True
+    #                     else:
+    #                         return False
+    #         else:
+    #             logger.debug(
+    #                 'Cannot process UDP packet dport of - [%s], expected - '
+    #                 '[%s]', udp_packet.dport, udp_dport)
+    #             return False
+
 
 class IntLoggerAE(PacketAnalytics):
     """
@@ -426,6 +549,10 @@ class IntLoggerAE(PacketAnalytics):
         """
         logger.info('INT Packet data - [%s]', extract_int_data(packet[Ether]))
         return False
+
+    # TODO - Implement with Issue #351
+    # def process_drop_rpt(self, packet, udp_dport=UDP_INT_DST_PORT):
+    #     pass
 
 
 class LoggerAE(PacketAnalytics):
@@ -450,3 +577,7 @@ class LoggerAE(PacketAnalytics):
         :raises NotImplemented
         """
         raise NotImplemented
+
+    # TODO - Implement with Issue #351
+    # def process_drop_rpt(self, packet, udp_dport=UDP_INT_DST_PORT):
+    #     pass

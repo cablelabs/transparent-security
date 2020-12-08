@@ -13,8 +13,6 @@
 import socket
 from logging import getLogger
 
-import hashlib
-
 import ipaddress
 from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import Ether
@@ -31,6 +29,8 @@ from trans_sec import consts
 from trans_sec.controller.http_server_flask import SDNControllerServer
 
 # Logger stuff
+from trans_sec.utils import tps_utils
+
 logger = getLogger('ddos_sdn_controller')
 
 AGG_CTRL_KEY = 'aggregate'
@@ -92,52 +92,54 @@ class DdosSdnController:
             if controller == self.get_agg_controller():
                 logger.info("Creating drop report for controller: %s",
                             controller)
-                match_keys, drop_count = controller.count_dropped_packets()
-                logger.info("Match keys - [%s]", match_keys)
-                logger.info('Dropped packet count - [%s]', drop_count)
-                if match_keys and drop_count:
-                    key_list = []
-                    for key, value in match_keys.items():
-                        key_list.append(value['value'])
-                    logger.info("Match key list - %s", key_list)
-                    keys = int(hashlib.md5(str(key_list).encode()).hexdigest(),
-                               16)
-                else:
-                    keys = 0
-                    drop_count = 0
-                host_name = socket.gethostname()
-                sdn_ip = socket.gethostbyname(host_name)
-                ip_len = (IPV4_HDR_LEN + UDP_INT_HDR_LEN + DRPT_LEN
-                          + UDP_HDR_LEN + DRPT_PAYLOAD_LEN)
-                udp_int_len = ip_len - IPV4_HDR_LEN
-                udp_len = UDP_HDR_LEN + DRPT_PAYLOAD_LEN
-                drop_pkt = Ether(type=consts.IPV4_TYPE)
-                drop_pkt = drop_pkt / IP(
-                    dst=str(self.ae_ip), src=sdn_ip, len=ip_len,
-                    proto=consts.UDP_PROTO)
-                drop_pkt = drop_pkt / UdpInt(sport=consts.UDP_INT_SRC_PORT,
-                                             dport=consts.UDP_TRPT_DST_PORT,
-                                             len=udp_int_len)
-                drop_pkt = drop_pkt / DropReport(
-                    ver=consts.DRPT_VER,
-                    node_id=self.topo['switches']['aggregate']['int_id'],
-                    in_type=consts.DRPT_IN_TYPE,
-                    rpt_len=consts.DRPT_REP_LEN, md_len=consts.DRPT_MD_LEN,
-                    rep_md_bits=consts.DRPT_MD_BITS,
-                    domain_id=consts.TRPT_DOMAIN_ID,
-                    var_opt_bsmd=consts.DRPT_BS_MD,
-                    timestamp=int(time.time()),
-                    drop_count=drop_count,
-                    drop_tbl_keys=keys)
-                drop_pkt = drop_pkt / UDP(dport=consts.UDP_DRPT_DST_PORT,
-                                          sport=consts.UDP_DRPT_SRC_PORT,
-                                          len=udp_len)
-                drop_pkt = drop_pkt / 'tps drop report'
-                try:
-                    sendp(drop_pkt, verbose=2)
-                    logger.info("Sent Drop Report packet")
-                except Exception as e:
-                    logger.info("Unable to send drop report - [%s]", e)
+                drp_entries = controller.count_dropped_packets()
+                for match_keys, drop_count in drp_entries:
+                    if match_keys != 0:
+                        logger.debug('Match keys - [%s]', match_keys)
+                        attack_key = tps_utils.create_attack_hash(**match_keys)
+                        logger.debug('Attack key value - [%s]', attack_key)
+                        if attack_key:
+                            self.__send_drop_pkt(attack_key, drop_count)
+                    else:
+                        logger.debug('No drops to report')
+
+    def __send_drop_pkt(self, attack_key, drop_count):
+        host_name = socket.gethostname()
+
+        sdn_ip = socket.gethostbyname(host_name)
+        ip_len = (IPV4_HDR_LEN + UDP_INT_HDR_LEN + DRPT_LEN
+                  + UDP_HDR_LEN + DRPT_PAYLOAD_LEN)
+        udp_int_len = ip_len - IPV4_HDR_LEN
+        udp_len = UDP_HDR_LEN + DRPT_PAYLOAD_LEN
+        drop_pkt = Ether(type=consts.IPV4_TYPE)
+        drop_pkt = drop_pkt / IP(
+            dst=str(self.ae_ip), src=sdn_ip, len=ip_len,
+            proto=consts.UDP_PROTO)
+        drop_pkt = drop_pkt / UdpInt(sport=consts.UDP_INT_SRC_PORT,
+                                     dport=consts.UDP_TRPT_DST_PORT,
+                                     len=udp_int_len)
+        drop_pkt = drop_pkt / DropReport(
+            ver=consts.DRPT_VER,
+            node_id=self.topo['switches']['aggregate']['int_id'],
+            in_type=consts.DRPT_IN_TYPE,
+            rpt_len=consts.DRPT_REP_LEN, md_len=consts.DRPT_MD_LEN,
+            rep_md_bits=consts.DRPT_MD_BITS,
+            domain_id=consts.TRPT_DOMAIN_ID,
+            var_opt_bsmd=consts.DRPT_BS_MD,
+            timestamp=int(time.time()),
+            drop_count=drop_count,
+            drop_tbl_keys=attack_key)
+        drop_pkt = drop_pkt / UDP(dport=consts.UDP_DRPT_DST_PORT,
+                                  sport=consts.UDP_DRPT_SRC_PORT,
+                                  len=udp_len)
+        drop_pkt = drop_pkt / 'tps drop report'
+        try:
+            sendp(drop_pkt, verbose=2)
+            logger.info(
+                "Sent Drop Report with attack key - [%s], and count - [%s]",
+                attack_key, drop_count)
+        except Exception as e:
+            logger.info("Unable to send drop report - [%s]", e)
 
     def add_data_forward(self, df_req):
         """
