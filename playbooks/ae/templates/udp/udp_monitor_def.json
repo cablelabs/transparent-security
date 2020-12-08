@@ -146,7 +146,7 @@
     "severity": "1",
     "condition": {
       "script": {
-        "source": "ctx.results[0].aggregations.UDP2DstPortValueCount.value >= 10",
+        "source": "if(ctx.results[0].hits.total.value > 0){ctx.results[0].aggregations.UDP2DstPortValueCount.value >= 10}",
         "lang": "painless"
       }
     },
