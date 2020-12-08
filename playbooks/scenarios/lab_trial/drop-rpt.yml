@@ -14,7 +14,7 @@
 # one will be demonstrating dropped packets
 ---
 # Basic Drop Report scenario for the lab trial
-- import_playbook: drop_report_simple.yml
+- import_playbook: ../general/drop_report_simple.yml
   vars:
     send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
     ip_version: "{{ scenario_send_ip_version | default(4) }}"
@@ -24,5 +24,10 @@
     drop_host: ae
     sender: "{{ topo_dict.hosts[send_host] }}"
     receiver: "{{ topo_dict.hosts[rec_host] }}"
-    send_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 1) }}"
+    send_ports:
+      - 1234
+      - 3456
+      - 5678
+      - 7890
     send_packet_count: 50
+    arp_discovery: True
