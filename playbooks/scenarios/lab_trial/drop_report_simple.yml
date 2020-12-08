@@ -77,7 +77,7 @@
       command: "{{ send_cmd }}"
       register: cmd_out
       changed_when: cmd_out is not failed
-      async: 180
+      async: 30
 
 # Listen and wait for Drop report
 - hosts: ae
@@ -120,7 +120,6 @@
       register: receive_out
       changed_when: receive_out is not failed
 
-    ## hash {{ send_port }} {{ sender.mac }} {{ receiver.ip }} {{ receiver.ipv6 }}
     - name: Display the receive stdout
       debug:
         var: receive_out.stdout
@@ -128,11 +127,33 @@
     - name: Get count & hash from stdout
       set_fact:
         drop_stats: "{{ receive_out.stdout }}"
+        expected_str: "{{ sender.mac }}|{{ send_port }}|{{ receiver.ip if ip_ver == '4' else '0.0.0.0' }}|{{ receiver.ipv6 | ipaddr if ip_ver == '6' else '::' }}"
+
+    - name: Show string to hash
+      debug:
+        var: expected_str
+
+    - name: Calculate hash string
+      set_fact:
+        hash_str: "{{ expected_str | hash('sha256') }}"
+
+    - name: Get the first 16 bytes
+      set_fact:
+        hash_half_str: "{{ hash_str[:16] }}"
+
+    - name: Convert into int
+      set_fact:
+        hash_val: "{{ hash_half_str | int(base=16) }}"
+
+    - name: Fail when actual hash {{ drop_stats.key_hash }} != expected hash {{ hash_val }}
+      fail:
+        msg: "{{ drop_stats.key_hash }} != {{ hash_val }}"
+      when: drop_stats.key_hash is not defined or drop_stats.key_hash | int != hash_val | int
 
     - name: Fail when {{ drop_stats.drop_count }} != {{ send_packet_count }}
       fail:
         msg: "{{ drop_stats.drop_count }} != {{ send_packet_count }}"
-      when: drop_stats.drop_count != send_packet_count
+      when: drop_stats.drop_count is not defined or drop_stats.drop_count != send_packet_count
 
 # Stop packet mitigation
 - hosts: controller

@@ -36,6 +36,9 @@ def get_args():
                         required=False, default=None)
     parser.add_argument('-i', '--interface',
                         help='Linux interface to listen on', required=True)
+    parser.add_argument('-di', '--drop-interface', dest='drop_interface',
+                        help='Linux interface to listen for Drop Reports',
+                        required=False)
     parser.add_argument('-dh', '--debug-host', dest='debug_host',
                         help='remote debugging host IP')
     parser.add_argument('-dp', '--debug-port', dest='debug_port', default=5678,
@@ -99,7 +102,7 @@ def main():
         logger.info('LoggerAE instantiated')
         ae = IntLoggerAE(http_session)
 
-    ae.start_sniffing(args.interface)
+    ae.start_sniffing(args.interface, args.drop_interface)
     sys.stdout.flush()
 
 

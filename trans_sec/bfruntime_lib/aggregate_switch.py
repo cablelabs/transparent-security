@@ -210,18 +210,34 @@ class AggregateSwitch(BFRuntimeSwitch):
                                 ])
 
     def get_drop_pkt_count(self):
+        logger.info('Requesting drop packets')
         drop_table_obj = self.get_table(data_drop_tbl)
-        match_keys = 0
-        drop_count = 0
+        out_tuples = list()
         if drop_table_obj:
             try:
-                data, key = next(drop_table_obj.entry_get(
-                    self.target, [], flags={"from_hw": True}))
-                match_keys = key.to_dict()
-                drop_count = data.to_dict()["$COUNTER_SPEC_PKTS"]
+                entries = drop_table_obj.entry_get(
+                    self.target, [], flags={"from_hw": True})
+                for data, key in entries:
+                    out_tuples.append((self.__map_drop_tbl_keys(key.to_dict()),
+                                       data.to_dict()["$COUNTER_SPEC_PKTS"]))
             except Exception as e:
                 logger.info("Unable to access table entry info - [%s]", e)
-        return match_keys, drop_count
+
+        logger.info('Returning values - [%s]', out_tuples)
+        return out_tuples
+
+    @staticmethod
+    def __map_drop_tbl_keys(match_keys):
+        key_hashing_map = dict()
+        key_hashing_map['mac'] = match_keys[
+            'hdr.ethernet.src_mac']['value']
+        key_hashing_map['port'] = match_keys[
+            'meta.dst_port']['value']
+        key_hashing_map['ip_addr'] = match_keys[
+            'meta.ipv4_addr']['value']
+        key_hashing_map['ipv6_addr'] = match_keys[
+            'meta.ipv6_addr']['value']
+        return key_hashing_map
 
     def add_switch_id(self):
         logger.info(

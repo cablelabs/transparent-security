@@ -18,6 +18,7 @@
 -s {{ sdn_url }} \
 -l {{ log_level }} \
 -i {{ monitor_intf }} \
+-di {{ ae_ip_intf }} \
 -t {{ srvc_type }} \
 -pc {{ packet_count | default(100) }} \
 -si {{ sample_interval | default(60) }} \
