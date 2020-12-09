@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import argparse
+import json
 import logging
 import sys
 
@@ -30,6 +31,10 @@ from trans_sec.packet.inspect_layer import (
 logger = logging.getLogger('receive_packets')
 FORMAT = '%(levelname)s %(asctime)-15s %(filename)s %(message)s'
 
+# global drop_rpt_count
+drop_rpt_count = 0
+drop_rpt_dict = list()
+
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -44,8 +49,8 @@ def get_args():
         required=False, default=0, dest='int_hops', type=int)
     parser.add_argument(
         '-dr', '--drop-rpt',
-        help='When true, parse the drop report instead',
-        required=False, default=False, dest='drop_rpt', type=bool)
+        help='Number of reports to output before exit',
+        required=False, default=None, dest='drop_rpt', type=int)
     parser.add_argument(
         '-d', '--duration', default=0, dest='duration', type=int,
         required=False,
@@ -57,10 +62,11 @@ def get_args():
     return parser.parse_args()
 
 
-def __log_packet(packet, int_hops, drop_rpt=False):
+def __log_packet(packet, int_hops, drop_rpt=None):
     logger.info('Expected INT Hops - [%s] on packet - [%s]',
                 int_hops, packet.summary())
 
+    global drop_rpt_count
     ether_pkt = packet[Ether]
     ip_proto = 0
     ip_pkt = None
@@ -88,7 +94,8 @@ def __log_packet(packet, int_hops, drop_rpt=False):
     logger.info('IP Protocol - [%s] hops - [%s]', ip_proto, int_hops)
     if drop_rpt and ip_proto == trans_sec.consts.UDP_PROTO:
         logger.debug('Attempting to log Drop Report')
-        __log_drop_rpt(ip_pkt)
+        drop_rpt_count += 1
+        __log_drop_rpt(ip_pkt, drop_rpt)
 
     if not drop_rpt:
         if int_hops > 0 and ip_proto == trans_sec.consts.UDP_PROTO:
@@ -137,7 +144,9 @@ def __log_std_packet(ether_pkt, ip_pkt, ip_proto, pkt_len):
     logger.warning('Packet data - [%s]', int_data)
 
 
-def __log_drop_rpt(ip_pkt, end_proc_upon_receipt=True):
+def __log_drop_rpt(ip_pkt, count_to_exit):
+    global drop_rpt_dict
+
     logger.info('Logging Drop Report packet then exit')
     udp_pkt = UDP(_pkt=ip_pkt.payload)
 
@@ -149,16 +158,16 @@ def __log_drop_rpt(ip_pkt, end_proc_upon_receipt=True):
                  udp_pkt.sport, udp_pkt.dport, udp_pkt.len)
     if udp_pkt.dport == 556:
         drop_rpt_pkt = DropReport(_pkt=udp_pkt.payload)
-        int_data = dict(
-            key_hash=drop_rpt_pkt.drop_tbl_keys,
-            drop_count=drop_rpt_pkt.drop_count,
-        )
-        logger.warning('Drop Report data - [%s]', int_data)
+        if not drop_rpt_dict:
+            drop_rpt_dict = dict()
+        drop_rpt_dict[drop_rpt_pkt.drop_tbl_keys] = drop_rpt_pkt.drop_count
 
-        if end_proc_upon_receipt:
+        logger.warning('Drop Report dict - [%s]', drop_rpt_dict)
+
+        if drop_rpt_count >= count_to_exit:
             # Output as json string to stdout
             #  (i.e. for parsing by ansible playbook)
-            print(int_data)
+            print(json.dumps(drop_rpt_dict))
             exit(0)
 
 
@@ -261,7 +270,8 @@ def __get_ip_udp_int_pkt(ip_pkt):
         return None, None
 
 
-def device_sniff(iface, duration, int_hops, drop_report=False):
+def device_sniff(iface, duration, int_hops, drop_report=None):
+    global drop_rpt_count
     if int_hops > 0:
         logger.info('Binding layers for INT with hops - [%s]', int_hops)
 
@@ -302,7 +312,6 @@ def device_sniff(iface, duration, int_hops, drop_report=False):
 
 if __name__ == '__main__':
     args = get_args()
-
     numeric_level = getattr(logging, args.log_level, None)
     if args.log_file:
         logging.basicConfig(format=FORMAT, level=numeric_level,
@@ -312,6 +321,5 @@ if __name__ == '__main__':
                             stream=sys.stdout)
 
     logger.info('Logger initialized')
-
     logger.info('Sniffing for packets on interface - [%s]', args.iface)
     device_sniff(args.iface, args.duration, args.int_hops, args.drop_rpt)
