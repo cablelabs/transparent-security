@@ -25,7 +25,7 @@
         body_format: json
       register: udp_template_response
 
-    - name: POST call to create script function to generrate drop report hash
+    - name: POST call to create script function to generate drop report hash
       uri:
           url: "http://localhost:9200/_scripts/calculateKeyHash"
           method: POST
