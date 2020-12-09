@@ -84,6 +84,15 @@
           "data": {
             "type": "keyword"
           },
+          "sha256Hash":{
+            "type": "keyword"
+          },
+          "dropReportHash": {
+              "type" : "keyword"
+          },
+          "combinedHashKeys":{
+            "type": "keyword"
+          },
           "ethernetHeaderDestMac": {
             "type": "keyword"
           },

@@ -1,38 +1,37 @@
 {
-  "description": "Transparent Security UDP v4 & v6 data parsing pipeline",
-  "processors": [
-    {
+    "description" : "Transparent Security UDP v4 & v6 data parsing pipeline",
+    "processors" : [
+      {
         "set" : {
           "field" : "ts.rawData",
           "value" : "{{layers.data.data_data_data}}"
         }
-    },
-    {
-      "script": {
-         "lang": "painless",
-         "ignore_failure": true,
-          "source": "ctx.ts.telemetryReport =ctx.ts.rawData.substring(0, 48).replace(':','')"
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : "ctx.ts.telemetryReport =ctx.ts.rawData.substring(0, 48).replace(':','')",
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
                String hardwareIdStr = ctx.layers.data.data_data_data.replace(':','').substring(1, 3);
                BigInteger hwdIdBigInt = new BigInteger(hardwareIdStr, 16);
                BigInteger bitwiseAnd = new BigInteger('FC', 16);
                BigInteger extractedHardwareId = hwdIdBigInt.and(bitwiseAnd);
                String hwdIdStr =  extractedHardwareId.toString(16);
                ctx.ts.telemetryHwdId = hwdIdStr;
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
                String tsRawData = ctx.layers.data.data_data_data.replace(':','');
                String sequenceNumberPartStrI = tsRawData.substring(2, 3);
                String sequenceNumberPartStrII = tsRawData.substring(3, 8);
@@ -42,202 +41,202 @@
                BigInteger updatedSequenceNumber = sequenceNumberBigInt.and(bitwiseAnd);
                // String sequenceNumberHexStr =  updatedSequenceNumber.toString(16);
                ctx.ts.telemetrySequenceNumber = updatedSequenceNumber.intValue();
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
                String tsRawData = ctx.layers.data.data_data_data.replace(':','');
                String nodeIdStr = tsRawData.substring(8, 16);
                BigInteger nodeIdBigInt = new BigInteger(nodeIdStr, 16);
                ctx.ts.telemetryNodeId =nodeIdBigInt.intValue();
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
                String tsRawData = ctx.layers.data.data_data_data.replace(':','');
                String repTypeStr = tsRawData.substring(16, 17);
                BigInteger repTypeBigInt = new BigInteger(repTypeStr, 16);
                ctx.ts.telemetryReportType =repTypeBigInt.intValue();
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
                String tsRawData = ctx.layers.data.data_data_data.replace(':','');
                 String inTypeStr = tsRawData.substring(17, 18);
                BigInteger inTypeBigInt = new BigInteger(inTypeStr, 16);
                ctx.ts.telemetryInType = inTypeBigInt.intValue();
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
                String tsRawData = ctx.layers.data.data_data_data.replace(':','');
                String reportLengthStr = tsRawData.substring(18, 20);
                BigInteger reportLengthBigInt = new BigInteger(reportLengthStr, 16);
                ctx.ts.telemetryReportLength = reportLengthBigInt.intValue();
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
                String tsRawData = ctx.layers.data.data_data_data.replace(':','');
                String mdLengthStr = tsRawData.substring(20, 22);
                BigInteger mdLengthBigInt = new BigInteger(mdLengthStr, 16);
                ctx.ts.telemetryMDLength = mdLengthBigInt.intValue();
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
                String tsRawData = ctx.layers.data.data_data_data.replace(':','');
                String dStr = tsRawData.substring(22, 23);
                BigInteger dBigInt = new BigInteger(dStr, 16);
                BigInteger bitwiseAnd = new BigInteger('8', 16);
                BigInteger dRes = dBigInt.and(bitwiseAnd);
                ctx.ts.telemetryD = dRes.intValue();
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
                String tsRawData = ctx.layers.data.data_data_data.replace(':','');
                String qStr = tsRawData.substring(22, 23);
                BigInteger qBigInt = new BigInteger(qStr, 16);
                BigInteger bitwiseAnd = new BigInteger('4', 16);
                BigInteger qRes = qBigInt.and(bitwiseAnd);
                ctx.ts.telemetryQ = qRes.intValue();
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
                String tsRawData = ctx.layers.data.data_data_data.replace(':','');
                String fStr = tsRawData.substring(22, 23);
                BigInteger fBigInt = new BigInteger(fStr, 16);
                BigInteger bitwiseAnd = new BigInteger('2', 16);
                BigInteger fRes = fBigInt.and(bitwiseAnd);
                ctx.ts.telemetryF = fRes.intValue();
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
                String tsRawData = ctx.layers.data.data_data_data.replace(':','');
                String IStr = tsRawData.substring(22, 23);
                BigInteger IBigInt = new BigInteger(IStr, 16);
                BigInteger bitwiseAnd = new BigInteger('1', 16);
                BigInteger IRes = IBigInt.and(bitwiseAnd);
                ctx.ts.telemetryI = IRes.intValue();
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
                String tsRawData = ctx.layers.data.data_data_data.replace(':','');
                String rsvdStr = tsRawData.substring(23, 24);
                BigInteger rsvdBigInt = new BigInteger(rsvdStr, 16);
                ctx.ts.telemetryRsvd = rsvdBigInt.intValue();
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
                String tsRawData = ctx.layers.data.data_data_data.replace(':','');
                 String repMdBitsStr = tsRawData.substring(24, 28);
                BigInteger repMdBitsBigInt = new BigInteger(repMdBitsStr, 16);
                ctx.ts.telemetryRepMdBits = repMdBitsBigInt.intValue();
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
                String tsRawData = ctx.layers.data.data_data_data.replace(':','');
                String domainSpecificIDStr = tsRawData.substring(28, 32);
                BigInteger domainSpecificIDBigInt = new BigInteger(domainSpecificIDStr, 16);
                ctx.ts.telemetryDomainSpecificID = domainSpecificIDBigInt.intValue();
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
                String tsRawData = ctx.layers.data.data_data_data.replace(':','');
                String dsMdBitsStr = tsRawData.substring(32, 36);
                BigInteger dsMdBitsStrBigInt = new BigInteger(dsMdBitsStr, 16);
                ctx.ts.telemetryDsMdBits = dsMdBitsStrBigInt.intValue();
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
                String tsRawData = ctx.layers.data.data_data_data.replace(':','');
                String dsMdStatusStr = tsRawData.substring(36, 40);
                BigInteger dsMdStatusBigInt = new BigInteger(dsMdStatusStr, 16);
                ctx.ts.telemetryDsMdStatus = dsMdStatusBigInt.intValue();
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
                String tsRawData = ctx.layers.data.data_data_data.replace(':','');
                String varOptStr = tsRawData.substring(40, 48);
                BigInteger varOptBigInt = new BigInteger(varOptStr, 16);
                ctx.ts.telemetryVarOpt = varOptBigInt.intValue();
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
                String tsRawData = ctx.layers.data.data_data_data.replace(':','');
                 String etherType = tsRawData.substring(72, 76);
                 String ipVersion = tsRawData.substring(76, 77);
@@ -248,14 +247,14 @@
                 {
                    ctx.ts.isIPv6 = false;
                 }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
                String tsRawData = ctx.layers.data.data_data_data.replace(':','');
                 String etherType = tsRawData.substring(72, 76);
                 String ipVersion = tsRawData.substring(76, 77);
@@ -266,14 +265,14 @@
                 {
                    ctx.ts.isIPv4 = false;
                 }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -285,56 +284,56 @@
               {
                ctx.ts.data = tsRawData.substring(48, 292);
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
                ctx.ts.ethernetHeader = tsRawData.substring(48, 76);
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               ctx.ts.ethernetHeaderDestMac = tsRawData.substring(48, 60);
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               ctx.ts.ethernetHeaderSrcMac = tsRawData.substring(60, 72);
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
              ctx.ts.ethernetHeaderEtherType = tsRawData.substring(72, 76);
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -346,14 +345,14 @@
               {
                ctx.ts.IPvData = tsRawData.substring(76, 156);
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -365,13 +364,13 @@
               {
                ctx.ts.IPVersion = tsRawData.substring(76, 77);
               }
-        """
-      }
-    },
-    {
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
         "script" : {
           "lang" : "painless",
-          "ignore_failure" : true,
           "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
@@ -396,13 +395,13 @@
                 IPv6SrcIP = IPv6SrcIP.substring(0, IPv6SrcIP.length()-1);
                 ctx.ts.IPv6SrcIP = IPv6SrcIP;
               }
-        """
+        """,
+          "ignore_failure" : true
         }
       },
       {
         "script" : {
           "lang" : "painless",
-          "ignore_failure" : true,
           "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
@@ -427,14 +426,14 @@
                 IPv6DestIP = IPv6DestIP.substring(0, IPv6DestIP.length()-1);
                 ctx.ts.IPv6DestIP = IPv6DestIP;
               }
-        """
+        """,
+          "ignore_failure" : true
         }
       },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -446,14 +445,14 @@
               {
                ctx.ts.UDGPData = tsRawData.substring(156, 172);
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -469,14 +468,14 @@
                BigInteger UDGSrcPortBigInt = new BigInteger(UDGSrcPortStr, 16);
                ctx.ts.UDGSrcPort = UDGSrcPortBigInt.intValue();
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -492,14 +491,14 @@
                BigInteger UDGDstPortBigInt = new BigInteger(UDGDstPortStr, 16);
                ctx.ts.UDGDstPort = UDGDstPortBigInt.intValue();
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -515,14 +514,14 @@
                BigInteger UDGLengthBigInt = new BigInteger(UDGLengthStr, 16);
                ctx.ts.UDGLength = UDGLengthBigInt.intValue();
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -538,14 +537,14 @@
                BigInteger UDGChecksumBigInt = new BigInteger(UDGChecksumStr, 16);
                ctx.ts.UDGChecksum = UDGChecksumBigInt.intValue();
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -557,14 +556,14 @@
               {
                ctx.ts.InBandNetworkTelemetryData = tsRawData.substring(172, 236);
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -576,14 +575,14 @@
               {
                ctx.ts.UDPIntShimHeaderData = tsRawData.substring(172, 180);
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -595,14 +594,14 @@
               {
                ctx.ts.UDPIntShimHeaderType = tsRawData.substring(172, 173);
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -622,14 +621,14 @@
                   BigInteger result = udpIntShimNPTBigInt.and(bitwiseAnd);
                   ctx.ts.UDPIntShimHeaderNPT = result.intValue();
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -641,14 +640,14 @@
               {
                   ctx.ts.UDPIntShimHeaderRes1 = tsRawData.substring(174, 175);
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -664,14 +663,14 @@
                   BigInteger lengthStrBigInt =  new BigInteger(lengthStr, 16);
                   ctx.ts.UDPIntShimHeaderLength = lengthStrBigInt.intValue();
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -683,14 +682,14 @@
               {
                   ctx.ts.UDPIntShimHeaderRes2 = tsRawData.substring(176, 178);
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -706,14 +705,14 @@
                    BigInteger nextProtoBigInt =  new BigInteger(nextProtoStr, 16);
                   ctx.ts.UDPIntShimHeaderNextProto = nextProtoBigInt.intValue();
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -725,14 +724,14 @@
               {
                    ctx.ts.INTMetadataHeaderData =  tsRawData.substring(180, 204);
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -748,14 +747,14 @@
                 BigInteger UDPIntMetaDataHeaderVersionStrBigInt =  new BigInteger(UDPIntMetaDataHeaderVersionStr, 16);
                 ctx.ts.UDPIntMetaDataHeaderVersion =  UDPIntMetaDataHeaderVersionStrBigInt.intValue();
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -775,14 +774,14 @@
                 BigInteger result = UDPIntMetaDataHeaderResBigInt.and(bitwiseAnd);
                 ctx.ts.UDPIntMetaDataHeaderRes =  result.intValue();
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -802,14 +801,14 @@
                 BigInteger result = UDPIntMetaDataHeaderDBigInt.and(bitwiseAnd);
                 ctx.ts.UDPIntMetaDataHeaderD =  result.intValue();
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -829,14 +828,14 @@
                  BigInteger result = UDPIntMetaDataHeaderEBigInt.and(bitwiseAnd);
                  ctx.ts.UDPIntMetaDataHeaderE =  result.intValue();
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -856,14 +855,14 @@
                   BigInteger result = UDPIntMetaDataHeaderMBigInt.and(bitwiseAnd);
                   ctx.ts.UDPIntMetaDataHeaderM =  result.intValue();
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -883,14 +882,14 @@
                   BigInteger result = UDPIntMetaDataHeaderPerhopMetadataLengthBigInt.and(bitwiseAnd);
                   ctx.ts.UDPIntMetaDataHeaderPerhopMetadataLength =  result.intValue();
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -906,14 +905,14 @@
                   BigInteger UDPIntMetaDataHeaderRemainingHopCntBigInt =  new BigInteger(UDPIntMetaDataHeaderRemainingHopCntStr, 16);
                   ctx.ts.UDPIntMetaDataHeaderRemainingHopCnt =  UDPIntMetaDataHeaderRemainingHopCntBigInt.intValue();
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -929,14 +928,14 @@
                   BigInteger UDPIntMetaDataHeaderInstructionBitmapBigInt =  new BigInteger(UDPIntMetaDataHeaderInstructionBitmapStr, 16);
                   ctx.ts.UDPIntMetaDataHeaderInstructionBitmap =  UDPIntMetaDataHeaderInstructionBitmapBigInt.toString(16);
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -952,14 +951,14 @@
                   BigInteger UDPIntMetaDataHeaderDomainSpecificIDBigInt =  new BigInteger(UDPIntMetaDataHeaderDomainSpecificIDStr, 16);
                   ctx.ts.UDPIntMetaDataHeaderDomainSpecificID =  UDPIntMetaDataHeaderDomainSpecificIDBigInt.toString(16);
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -975,14 +974,14 @@
                   BigInteger UDPIntMetaDataHeaderDSInstructionBigInt =  new BigInteger(UDPIntMetaDataHeaderDSInstructionStr, 16);
                   ctx.ts.UDPIntMetaDataHeaderDSInstruction =  UDPIntMetaDataHeaderDSInstructionBigInt.toString(16);
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -998,14 +997,14 @@
                  BigInteger UDPIntMetaDataHeaderDSFlagsBigInt =  new BigInteger(UDPIntMetaDataHeaderDSFlagsStr, 16);
                  ctx.ts.UDPIntMetaDataHeaderDSFlags = UDPIntMetaDataHeaderDSFlagsBigInt.toString(16);
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1017,14 +1016,14 @@
               {
                  ctx.ts.INTMetadataStackData = tsRawData.substring(204, 236);
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1036,14 +1035,14 @@
               {
                   ctx.ts.INTMetadataStackSwitchID = tsRawData.substring(204, 212);
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1055,14 +1054,14 @@
               {
                   ctx.ts.INTMetadataSourceMetadata = tsRawData.substring(212, 236);
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1074,14 +1073,14 @@
               {
                   ctx.ts.INTMetadataSourceMetadataSwitchId = tsRawData.substring(212, 220);
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1107,14 +1106,14 @@
                 }
                   ctx.ts.INTMetadataSourceMetadataOriginatingMac = formattedOriginatingMac.toString();
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1126,14 +1125,14 @@
               {
                   ctx.ts.INTMetadataSourceMetadataReserved = tsRawData.substring(232, 236);
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1145,14 +1144,14 @@
               {
                   ctx.ts.UDP2Data = tsRawData.substring(236, 252);
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1168,14 +1167,14 @@
                    BigInteger UDP2SrcPortBigInt = new BigInteger(UDP2SrcPortStr,16);
                    ctx.ts.UDP2SrcPort = UDP2SrcPortBigInt.intValue();
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1191,14 +1190,14 @@
                  BigInteger UDP2DstPortBigInt = new BigInteger(UDP2DstPortStr,16);
                  ctx.ts.UDP2DstPort = UDP2DstPortBigInt.intValue();
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1210,14 +1209,14 @@
               {
                  ctx.ts.UDP2Length = tsRawData.substring(244, 248);
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1229,14 +1228,14 @@
               {
                  ctx.ts.UDP2Checksum = tsRawData.substring(248, 252);
               }
-        """
-      }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "ignore_failure": true,
-          "source": """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1248,8 +1247,44 @@
               {
                  ctx.ts.dataII = tsRawData.substring(252, 292);
               }
-        """
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
+              String macAddress = ctx.ts.INTMetadataSourceMetadataOriginatingMac;
+              String destinationPort = ctx.ts.UDP2DstPort;
+              String IPvDestIP = ctx.ts.IPv4DestIP;
+              String combinedKeys = macAddress + '|' + destinationPort + '|' + IPvDestIP;
+              ctx.ts.combinedHashKeys = combinedKeys;
+
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "ignore_failure" : false,
+          "params" : {
+            "combinedHashKeys" : "{{ctx.ts.combinedHashKeys}}"
+          },
+          "id" : "calculateKeyHash"
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
+              String completeSHA256Hash = ctx.ts.sha256Hash;
+              String subsetSHA256HashStr= completeSHA256Hash.substring(0,16);
+              BigInteger hashBigInt = new BigInteger(subsetSHA256HashStr, 16);
+              ctx.ts.dropReportHash = hashBigInt.intValue();
+        """,
+          "ignore_failure" : true
+        }
       }
-    }
-  ]
-}
+    ]
+  }
