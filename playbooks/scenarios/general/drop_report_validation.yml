@@ -13,10 +13,6 @@
 # Simple scenario where packets are sent through 3 devices and only the last
 # one will be demonstrating dropped packets
 ---
-- name: Parse data from stdout
-  set_fact:
-    drop_stats: "{{ receive_out.stdout }}"
-
 - name: Calculate string to hash
   set_fact:
     hashing_str: "{{ sender.mac }}|{{ item }}|{{ receiver.ip if ip_ver == '4' else '0.0.0.0' }}|{{ receiver.ipv6 | ipaddr if ip_ver == '6' else '::' }}"

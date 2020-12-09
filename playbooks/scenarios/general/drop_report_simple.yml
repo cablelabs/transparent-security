@@ -57,10 +57,6 @@
     protocol: "{{ send_protocol | default('UDP') }}"
     receiver_log_file: "{{ log_dir }}/dr-ip-{{ ip_ver }}-proto-{{ protocol }}.log"
   tasks:
-    - name: Wait 20 seconds for the next 2 Drop Report iterations
-      pause:
-        seconds: 20
-
     - name: Create receiver log directory {{ log_dir }}
       file:
         path: "{{ log_dir }}"
@@ -81,19 +77,19 @@
         receive_cmd: >
           {{ trans_sec_dir }}/trans_sec/device_software/receive_packets.py
           -i {{ receiver_intf }} -f {{ receiver_log_file }} -d {{ receive_timeout }} -dr {{ send_ports | length }}
-        register: receive_out
 
-    - name: Receive and log packets with {{ receive_cmd }}
+    - name: Receive Drop Report for {{ send_ports }} with {{ receive_cmd }}
       command: "{{ receive_cmd }}"
       register: receive_out
       changed_when: receive_out is not failed
-
-    - name: Display the receive stdout
-      debug:
-        var: receive_out.stdout
+      retries: 3
+      delay: 10
+      until: receive_out.stdout | length > 5 and receive_out.stdout | from_json | length == send_ports | length
 
     - name: Validate each drop report
       include_tasks: drop_report_validation.yml
+      vars:
+        drop_stats: "{{ receive_out.stdout }}"
       with_items: "{{ send_ports }}"
 
 # Stop packet mitigation
