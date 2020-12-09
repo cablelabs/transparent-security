@@ -1258,7 +1258,7 @@
               String macAddress = ctx.ts.INTMetadataSourceMetadataOriginatingMac;
               String destinationPort = ctx.ts.UDP2DstPort;
               String IPvDestIP = ctx.ts.IPv4DestIP;
-              String combinedKeys = macAddress +  destinationPort + IPvDestIP;
+              String combinedKeys = macAddress + '|' + destinationPort + '|' + IPvDestIP;
               ctx.ts.combinedHashKeys = combinedKeys;
 
         """,
@@ -1267,11 +1267,23 @@
       },
       {
         "script" : {
-          "id": "calculateKeyHash",
-           "params": {
-              "combinedHashKeys": "{{ctx.ts.combinedHashKeys}}"
-        },
-        "ignore_failure" : false
+          "ignore_failure" : false,
+          "params" : {
+            "combinedHashKeys" : "{{ctx.ts.combinedHashKeys}}"
+          },
+          "id" : "calculateKeyHash"
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
+              String completeSHA256Hash = ctx.ts.sha256Hash;
+              String subsetSHA256HashStr= completeSHA256Hash.substring(0,16);
+              BigInteger hashBigInt = new BigInteger(subsetSHA256HashStr, 16);
+              ctx.ts.dropReportHash = hashBigInt.intValue();
+        """,
+          "ignore_failure" : true
         }
       }
     ]

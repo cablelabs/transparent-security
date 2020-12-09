@@ -87,6 +87,9 @@
           "sha256Hash":{
             "type": "keyword"
           },
+          "dropReportHash": {
+              "type" : "keyword"
+          },
           "combinedHashKeys":{
             "type": "keyword"
           },
