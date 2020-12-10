@@ -31,7 +31,7 @@
     prog_name: "{{ p4_pkg }}"
     additional_tmplt_file: "{{ trans_sec_dir }}/playbooks/tofino/templates/tofino-model-veth-port-mapping.json.j2"
     additional_tmplt_out_file: "{{ remote_scripts_dir }}/port-mapping.json"
-  when: not from_hw | bool
+  when: not (from_hw | default(False) | bool)
 
 # Start switchd
 - import_playbook: ../general/start_service.yml

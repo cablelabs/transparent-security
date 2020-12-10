@@ -53,8 +53,8 @@ class PacketAnalytics(object):
         self.sniff_stop = threading.Event()
         self.sdn_attack_context = sdn_attack_context
 
-        logger.debug("Started AE with attack call to [%s/%s]",
-                     self.sdn_interface, self.sdn_attack_context)
+        logger.debug("Started AE with attack call to [/%s]",
+                     self.sdn_attack_context)
 
     def start_sniffing(self, iface, drop_iface=None,
                        udp_dport=UDP_TRPT_DST_PORT):
@@ -79,7 +79,6 @@ class PacketAnalytics(object):
 
     def sniff_int(self, iface, udp_port):
         logger.info("INT monitoring iface [%s]", iface)
-
         try:
             sniff(iface=iface,
                   prn=lambda packet: self.handle_packet(packet, udp_port),
@@ -87,9 +86,10 @@ class PacketAnalytics(object):
         except Exception as e:
             logger.error('Unexpected error sniffing for INT Data - [%s]', e)
 
+    # TODO/FIXME - Had issues with sending in a single param function.
+    #  determine how to get rid of the 'foo' param
     def sniff_drop(self, iface, foo=None):
         logger.info("Drop monitoring iface [%s]", iface)
-
         try:
             sniff(iface=iface,
                   prn=lambda packet: self.handle_drop_rpt(packet),

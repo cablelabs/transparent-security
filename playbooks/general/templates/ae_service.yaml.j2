@@ -1,6 +1,4 @@
-#!/usr/bin/env bash
-
-# Copyright (c) 2019 Cable Television Laboratories, Inc.
+# Copyright (c) 2020 Cable Television Laboratories, Inc.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -12,9 +10,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-# Runs the Analytics Engine
-{{ trans_sec_dir }}/bin/start_ae.py \
--l {{ log_level }} \
--f {{ log_dir }}/{{ service_name }}.log \
--c {{ additional_tmplt_out_file }}
+---
+sdn_url: {{ sdn_url }}
+monitor_intf: {{ monitor_intf }}
+drop_rpt_intf: {{ ae_ip_intf }}
+drop_count: {{ drop_count | default(3) }}
+service_type: {{ srvc_type }}
+packet_count: {{ packet_count | default(100) }}
+sample_interval: {{ sample_interval | default(60) }}
+sdn_attack_ctx: {{ sdn_attack_context }}

@@ -19,7 +19,7 @@
   gather_facts: yes
   become: yes
   vars:
-    setup_tunnels: "{{ not from_hw|bool | default(True) }}"
+    setup_tunnels: "{{ not (from_hw | default(False) | bool) }}"
   tasks:
     - debug:
         var: from_hw

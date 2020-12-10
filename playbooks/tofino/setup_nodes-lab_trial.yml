@@ -76,6 +76,8 @@
     host_val: ae
     service_name: tps-tofino-ae
     local_srvc_script_tmplt_file: "{{ orch_trans_sec_dir }}/playbooks/general/templates/ae_service.sh.j2"
+    additional_tmplt_file: "{{ orch_trans_sec_dir }}/playbooks/general/templates/ae_service.yaml.j2"
+    additional_tmplt_out_file: "{{ remote_scripts_dir }}/ae_service.yaml"
     srvc_type: SIMPLE
     sdn_url: "http://{{ sdn_ip }}:{{ sdn_port }}"
     monitor_intf: "{{ ae_monitor_intf }}"

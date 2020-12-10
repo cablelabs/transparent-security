@@ -25,7 +25,6 @@
     srvc_status: "{{ service_status_running | default('true') }}"
     start_srvc: "{{ start_service | default(True) }}"
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-
   tasks:
     - name: Start service block when {{ start_srvc }} is true
       block:
@@ -49,7 +48,7 @@
         template:
           src: "{{ additional_tmplt_file }}"
           dest: "{{ additional_tmplt_out_file }}"
-        when: additional_tmplt_file is defined
+        when: additional_tmplt_file is defined and additional_tmplt_out_file is defined
 
       - name: Copy {{ srvc_name }} Service File to /etc/systemd/system/{{ srvc_name }}.service
         template:

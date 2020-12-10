@@ -17,6 +17,7 @@ import logging
 import sys
 
 import pydevd
+import yaml
 
 from trans_sec.analytics.oinc import Oinc, SimpleAE, LoggerAE, IntLoggerAE
 from trans_sec.utils.http_session import HttpSession
@@ -34,36 +35,19 @@ def get_args():
     parser.add_argument('-f', '--logfile',
                         help='File to log to defaults to console',
                         required=False, default=None)
-    parser.add_argument('-i', '--interface',
-                        help='Linux interface to listen on', required=True)
-    parser.add_argument('-di', '--drop-interface', dest='drop_interface',
-                        help='Linux interface to listen for Drop Reports',
-                        required=False)
+    parser.add_argument('-c', '--conf-file', help='Tells AE how to startup',
+                        required=True, dest='conf_file')
     parser.add_argument('-dh', '--debug-host', dest='debug_host',
                         help='remote debugging host IP')
     parser.add_argument('-dp', '--debug-port', dest='debug_port', default=5678,
                         help='the remote debugging port')
-    parser.add_argument('-s', '--sdn-url', dest='sdn_url', required=True,
-                        help='the URL to the SDN controller')
-    parser.add_argument('-t', '--type', dest='type', required=True,
-                        choices=['OINC', 'SIMPLE', 'LOGGING', 'INT'],
-                        help='Acceptable values OINC|SIMPLE|LOGGING|INT')
-    parser.add_argument('-c', '--sdn-attack-ctx', dest='sdn_ctx',
-                        required=False, default='gwAttack',
-                        help='the URL to the SDN controller')
-    parser.add_argument('-pc', '--packet-count', required=False, type=int,
-                        default=100,
-                        help='Number of packets to hit alert within the '
-                             'sample-interval')
-    parser.add_argument('-si', '--sample-interval', required=False, type=int,
-                        default=60,
-                        help='Number of seconds the packet count needs to hit '
-                             'to trigger alert')
     return parser.parse_args()
 
 
 def main():
     args = get_args()
+    with open(args.conf_file, 'r') as conf_file:
+        conf_dict = yaml.safe_load(conf_file)
 
     # Initialize logger
     numeric_level = getattr(logging, args.loglevel.upper(), None)
@@ -79,32 +63,39 @@ def main():
         pydevd.settrace(host=args.debug_host, port=int(args.debug_port),
                         stdoutToServer=True, stderrToServer=True,
                         suspend=False)
-    logger.info('Starting Oinc with SDN Controller url [%s]', args.sdn_url)
+
+    sdn_url = conf_dict['sdn_url']
+    ae_type = conf_dict.get('service_type', 'SIMPLE')
+    attack_ctx = conf_dict.get('sdn_attack_ctx', 'aggAttack')
+
+    logger.info('Starting [%s] with SDN Controller url [%s] to [%s]',
+                ae_type, sdn_url, attack_ctx)
+    http_session = HttpSession(sdn_url)
 
     ae = None
-
-    logger.info('Retrieving http session from url - [%s]', args.sdn_url)
-    http_session = HttpSession(args.sdn_url)
-
-    if args.type == 'SIMPLE':
+    if ae_type == 'SIMPLE':
         logger.info('SimpleAE instantiated')
-        logger.debug('SDN Context - [%s]', args.sdn_ctx)
-        ae = SimpleAE(http_session, packet_count=args.packet_count,
-                      sample_interval=args.sample_interval,
-                      sdn_attack_context=args.sdn_ctx)
-    elif args.type == 'OINC':
+        logger.debug('SDN Context - [%s]', attack_ctx)
+        ae = SimpleAE(http_session,
+                      packet_count=int(conf_dict['packet_count']),
+                      sample_interval=int(conf_dict['sample_interval']),
+                      sdn_attack_context=attack_ctx,
+                      drop_count=conf_dict.get('drop_count'))
+    elif ae_type == 'OINC':
         logger.info('Oinc instantiated')
         ae = Oinc(http_session)
-    elif args.type == 'LOGGING':
+    elif ae_type == 'LOGGING':
         logger.info('LoggerAE instantiated')
         ae = LoggerAE(http_session)
-    elif args.type == 'INT':
+    elif ae_type == 'INT':
         logger.info('LoggerAE instantiated')
         ae = IntLoggerAE(http_session)
 
+    mon_intf = conf_dict['monitor_intf']
+    drop_intf = conf_dict.get('drop_rpt_intf')
     logger.info('Begin sniffing for INT on [%s] and Drop Reports on [%s]',
-                args.interface, args.drop_interface)
-    ae.start_sniffing(args.interface, args.drop_interface)
+                mon_intf, drop_intf)
+    ae.start_sniffing(mon_intf, drop_intf)
     sys.stdout.flush()
 
 
