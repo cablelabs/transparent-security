@@ -68,11 +68,11 @@
   become: yes
   vars:
     ae_srvc_state: "{{ ae_state | default('stopped') }}"
-    exe_systemd: "{% if ae_state == 'none' %}False{% else %}True{% endif %}"
+    exe_systemd: "{% if ae_srvc_state == 'none' %}False{% else %}True{% endif %}"
   tasks:
     - debug:
         var: exe_systemd
-    - name: Restart tps-tofino-ae with state {{ ae_state | default('stopped') }}
+    - name: Restart tps-tofino-ae with state {{ ae_srvc_state }}
       systemd:
         name: tps-tofino-ae
         state: "{{ ae_srvc_state }}"

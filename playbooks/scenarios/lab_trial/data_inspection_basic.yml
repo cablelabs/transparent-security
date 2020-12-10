@@ -18,13 +18,13 @@
   gather_facts: no
   become: yes
   vars:
-    ae_srvc_state: "{{ ae_state }}"
-    exe_systemd: "{% if ae_state == 'none' %}False{% else %}True{% endif %}"
+    ae_srvc_state: "{{ ae_state | default('stopped') }}"
+    exe_systemd: "{% if ae_srvc_state == 'none' %}False{% else %}True{% endif %}"
   tasks:
-    - name: Restart tps-tofino-ae with state {{ ae_state | default('stopped') }}
+    - name: Restart tps-tofino-ae with state {{ ae_srvc_state }}
       systemd:
         name: tps-tofino-ae
-        state: "{{ ae_srvc_state | default('stopped') }}"
+        state: "{{ ae_srvc_state }}"
       when: exe_systemd | bool
 
 # Call POST on all WS calls
