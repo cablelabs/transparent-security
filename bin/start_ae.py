@@ -102,6 +102,8 @@ def main():
         logger.info('LoggerAE instantiated')
         ae = IntLoggerAE(http_session)
 
+    logger.info('Begin sniffing for INT on [%s] and Drop Reports on [%s]',
+                args.interface, args.drop_interface)
     ae.start_sniffing(args.interface, args.drop_interface)
     sys.stdout.flush()
 
