@@ -21,6 +21,8 @@
   become: yes
   vars:
     restart_switch: "{{ switch_restart | default(True) }}"
+    run_on_hw: "{{ from_hw | default(False) | bool }}"
+    restart_model: "{{ not run_on_hw|bool }}"
   tasks:
     - block:
       - name: Stop tps-tofino-switchd
@@ -32,13 +34,13 @@
         systemd:
           name: tps-tofino-model
           state: restarted
-        when: not from_hw | bool
+        when: restart_model
 
       - name: Restart tps-tofino-switchd
         systemd:
           name: tps-tofino-switchd
           state: restarted
-      when: restart_switch | bool
+      when: restart_switch
 
     - name: Wait for tps-tofino-switchd to open port
       wait_for:
@@ -64,8 +66,14 @@
 - hosts: ae
   gather_facts: no
   become: yes
+  vars:
+    ae_srvc_state: "{{ ae_state | default('stopped') }}"
+    exe_systemd: "{% if ae_srvc_state == 'none' %}False{% else %}True{% endif %}"
   tasks:
-    - name: Restart tps-tofino-ae with state {{ ae_state | default('stopped') }}
+    - debug:
+        var: exe_systemd
+    - name: Restart tps-tofino-ae with state {{ ae_srvc_state }}
       systemd:
         name: tps-tofino-ae
-        state: "{{ ae_state | default('stopped') }}"
+        state: "{{ ae_srvc_state }}"
+      when: exe_systemd | bool

@@ -87,14 +87,13 @@ class HttpSession:
                 raise AlreadyExistsError(
                     body['Addr'], str(temp['Messages'][0]))
 
-    def delete(self, resource, key):
-        logger.info('DELETE resource [%s] with key [%s]', resource, key)
+    def delete(self, resource, body):
+        logger.info('DELETE resource [%s] with key [%s]', resource, body)
         if not self.is_authorized():
             self.authorize()
         headers = {'Authorization': 'Bearer ' + self.token}
-        actual_resource = resource + '/' + key
-        r = requests.delete(self.url + '/' + actual_resource,
-                            headers=headers, verify=False)
+        r = requests.delete(self.url + '/' + resource,
+                            headers=headers, json=body, verify=False)
         if r.status_code == 200:
             logger.info('DELETE return value - [%s]', r.json())
             return r.json()
