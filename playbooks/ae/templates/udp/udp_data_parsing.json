@@ -1427,7 +1427,6 @@
           "ignore_failure" : true
         }
       },
-
       {
         "script" : {
           "lang" : "painless",
@@ -1473,7 +1472,7 @@
           "ignore_failure" : true
         }
       },
-       {
+      {
         "script" : {
           "lang" : "painless",
           "source" : """
@@ -1495,9 +1494,18 @@
               String macAddress = ctx.ts.INTMetadataSourceMetadataOriginatingMac;
               String destinationPort = ctx.ts.UDP2DstPort;
               String IPvDestIP = ctx.ts.IPv4DestIP;
-              String combinedKeys = macAddress + '|' + destinationPort + '|' + IPvDestIP + '::';
-              ctx.ts.combinedHashKeys = combinedKeys;
-
+              String isIPv4 = ctx.ts.isIPv4;
+              String isIPv6 = ctx.ts.isIPv6;
+              if(isIPv4 == 'true')
+              {
+                 String combinedKeys = macAddress + '|' + destinationPort + '|' + IPvDestIP + '|' + '::';
+                 ctx.ts.combinedHashKeys = combinedKeys;
+              }
+              if(isIPv6 == 'true')
+              {
+                 String combinedKeys = macAddress + '|' + destinationPort + '|' + '::' + '|' +  IPvDestIP ;
+                 ctx.ts.combinedHashKeys = combinedKeys;
+              }
 
         """,
           "ignore_failure" : true
@@ -1519,7 +1527,7 @@
               String completeSHA256Hash = ctx.ts.sha256Hash;
               String subsetSHA256HashStr= completeSHA256Hash.substring(0,16);
               BigInteger hashBigInt = new BigInteger(subsetSHA256HashStr, 16);
-              ctx.ts.dropReportHash = hashBigInt.intValue();
+              ctx.ts.dropReportHash = hashBigInt;
         """,
           "ignore_failure" : true
         }
