@@ -148,7 +148,7 @@ byte[] charArrayToByteArray(char[] charArray) {
 
 byte[] block = new byte[64];
 int[] words = new int[64];
-byte[] data = charArrayToByteArray(params.combinedHashKeys.toCharArray());
+byte[] data = charArrayToByteArray(params.dropHashInput.toCharArray());
 byte[] res = digest(data, block, words);
 String sha256Str = bytesToHex(res);
 ctx.ts.sha256Hash = sha256Str;
