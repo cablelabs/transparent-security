@@ -7,6 +7,7 @@
           "value" : "{{layers.data.data_data_data}}"
         }
       },
+
       {
         "script" : {
           "lang" : "painless",
@@ -1491,23 +1492,31 @@
         "script" : {
           "lang" : "painless",
           "source" : """
-
+         if(ctx.ts.isDropReport == false)
+         {
           String macAddress = ctx.ts.INTMetadataSourceMetadataOriginatingMac;
           String destinationPort = ctx.ts.UDP2DstPort.toString();
           String IPvDestIP = ctx.ts.IPv4DestIP;
           String combinedKeys = '';
+          if(ctx.ts.isIPv4 == true)
+          {
           combinedKeys = combinedKeys.concat(macAddress).concat('|').concat(destinationPort).concat('|').concat(IPvDestIP).concat('|').concat('::');
           ctx.ts.dropHashInput = combinedKeys;
+          }
+          if(ctx.ts.isIPv6 == true)
+          {
+          combinedKeys = combinedKeys.concat(macAddress).concat('|').concat(destinationPort).concat('|').concat(IPvDestIP).concat('|').concat('::');
+          ctx.ts.dropHashInput = combinedKeys;
+          }
+         }
         """,
           "ignore_failure" : false
-        }
+         }
       },
+
       {
         "script" : {
           "ignore_failure" : false,
-          "params" : {
-            "dropHashInput" : "00:00:00:00:01:01|5792|192.168.1.10|::"
-          },
           "id" : "calculateKeyHash"
         }
       },
