@@ -145,10 +145,14 @@ return byteArray;
 }
 byte[] block = new byte[64];
 int[] words = new int[64];
-byte[] data = charArrayToByteArray(ctx.ts.dropHashInput.toCharArray());
+String dropHashInput = ctx.ts.dropHashInput;
+if(dropHashInput != null && ctx.ts.isDropReport == false)
+{
+byte[] data = charArrayToByteArray(dropHashInput.toCharArray());
 byte[] res = digest(data, block, words);
 String sha256Str = bytesToHex(res);
 ctx.ts.sha256Hash = sha256Str;
+}
         """
   }
 }
