@@ -1481,7 +1481,7 @@
               String dropTelemetryReport = ctx.ts.dropTelemetryReport;
               String telemetryReportVarOptHashStr = dropTelemetryReport.substring(64,96);
               BigInteger telemetryReportVarOptHashBigInt = new BigInteger(telemetryReportVarOptHashStr, 16);
-              ctx.ts.telemetryReportVarOptHash =  telemetryReportVarOptHashBigInt.intValue();
+              ctx.ts.telemetryReportVarOptHash =  telemetryReportVarOptHashBigInt;
                }
         """,
           "ignore_failure" : true
