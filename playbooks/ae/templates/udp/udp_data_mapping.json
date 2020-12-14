@@ -56,19 +56,13 @@
             "ethernetHeaderDestMac" : {
               "type" : "keyword"
             },
-            "isDropReport" : {
+            "UDGSrcPort" : {
               "type" : "keyword"
             },
             "telemetryRsvd" : {
               "type" : "keyword"
             },
-            "UDGSrcPort" : {
-              "type" : "keyword"
-            },
             "INTMetadataSourceMetadataSwitchId" : {
-              "type" : "keyword"
-            },
-            "ethernetHeaderSrcMac" : {
               "type" : "keyword"
             },
             "UDPIntShimHeaderNextProto" : {
@@ -77,7 +71,10 @@
             "IPv6SrcIP" : {
               "type" : "keyword"
             },
-            "isIpv4" : {
+            "ethernetHeaderSrcMac" : {
+              "type" : "keyword"
+            },
+            "isIPv4" : {
               "type" : "keyword"
             },
             "UDPIntMetaDataHeaderVersion" : {
@@ -89,19 +86,16 @@
             "telemetryReportVersion" : {
               "type" : "keyword"
             },
-            "isIpv6" : {
+            "isIPv6" : {
               "type" : "keyword"
-            },
-            "telemetryReportVarOpBsmd": {
-               "type" : "keyword"
             },
             "INTMetadataSourceMetadataOriginatingMac" : {
               "type" : "keyword"
             },
-            "UDPIntMetaDataHeaderInstructionBitmap" : {
+            "UDP2Checksum" : {
               "type" : "keyword"
             },
-            "UDP2Checksum" : {
+            "UDPIntMetaDataHeaderInstructionBitmap" : {
               "type" : "keyword"
             },
             "INTMetadataSourceMetadata" : {
@@ -110,49 +104,49 @@
             "IPvSrcAddr" : {
               "type" : "keyword"
             },
-            "tsRawDataSize" : {
+            "UDGPData" : {
               "type" : "keyword"
             },
-            "UDGPData" : {
+            "tsRawDataSize" : {
               "type" : "keyword"
             },
             "UDGChecksum" : {
               "type" : "keyword"
             },
-            "INTMetadataHeaderData" : {
+            "IPvDestAddr" : {
               "type" : "keyword"
             },
-            "IPvDestAddr" : {
+            "INTMetadataHeaderData" : {
               "type" : "keyword"
             },
             "telemetryInType" : {
               "type" : "keyword"
             },
-            "telemetryReport" : {
+            "telemetryReportVarOptTimeStamp" : {
               "type" : "keyword"
             },
             "dropTelemetryReport" : {
               "type" : "keyword"
             },
-            "telemetryReportVarOptTimeStamp" : {
-              "type" : "keyword"
-            },
-            "telemetryReportVarOptDropCount" : {
-              "type" : "keyword"
-            },
-            "telemetryReportVarOptHash" : {
-              "type" : "keyword"
-            },
-            "UDPIntMetaDataHeaderDSFlags" : {
-              "type" : "keyword"
-            },
-            "IPv4SrcIP" : {
+            "telemetryReport" : {
               "type" : "keyword"
             },
             "telemetryDsMdStatus" : {
               "type" : "keyword"
             },
+            "ts.isIPv4":{
+              "type" : "keyword"
+            },
+             "ts.isIPv6":{
+              "type" : "keyword"
+            },
+            "UDPIntMetaDataHeaderDSFlags" : {
+              "type" : "keyword"
+            },
             "InBandNetworkTelemetryData" : {
+              "type" : "keyword"
+            },
+            "IPv4SrcIP" : {
               "type" : "keyword"
             },
             "UDPIntShimHeaderRes2" : {
@@ -161,10 +155,10 @@
             "UDPIntMetaDataHeaderDSInstruction" : {
               "type" : "keyword"
             },
-            "UDPIntShimHeaderRes1" : {
+            "UDP2Data" : {
               "type" : "keyword"
             },
-            "UDP2Data" : {
+            "UDPIntShimHeaderRes1" : {
               "type" : "keyword"
             },
             "telemetryHwdId" : {
@@ -197,10 +191,11 @@
             "IPVersion" : {
               "type" : "keyword"
             },
-            "IPv4DestIP" : {
+
+            "IPvPayloadLength" : {
               "type" : "keyword"
             },
-            "IPvPayloadLength" : {
+            "IPv4DestIP" : {
               "type" : "keyword"
             },
             "UDPIntShimHeaderLength" : {
@@ -212,18 +207,22 @@
             "UDGLength" : {
               "type" : "keyword"
             },
+            "telemetryReportVarOptDropCount" : {
+              "type" : "keyword"
+            },
             "UDPIntMetaDataHeaderM" : {
               "type" : "keyword"
             },
             "UDP2DstPort" : {
               "type" : "keyword"
             },
-            "dropReportHash" : {
-              "type" : "keyword"
-            },
             "telemetryD" : {
               "type" : "keyword"
             },
+            "dropReportHash" : {
+              "type" : "keyword"
+            },
+
             "rawData" : {
               "type" : "keyword"
             },
@@ -251,10 +250,10 @@
             "UDGDstPort" : {
               "type" : "keyword"
             },
-            "combinedHashKeys" : {
+            "IPvNextHopLimit" : {
               "type" : "keyword"
             },
-            "IPvNextHopLimit" : {
+            "dropHashInput" : {
               "type" : "keyword"
             },
             "telemetryDsMdBits" : {
@@ -263,7 +262,13 @@
             "UDPIntMetaDataHeaderDomainSpecificID" : {
               "type" : "keyword"
             },
+            "telemetryReportVarOpBsmd" : {
+              "type" : "keyword"
+            },
             "telemetryRepMdBits" : {
+              "type" : "keyword"
+            },
+            "telemetryReportVarOptHash" : {
               "type" : "keyword"
             },
             "UDPIntMetaDataHeaderRemainingHopCnt" : {
@@ -272,13 +277,16 @@
             "IPv6DestIP" : {
               "type" : "keyword"
             },
-            "telemetrySequenceNumber" : {
+            "isDropReport" : {
+              "type" : "keyword"
+            },
+            "IPvClass" : {
               "type" : "keyword"
             },
             "telemetryMDLength" : {
               "type" : "keyword"
             },
-            "IPvClass" : {
+            "telemetrySequenceNumber" : {
               "type" : "keyword"
             },
             "UDPIntMetaDataHeaderD" : {

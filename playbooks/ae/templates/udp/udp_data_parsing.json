@@ -1494,19 +1494,18 @@
               String macAddress = ctx.ts.INTMetadataSourceMetadataOriginatingMac;
               String destinationPort = ctx.ts.UDP2DstPort;
               String IPvDestIP = ctx.ts.IPv4DestIP;
+              String combinedKeys = '';
               String isIPv4 = ctx.ts.isIPv4;
-              String isIPv6 = ctx.ts.isIPv6;
-              if(isIPv4 == 'true')
-              {
-                 String combinedKeys = macAddress + '|' + destinationPort + '|' + IPvDestIP + '|' + '::';
-                 ctx.ts.combinedHashKeys = combinedKeys;
-              }
-              if(isIPv6 == 'true')
-              {
-                 String combinedKeys = macAddress + '|' + destinationPort + '|' + '::' + '|' +  IPvDestIP ;
-                 ctx.ts.combinedHashKeys = combinedKeys;
-              }
-
+          if(isIPv4.toString() == 'true')
+{
+combinedKeys = combinedKeys.concat(macAddress).concat('|').concat(destinationPort).concat('|').concat(IPvDestIP).concat('|').concat('::');
+ctx.ts.dropHashInput = combinedKeys;
+}
+if(isIPv4.toString() == 'false')
+{
+combinedKeys = combinedKeys.concat(macAddress).concat('|').concat(destinationPort).concat('|').concat(IPvDestIP).concat('|').concat('::');
+ctx.ts.dropHashInput = combinedKeys;
+}
         """,
           "ignore_failure" : true
         }
@@ -1515,7 +1514,7 @@
         "script" : {
           "ignore_failure" : false,
           "params" : {
-            "combinedHashKeys" : "{{ctx.ts.combinedHashKeys}}"
+            "dropHashInput" : "00:00:00:00:01:01|5792|192.168.1.10|::"
           },
           "id" : "calculateKeyHash"
         }
