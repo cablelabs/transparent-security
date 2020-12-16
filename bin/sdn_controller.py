@@ -64,6 +64,9 @@ def get_args():
     parser.add_argument('-drf', '--drop-rpt-freq', dest='drop_rpt_freq',
                         help='The number of seconds between drop reports',
                         required=False, default=10, type=int)
+    parser.add_argument('-drb', '--drop-rpt-behavior', dest='drop_rpt_behavior',
+                        help='Send drop count as a delta or total value',
+                        choices=['delta', 'total_count'], default='total_count')
     parser.add_argument('-dh', '--debug-host', dest='debug_host',
                         help='remote debugging host IP')
     parser.add_argument('-dp', '--debug-port', dest='debug_port', default=5678,
@@ -149,14 +152,20 @@ def main():
             topo=topo,
             log_dir=args.log_dir,
             load_p4=eval(args.load_p4))
-
+    drop_rpt_behavior = args.drop_rpt_behavior
+    logger.info("Drop report count behavior - [%s]", drop_rpt_behavior)
+    if drop_rpt_behavior == 'delta':
+        is_delta = True
+    else:
+        is_delta = False
     DdosSdnController(
         topo=topo,
         controllers=controllers,
         http_server_port=args.http_server_port,
         ansible_inventory=args.ansible_inventory,
         controller_user=args.controller_user,
-        ae_ip_str=args.ae_ip).start()
+        ae_ip_str=args.ae_ip,
+        is_delta=is_delta).start()
 
 
 if __name__ == '__main__':
