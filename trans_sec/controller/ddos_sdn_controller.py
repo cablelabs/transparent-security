@@ -43,7 +43,7 @@ class DdosSdnController:
     SDN controller for quelling DDoS attacks
     """
     def __init__(self, topo, controllers, http_server_port, controller_user,
-                 ansible_inventory, ae_ip_str=None, drop_rpt_freq=10):
+                 ansible_inventory, ae_ip_str=None, drop_rpt_freq=10, is_delta=False):
 
         self.topo = topo
         self.controllers = controllers
@@ -52,11 +52,13 @@ class DdosSdnController:
         self.ansible_inventory = ansible_inventory
         self.controller_user = controller_user
         self.running = False
+        self.is_delta = is_delta
         if ae_ip_str:
             self.ae_ip = ipaddress.ip_address(ae_ip_str)
         else:
             self.ae_ip = None
         self.drop_rpt_freq = drop_rpt_freq
+        self.drop_rpt_count = dict()
 
     def start(self):
         logger.info('Starting Controllers - [%s]', self.controllers)
@@ -97,13 +99,23 @@ class DdosSdnController:
                     if match_keys != 0:
                         logger.debug('Match keys - [%s]', match_keys)
                         attack_key = tps_utils.create_attack_hash(**match_keys)
-                        logger.debug('Attack key value - [%s]', attack_key)
+                        logger.debug('Attack key value - [%s] and drop report delta mode - [%s]', attack_key,
+                                     self.is_delta)
                         if attack_key:
-                            self.__send_drop_pkt(attack_key, drop_count)
+                            if self.is_delta:
+                                old_count = self.drop_rpt_count.get(attack_key)
+                                logger.debug('Previous drop count - [%s]', old_count)
+                                if not old_count:
+                                    old_count = 0
+                                rpt_count = drop_count - old_count
+                                self.drop_rpt_count[attack_key] = drop_count
+                            else:
+                                rpt_count = drop_count
+                            self.__send_drop_pkt(attack_key, rpt_count)
                     else:
                         logger.debug('No drops to report')
 
-    def __send_drop_pkt(self, attack_key, drop_count):
+    def __send_drop_pkt(self, attack_key, rpt_count):
         host_name = socket.gethostname()
 
         sdn_ip = socket.gethostbyname(host_name)
@@ -127,7 +139,7 @@ class DdosSdnController:
             domain_id=consts.TRPT_DOMAIN_ID,
             var_opt_bsmd=consts.DRPT_BS_MD,
             timestamp=int(time.time()),
-            drop_count=drop_count,
+            drop_count=rpt_count,
             drop_tbl_keys=attack_key)
         drop_pkt = drop_pkt / UDP(dport=consts.UDP_DRPT_DST_PORT,
                                   sport=consts.UDP_DRPT_SRC_PORT,
@@ -137,7 +149,7 @@ class DdosSdnController:
             sendp(drop_pkt, verbose=2)
             logger.info(
                 "Sent Drop Report with attack key - [%s], and count - [%s]",
-                attack_key, drop_count)
+                attack_key, rpt_count)
         except Exception as e:
             logger.info("Unable to send drop report - [%s]", e)
 
