@@ -451,8 +451,8 @@
               {
                String IPv6SrcIPHexString = tsRawData.substring(92,124);
                String IPv6SrcIP = "";
-                for(int i = 0; i < IPv6SrcIPHexString.length(); i = i + 2) {
-                     IPv6SrcIP = IPv6SrcIP + Integer.valueOf(IPv6SrcIPHexString.substring(i, i+2), 16) + ".";
+                for(int i = 0; i < IPv6SrcIPHexString.length(); i = i + 4) {
+                     IPv6SrcIP = IPv6SrcIP + IPv6SrcIPHexString.substring(i, i+4) + ":";
                 }
                 IPv6SrcIP = IPv6SrcIP.substring(0, IPv6SrcIP.length()-1);
                 ctx.ts.IPv6SrcIP = IPv6SrcIP;
@@ -485,8 +485,8 @@
              {
                String IPv6DestIPHexString = tsRawData.substring(124,156);
                String IPv6DestIP = "";
-                for(int i = 0; i < IPv6DestIPHexString.length(); i = i + 2) {
-                     IPv6DestIP = IPv6DestIP + Integer.valueOf(IPv6DestIPHexString.substring(i, i+2), 16) + ".";
+                for(int i = 0; i < IPv6DestIPHexString.length(); i = i + 4) {
+                     IPv6DestIP = IPv6DestIP + IPv6DestIPHexString.substring(i, i+4) + ":";
                 }
                 IPv6DestIP = IPv6DestIP.substring(0, IPv6DestIP.length()-1);
                 ctx.ts.IPv6DestIP = IPv6DestIP;
