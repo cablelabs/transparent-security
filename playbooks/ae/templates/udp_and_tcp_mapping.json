@@ -70,9 +70,6 @@
           "isIPv4" : {
             "type" : "keyword"
           },
-          "nextProto": {
-            "type" : "keyword"
-          },
           "isTCP" : {
             "type" : "keyword"
           },
