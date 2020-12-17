@@ -304,8 +304,6 @@
 
                 if( etherType == '0800' && ipVersion == '4')
                 {
-                  String nextProtoStr = tsRawData.substring(138, 140);
-                  BigInteger nextProtoBigInt =  new BigInteger(nextProtoStr, 16);
 
                   if( ctx.ts.nextProto == tcpNextProtoInt )
                   {
@@ -317,8 +315,7 @@
 
                 if( etherType == '86dd' && ipVersion == '6')
                 {
-                  String nextProtoStr = tsRawData.substring(178, 180);
-                   BigInteger nextProtoBigInt =  new BigInteger(nextProtoStr, 16);
+
                     if( ctx.ts.nextProto == tcpNextProtoInt )
                   {
                     ctx.ts.isTCPv6 = true;
@@ -342,8 +339,6 @@
                 int udpNextProtoInt = Integer.parseInt(udpNextProtoStr);
                 if( etherType == '0800' && ipVersion == '4')
                 {
-                  String nextProtoStr = tsRawData.substring(138, 140);
-                   BigInteger nextProtoBigInt =  new BigInteger(nextProtoStr, 16);
 
                   if(ctx.ts.nextProto == udpNextProtoInt )
                   {
