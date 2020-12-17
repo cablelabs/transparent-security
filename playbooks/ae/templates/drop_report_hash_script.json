@@ -1,7 +1,7 @@
 {
-"script" : {
-          "lang" : "painless",
-          "source" : """
+  "script" : {
+    "lang" : "painless",
+    "source" : """
 int[] HS() {
     return new int[] {
         (int) 0x6a09e667L,
@@ -15,7 +15,7 @@ int[] HS() {
   };
 }
 int[] KS() {
-  return new int[] {
+return new int[] {
     (int) 0x428a2f98L, (int) 0x71374491L, (int) 0xb5c0fbcfL, (int) 0xe9b5dba5L,
     (int) 0x3956c25bL, (int) 0x59f111f1L, (int) 0x923f82a4L, (int) 0xab1c5ed5L,
     (int) 0xd807aa98L, (int) 0x12835b01L, (int) 0x243185beL, (int) 0x550c7dc3L,
@@ -34,7 +34,7 @@ int[] KS() {
     (int) 0x90befffaL, (int) 0xa4506cebL, (int) 0xbef9a3f7L, (int) 0xc67178f2L
   };
 }
-             byte[] digest(byte[] data, byte[] block, int[] words) {
+byte[] digest(byte[] data, byte[] block, int[] words) {
   byte[] padded = padMessage(data);
   int[] hs = HS();
 
@@ -62,7 +62,7 @@ int[] KS() {
   }
   return hash;
 }
-             void setupWords(byte[] block, int[] words) {
+void setupWords(byte[] block, int[] words) {
   for (int j = 0; j < 16; j++) {
     words[j] = 0;
     for (int m = 0; m < 4; m++) {
@@ -79,7 +79,7 @@ int[] KS() {
     words[j] = words[j - 16] + s0 + words[j - 7] + s1;
   }
 }
-             void iterate(int[] registers, int[] words, int j, int[] ks) {
+void iterate(int[] registers, int[] words, int j, int[] ks) {
   int S0 = Integer.rotateRight(registers[0], 2) ^
            Integer.rotateRight(registers[0], 13) ^
            Integer.rotateRight(registers[0], 22);
@@ -99,7 +99,6 @@ int[] KS() {
   registers[1] = registers[0];
   registers[0] = temp1 + temp2;
 }
-
 byte[] padMessage(byte[] data) {
   int length = data.length;
   int tail = length % 64;
@@ -120,7 +119,6 @@ byte[] padMessage(byte[] data) {
   System.arraycopy(pad, 0, output, length, pad.length);
   return output;
 }
-
 byte[] intToBytes(int i) {
   byte[] b = new byte[4];
   for (int c = 0; c < 4; c++) {
@@ -139,19 +137,22 @@ String bytesToHex(byte[] bytes) {
   return String.copyValueOf(hexChars);
 }
 byte[] charArrayToByteArray(char[] charArray) {
-  byte[] byteArray = new byte[charArray.length];
-  for(int i= 0; i < charArray.length; i++) {
+byte[] byteArray = new byte[charArray.length];
+for(int i= 0; i < charArray.length; i++) {
     byteArray[i] = (byte)(255 & (int)charArray[i]);
   }
-  return byteArray;
+return byteArray;
 }
-
 byte[] block = new byte[64];
 int[] words = new int[64];
-byte[] data = charArrayToByteArray(params.combinedHashKeys.toCharArray());
+String dropHashInput = ctx.ts.dropHashInput;
+if(dropHashInput != null && ctx.ts.isDropReport == false)
+{
+byte[] data = charArrayToByteArray(dropHashInput.toCharArray());
 byte[] res = digest(data, block, words);
 String sha256Str = bytesToHex(res);
 ctx.ts.sha256Hash = sha256Str;
+}
         """
   }
 }
