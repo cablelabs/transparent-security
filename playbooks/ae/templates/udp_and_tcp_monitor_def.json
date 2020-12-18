@@ -27,14 +27,6 @@
                             "boost": 1
                         }
                     }
-                },
-                {
-                    "wildcard": {
-                        "ts.UDP2DstPort": {
-                            "wildcard": "*5792*",
-                            "boost": 1
-                        }
-                    }
                 }
             ],
             "adjust_pure_negative": true,
