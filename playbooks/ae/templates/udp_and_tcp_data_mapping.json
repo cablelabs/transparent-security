@@ -1,0 +1,320 @@
+{
+  "index_patterns" : [
+    "packets-*"
+  ],
+  "settings" : {
+    "index" : {
+      "number_of_replicas" : "0",
+      "default_pipeline" : "ts_parsing",
+      "max_script_fields" : "200"
+    }
+  },
+  "mappings" : {
+    "dynamic" : "false",
+    "properties" : {
+      "layers" : {
+        "properties" : {
+          "data_raw" : {
+            "type" : "keyword"
+          },
+          "data" : {
+            "properties" : {
+              "data_data_data_raw" : {
+                "type" : "keyword"
+              },
+              "data_data_len" : {
+                "type" : "keyword"
+              },
+              "data_data_data" : {
+                "type" : "keyword"
+              }
+            }
+          }
+        }
+      },
+      "timestamp" : {
+        "type" : "date"
+      },
+      "ts" : {
+        "properties" : {
+          "INTMetadataSourceMetadataReserved" : {
+            "type" : "keyword"
+          },
+          "UDPIntShimHeaderType" : {
+            "type" : "keyword"
+          },
+          "telemetryReportLength" : {
+            "type" : "keyword"
+          },
+          "data" : {
+            "type" : "keyword"
+          },
+          "ethernetHeaderDestMac" : {
+            "type" : "keyword"
+          },
+          "telemetryRsvd" : {
+            "type" : "keyword"
+          },
+          "UDGSrcPort" : {
+            "type" : "keyword"
+          },
+          "INTMetadataSourceMetadataSwitchId" : {
+            "type" : "keyword"
+          },
+          "ethernetHeaderSrcMac" : {
+            "type" : "keyword"
+          },
+          "UDPIntShimHeaderNextProto" : {
+            "type" : "keyword"
+          },
+          "isIPv4" : {
+            "type" : "keyword"
+          },
+          "isTCP" : {
+            "type" : "keyword"
+          },
+          "isTCPv4" : {
+            "type" : "keyword"
+          },
+          "isTCPv6" : {
+            "type" : "keyword"
+          },
+          "isUDP" : {
+            "type" : "keyword"
+          },
+          "isUDPv4" : {
+            "type" : "keyword"
+          },
+          "isUDPv6" : {
+            "type" : "keyword"
+          },
+          "dropReportHash": {
+            "type": "keyword"
+          },
+          "sha256Hash": {
+            "type": "keyword"
+          },
+          "nextProto": {
+            "type": "keyword"
+          },
+          "TCPData" : {
+            "type" : "keyword"
+          },
+          "TCPSrcPort" : {
+            "type" : "keyword"
+          },
+          "TCPDestPort" : {
+            "type" : "keyword"
+          },
+          "TCPIntShimHeaderNextProto" : {
+            "type" : "keyword"
+          },
+          "UDPIntMetaDataHeaderVersion" : {
+            "type" : "keyword"
+          },
+          "IPvNextHdrProto" : {
+            "type" : "keyword"
+          },
+          "telemetryReportVersion" : {
+            "type" : "keyword"
+          },
+          "isIPv6" : {
+            "type" : "keyword"
+          },
+          "IPv4SrcIP": {
+            "type" : "keyword"
+          },
+          "UDP2DstPort": {
+            "type": "keyword"
+          },
+          "UDP2Checksum": {
+            "type": "keyword"
+          },
+          "UDP2Length": {
+            "type": "keyword"
+          },
+          "combinedHashKeys": {
+            "type": "keyword"
+          },
+          "UDP2SrcPort": {
+            "type": "keyword"
+          },
+          "IPv6SrcIP": {
+            "type" : "keyword"
+          },
+          "IPv4DestIP":{
+            "type" : "keyword"
+          },
+          "IPv6DestIP":{
+            "type" : "keyword"
+          },
+          "INTMetadataSourceMetadataOriginatingMac" : {
+            "type" : "keyword"
+          },
+          "UDPIntMetaDataHeaderInstructionBitmap" : {
+            "type" : "keyword"
+          },
+          "INTMetadataSourceMetadata" : {
+            "type" : "keyword"
+          },
+          "IPvSrcAddr" : {
+            "type" : "keyword"
+          },
+          "tsRawDataSize" : {
+            "type" : "keyword"
+          },
+          "UDGPData" : {
+            "type" : "keyword"
+          },
+          "UDGChecksum" : {
+            "type" : "keyword"
+          },
+          "INTMetadataHeaderData" : {
+            "type" : "keyword"
+          },
+          "IPvDestAddr" : {
+            "type" : "keyword"
+          },
+          "telemetryInType" : {
+            "type" : "keyword"
+          },
+          "telemetryReport" : {
+            "type" : "keyword"
+          },
+          "UDPIntMetaDataHeaderDSFlags" : {
+            "type" : "keyword"
+          },
+          "telemetryDsMdStatus" : {
+            "type" : "keyword"
+          },
+          "InBandNetworkTelemetryData" : {
+            "type" : "keyword"
+          },
+          "UDPIntShimHeaderRes2" : {
+            "type" : "keyword"
+          },
+          "UDPIntMetaDataHeaderDSInstruction" : {
+            "type" : "keyword"
+          },
+          "UDPIntShimHeaderRes1" : {
+            "type" : "keyword"
+          },
+          "UDP2Data" : {
+            "type" : "keyword"
+          },
+          "telemetryHwdId" : {
+            "type" : "keyword"
+          },
+          "telemetryVarOpt" : {
+            "type" : "keyword"
+          },
+          "IPvData" : {
+            "type" : "keyword"
+          },
+          "ethernetHeaderEtherType" : {
+            "type" : "keyword"
+          },
+          "INTMetadataStackData" : {
+            "type" : "keyword"
+          },
+          "IPvFlow" : {
+            "type" : "keyword"
+          },
+          "UDPIntShimHeaderData" : {
+            "type" : "keyword"
+          },
+          "INTMetadataStackSwitchID" : {
+            "type" : "keyword"
+          },
+          "IPVersion" : {
+            "type" : "keyword"
+          },
+          "IPvPayloadLength" : {
+            "type" : "keyword"
+          },
+          "UDPIntShimHeaderLength" : {
+            "type" : "keyword"
+          },
+          "UDPIntShimHeaderNPT" : {
+            "type" : "keyword"
+          },
+          "UDGLength" : {
+            "type" : "keyword"
+          },
+          "UDPIntMetaDataHeaderM" : {
+            "type" : "keyword"
+          },
+          "telemetryD" : {
+            "type" : "keyword"
+          },
+          "rawData" : {
+            "type" : "keyword"
+          },
+          "telemetryF" : {
+            "type" : "keyword"
+          },
+          "telemetryReportType" : {
+            "type" : "keyword"
+          },
+          "telemetryI" : {
+            "type" : "keyword"
+          },
+          "UDPIntMetaDataHeaderPerhopMetadataLength" : {
+            "type" : "keyword"
+          },
+          "telemetryQ" : {
+            "type" : "keyword"
+          },
+          "telemetryDomainSpecificID" : {
+            "type" : "keyword"
+          },
+          "udpLayersSize" : {
+            "type" : "keyword"
+          },
+          "UDGDstPort" : {
+            "type" : "keyword"
+          },
+          "IPvNextHopLimit" : {
+            "type" : "keyword"
+          },
+          "telemetryDsMdBits" : {
+            "type" : "keyword"
+          },
+          "UDPIntMetaDataHeaderDomainSpecificID" : {
+            "type" : "keyword"
+          },
+          "telemetryRepMdBits" : {
+            "type" : "keyword"
+          },
+          "UDPIntMetaDataHeaderRemainingHopCnt" : {
+            "type" : "keyword"
+          },
+          "telemetrySequenceNumber" : {
+            "type" : "keyword"
+          },
+          "telemetryMDLength" : {
+            "type" : "keyword"
+          },
+          "IPvClass" : {
+            "type" : "keyword"
+          },
+          "UDPIntMetaDataHeaderD" : {
+            "type" : "keyword"
+          },
+          "UDPIntMetaDataHeaderE" : {
+            "type" : "keyword"
+          },
+          "telemetryNodeId" : {
+            "type" : "keyword"
+          },
+          "dataII" : {
+            "type" : "keyword"
+          },
+          "UDPIntMetaDataHeaderRes" : {
+            "type" : "keyword"
+          }
+        }
+      }
+    }
+  }
+}

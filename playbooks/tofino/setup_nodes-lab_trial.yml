@@ -84,4 +84,4 @@
     sdn_attack_context: aggAttack
 
 #Import playbook to setup and load AE pipelines
-- import_playbook: ../ae/setup_ae_udp_pipeline.yml
+- import_playbook: ../ae/setup_ae_udp_and_tcp_pipeline.yml
