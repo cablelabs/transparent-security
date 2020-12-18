@@ -80,6 +80,23 @@
                 ]
             }
         },
+        "TCPDstPortValue": {
+            "terms": {
+                "field": "ts.TCPDestPort",
+                "size": 10,
+                "min_doc_count": 1,
+                "shard_min_doc_count": 0,
+                "show_term_doc_count_error": false,
+                "order": [
+                    {
+                        "_count": "desc"
+                    },
+                    {
+                        "_key": "asc"
+                    }
+                ]
+            }
+        },
         "INTMetadataSourceMetadataOriginatingMacValueCount": {
             "value_count": {
                 "field": "ts.INTMetadataSourceMetadataOriginatingMac"
@@ -105,6 +122,11 @@
         "UDP2DstPortValueCount": {
             "value_count": {
                 "field": "ts.UDP2DstPort"
+            }
+        },
+        "TCPDstPortValueCount": {
+            "value_count": {
+                "field": "ts.TCPDestPort"
             }
         },
         "IPv4SrcIP": {
@@ -183,11 +205,9 @@
                 "shard_min_doc_count": 0,
                 "show_term_doc_count_error": false,
                 "order": [
+
                     {
-                        "_count": "desc"
-                    },
-                    {
-                        "_key": "asc"
+                        "_key": "desc"
                     }
                 ]
             }
@@ -200,11 +220,9 @@
                 "shard_min_doc_count": 0,
                 "show_term_doc_count_error": false,
                 "order": [
+
                     {
-                        "_count": "desc"
-                    },
-                    {
-                        "_key": "asc"
+                        "_key": "desc"
                     }
                 ]
             }
@@ -217,11 +235,9 @@
                 "shard_min_doc_count": 0,
                 "show_term_doc_count_error": false,
                 "order": [
+
                     {
-                        "_count": "desc"
-                    },
-                    {
-                        "_key": "asc"
+                        "_key": "desc"
                     }
                 ]
             }
@@ -234,11 +250,9 @@
                 "shard_min_doc_count": 0,
                 "show_term_doc_count_error": false,
                 "order": [
+
                     {
-                        "_count": "desc"
-                    },
-                    {
-                        "_key": "asc"
+                        "_key": "desc"
                     }
                 ]
             }
