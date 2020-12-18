@@ -35,14 +35,6 @@
                             "boost": 1
                         }
                     }
-                },
-                {
-                    "wildcard": {
-                        "ts.TCPDestPort": {
-                            "wildcard": "*5792*",
-                            "boost": 1
-                        }
-                    }
                 }
             ],
             "adjust_pure_negative": true,

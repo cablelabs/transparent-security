@@ -325,7 +325,7 @@
                 }
 
         """,
-          "ignore_failure" : false
+          "ignore_failure" : true
         }
       },
       {
@@ -362,7 +362,7 @@
                 }
 
         """,
-          "ignore_failure" : false
+          "ignore_failure" : true
         }
       },
       {
