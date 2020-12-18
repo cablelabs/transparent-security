@@ -268,7 +268,7 @@
     "severity": "1",
     "condition": {
       "script": {
-        "source": "if(ctx.results[0].hits.total.value > 0){ctx.results[0].aggregations.TCPDstPortValueCount.value >= 100 && ctx.results[0].aggregations.isTCPv4Count.buckets.0.key =='true' && ctx.results[0].aggregations.isTCPv4Count.buckets.0.doc_count >= 100}",
+        "source": "if(ctx.results[0].hits.total.value > 0){ctx.results[0].aggregations.TCPDstPortValueCount.value >= 100  && ctx.results[0].aggregations.isTCPv4Count.buckets.length > 0 && ctx.results[0].aggregations.isTCPv4Count.buckets.0.key =='true' && ctx.results[0].aggregations.isTCPv4Count.buckets.0.doc_count >= 100}",
         "lang": "painless"
       }
     },
@@ -290,7 +290,7 @@
     "severity": "1",
     "condition": {
       "script": {
-        "source": "if(ctx.results[0].hits.total.value > 0){ctx.results[0].aggregations.TCPDstPortValueCount.value >= 100 && ctx.results[0].aggregations.isTCPv6Count.buckets.0.key =='true' && ctx.results[0].aggregations.isTCPv6Count.buckets.0.doc_count >= 100}",
+        "source": "if(ctx.results[0].hits.total.value > 0){ctx.results[0].aggregations.TCPDstPortValueCount.value >= 100  && ctx.results[0].aggregations.isTCPv6Count.buckets.length > 0 && ctx.results[0].aggregations.isTCPv6Count.buckets.0.key =='true' && ctx.results[0].aggregations.isTCPv6Count.buckets.0.doc_count >= 100}",
         "lang": "painless"
       }
     },
@@ -312,7 +312,7 @@
     "severity": "1",
     "condition": {
       "script": {
-        "source": "if(ctx.results[0].hits.total.value > 0){ctx.results[0].aggregations.UDP2DstPortValueCount.value >= 100 && ctx.results[0].aggregations.isUDPv4Count.buckets.0.key =='true' && ctx.results[0].aggregations.isUDPv4Count.buckets.0.doc_count >= 100}",
+        "source": "if(ctx.results[0].hits.total.value > 0){ctx.results[0].aggregations.UDP2DstPortValueCount.value >= 100  && ctx.results[0].aggregations.isUDPv4Count.buckets.length > 0 && ctx.results[0].aggregations.isUDPv4Count.buckets.0.key =='true' && ctx.results[0].aggregations.isUDPv4Count.buckets.0.doc_count >= 100}",
         "lang": "painless"
       }
     },
@@ -334,7 +334,7 @@
     "severity": "1",
     "condition": {
       "script": {
-        "source": "if(ctx.results[0].hits.total.value > 0){ctx.results[0].aggregations.UDP2DstPortValueCount.value >= 100 && ctx.results[0].aggregations.isUDPv6Count.buckets.0.key =='true' && ctx.results[0].aggregations.isUDPv6Count.buckets.0.doc_count >= 100}",
+        "source": "if(ctx.results[0].hits.total.value > 0){ctx.results[0].aggregations.UDP2DstPortValueCount.value >= 100 && ctx.results[0].aggregations.isUDPv6Count.buckets.length > 0 && ctx.results[0].aggregations.isUDPv6Count.buckets.0.key =='true' && ctx.results[0].aggregations.isUDPv6Count.buckets.0.doc_count >= 100}",
         "lang": "painless"
       }
     },
