@@ -1,0 +1,340 @@
+{
+  "type": "monitor",
+  "name": "DDOS-UDP-TCP-Monitor",
+  "enabled": true,
+  "schedule": {
+    "period": {
+      "interval": 1,
+      "unit": "MINUTES"
+    }
+  },
+  "inputs": [{
+    "search": {
+      "indices": ["packets-*"],
+      "query": {
+        "size": 0,
+        "query": {
+        "bool": {
+            "filter": [
+                {
+                    "range": {
+                        "timestamp": {
+                            "from": "{{period_end}}||-1m",
+                            "to": "{{period_end}}",
+                            "include_lower": true,
+                            "include_upper": true,
+                            "format": "epoch_millis",
+                            "boost": 1
+                        }
+                    }
+                },
+                {
+                    "wildcard": {
+                        "ts.UDP2DstPort": {
+                            "wildcard": "*5792*",
+                            "boost": 1
+                        }
+                    }
+                }
+            ],
+            "adjust_pure_negative": true,
+            "boost": 1
+        }
+    },
+        "_source": {
+        "includes": [
+           "ts.UDP2DstPort",
+            "ts.IPvDestAddr",
+            "ts.INTMetadataSourceMetadataOriginatingMac",
+            "ts.IPv4SrcIP",
+            "ts.IPv4DestIP",
+            "ts.IPv6SrcIP",
+            "ts.IPv6DestIP",
+            "ts.isTCPv4",
+            "ts.isTCPv6",
+            "ts.isUDPv4",
+            "ts.isUDPv6"
+        ],
+        "excludes": []
+    },
+        "aggregations": {
+        "IPvDestAddrValueCount": {
+            "value_count": {
+                "field": "ts.IPvDestAddr"
+            }
+        },
+        "UDP2DstPortValue": {
+            "terms": {
+                "field": "ts.UDP2DstPort",
+                "size": 10,
+                "min_doc_count": 1,
+                "shard_min_doc_count": 0,
+                "show_term_doc_count_error": false,
+                "order": [
+                    {
+                        "_count": "desc"
+                    },
+                    {
+                        "_key": "asc"
+                    }
+                ]
+            }
+        },
+        "INTMetadataSourceMetadataOriginatingMacValueCount": {
+            "value_count": {
+                "field": "ts.INTMetadataSourceMetadataOriginatingMac"
+            }
+        },
+        "IPv4DestIP": {
+            "terms": {
+                "field": "ts.IPv4DestIP",
+                "size": 10,
+                "min_doc_count": 1,
+                "shard_min_doc_count": 0,
+                "show_term_doc_count_error": false,
+                "order": [
+                    {
+                        "_count": "desc"
+                    },
+                    {
+                        "_key": "asc"
+                    }
+                ]
+            }
+        },
+        "UDP2DstPortValueCount": {
+            "value_count": {
+                "field": "ts.UDP2DstPort"
+            }
+        },
+        "IPv4SrcIP": {
+            "terms": {
+                "field": "ts.IPv4SrcIP",
+                "size": 10,
+                "min_doc_count": 1,
+                "shard_min_doc_count": 0,
+                "show_term_doc_count_error": false,
+                "order": [
+                    {
+                        "_count": "desc"
+                    },
+                    {
+                        "_key": "asc"
+                    }
+                ]
+            }
+        },
+        "IPv6SrcIP": {
+            "terms": {
+                "field": "ts.IPv6SrcIP",
+                "size": 10,
+                "min_doc_count": 1,
+                "shard_min_doc_count": 0,
+                "show_term_doc_count_error": false,
+                "order": [
+                    {
+                        "_count": "desc"
+                    },
+                    {
+                        "_key": "asc"
+                    }
+                ]
+            }
+        },
+        "IPv6DestIP": {
+            "terms": {
+                "field": "ts.IPv6DestIP",
+                "size": 10,
+                "min_doc_count": 1,
+                "shard_min_doc_count": 0,
+                "show_term_doc_count_error": false,
+                "order": [
+                    {
+                        "_count": "desc"
+                    },
+                    {
+                        "_key": "asc"
+                    }
+                ]
+            }
+        },
+        "OriginatingMacAddrUDPv4": {
+            "terms": {
+                "field": "ts.INTMetadataSourceMetadataOriginatingMac",
+                "size": 10,
+                "min_doc_count": 1,
+                "shard_min_doc_count": 0,
+                "show_term_doc_count_error": false,
+                "order": [
+                    {
+                        "_count": "desc"
+                    },
+                    {
+                        "_key": "asc"
+                    }
+                ]
+            }
+        },
+        "isTCPv4Count": {
+            "terms": {
+                "field": "ts.isTCPv4",
+                "size": 10,
+                "min_doc_count": 1,
+                "shard_min_doc_count": 0,
+                "show_term_doc_count_error": false,
+                "order": [
+                    {
+                        "_count": "desc"
+                    },
+                    {
+                        "_key": "asc"
+                    }
+                ]
+            }
+        },
+        "isTCPv6Count": {
+            "terms": {
+                "field": "ts.isTCPv6",
+                "size": 10,
+                "min_doc_count": 1,
+                "shard_min_doc_count": 0,
+                "show_term_doc_count_error": false,
+                "order": [
+                    {
+                        "_count": "desc"
+                    },
+                    {
+                        "_key": "asc"
+                    }
+                ]
+            }
+        },
+        "isUDPv4Count": {
+            "terms": {
+                "field": "ts.isUDPv4",
+                "size": 10,
+                "min_doc_count": 1,
+                "shard_min_doc_count": 0,
+                "show_term_doc_count_error": false,
+                "order": [
+                    {
+                        "_count": "desc"
+                    },
+                    {
+                        "_key": "asc"
+                    }
+                ]
+            }
+        },
+        "isUDPv6Count": {
+            "terms": {
+                "field": "ts.isUDPv6",
+                "size": 10,
+                "min_doc_count": 1,
+                "shard_min_doc_count": 0,
+                "show_term_doc_count_error": false,
+                "order": [
+                    {
+                        "_count": "desc"
+                    },
+                    {
+                        "_key": "asc"
+                    }
+                ]
+            }
+        }
+    }
+      }
+  }
+    }],
+  "triggers": [
+  {
+    "name": "DDOS-Trigger-TCPv4",
+    "severity": "1",
+    "condition": {
+      "script": {
+        "source": "if(ctx.results[0].hits.total.value > 0){ctx.results[0].aggregations.UDP2DstPortValueCount.value >= 10}",
+        "lang": "painless"
+      }
+    },
+    "actions": [{
+      "name": "Sdn-WebHook-Action",
+      "destination_id": "sdnWebhookResponseIdTCPv4",
+      "message_template": {
+        "source":"{\"event_action\":\"trigger\", \"dst_ip\":\"{{ctx.results.0.aggregations.IPv4DestIP.buckets.0.key}}\",\"dst_port\":\"{{ctx.results.0.aggregations.UDP2DstPortValue.buckets.0.key}}\",\"src_ip\":\"{{ctx.results.0.aggregations.IPv4SrcIP.buckets.0.key}}\",\"src_mac\":\"{{ctx.results.0.aggregations.OriginatingMacAddrUDPv4.buckets.0.key}}\"}",
+        "lang": "mustache",
+        "options": {
+            "content_type": "application/json"
+       }
+     },
+      "throttle_enabled": false
+    }]
+  },
+  {
+    "name": "DDOS-Trigger-TCPv6",
+    "severity": "1",
+    "condition": {
+      "script": {
+        "source": "if(ctx.results[0].hits.total.value > 0){ctx.results[0].aggregations.UDP2DstPortValueCount.value >= 10}",
+        "lang": "painless"
+      }
+    },
+    "actions": [{
+      "name": "Sdn-WebHook-Action",
+      "destination_id": "sdnWebhookResponseIdTCPv6",
+      "message_template": {
+        "source":"{\"event_action\":\"trigger\", \"dst_ip\":\"{{ctx.results.0.aggregations.IPv4DestIP.buckets.0.key}}\",\"dst_port\":\"{{ctx.results.0.aggregations.UDP2DstPortValue.buckets.0.key}}\",\"src_ip\":\"{{ctx.results.0.aggregations.IPv4SrcIP.buckets.0.key}}\",\"src_mac\":\"{{ctx.results.0.aggregations.OriginatingMacAddrUDPv4.buckets.0.key}}\"}",
+        "lang": "mustache",
+        "options": {
+            "content_type": "application/json"
+       }
+     },
+      "throttle_enabled": false
+    }]
+  },
+  {
+    "name": "DDOS-Trigger-UDPv4",
+    "severity": "1",
+    "condition": {
+      "script": {
+        "source": "if(ctx.results[0].hits.total.value > 0){ctx.results[0].aggregations.UDP2DstPortValueCount.value >= 10}",
+        "lang": "painless"
+      }
+    },
+    "actions": [{
+      "name": "Sdn-WebHook-Action",
+      "destination_id": "sdnWebhookResponseIdUDPv4",
+      "message_template": {
+        "source":"{\"event_action\":\"trigger\", \"dst_ip\":\"{{ctx.results.0.aggregations.IPv4DestIP.buckets.0.key}}\",\"dst_port\":\"{{ctx.results.0.aggregations.UDP2DstPortValue.buckets.0.key}}\",\"src_ip\":\"{{ctx.results.0.aggregations.IPv4SrcIP.buckets.0.key}}\",\"src_mac\":\"{{ctx.results.0.aggregations.OriginatingMacAddrUDPv4.buckets.0.key}}\"}",
+        "lang": "mustache",
+        "options": {
+            "content_type": "application/json"
+       }
+     },
+      "throttle_enabled": false
+    }]
+  },
+  {
+    "name": "DDOS-Trigger-UDPv6",
+    "severity": "1",
+    "condition": {
+      "script": {
+        "source": "if(ctx.results[0].hits.total.value > 0){ctx.results[0].aggregations.UDP2DstPortValueCount.value >= 10}",
+        "lang": "painless"
+      }
+    },
+    "actions": [{
+      "name": "Sdn-WebHook-Action",
+      "destination_id": "sdnWebhookResponseIdUDPv6",
+      "message_template": {
+        "source":"{\"event_action\":\"trigger\", \"dst_ip\":\"{{ctx.results.0.aggregations.IPv4DestIP.buckets.0.key}}\",\"dst_port\":\"{{ctx.results.0.aggregations.UDP2DstPortValue.buckets.0.key}}\",\"src_ip\":\"{{ctx.results.0.aggregations.IPv4SrcIP.buckets.0.key}}\",\"src_mac\":\"{{ctx.results.0.aggregations.OriginatingMacAddrUDPv4.buckets.0.key}}\"}",
+        "lang": "mustache",
+        "options": {
+            "content_type": "application/json"
+       }
+     },
+      "throttle_enabled": false
+    }]
+  }
+  ]
+}
