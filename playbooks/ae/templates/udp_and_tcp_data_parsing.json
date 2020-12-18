@@ -328,7 +328,7 @@
           "ignore_failure" : false
         }
       },
-       {
+      {
         "script" : {
           "lang" : "painless",
           "source" : """
@@ -364,7 +364,7 @@
         """,
           "ignore_failure" : false
         }
-       },
+      },
       {
         "script" : {
           "lang" : "painless",
@@ -1232,7 +1232,7 @@
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
-              if(ctx.ts.isUDP == true)
+              if(ctx.ts.isUDPv4 == true || ctx.ts.isUDPv6 == true)
              {
               if( etherType == '0800' && ipVersion == '4')
               {
@@ -1247,7 +1247,7 @@
           "ignore_failure" : true
         }
       },
-        {
+      {
         "script" : {
           "lang" : "painless",
           "source" : """
@@ -1256,7 +1256,7 @@
               String ipVersion = tsRawData.substring(76, 77);
               String tcpNextProtoStr = '6';
               int tcpNextProtoInt = Integer.parseInt(tcpNextProtoStr);
-              if(ctx.ts.isTCP == true)
+              if(ctx.ts.isTCPv4 == true || ctx.ts.isTCPv6 == true)
             {
               if( etherType == '0800' && ipVersion == '4' &&  ctx.ts.nextProto == tcpNextProtoInt )
               {
@@ -1278,7 +1278,7 @@
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
-              if( ctx.ts.isUDP == true )
+              if( ctx.ts.isUDPv4 == true || ctx.ts.isUDPv6 == true )
              {
               if( etherType == '0800' && ipVersion == '4')
               {
@@ -1305,16 +1305,16 @@
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
               String tcpNextProtoStr = '6';
-              if( ctx.ts.isTCP == true )
+              if( ctx.ts.isTCPv4 == true || ctx.ts.isTCPv6 == true )
             {
               int tcpNextProtoInt = Integer.parseInt(tcpNextProtoStr);
-              if( etherType == '0800' && ipVersion == '4' &&  ctx.ts.nextProto == tcpNextProtoInt )
+              if( etherType == '0800' && ipVersion == '4' )
               {
                String TCPSrcPortStr = tsRawData.substring(196, 200);
                BigInteger TCPSrcPortBigInt = new BigInteger(TCPSrcPortStr,16);
                ctx.ts.TCPSrcPort = TCPSrcPortBigInt.intValue();
               }
-              if( etherType == '86dd' && ipVersion == '6' &&  ctx.ts.nextProto == tcpNextProtoInt )
+              if( etherType == '86dd' && ipVersion == '6')
               {
                String TCPSrcPortStr = tsRawData.substring(236, 240);
                BigInteger TCPSrcPortBigInt = new BigInteger(TCPSrcPortStr,16);
@@ -1332,7 +1332,7 @@
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
-              if( ctx.ts.isUDP == true )
+              if( ctx.ts.isUDPv4 == true || ctx.ts.isUDPv6 == true )
              {
               if( etherType == '0800' && ipVersion == '4')
               {
@@ -1359,7 +1359,7 @@
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
               String tcpNextProtoStr = '6';
-             if( ctx.ts.isTCP == true )
+             if( ctx.ts.isTCPv4 == true ||  ctx.ts.isTCPv6 == true )
            {
               int tcpNextProtoInt = Integer.parseInt(tcpNextProtoStr);
               if( etherType == '0800' && ipVersion == '4' &&  ctx.ts.nextProto == tcpNextProtoInt )
@@ -1405,7 +1405,7 @@
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
-              if(ctx.ts.isUDP == true )
+              if(ctx.ts.isUDPv4 == true || ctx.ts.isUDPv6 == true)
             {
               if( etherType == '0800' && ipVersion == '4')
               {
@@ -1427,7 +1427,7 @@
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
-              if ( ctx.ts.isUDP == true)
+              if (ctx.ts.isUDPv4 == true || ctx.ts.isUDPv6 == true)
              {
               if( etherType == '0800' && ipVersion == '4')
               {
@@ -1438,15 +1438,15 @@
                  ctx.ts.dataII = tsRawData.substring(252, 292);
               }
             }
-            if(ctx.ts.isTCP == true)
+            if(ctx.ts.isTCPv4 == true ||  ctx.ts.isTCPv6 == true)
            {
               String tcpNextProtoStr = '6';
               int tcpNextProtoInt = Integer.parseInt(tcpNextProtoStr);
-              if( etherType == '0800' && ipVersion == '4' &&  ctx.ts.nextProto == tcpNextProtoInt)
+              if( etherType == '0800' && ipVersion == '4' )
               {
                  ctx.ts.dataII = tsRawData.substring(236, 288);
               }
-              if(etherType == '86dd' && ipVersion == '6' &&  ctx.ts.nextProto == tcpNextProtoInt)
+              if(etherType == '86dd' && ipVersion == '6' )
               {
                  ctx.ts.dataII = tsRawData.substring(252, 304);
               }
@@ -1455,7 +1455,5 @@
           "ignore_failure" : true
         }
       }
-
-
     ]
   }
