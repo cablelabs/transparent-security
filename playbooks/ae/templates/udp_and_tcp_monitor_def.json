@@ -35,6 +35,14 @@
                             "boost": 1
                         }
                     }
+                },
+                {
+                    "wildcard": {
+                        "ts.TCPDestPort": {
+                            "wildcard": "*5792*",
+                            "boost": 1
+                        }
+                    }
                 }
             ],
             "adjust_pure_negative": true,
@@ -43,7 +51,8 @@
     },
         "_source": {
         "includes": [
-           "ts.UDP2DstPort",
+            "ts.UDP2DstPort",
+            "ts.TCPDestPort",
             "ts.IPvDestAddr",
             "ts.INTMetadataSourceMetadataOriginatingMac",
             "ts.IPv4SrcIP",
