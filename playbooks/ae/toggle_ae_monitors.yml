@@ -47,8 +47,10 @@
         dest: "{{ remote_scripts_dir }}/updated_monitor_def.json"
         content: "{{ monitor_put_body }}"
         force: yes
-        owner: root
-        mode: 777
+        owner: centos
+        group: centos
+        mode: 0777
+
 
     - name: Updated monitor definition to enable or disable
       become: yes
@@ -56,7 +58,7 @@
       lineinfile:
         path: "{{ remote_scripts_dir }}/update_monitor_def.json"
         regex: 'enabled'
-        line: '"enabled": "false",'
+        line: '"enabled": "true",'
         state: present
         backup: yes
       register: updatedMonitorDefJson
@@ -70,7 +72,7 @@
          url: "http://localhost:9200/_opendistro/_alerting/monitors/{{get_monitor_id_response.json.hits.hits[0]._id}}"
          method: PUT
          return_content: yes
-         status_code: 201
+         status_code: 200
          body: "{{ updatedMonitorDefJson }}"
          body_format: json
       register: updatedMonitorDefResponse
