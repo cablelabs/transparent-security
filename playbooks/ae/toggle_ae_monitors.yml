@@ -1,0 +1,81 @@
+
+- hosts: ae
+  gather_facts: no
+  tasks:
+    - name: Get monitor ID for DDOS-UDP-TCP monitor to update via monitor name
+      uri:
+        url: "http://localhost:9200/_opendistro/_alerting/monitors/_search"
+        method: GET
+        return_content: yes
+        body: "{{ lookup('file','./templates/query_monitor_id.json') }}"
+        body_format: json
+      register: get_monitor_id_response
+
+    - name: Show retrieved Monitor definition
+      debug:
+        var: get_monitor_id_response.json
+
+    - name: Show retrieved Monitor definition only source
+      debug:
+        var: get_monitor_id_response.json.hits.hits[0]._source
+
+    - name: Ensures remote scripts directory exists
+      become: yes
+      file:
+        path: "{{ remote_scripts_dir }}"
+        state: directory
+
+    - name: Ensure remote_scripts_dir directories are 777
+      become: yes
+      shell: "chmod -R 777 transparent-security"
+      args:
+        chdir: "/etc"
+
+    - name: Ensures updated_monitor_def.json exists
+      become: yes
+      command: touch /etc/transparent-security/updated_monitor_def.json
+      args:
+        creates: /etc/transparent-security/updated_monitor_def.json
+
+    - name: Set updated_sdn_webhook_def as fact
+      set_fact:
+         monitor_put_body : "{{ get_monitor_id_response.json.hits.hits[0]._source }}"
+
+    - name: Copy body for updating monitor definition
+      become: yes
+      copy:
+        dest: "{{ remote_scripts_dir }}/updated_monitor_def.json"
+        content: "{{ monitor_put_body }}"
+        force: yes
+        owner: root
+        mode: 777
+
+    - name: Updated monitor definition to enable or disable
+      become: yes
+      tags: updatedMonitorDefJson
+      lineinfile:
+        path: "{{ remote_scripts_dir }}/update_monitor_def.json"
+        regex: 'enabled'
+        line: '"enabled": "false",'
+        state: present
+        backup: yes
+      register: updatedMonitorDefJson
+
+    - name: Show Updated monitor definition
+      debug:
+        var: updatedMonitorDefJson
+
+    - name: PUT call to update Monitor definition in Elasticsearch
+      uri:
+         url: "http://localhost:9200/_opendistro/_alerting/monitors/{{get_monitor_id_response.json.hits.hits[0]._id}}"
+         method: PUT
+         return_content: yes
+         status_code: 201
+         body: "{{ updatedMonitorDefJson }}"
+         body_format: json
+      register: updatedMonitorDefResponse
+
+    - name: Fetch updated monitor definition.
+      debug:
+        msg: " Updated Monitor Definition : {{ updatedMonitorDefResponse }}"
+
