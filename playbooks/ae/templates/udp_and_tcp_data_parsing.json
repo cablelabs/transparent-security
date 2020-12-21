@@ -230,7 +230,6 @@
       },
       {
         "script" : {
-          "lang" : "painless",
           "source" : """
           if(ctx.ts.isDropReport == false)
           {
@@ -1652,23 +1651,45 @@
           "source" : """
          if(ctx.ts.isDropReport == false)
          {
+          if(ctx.ts.isUDPv4 == true || ctx.ts.isUDPv6 == true)
+          {
           String macAddress = ctx.ts.INTMetadataSourceMetadataOriginatingMac;
           String destinationPort = ctx.ts.UDP2DstPort.toString();
-          String IPvDestIP = ctx.ts.IPv4DestIP;
           String combinedKeys = '';
-          if(ctx.ts.isIPv4 == true)
+          if(ctx.ts.isIPv4 == true && ctx.ts.isUDPv4 == true)
           {
+          String IPvDestIP = ctx.ts.IPv4DestIP;
           combinedKeys = combinedKeys.concat(macAddress).concat('|').concat(destinationPort).concat('|').concat(IPvDestIP).concat('|').concat('::');
           ctx.ts.dropHashInput = combinedKeys;
           }
-          if(ctx.ts.isIPv6 == true)
+          if(ctx.ts.isIPv6 == true && ctx.ts.isUDPv6 == true)
           {
+          String IPvDestIP = ctx.ts.IPv6DestIP;
           combinedKeys = combinedKeys.concat(macAddress).concat('|').concat(destinationPort).concat('|').concat(IPvDestIP).concat('|').concat('::');
           ctx.ts.dropHashInput = combinedKeys;
           }
+        }
+        if(ctx.ts.isTCPv4 == true || ctx.ts.isTCPv6 == true)
+        {
+          String macAddress = ctx.ts.INTMetadataSourceMetadataOriginatingMac;
+          String destinationPort = ctx.ts.TCPDestPort.toString();
+          String combinedKeys = '';
+          if(ctx.ts.isIPv4 == true && ctx.ts.isTCPv4 == true)
+          {
+          String IPvDestIP = ctx.ts.IPv4DestIP;
+          combinedKeys = combinedKeys.concat(macAddress).concat('|').concat(destinationPort).concat('|').concat(IPvDestIP).concat('|').concat('::');
+          ctx.ts.dropHashInput = combinedKeys;
+          }
+          if(ctx.ts.isIPv6 == true && ctx.ts.isTCPv6 == true)
+          {
+          String IPvDestIP = ctx.ts.IPv6DestIP;
+          combinedKeys = combinedKeys.concat(macAddress).concat('|').concat(destinationPort).concat('|').concat(IPvDestIP).concat('|').concat('::');
+          ctx.ts.dropHashInput = combinedKeys;
+          }
+        }
          }
         """,
-          "ignore_failure" : false
+          "ignore_failure" : true
          }
       },
       {
