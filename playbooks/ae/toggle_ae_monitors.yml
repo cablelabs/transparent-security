@@ -15,16 +15,16 @@
       debug:
         var: get_monitor_id_response.json
 
-    - name: Set fact for source
+    - name: Set fact for source from retrieved Monitor definition
       set_fact:
         monitor_put_original_body: "{{ get_monitor_id_response.json.hits.hits[0]._source }}"
 
-    - name: Change enabled to passed argument value.
+    - name: Change enabled to passed as argument value.
       set_fact:
         monitor_updated_def: "{{ monitor_put_original_body|combine({'enabled': false }, recursive=True) }}"
       when: not toggle | bool
 
-    - name: Change enabled to passed argument value.
+    - name: Change enabled to passed as argument value.
       set_fact:
         monitor_updated_def: "{{ monitor_put_original_body|combine({'enabled': true }, recursive=True) }}"
       when: toggle | bool
