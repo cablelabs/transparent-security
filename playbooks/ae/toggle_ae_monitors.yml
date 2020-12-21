@@ -46,16 +46,18 @@
       copy:
         dest: "{{ remote_scripts_dir }}/updated_monitor_def.json"
         content: "{{ monitor_put_body }}"
-
-
+        force: yes
+        owner: centos
+        group: centos
+        mode: 0777
 
     - name: Updated monitor definition to enable or disable
       become: yes
       tags: updatedMonitorDefJson
       lineinfile:
         path: "{{ remote_scripts_dir }}/updated_monitor_def.json"
-        regex: 'enabled'
-        line: '"enabled": "true",'
+        regex: '"enabled"'
+        line: '"enabled" : {{ toggle }}",'
         state: present
         backup: yes
       register: updatedMonitorDefJson
