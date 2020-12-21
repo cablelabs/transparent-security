@@ -17,6 +17,13 @@
       {
         "script" : {
           "lang" : "painless",
+          "source" : "ctx.ts.dropTelemetryReport = ctx.ts.rawData.substring(0, 180).replace(':','')",
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
           "source" : """
                String hardwareIdStr = ctx.layers.data.data_data_data.replace(':','').substring(1, 3);
                BigInteger hwdIdBigInt = new BigInteger(hardwareIdStr, 16);
@@ -225,10 +232,13 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+          {
                String tsRawData = ctx.layers.data.data_data_data.replace(':','');
                String varOptStr = tsRawData.substring(40, 48);
                BigInteger varOptBigInt = new BigInteger(varOptStr, 16);
                ctx.ts.telemetryVarOpt = varOptBigInt.intValue();
+          }
         """,
           "ignore_failure" : true
         }
@@ -237,6 +247,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+           {
                String tsRawData = ctx.layers.data.data_data_data.replace(':','');
                 String etherType = tsRawData.substring(72, 76);
                 String ipVersion = tsRawData.substring(76, 77);
@@ -247,6 +259,7 @@
                 {
                    ctx.ts.isIPv6 = false;
                 }
+            }
         """,
           "ignore_failure" : true
         }
@@ -255,6 +268,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+           {
                String tsRawData = ctx.layers.data.data_data_data.replace(':','');
                 String etherType = tsRawData.substring(72, 76);
                 String ipVersion = tsRawData.substring(76, 77);
@@ -265,6 +280,7 @@
                 {
                    ctx.ts.isIPv4 = false;
                 }
+              }
         """,
           "ignore_failure" : true
         }
@@ -273,6 +289,32 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+
+               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
+                String etherType = tsRawData.substring(72, 76);
+                String ipVersion = tsRawData.substring(76, 77);
+                String dropReportStrValue = '2';
+                String telemetryIPv4StrValue ='4';
+                String telemetryIPv6StrValue ='5';
+                String telemetryInTypeStrValue = ctx.ts.telemetryInType.toString();
+                if(dropReportStrValue == telemetryInTypeStrValue)
+                {
+                  ctx.ts.isDropReport = true;
+                }
+                if( (telemetryInTypeStrValue == telemetryIPv4StrValue) || (telemetryInTypeStrValue == telemetryIPv6StrValue) )
+                {
+                   ctx.ts.isDropReport = false;
+                }
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
                String tsRawData = ctx.layers.data.data_data_data.replace(':','');
                 String etherType = tsRawData.substring(72, 76);
                 String ipVersion = tsRawData.substring(76, 77);
@@ -288,6 +330,7 @@
                    BigInteger nextProtoBigInt =  new BigInteger(nextProtoStr, 16);
                   ctx.ts.nextProto = nextProtoBigInt.intValue();
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -296,6 +339,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
                String tsRawData = ctx.layers.data.data_data_data.replace(':','');
                 String etherType = tsRawData.substring(72, 76);
                 String ipVersion = tsRawData.substring(76, 77);
@@ -323,7 +368,7 @@
                    ctx.ts.isTCPv6 = false;
                  }
                 }
-
+              }
         """,
           "ignore_failure" : true
         }
@@ -332,6 +377,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
                String tsRawData = ctx.layers.data.data_data_data.replace(':','');
                 String etherType = tsRawData.substring(72, 76);
                 String ipVersion = tsRawData.substring(76, 77);
@@ -360,7 +407,7 @@
                    ctx.ts.isUDPv6 = false;
                  }
                 }
-
+              }
         """,
           "ignore_failure" : true
         }
@@ -369,6 +416,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -380,6 +429,7 @@
               {
                ctx.ts.data = tsRawData.substring(48, 292);
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -388,10 +438,13 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
                ctx.ts.ethernetHeader = tsRawData.substring(48, 76);
+             }
         """,
           "ignore_failure" : true
         }
@@ -400,8 +453,11 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               ctx.ts.ethernetHeaderDestMac = tsRawData.substring(48, 60);
+            }
         """,
           "ignore_failure" : true
         }
@@ -410,8 +466,11 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               ctx.ts.ethernetHeaderSrcMac = tsRawData.substring(60, 72);
+            }
         """,
           "ignore_failure" : true
         }
@@ -420,8 +479,11 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
              ctx.ts.ethernetHeaderEtherType = tsRawData.substring(72, 76);
+           }
         """,
           "ignore_failure" : true
         }
@@ -430,6 +492,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -441,6 +505,7 @@
               {
                ctx.ts.IPvData = tsRawData.substring(76, 156);
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -449,6 +514,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -460,6 +527,7 @@
               {
                ctx.ts.IPVersion = tsRawData.substring(76, 77);
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -468,6 +536,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -491,6 +561,7 @@
                 IPv6SrcIP = IPv6SrcIP.substring(0, IPv6SrcIP.length()-1);
                 ctx.ts.IPv6SrcIP = IPv6SrcIP;
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -499,6 +570,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -522,6 +595,7 @@
                 IPv6DestIP = IPv6DestIP.substring(0, IPv6DestIP.length()-1);
                 ctx.ts.IPv6DestIP = IPv6DestIP;
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -530,6 +604,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -541,6 +617,7 @@
               {
                ctx.ts.UDGPData = tsRawData.substring(156, 172);
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -549,6 +626,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -564,6 +643,7 @@
                BigInteger UDGSrcPortBigInt = new BigInteger(UDGSrcPortStr, 16);
                ctx.ts.UDGSrcPort = UDGSrcPortBigInt.intValue();
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -572,6 +652,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -587,6 +669,7 @@
                BigInteger UDGDstPortBigInt = new BigInteger(UDGDstPortStr, 16);
                ctx.ts.UDGDstPort = UDGDstPortBigInt.intValue();
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -595,6 +678,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -610,6 +695,7 @@
                BigInteger UDGLengthBigInt = new BigInteger(UDGLengthStr, 16);
                ctx.ts.UDGLength = UDGLengthBigInt.intValue();
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -618,6 +704,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -633,6 +721,7 @@
                BigInteger UDGChecksumBigInt = new BigInteger(UDGChecksumStr, 16);
                ctx.ts.UDGChecksum = UDGChecksumBigInt.intValue();
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -641,6 +730,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -652,6 +743,7 @@
               {
                ctx.ts.InBandNetworkTelemetryData = tsRawData.substring(172, 236);
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -660,6 +752,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -671,6 +765,7 @@
               {
                ctx.ts.UDPIntShimHeaderData = tsRawData.substring(172, 180);
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -679,6 +774,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -690,6 +787,7 @@
               {
                ctx.ts.UDPIntShimHeaderType = tsRawData.substring(172, 173);
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -698,6 +796,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -717,6 +817,7 @@
                   BigInteger result = udpIntShimNPTBigInt.and(bitwiseAnd);
                   ctx.ts.UDPIntShimHeaderNPT = result.intValue();
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -725,6 +826,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -736,6 +839,7 @@
               {
                   ctx.ts.UDPIntShimHeaderRes1 = tsRawData.substring(174, 175);
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -744,6 +848,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -759,6 +865,7 @@
                   BigInteger lengthStrBigInt =  new BigInteger(lengthStr, 16);
                   ctx.ts.UDPIntShimHeaderLength = lengthStrBigInt.intValue();
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -767,6 +874,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -778,6 +887,7 @@
               {
                   ctx.ts.UDPIntShimHeaderRes2 = tsRawData.substring(176, 178);
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -786,6 +896,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -801,6 +913,7 @@
                    BigInteger nextProtoBigInt =  new BigInteger(nextProtoStr, 16);
                   ctx.ts.UDPIntShimHeaderNextProto = nextProtoBigInt.intValue();
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -809,6 +922,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -820,6 +935,7 @@
               {
                    ctx.ts.INTMetadataHeaderData =  tsRawData.substring(180, 204);
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -828,6 +944,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -843,6 +961,7 @@
                 BigInteger UDPIntMetaDataHeaderVersionStrBigInt =  new BigInteger(UDPIntMetaDataHeaderVersionStr, 16);
                 ctx.ts.UDPIntMetaDataHeaderVersion =  UDPIntMetaDataHeaderVersionStrBigInt.intValue();
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -851,6 +970,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -870,6 +991,7 @@
                 BigInteger result = UDPIntMetaDataHeaderResBigInt.and(bitwiseAnd);
                 ctx.ts.UDPIntMetaDataHeaderRes =  result.intValue();
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -878,6 +1000,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -897,6 +1021,7 @@
                 BigInteger result = UDPIntMetaDataHeaderDBigInt.and(bitwiseAnd);
                 ctx.ts.UDPIntMetaDataHeaderD =  result.intValue();
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -905,6 +1030,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -924,6 +1051,7 @@
                  BigInteger result = UDPIntMetaDataHeaderEBigInt.and(bitwiseAnd);
                  ctx.ts.UDPIntMetaDataHeaderE =  result.intValue();
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -932,6 +1060,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -951,6 +1081,7 @@
                   BigInteger result = UDPIntMetaDataHeaderMBigInt.and(bitwiseAnd);
                   ctx.ts.UDPIntMetaDataHeaderM =  result.intValue();
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -959,6 +1090,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -978,6 +1111,7 @@
                   BigInteger result = UDPIntMetaDataHeaderPerhopMetadataLengthBigInt.and(bitwiseAnd);
                   ctx.ts.UDPIntMetaDataHeaderPerhopMetadataLength =  result.intValue();
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -986,6 +1120,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1001,6 +1137,7 @@
                   BigInteger UDPIntMetaDataHeaderRemainingHopCntBigInt =  new BigInteger(UDPIntMetaDataHeaderRemainingHopCntStr, 16);
                   ctx.ts.UDPIntMetaDataHeaderRemainingHopCnt =  UDPIntMetaDataHeaderRemainingHopCntBigInt.intValue();
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -1009,6 +1146,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1024,6 +1163,7 @@
                   BigInteger UDPIntMetaDataHeaderInstructionBitmapBigInt =  new BigInteger(UDPIntMetaDataHeaderInstructionBitmapStr, 16);
                   ctx.ts.UDPIntMetaDataHeaderInstructionBitmap =  UDPIntMetaDataHeaderInstructionBitmapBigInt.toString(16);
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -1032,6 +1172,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1047,6 +1189,7 @@
                   BigInteger UDPIntMetaDataHeaderDomainSpecificIDBigInt =  new BigInteger(UDPIntMetaDataHeaderDomainSpecificIDStr, 16);
                   ctx.ts.UDPIntMetaDataHeaderDomainSpecificID =  UDPIntMetaDataHeaderDomainSpecificIDBigInt.toString(16);
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -1055,6 +1198,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1070,6 +1215,7 @@
                   BigInteger UDPIntMetaDataHeaderDSInstructionBigInt =  new BigInteger(UDPIntMetaDataHeaderDSInstructionStr, 16);
                   ctx.ts.UDPIntMetaDataHeaderDSInstruction =  UDPIntMetaDataHeaderDSInstructionBigInt.toString(16);
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -1078,6 +1224,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1093,6 +1241,7 @@
                  BigInteger UDPIntMetaDataHeaderDSFlagsBigInt =  new BigInteger(UDPIntMetaDataHeaderDSFlagsStr, 16);
                  ctx.ts.UDPIntMetaDataHeaderDSFlags = UDPIntMetaDataHeaderDSFlagsBigInt.toString(16);
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -1101,6 +1250,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1112,6 +1263,7 @@
               {
                  ctx.ts.INTMetadataStackData = tsRawData.substring(204, 236);
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -1120,6 +1272,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1131,6 +1285,7 @@
               {
                   ctx.ts.INTMetadataStackSwitchID = tsRawData.substring(204, 212);
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -1139,6 +1294,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1150,6 +1307,7 @@
               {
                   ctx.ts.INTMetadataSourceMetadata = tsRawData.substring(212, 236);
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -1158,6 +1316,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1169,6 +1329,7 @@
               {
                   ctx.ts.INTMetadataSourceMetadataSwitchId = tsRawData.substring(212, 220);
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -1177,6 +1338,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1202,6 +1365,7 @@
                 }
                   ctx.ts.INTMetadataSourceMetadataOriginatingMac = formattedOriginatingMac.toString();
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -1210,6 +1374,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1221,6 +1387,7 @@
               {
                   ctx.ts.INTMetadataSourceMetadataReserved = tsRawData.substring(232, 236);
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -1229,6 +1396,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1243,6 +1412,7 @@
                   ctx.ts.UDP2Data = tsRawData.substring(236, 252);
               }
              }
+           }
         """,
           "ignore_failure" : true
         }
@@ -1251,6 +1421,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1267,6 +1439,7 @@
                ctx.ts.TCPData = tsRawData.substring(236, 276);
               }
             }
+          }
         """,
           "ignore_failure" : true
         }
@@ -1275,6 +1448,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1293,6 +1468,7 @@
                    ctx.ts.UDP2SrcPort = UDP2SrcPortBigInt.intValue();
               }
             }
+          }
         """,
           "ignore_failure" : true
         }
@@ -1301,6 +1477,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1321,6 +1499,7 @@
                ctx.ts.TCPSrcPort = TCPSrcPortBigInt.intValue();
               }
             }
+          }
         """,
           "ignore_failure" : true
         }
@@ -1329,6 +1508,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1347,6 +1528,7 @@
                  ctx.ts.UDP2DstPort = UDP2DstPortBigInt.intValue();
               }
             }
+          }
         """,
           "ignore_failure" : true
         }
@@ -1355,6 +1537,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1375,6 +1559,7 @@
                ctx.ts.TCPDestPort = TCPDstPortBigInt.intValue();
               }
           }
+        }
         """,
           "ignore_failure" : true
         }
@@ -1383,6 +1568,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+             {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1394,6 +1581,7 @@
               {
                  ctx.ts.UDP2Length = tsRawData.substring(244, 248);
               }
+            }
         """,
           "ignore_failure" : true
         }
@@ -1402,6 +1590,111 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == true)
+               {
+              String dropTelemetryReport = ctx.ts.dropTelemetryReport;
+              String telemetryReportVarOpBsmdStr = dropTelemetryReport.substring(40,48);
+              BigInteger telemetryReportVarOpBsmdBigInt = new BigInteger(telemetryReportVarOpBsmdStr, 16);
+              ctx.ts.telemetryReportVarOpBsmd = telemetryReportVarOpBsmdBigInt.intValue();
+               }
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
+          if(ctx.ts.isDropReport == true)
+               {
+              String dropTelemetryReport = ctx.ts.dropTelemetryReport;
+              String telemetryReportVarOptTimeStampStr = dropTelemetryReport.substring(48,56);
+              BigInteger telemetryReportVarOptTimeStampBigInt = new BigInteger(telemetryReportVarOptTimeStampStr, 16);
+              ctx.ts.telemetryReportVarOptTimeStamp = telemetryReportVarOptTimeStampBigInt.intValue();
+               }
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
+          if(ctx.ts.isDropReport == true)
+               {
+              String dropTelemetryReport = ctx.ts.dropTelemetryReport;
+              String telemetryReportVarOptDropCountStr = dropTelemetryReport.substring(56,64);
+              BigInteger telemetryReportVarOptDropCountBigInt = new BigInteger(telemetryReportVarOptDropCountStr, 16);
+              ctx.ts.telemetryReportVarOptDropCount = telemetryReportVarOptDropCountBigInt.intValue();
+               }
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
+          if(ctx.ts.isDropReport == true)
+               {
+              String dropTelemetryReport = ctx.ts.dropTelemetryReport;
+              String telemetryReportVarOptHashStr = dropTelemetryReport.substring(64,96);
+              BigInteger telemetryReportVarOptHashBigInt = new BigInteger(telemetryReportVarOptHashStr, 16);
+              ctx.ts.telemetryReportVarOptHash =  telemetryReportVarOptHashBigInt;
+               }
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
+         if(ctx.ts.isDropReport == false)
+         {
+          String macAddress = ctx.ts.INTMetadataSourceMetadataOriginatingMac;
+          String destinationPort = ctx.ts.UDP2DstPort.toString();
+          String IPvDestIP = ctx.ts.IPv4DestIP;
+          String combinedKeys = '';
+          if(ctx.ts.isIPv4 == true)
+          {
+          combinedKeys = combinedKeys.concat(macAddress).concat('|').concat(destinationPort).concat('|').concat(IPvDestIP).concat('|').concat('::');
+          ctx.ts.dropHashInput = combinedKeys;
+          }
+          if(ctx.ts.isIPv6 == true)
+          {
+          combinedKeys = combinedKeys.concat(macAddress).concat('|').concat(destinationPort).concat('|').concat(IPvDestIP).concat('|').concat('::');
+          ctx.ts.dropHashInput = combinedKeys;
+          }
+         }
+        """,
+          "ignore_failure" : false
+         }
+      },
+      {
+              "script" : {
+                "ignore_failure" : false,
+                "id" : "calculateKeyHash"
+              }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
+              String completeSHA256Hash = ctx.ts.sha256Hash;
+              String subsetSHA256HashStr= completeSHA256Hash.substring(0,16);
+              BigInteger hashBigInt = new BigInteger(subsetSHA256HashStr, 16);
+              ctx.ts.dropReportHash = hashBigInt;
+        """,
+          "ignore_failure" : true
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
+          if(ctx.ts.isDropReport == false)
+          {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1416,6 +1709,7 @@
                  ctx.ts.UDP2Checksum = tsRawData.substring(248, 252);
               }
            }
+         }
         """,
           "ignore_failure" : true
         }
@@ -1424,6 +1718,8 @@
         "script" : {
           "lang" : "painless",
           "source" : """
+          if(ctx.ts.isDropReport == false)
+          {
               String tsRawData = ctx.layers.data.data_data_data.replace(':','');
               String etherType = tsRawData.substring(72, 76);
               String ipVersion = tsRawData.substring(76, 77);
@@ -1451,6 +1747,7 @@
                  ctx.ts.dataII = tsRawData.substring(252, 304);
               }
            }
+         }
         """,
           "ignore_failure" : true
         }
