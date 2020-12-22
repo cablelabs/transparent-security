@@ -1,0 +1,49 @@
+
+- hosts: ae
+  gather_facts: no
+  tasks:
+    - name: Get monitor ID for DDOS-UDP-TCP monitor to update via monitor name
+      uri:
+        url: "http://localhost:9200/_opendistro/_alerting/monitors/_search"
+        method: GET
+        return_content: yes
+        body: "{{ lookup('file','./templates/query_monitor_id.json') }}"
+        body_format: json
+      register: get_monitor_id_response
+
+    - name: Show retrieved Monitor definition
+      debug:
+        var: get_monitor_id_response.json
+
+    - name: Set fact for source from retrieved Monitor definition
+      set_fact:
+        monitor_put_original_body: "{{ get_monitor_id_response.json.hits.hits[0]._source }}"
+
+    - name: Change enabled to passed as argument value.
+      set_fact:
+        monitor_updated_def: "{{ monitor_put_original_body|combine({'enabled': false }, recursive=True) }}"
+      when: not toggle | bool
+
+    - name: Change enabled to passed as argument value.
+      set_fact:
+        monitor_updated_def: "{{ monitor_put_original_body|combine({'enabled': true }, recursive=True) }}"
+      when: toggle | bool
+
+    - name: Debug for monitor_updated_def
+      debug:
+        var: monitor_updated_def
+
+    - name: PUT call to update Monitor definition in Elasticsearch
+      uri:
+         url: "http://localhost:9200/_opendistro/_alerting/monitors/{{get_monitor_id_response.json.hits.hits[0]._id}}"
+         method: PUT
+         return_content: yes
+         status_code: 200
+         body: "{{ monitor_updated_def }}"
+         body_format: json
+      register: updatedMonitorDefResponse
+
+    - name: Fetch updated monitor definition.
+      debug:
+        msg: " Updated Monitor Definition : {{ updatedMonitorDefResponse }}"
+

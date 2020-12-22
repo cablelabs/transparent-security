@@ -1,0 +1,7 @@
+{
+  "query": {
+    "match" : {
+      "monitor.name": "DDOS-UDP-TCP-Monitor"
+    }
+  }
+}
