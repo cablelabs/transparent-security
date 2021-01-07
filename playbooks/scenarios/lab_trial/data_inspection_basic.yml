@@ -21,11 +21,17 @@
     ae_srvc_state: "{{ ae_state | default('stopped') }}"
     exe_systemd: "{% if ae_srvc_state == 'none' %}False{% else %}True{% endif %}"
   tasks:
-    - name: Restart tps-tofino-ae with state {{ ae_srvc_state }}
+    - name: Stop tps-tofino-ae with state {{ ae_srvc_state }} for analytics engine
       systemd:
         name: tps-tofino-ae
         state: "{{ ae_srvc_state }}"
       when: exe_systemd | bool
+
+    - name: Set up packet ingestion for all packets on analytics engine
+      become: yes
+      shell: nohup python3 src/espcap.py --nic=core-tun1 --node=localhost:9200 --chunk=1 > nohup.out 2>&1 &
+      args:
+        chdir: "/home/centos/espcap"
 
 # Call POST on all WS calls
 - hosts: controller
