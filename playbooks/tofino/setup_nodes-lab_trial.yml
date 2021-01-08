@@ -83,5 +83,13 @@
     sample_interval: 60
     sdn_attack_context: aggAttack
 
+# Start ES PCAP Service
+- import_playbook: ../general/start_service.yml
+  vars:
+    host_val: ae
+    service_name: tps-es-pcap
+    local_srvc_script_tmplt_file: "{{ orch_trans_sec_dir }}/playbooks/general/templates/es_pcap.sh.j2"
+    srvc_type: SIMPLE
+
 #Import playbook to setup and load AE pipelines
 - import_playbook: ../ae/setup_ae_udp_and_tcp_pipeline.yml
