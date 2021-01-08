@@ -16,18 +16,18 @@
 # Refresh lab_trial environment config
 - import_playbook: restart.yml
 
-
 # Data Inspection scenarios for UDP and IPv4
 - import_playbook: pkt-flood.yml
   vars:
     scenario_send_protocol: UDP
     scenario_send_ip_version: 4
 
+# TODO: Fix UDPv6 pipeline for detecting and mitigating attack
 # Data Inspection scenarios for UDP and IPv6
-- import_playbook: pkt-flood.yml
-  vars:
-    scenario_send_protocol: UDP
-    scenario_send_ip_version: 6
+#- import_playbook: pkt-flood.yml
+#  vars:
+#    scenario_send_protocol: UDP
+#    scenario_send_ip_version: 6
 
 # Data Inspection scenarios for TCP and IPv4
 - import_playbook: pkt-flood.yml
