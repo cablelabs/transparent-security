@@ -22,7 +22,7 @@
   become: yes
   gather_facts: no
   vars:
-    receive_timeout: "{{ receiver_timeout_seconds | default(60) }}"
+    receive_timeout: "{{ receiver_timeout_seconds | default(90) }}"
     hops: "{{ int_hops | default(0) }}"
     ip_ver: "{{ ip_version | default('4') }}"
     receiver_intf: "{{ rec_intf_name | default(None) }}"
