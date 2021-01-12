@@ -17,7 +17,7 @@ import threading
 import requests
 from flask import Flask, request
 from flask_restful import reqparse
-from flask_restful_swagger_3 import swagger, Resource, Api, Schema
+from flask_restful_swagger_3 import swagger, Resource, Api
 
 logger = logging.getLogger('http_server_handler')
 
@@ -52,6 +52,12 @@ class SDNControllerServer:
             resource_class_kwargs={'sdn_controller': self.sdn_controller})
         self.api.add_resource(
             TelemetryReportSampling, '/telemRptSample',
+            resource_class_kwargs={'sdn_controller': self.sdn_controller})
+        self.api.add_resource(
+            DefaultPort, '/dfltPort',
+            resource_class_kwargs={'sdn_controller': self.sdn_controller})
+        self.api.add_resource(
+            MulticastGroups, '/mcastPorts',
             resource_class_kwargs={'sdn_controller': self.sdn_controller})
         self.api.add_resource(Shutdown, '/shutdown')
 
@@ -133,7 +139,7 @@ class DataInspection(Resource):
         logger.info('Attack requested')
         args = self.parser.parse_args()
 
-        logger.info('Attack args - [%s]', args)
+        logger.info('args - [%s]', args)
         self.sdn_controller.add_data_inspection(args)
         return json.dumps({"success": True}), 201
 
@@ -145,7 +151,7 @@ class DataInspection(Resource):
         logger.info('Attacker to remove')
         args = self.parser.parse_args()
 
-        logger.info('Attack args - [%s]', args)
+        logger.info('args - [%s]', args)
         self.sdn_controller.del_data_inspection(args)
         return json.dumps({"success": True}), 201
 
@@ -174,7 +180,7 @@ class GwAttack(Resource):
         logger.info('Attack requested')
         args = self.parser.parse_args()
 
-        logger.info('Attack args - [%s]', args)
+        logger.info('args - [%s]', args)
         self.sdn_controller.add_attacker(args)
         return json.dumps({"success": True}), 201
 
@@ -186,7 +192,7 @@ class GwAttack(Resource):
         logger.info('Attacker to remove')
         args = self.parser.parse_args()
 
-        logger.info('Attack args - [%s]', args)
+        logger.info('args - [%s]', args)
         self.sdn_controller.remove_attacker(args)
         return json.dumps({"success": True}), 201
 
@@ -212,7 +218,7 @@ class AggDataForward(Resource):
         logger.info('Attack requested')
         args = self.parser.parse_args()
 
-        logger.info('Attack args - [%s]', args)
+        logger.info('args - [%s]', args)
         self.sdn_controller.add_agg_data_forward(args)
         return json.dumps({"success": True}), 201
 
@@ -224,7 +230,7 @@ class AggDataForward(Resource):
         logger.info('Attacker to remove')
         args = self.parser.parse_args()
 
-        logger.info('Attack args - [%s]', args)
+        logger.info('args - [%s]', args)
         self.sdn_controller.del_agg_data_forward(args)
         return json.dumps({"success": True}), 201
 
@@ -249,7 +255,7 @@ class AggAttack(Resource):
         logger.info('Attack requested')
         args = self.parser.parse_args()
 
-        logger.info('Attack args - [%s]', args)
+        logger.info('args - [%s]', args)
         self.sdn_controller.add_agg_attacker(args)
         return json.dumps({"success": True}), 201
 
@@ -261,7 +267,7 @@ class AggAttack(Resource):
         logger.info('Attacker to remove')
         args = self.parser.parse_args()
 
-        logger.info('Attack args - [%s]', args)
+        logger.info('args - [%s]', args)
         self.sdn_controller.remove_agg_attacker(args)
         return json.dumps({"success": True}), 201
 
@@ -284,7 +290,7 @@ class CoreDataForward(Resource):
         logger.info('Attack requested')
         args = self.parser.parse_args()
 
-        logger.info('Attack args - [%s]', args)
+        logger.info('args - [%s]', args)
         self.sdn_controller.add_core_data_forward(args)
         return json.dumps({"success": True}), 201
 
@@ -296,7 +302,7 @@ class CoreDataForward(Resource):
         logger.info('Attacker to remove')
         args = self.parser.parse_args()
 
-        logger.info('Attack args - [%s]', args)
+        logger.info('args - [%s]', args)
         self.sdn_controller.del_agg_data_forward(args)
         return json.dumps({"success": True}), 201
 
@@ -322,7 +328,7 @@ class TelemetryReport(Resource):
         logger.info('Activating telemetry report')
         args = self.parser.parse_args()
 
-        logger.info('Attack args - [%s]', args)
+        logger.info('args - [%s]', args)
         self.sdn_controller.activate_telem_rpt(args)
         return json.dumps({"success": True}), 201
 
@@ -334,7 +340,7 @@ class TelemetryReport(Resource):
         logger.info('Deactivating telemetry report')
         args = self.parser.parse_args()
 
-        logger.info('Attack args - [%s]', args)
+        logger.info('args - [%s]', args)
         self.sdn_controller.remove_agg_attacker(args)
         return json.dumps({"success": True}), 201
 
@@ -360,9 +366,72 @@ class TelemetryReportSampling(Resource):
         logger.info('Set Telemetry report sampling value')
         args = self.parser.parse_args()
 
-        logger.info('Attack args - [%s]', args)
+        logger.info('args - [%s]', args)
         self.sdn_controller.set_trpt_sampling_value(args)
         return json.dumps({"success": True}), 201
+
+
+class DefaultPort(Resource):
+    """
+    Class for exposing web service to issue an attack call to aggregate.p4
+    """
+    parser = reqparse.RequestParser()
+    parser.add_argument('device_id', type=int, default=0)
+    parser.add_argument('switch_mac', type=str)
+    parser.add_argument('port', type=int)
+
+    def __init__(self, **kwargs):
+        self.sdn_controller = kwargs['sdn_controller']
+
+    @swagger.tags(['setDefaultPort'])
+    @swagger.response(response_code=201,
+                      description='Update the default port value')
+    @swagger.reqparser(name='DefaultPortParser', parser=parser)
+    def post(self):
+        logger.info('Update default port')
+        args = self.parser.parse_args()
+
+        logger.info('args - [%s]', args)
+        self.sdn_controller.update_dflt_port(args)
+        return json.dumps({"success": True}), 201
+
+
+class MulticastGroups(Resource):
+    """
+    Class for exposing web service to issue an attack call to aggregate.p4
+    """
+    parser = reqparse.RequestParser()
+    parser.add_argument('device_id', type=int, default=0)
+    parser.add_argument('switch_mac', type=str)
+    parser.add_argument('ports', type=str)
+
+    def __init__(self, **kwargs):
+        self.sdn_controller = kwargs['sdn_controller']
+
+    @swagger.tags(['mcastUpdatePorts'])
+    @swagger.response(response_code=201,
+                      description='Update the multicast groups')
+    @swagger.reqparser(name='McastGrpParser', parser=parser)
+    def post(self):
+        args = self.parser.parse_args()
+        logger.info('Setting mcast ports with args - [%s]', args)
+
+        logger.info('args - [%s]', args)
+        self.sdn_controller.update_mcast_grp(args)
+        return json.dumps({"success": True}), 201
+
+    @swagger.tags(['mcastPortGet'])
+    @swagger.response(response_code=201,
+                      description='Retrieve the multicast ports')
+    @swagger.reqparser(name='McastGrpParser', parser=parser)
+    def get(self):
+        logger.info('Retrieving mcast ports')
+        args = self.parser.parse_args()
+
+        logger.info('args - [%s]', args)
+        ports = self.sdn_controller.get_mcast_grp_ports(args)
+        logger.info('Returning port values - [%s]', ports)
+        return json.dumps({"success": True, "ports": ports}), 201
 
 
 class Shutdown(Resource):

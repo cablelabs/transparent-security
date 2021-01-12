@@ -61,7 +61,7 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
         self.__configure_ports(ansible_inventory, controller_user)
         self.add_switch_id()
         self.digest_thread.start()
-        self.__setup_arp_multicast()
+        self.update_arp_multicast(ports=self.__find_node_ports())
         self.__setup_default_port()
 
     def stop(self):
@@ -89,34 +89,83 @@ class BFRuntimeSwitch(SwitchConnection, ABC):
                          cmd, ret_val)
         logger.info('Playbook command [%s] return value - [%s]', cmd, ret_val)
 
-    def __setup_arp_multicast(self, node_id=1, rid=1, lags=[], mgid=1,
-                              mc_nids=[1], l1_xids=[0]):
-        ports = self.__find_node_ports()
-        logger.info('Adding multicast entries to switch')
-        mg_id_table = self.get_table('$pre.node')
-        mg_id_table.entry_add(
-            self.target,
-            [mg_id_table.make_key([KeyTuple('$MULTICAST_NODE_ID', node_id)])],
-            [mg_id_table.make_data([
-                DataTuple('$MULTICAST_RID', rid),
-                DataTuple('$DEV_PORT', int_arr_val=ports),
-                DataTuple('$MULTICAST_LAG_ID', int_arr_val=lags),
-            ])]
-        )
-        logger.info('Done with node entries')
+    def update_arp_multicast(self, node_id=1, rid=1, lags=[], mgid=1,
+                             mc_nids=[1], l1_xids=[0], ports=None):
+        if not ports:
+            ports = self.__find_node_ports()
+        self.__update_pre_tbl(node_id, ports, rid, lags)
+        self.__update_mgid_tbl(mgid, mc_nids, l1_xids)
 
+    def __update_pre_tbl(self, node_id, ports, rid=1, lags=[]):
+        logger.info('Deleting and adding multicast entries to $pre.node')
+        pre_table = self.get_table('$pre.node')
+        pre_key = [pre_table.make_key(
+                    [KeyTuple('$MULTICAST_NODE_ID', node_id)])]
+        try:
+            pre_table.entry_del(self.target, pre_key)
+        except Exception as e:
+            logger.debug('Ignore me - [%s]', e)
+            pass
+
+        try:
+            pre_table.entry_add(
+                self.target, pre_key,
+                [pre_table.make_data([
+                    DataTuple('$MULTICAST_RID', rid),
+                    DataTuple('$DEV_PORT', int_arr_val=ports),
+                    DataTuple('$MULTICAST_LAG_ID', int_arr_val=lags),
+                ])]
+            )
+        except Exception as e:
+            if 'ALREADY_EXISTS' in str(e):
+                pass
+            else:
+                logger.error('Unexpected error inserting into table %s - [%s]',
+                             '$pre.node', e)
+                raise e
+
+    def __update_mgid_tbl(self, mgid, mc_nids, l1_xids):
         mg_id_table = self.get_table('$pre.mgid')
-        mg_id_table.entry_add(
-            self.target,
-            [mg_id_table.make_key([KeyTuple('$MGID', mgid)])],
-            [mg_id_table.make_data([
-                DataTuple('$MULTICAST_NODE_ID', int_arr_val=mc_nids),
-                DataTuple('$MULTICAST_NODE_L1_XID_VALID',
-                          bool_arr_val=[False]),
-                DataTuple('$MULTICAST_NODE_L1_XID', int_arr_val=l1_xids),
-            ])]
-        )
+        mg_id_key = [mg_id_table.make_key([KeyTuple('$MGID', mgid)])]
+        try:
+            mg_id_table.entry_del(self.target, mg_id_key)
+        except Exception as e:
+            logger.debug('Ignore me - [%s]', e)
+            pass
+
+        try:
+            mg_id_table.entry_add(
+                self.target, mg_id_key,
+                [mg_id_table.make_data([
+                    DataTuple('$MULTICAST_NODE_ID', int_arr_val=mc_nids),
+                    DataTuple('$MULTICAST_NODE_L1_XID_VALID',
+                              bool_arr_val=[False]),
+                    DataTuple('$MULTICAST_NODE_L1_XID', int_arr_val=l1_xids),
+                ])]
+            )
+        except Exception as e:
+            if 'ALREADY_EXISTS' in str(e):
+                pass
+            else:
+                logger.error('Unexpected error inserting into table %s - [%s]',
+                             '$pre.mgid', e)
+                raise e
         logger.info('Done with MC entries')
+
+    def get_arp_multicast_ports(self, node_id=1):
+        logger.info('Retrieving multicast entries from switch')
+        mg_id_table = self.get_table('$pre.node')
+        match_keys = [mg_id_table.make_key([KeyTuple('$MULTICAST_NODE_ID',
+                                                     node_id)])]
+        entries = mg_id_table.entry_get(self.target, match_keys)
+
+        out_ports = list()
+        for data, key in entries:
+            if '$DEV_PORT' in data:
+                out_ports.append(data.to_dict()['$DEV_PORT'])
+
+        logger.info('Multicast ports returned - [%s]', out_ports)
+        return out_ports
 
     def __setup_default_port(self):
         dflt_port = self.__find_dflt_port()
