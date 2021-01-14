@@ -16,6 +16,7 @@
 # Basic Data Inspection scenario - receiving packets on inet host
 - import_playbook: data_inspection_basic.yml
   vars:
+    es_pcap_srvc_state: restarted
     di_log_prfx: pkt-flood-1
     send_protocol: "{{ scenario_send_protocol | default('UDP') }}"
     ip_version: "{{ scenario_send_ip_version | default(4) }}"

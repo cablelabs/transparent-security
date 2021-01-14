@@ -10,6 +10,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import ast
 import socket
 from logging import getLogger
 
@@ -43,7 +44,8 @@ class DdosSdnController:
     SDN controller for quelling DDoS attacks
     """
     def __init__(self, topo, controllers, http_server_port, controller_user,
-                 ansible_inventory, ae_ip_str=None, drop_rpt_freq=10, is_delta=False):
+                 ansible_inventory, ae_ip_str=None, drop_rpt_freq=10,
+                 is_delta=False):
 
         self.topo = topo
         self.controllers = controllers
@@ -99,12 +101,14 @@ class DdosSdnController:
                     if match_keys != 0:
                         logger.debug('Match keys - [%s]', match_keys)
                         attack_key = tps_utils.create_attack_hash(**match_keys)
-                        logger.debug('Attack key value - [%s] and drop report delta mode - [%s]', attack_key,
-                                     self.is_delta)
+                        logger.debug(
+                            'Attack key value - [%s] and drop report delta '
+                            'mode - [%s]', attack_key, self.is_delta)
                         if attack_key:
                             if self.is_delta:
                                 old_count = self.drop_rpt_count.get(attack_key)
-                                logger.debug('Previous drop count - [%s]', old_count)
+                                logger.debug('Previous drop count - [%s]',
+                                             old_count)
                                 if not old_count:
                                     old_count = 0
                                 rpt_count = drop_count - old_count
@@ -296,6 +300,46 @@ class DdosSdnController:
                     'Error setting up telemetry report with error - [%s])', e)
         else:
             logger.warning('Aggregate controller cannot add attack')
+
+    def update_dflt_port(self, request):
+        """
+        Updates the default port
+        :param request: dict of the request
+        """
+        logger.debug('request - [%s]', request)
+        for key, controller in self.controllers.items():
+            for switch in controller.switches:
+                logger.debug('switch - [%s]', switch.device_id)
+                if switch.mac == request['switch_mac']:
+                    switch.update_default_port(request['port'])
+
+    def update_mcast_grp(self, request):
+        """
+        Updates the mcast ports
+        :param request: dict of the request
+        """
+        logger.debug('Update mcast request - [%s]', request)
+        for key, controller in self.controllers.items():
+            for switch in controller.switches:
+                logger.debug('switch mac - [%s], request mac - [%s]',
+                             switch.mac, request['switch_mac'])
+                if switch.mac == request['switch_mac']:
+                    logger.debug('Update mcast on - [%s]', switch.mac)
+                    ports = ast.literal_eval(request['ports'])
+                    logger.debug('Ports to update - [%s]', ports)
+                    switch.update_arp_multicast(ports=ports)
+
+    def get_mcast_grp_ports(self, request):
+        """
+        Retrieve the mcast ports
+        :param request: dict of the request
+        """
+        logger.debug('Retrieve mcast ports - [%s]', request)
+        for key, controller in self.controllers.items():
+            for switch in controller.switches:
+                logger.debug('switch - [%s]', switch.device_id)
+                if switch.mac == request['switch_mac']:
+                    return switch.get_arp_multicast_ports()
 
     def set_trpt_sampling_value(self, request):
         """
