@@ -366,8 +366,8 @@ control TpsCoreEgress(
     action set_telem_rpt_in_type_ipv4() {
         // TODO - write tests to test this action
         hdr.trpt_hdr.in_type = TRPT_HDR_IN_TYPE_IPV4;
-        hdr.trpt_ipv6.payload_len = hdr.ipv4.totalLen + (
-            IPV6_HDR_BYTES + UDP_HDR_BYTES + TRPT_HDR_BASE_BYTES + ETH_HDR_BYTES);
+        //hdr.trpt_ipv6.payload_len = hdr.ipv4.totalLen + (
+        //    IPV6_HDR_BYTES + UDP_HDR_BYTES + TRPT_HDR_BASE_BYTES + ETH_HDR_BYTES);
         hdr.trpt_ipv4.totalLen = hdr.ipv4.totalLen + (
             IPV4_HDR_BYTES + UDP_HDR_BYTES + (
                 INT_SHIM_BASE_SIZE * BYTES_PER_SHIM) + SWITCH_ID_HDR_BYTES + 6);
@@ -378,12 +378,12 @@ control TpsCoreEgress(
     /* Sets the trpt_eth.in_type for IPv6 */
     action set_telem_rpt_in_type_ipv6() {
         hdr.trpt_hdr.in_type = TRPT_HDR_IN_TYPE_IPV6;
-        hdr.trpt_ipv6.payload_len = hdr.ipv6.payload_len + (
-            IPV6_HDR_BYTES + UDP_HDR_BYTES + TRPT_HDR_BASE_BYTES + ETH_HDR_BYTES);
+        //hdr.trpt_ipv6.payload_len = hdr.ipv6.payload_len + (
+        //    IPV6_HDR_BYTES + UDP_HDR_BYTES + TRPT_HDR_BASE_BYTES + ETH_HDR_BYTES);
         hdr.trpt_ipv4.totalLen = hdr.ipv6.payload_len + (
-            IPV4_HDR_BYTES + UDP_HDR_BYTES + (
+            IPV4_HDR_BYTES + IPV6_HDR_BYTES + UDP_HDR_BYTES + (
                 INT_SHIM_BASE_SIZE * BYTES_PER_SHIM) + SWITCH_ID_HDR_BYTES + 6);
-        hdr.trpt_udp.len = hdr.ipv6.payload_len + (UDP_HDR_BYTES + (
+        hdr.trpt_udp.len = hdr.ipv6.payload_len + (UDP_HDR_BYTES + IPV6_HDR_BYTES + (
             INT_SHIM_BASE_SIZE * BYTES_PER_SHIM) + SWITCH_ID_HDR_BYTES + 6);
     }
 
