@@ -531,16 +531,6 @@ control TpsCoreEgressDeparser(
                  hdr.trpt_ipv4.srcAddr,
                  hdr.trpt_ipv4.dstAddr});
 
-        hdr.udp_int.cksum = checksum.update(
-                {hdr.udp_int.src_port,
-                 hdr.udp_int.dst_port,
-                 hdr.udp_int.len});
-
-        hdr.trpt_udp.cksum = checksum.update(
-                {hdr.trpt_udp.src_port,
-                 hdr.trpt_udp.dst_port,
-                 hdr.trpt_udp.len});
-
         /* For Telemetry Report Packets */
         packet.emit(hdr.trpt_eth);
         packet.emit(hdr.trpt_ipv4);
