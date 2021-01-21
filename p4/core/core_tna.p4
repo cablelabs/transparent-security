@@ -351,7 +351,8 @@ control TpsCoreEgress(
         hdr.trpt_hdr.sequence_no = 0;
         hdr.trpt_hdr.sequence_pad = 0;
         hdr.trpt_hdr.sequence_no = hdr.trpt_hdr.sequence_no + 1;
-        hdr.trpt_eth.dst_mac = hdr.ethernet.dst_mac;
+        //hdr.trpt_eth.dst_mac = hdr.ethernet.dst_mac;
+        hdr.trpt_eth.dst_mac = 0xffffffffffff;
         hdr.trpt_eth.src_mac = hdr.ethernet.src_mac;
         hdr.trpt_udp.dst_port = TRPT_INT_DST_PORT;
     }
