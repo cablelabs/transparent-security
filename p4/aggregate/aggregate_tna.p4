@@ -407,7 +407,10 @@ control TpsAggEgress(
         hdr.udp.dst_port = hdr.udp_int.dst_port;
         hdr.udp.len = hdr.udp_int.len;
         hdr.udp.cksum = hdr.udp_int.cksum;
-        hdr.udp_int.src_port = UDP_INT_SRC_PORT;
+
+        // TODO/FIXME - see INT 2.1 spec on how to calculate this value
+        //hdr.udp_int.src_port = UDP_INT_SRC_PORT;
+
         hdr.udp_int.dst_port = UDP_INT_DST_PORT;
 
         // TODO/FIXME - This value will be incorrect once the gateway with INT has been added into the mix
@@ -417,14 +420,20 @@ control TpsAggEgress(
 
     action insert_udp_int_for_tcp_ipv4() {
         hdr.udp_int.setValid();
-        hdr.udp_int.src_port = UDP_INT_SRC_PORT;
+
+        // TODO/FIXME - see INT 2.1 spec on how to calculate this value
+        //hdr.udp_int.src_port = UDP_INT_SRC_PORT;
+
         hdr.udp_int.dst_port = UDP_INT_DST_PORT;
         hdr.udp_int.len = hdr.ipv4.totalLen - IPV4_HDR_BYTES;
     }
 
     action insert_udp_int_for_tcp_ipv6() {
         hdr.udp_int.setValid();
-        hdr.udp_int.src_port = UDP_INT_SRC_PORT;
+
+        // TODO/FIXME - see INT 2.1 spec on how to calculate this value
+        //hdr.udp_int.src_port = UDP_INT_SRC_PORT;
+
         hdr.udp_int.dst_port = UDP_INT_DST_PORT;
         hdr.udp_int.len = hdr.ipv6.payload_len;
     }

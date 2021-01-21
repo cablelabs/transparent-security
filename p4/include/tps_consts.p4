@@ -70,8 +70,6 @@ const bit<4> INT_VERSION = 0x2;
 const bit<5> INT_META_LEN = 0x1;
 /* The supported Telemetry Report version */
 const bit<4> TRPT_VERSION = 0x2;
-/* The expected UDP INT header source port value */
-const bit<16> UDP_INT_SRC_PORT = 0x0;
 /* The expected UDP INT header destination port value */
 const bit<16> UDP_INT_DST_PORT = 0x022b;
 /* The expected Telemetry Report UDP destination port value */
