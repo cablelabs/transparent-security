@@ -168,12 +168,6 @@ control TpsAggIngress(
     }
 
     apply {
-        /* Value will be set with the udp_int.dst_port in the parser
-           which would be incorrect in this case */
-        if (hdr.tcp.isValid()) {
-            meta.dst_port = hdr.tcp.dst_port;
-        }
-
         // Basic forwarding and drop logic
         if (data_drop_t.apply().miss) {
             default_port_t.apply();
@@ -423,9 +417,12 @@ control TpsAggEgress(
 
         // TODO/FIXME - see INT 2.1 spec on how to calculate this value
         //hdr.udp_int.src_port = UDP_INT_SRC_PORT;
+        hdr.udp_int.src_port = hdr.tcp.src_port;
 
         hdr.udp_int.dst_port = UDP_INT_DST_PORT;
         hdr.udp_int.len = hdr.ipv4.totalLen - IPV4_HDR_BYTES;
+        hdr.ipv4.protocol = TYPE_UDP;
+        hdr.tcp.src_port = hdr.udp_int.src_port;
     }
 
     action insert_udp_int_for_tcp_ipv6() {
@@ -433,9 +430,12 @@ control TpsAggEgress(
 
         // TODO/FIXME - see INT 2.1 spec on how to calculate this value
         //hdr.udp_int.src_port = UDP_INT_SRC_PORT;
+        hdr.udp_int.src_port = hdr.tcp.src_port;
 
         hdr.udp_int.dst_port = UDP_INT_DST_PORT;
         hdr.udp_int.len = hdr.ipv6.payload_len;
+        hdr.ipv6.next_hdr_proto = TYPE_UDP;
+        hdr.tcp.src_port = hdr.udp_int.src_port;
     }
 
     apply {
