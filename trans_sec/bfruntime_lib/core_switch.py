@@ -53,7 +53,10 @@ data_fwd_action_val = 'port'
 
 telem_rpt_tbl = 'TpsCoreEgress.setup_telemetry_rpt_t'
 telem_rpt_tbl_key = 'hdr.udp_int.dst_port'
-telem_rpt_data = 'ae_ip'
+telem_rpt_ae_ip = 'ae_ip'
+telem_rpt_ae_mac = 'ae_mac'
+telem_rpt_action_1 = 'setup_telem_rpt_ipv4'
+telem_rpt_action_2 = 'setup_telem_rpt_ipv6'
 
 trpt_sample_tbl = 'TpsCoreIngress.mirror_sampler'
 trpt_sample_key = '$REGISTER_INDEX'
@@ -119,6 +122,12 @@ class CoreSwitch(BFRuntimeSwitch):
     def __set_table_field_annotations(self):
         df_table = self.get_table(data_fwd_tbl)
         df_table.info.key_field_annotation_add(data_fwd_tbl_key, "mac")
+
+        trpt_table = self.get_table(telem_rpt_tbl)
+        trpt_table.info.data_field_annotation_add(telem_rpt_ae_mac,
+                                                  telem_rpt_action_1, "mac")
+        trpt_table.info.data_field_annotation_add(telem_rpt_ae_mac,
+                                                  telem_rpt_action_2, "mac")
 
     def update_default_port(self, dflt_port):
         logger.info('Setting default port to - [%s]', dflt_port)
@@ -202,7 +211,7 @@ class CoreSwitch(BFRuntimeSwitch):
                     logger.debug("Unable to access table entry info - [%s]", e)
         return ae_ip
 
-    def setup_telemetry_rpt(self, ae_ip, port):
+    def setup_telemetry_rpt(self, ae_ip, ae_mac, port):
         logger.info(
             'Setting up telemetry report on core device [%s] with '
             'AE IP - [%s]', self.device_id, ae_ip)
@@ -215,7 +224,10 @@ class CoreSwitch(BFRuntimeSwitch):
                 telem_rpt_tbl,
                 action_name,
                 [KeyTuple(telem_rpt_tbl_key, value=int(port))],
-                [DataTuple(telem_rpt_data, val=bytearray(ip_addr.packed))])
+                [
+                    DataTuple(telem_rpt_ae_ip, val=bytearray(ip_addr.packed)),
+                    DataTuple(telem_rpt_ae_mac, val=ae_mac),
+                 ])
         except Exception as e:
             if 'ALREADY_EXISTS' in str(e):
                 pass

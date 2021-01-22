@@ -61,7 +61,8 @@ class CoreController(AbstractController):
     def setup_telem_rpt(self, **kwargs):
         for switch in self.switches:
             if switch.mac == kwargs['switch_mac']:
-                switch.setup_telemetry_rpt(kwargs['ae_ip'], kwargs['port'])
+                switch.setup_telemetry_rpt(kwargs['ae_ip'], kwargs['ae_mac'],
+                                           kwargs['port'])
 
     def set_trpt_sampling_value(self, sample_size):
         for switch in self.switches:

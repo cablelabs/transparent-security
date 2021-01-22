@@ -316,6 +316,7 @@ class TelemetryReport(Resource):
     parser.add_argument('switch_mac', type=str)
     parser.add_argument('port', type=str)
     parser.add_argument('ae_ip', type=str)
+    parser.add_argument('ae_mac', type=str)
 
     def __init__(self, **kwargs):
         self.sdn_controller = kwargs['sdn_controller']

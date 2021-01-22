@@ -213,7 +213,7 @@ header telem_rpt_t { /* 10 */
 }
 
 header bridge_md_t {
-    bit<8>  pkt_type;
+    bit<16>  pkt_type;
 }
 
 struct headers {

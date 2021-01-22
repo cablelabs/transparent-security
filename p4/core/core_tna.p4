@@ -351,8 +351,6 @@ control TpsCoreEgress(
         hdr.trpt_hdr.sequence_no = 0;
         hdr.trpt_hdr.sequence_pad = 0;
         hdr.trpt_hdr.sequence_no = hdr.trpt_hdr.sequence_no + 1;
-        //hdr.trpt_eth.dst_mac = hdr.ethernet.dst_mac;
-        hdr.trpt_eth.dst_mac = 0xffffffffffff;
         hdr.trpt_eth.src_mac = hdr.ethernet.src_mac;
         hdr.trpt_udp.dst_port = TRPT_INT_DST_PORT;
     }
@@ -385,9 +383,10 @@ control TpsCoreEgress(
     /**
     * Restrutures data within INT packet into a Telemetry Report packet type for ipv4
     */
-    action setup_telem_rpt_ipv4(ip4Addr_t ae_ip) {
+    action setup_telem_rpt_ipv4(ip4Addr_t ae_ip, macAddr_t ae_mac) {
         hdr.trpt_ipv4.setValid();
         hdr.trpt_eth.etherType = TYPE_IPV4;
+        hdr.trpt_eth.dst_mac = ae_mac;
         hdr.trpt_ipv4.version = 0x4;
         hdr.trpt_ipv4.ihl = 0x5;
         hdr.trpt_ipv4.ttl = DFLT_IPV4_TTL;
@@ -400,8 +399,9 @@ control TpsCoreEgress(
     /**
     * Restrutures data within INT packet into a Telemetry Report packet type for ipv4
     */
-    action setup_telem_rpt_ipv6(ip6Addr_t ae_ip) {
+    action setup_telem_rpt_ipv6(ip6Addr_t ae_ip, macAddr_t ae_mac) {
         hdr.trpt_ipv6.setValid();
+        hdr.trpt_eth.dst_mac = ae_mac;
         hdr.trpt_eth.etherType = TYPE_IPV6;
         hdr.trpt_ipv6.next_hdr_proto = TYPE_UDP;
         hdr.trpt_ipv6.srcAddr = hdr.ipv6.srcAddr;
@@ -462,7 +462,7 @@ control TpsCoreEgress(
             } else {
                 control_drop();
             }
-        } else {
+        } else if (meta.pkt_type == PKT_TYPE_NORMAL) {
             if(hdr.int_shim.isValid()) {
                 if(hdr.ipv4.isValid()) {
                     hdr.ipv4.protocol = hdr.int_shim.next_proto;
@@ -490,6 +490,8 @@ control TpsCoreEgress(
                 }
                 clear_int_all();
             }
+        } else {
+            control_drop();
         }
     }
 }
