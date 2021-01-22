@@ -455,10 +455,6 @@ control TpsCoreEgress(
                 } else {
                     control_drop();
                 }
-                // TODO/FIXME - This may simply be a parameter when configuring the mirror table
-                /* Ensure packet is no larger than TRPT_MAX_BYTES
-                truncate(TRPT_MAX_BYTES);
-                */
             } else {
                 control_drop();
             }

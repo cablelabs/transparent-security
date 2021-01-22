@@ -155,7 +155,7 @@ class CoreSwitch(BFRuntimeSwitch):
         self.delete_table_entry(data_fwd_tbl,
                                 [KeyTuple(data_fwd_tbl_key, value=dst_mac)])
 
-    def __write_clone_entries(self, port, mirror_tbl_key=1):
+    def __write_clone_entries(self, port, mirror_tbl_key=1, max_len=200):
         logger.info('Start mirroring operations on table [%s] to port [%s]',
                     "$mirror.cfg", port)
         mirror_cfg_table = self.get_table("$mirror.cfg")
@@ -167,7 +167,8 @@ class CoreSwitch(BFRuntimeSwitch):
                 DataTuple('$direction', str_val="BOTH"),
                 DataTuple('$ucast_egress_port', port),
                 DataTuple('$ucast_egress_port_valid', bool_val=True),
-                DataTuple('$session_enable', bool_val=True)
+                DataTuple('$session_enable', bool_val=True),
+                DataTuple('$max_pkt_len', max_len),
             ], '$normal')]
         )
 
