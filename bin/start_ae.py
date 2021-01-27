@@ -59,6 +59,10 @@ def get_args():
                         default=60,
                         help='Number of seconds the packet count needs to hit '
                              'to trigger alert')
+    parser.add_argument('-pb', '--packet-bytes', required=False, type=int,
+                        default=50000,
+                        help='Number of packet bytes to hit alert within the '
+                             'sample-interval')
     return parser.parse_args()
 
 
@@ -91,7 +95,8 @@ def main():
         logger.debug('SDN Context - [%s]', args.sdn_ctx)
         ae = SimpleAE(http_session, packet_count=args.packet_count,
                       sample_interval=args.sample_interval,
-                      sdn_attack_context=args.sdn_ctx)
+                      sdn_attack_context=args.sdn_ctx,
+                      byte_count=args.packet_bytes)
     elif args.type == 'OINC':
         logger.info('Oinc instantiated')
         ae = Oinc(http_session)
