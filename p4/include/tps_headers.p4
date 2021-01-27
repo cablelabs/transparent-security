@@ -212,7 +212,12 @@ header telem_rpt_t { /* 10 */
     bit<32> var_opt_md;
 }
 
+header bridge_md_t {
+    bit<16>  pkt_type;
+}
+
 struct headers {
+    bridge_md_t       bridge_md;
     ethernet_t        trpt_eth;
     ipv4_t            trpt_ipv4;
     ipv6_t            trpt_ipv6;

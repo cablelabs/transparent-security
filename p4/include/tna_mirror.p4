@@ -15,7 +15,7 @@
 /* -*- P4_16 -*- */
 
 typedef bit<3> mirror_type_t;
-typedef bit<8> pkt_type_t;
+typedef bit<16> pkt_type_t;
 
 /* Ingress mirroring information */
 const bit<3> ING_PORT_MIRROR = 1;

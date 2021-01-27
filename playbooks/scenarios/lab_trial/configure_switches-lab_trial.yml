@@ -30,6 +30,7 @@
           switch_mac: "{{ core.mac }}"
           port: 555
           ae_ip: "{{ ae_ip }}"
+          ae_mac: "{{ ae.mac }}"
         ok_status: 201
       - url: "http://{{ sdn_ip }}:{{ sdn_port }}/dataInspection"
         body:

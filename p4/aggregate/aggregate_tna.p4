@@ -168,12 +168,6 @@ control TpsAggIngress(
     }
 
     apply {
-        /* Value will be set with the udp_int.dst_port in the parser
-           which would be incorrect in this case */
-        if (hdr.tcp.isValid()) {
-            meta.dst_port = hdr.tcp.dst_port;
-        }
-
         // Basic forwarding and drop logic
         if (data_drop_t.apply().miss) {
             default_port_t.apply();
@@ -406,7 +400,11 @@ control TpsAggEgress(
         hdr.udp.src_port = hdr.udp_int.src_port;
         hdr.udp.dst_port = hdr.udp_int.dst_port;
         hdr.udp.len = hdr.udp_int.len;
-        hdr.udp_int.src_port = UDP_INT_SRC_PORT;
+        hdr.udp.cksum = hdr.udp_int.cksum;
+
+        // TODO/FIXME - see INT 2.1 spec on how to calculate this value
+        //hdr.udp_int.src_port = UDP_INT_SRC_PORT;
+
         hdr.udp_int.dst_port = UDP_INT_DST_PORT;
 
         // TODO/FIXME - This value will be incorrect once the gateway with INT has been added into the mix
@@ -416,16 +414,28 @@ control TpsAggEgress(
 
     action insert_udp_int_for_tcp_ipv4() {
         hdr.udp_int.setValid();
-        hdr.udp_int.src_port = UDP_INT_SRC_PORT;
+
+        // TODO/FIXME - see INT 2.1 spec on how to calculate this value
+        //hdr.udp_int.src_port = UDP_INT_SRC_PORT;
+        hdr.udp_int.src_port = hdr.tcp.src_port;
+
         hdr.udp_int.dst_port = UDP_INT_DST_PORT;
         hdr.udp_int.len = hdr.ipv4.totalLen - IPV4_HDR_BYTES;
+        hdr.ipv4.protocol = TYPE_UDP;
+        hdr.tcp.src_port = hdr.udp_int.src_port;
     }
 
     action insert_udp_int_for_tcp_ipv6() {
         hdr.udp_int.setValid();
-        hdr.udp_int.src_port = UDP_INT_SRC_PORT;
+
+        // TODO/FIXME - see INT 2.1 spec on how to calculate this value
+        //hdr.udp_int.src_port = UDP_INT_SRC_PORT;
+        hdr.udp_int.src_port = hdr.tcp.src_port;
+
         hdr.udp_int.dst_port = UDP_INT_DST_PORT;
         hdr.udp_int.len = hdr.ipv6.payload_len;
+        hdr.ipv6.next_hdr_proto = TYPE_UDP;
+        hdr.tcp.src_port = hdr.udp_int.src_port;
     }
 
     apply {
@@ -455,6 +465,7 @@ control TpsAggEgress(
                     }
                 }
             }
+            hdr.udp_int.cksum = 0;
         }
     }
 }
@@ -466,7 +477,23 @@ control TpsAggEgressDeparser(
     in agg_metadata_t meta,
     in egress_intrinsic_metadata_for_deparser_t eg_intr_dprsr_md) {
 
+    Checksum() ipv4_checksum;
+
     apply {
+        hdr.ipv4.hdrChecksum = ipv4_checksum.update({
+            hdr.ipv4.version,
+            hdr.ipv4.ihl,
+            hdr.ipv4.diffserv,
+            hdr.ipv4.totalLen,
+            hdr.ipv4.identification,
+            hdr.ipv4.flags,
+            hdr.ipv4.fragOffset,
+            hdr.ipv4.ttl,
+            hdr.ipv4.protocol,
+            hdr.ipv4.srcAddr,
+            hdr.ipv4.dstAddr
+        });
+
         /* For Standard and INT Packets */
         packet.emit(hdr.ethernet);
         packet.emit(hdr.arp);
