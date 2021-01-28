@@ -22,4 +22,5 @@
 -t {{ srvc_type }} \
 -pc {{ packet_count | default(100) }} \
 -si {{ sample_interval | default(60) }} \
--c {{ sdn_attack_context | default('gwAttack') }}
+-c {{ sdn_attack_context | default('gwAttack') }} \
+-pb {{ packet_bytes | default(50000) }}

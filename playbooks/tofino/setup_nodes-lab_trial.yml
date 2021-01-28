@@ -82,6 +82,7 @@
     packet_count: 100
     sample_interval: 60
     sdn_attack_context: aggAttack
+    packet_bytes: 50000
 
 # Start ES PCAP Service
 - import_playbook: ../general/start_service.yml

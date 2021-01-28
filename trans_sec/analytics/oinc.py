@@ -50,6 +50,7 @@ class PacketAnalytics(object):
         self.packet_count = packet_count
         self.sample_interval = sample_interval
         self.count_map = dict()
+        self.bytes_map = dict()
         self.sniff_stop = threading.Event()
         self.sdn_attack_context = sdn_attack_context
 
@@ -86,6 +87,7 @@ class PacketAnalytics(object):
                   stop_filter=lambda p: self.sniff_stop.is_set())
         except Exception as e:
             logger.error('Unexpected error sniffing for INT Data - [%s]', e)
+            self.sniff_int(iface, udp_port)
 
     def sniff_drop(self, iface, foo=None):
         logger.info("Drop monitoring iface [%s]", iface)
@@ -378,7 +380,8 @@ class SimpleAE(PacketAnalytics):
     attack notifications is based on the unique hash of the extracted INT data
     """
     def __init__(self, sdn_interface, packet_count=100, sample_interval=60,
-                 sdn_attack_context='gwAttack', drop_count=3):
+                 sdn_attack_context='gwAttack', drop_count=3,
+                 byte_count=50000):
         super(self.__class__, self).__init__(
             sdn_interface, packet_count, sample_interval, sdn_attack_context)
         # Holds the last time an attack call was issued to the SDN controller
@@ -390,6 +393,7 @@ class SimpleAE(PacketAnalytics):
         # any associated packets
         self.drop_rpt_map = dict()
         self.drop_count = drop_count
+        self.byte_count = byte_count
 
     def process_packet(self, packet, udp_dport=UDP_INT_DST_PORT):
         """
@@ -399,13 +403,13 @@ class SimpleAE(PacketAnalytics):
         :param udp_dport: the UDP port value on which to filter
         :return: T/F - True when an attack has been triggered
         """
-        ip_pkt, protocol = parse_ip_pkt(packet)
+        ip_pkt, protocol, pkt_bytes = parse_ip_pkt(packet)
         if ip_pkt and protocol and protocol == UDP_PROTO:
             udp_packet = UDP(_pkt=ip_pkt.payload)
             if udp_packet.dport == udp_dport and udp_dport == UDP_INT_DST_PORT:
                 int_data = extract_int_data(packet[Ether])
                 if int_data:
-                    return self.__process(int_data)
+                    return self.__process(int_data, pkt_bytes)
                 else:
                     logger.warning('Unable to debug INT data')
                     return False
@@ -413,7 +417,7 @@ class SimpleAE(PacketAnalytics):
                   and udp_dport == UDP_TRPT_DST_PORT):
                 int_data = extract_trpt_data(udp_packet)
                 if int_data:
-                    return self.__process(int_data)
+                    return self.__process(int_data, pkt_bytes)
                 else:
                     logger.warning('Unable to debug INT data')
                     return False
@@ -423,7 +427,7 @@ class SimpleAE(PacketAnalytics):
                     '[%s]', udp_packet.dport, udp_dport)
                 return False
 
-    def __process(self, int_data):
+    def __process(self, int_data, pkt_bytes):
         """
         Processes INT data for analysis
         :param int_data: the data to process
@@ -456,19 +460,24 @@ class SimpleAE(PacketAnalytics):
             self.count_map[attack_map_key] = list()
 
         curr_time = datetime.datetime.now()
-        self.count_map.get(attack_map_key).append(curr_time)
-        times = self.count_map.get(attack_map_key)
+        self.count_map.get(attack_map_key).append((curr_time, pkt_bytes))
+        time_bytes_tuple = self.count_map.get(attack_map_key)
         count = 0
-        for eval_time in times:
+        total_bytes = 0
+        for eval_time, pkt_bytes in time_bytes_tuple:
+            logger.debug('eval_time - [%s], pkt_bytes - [%s]',
+                         eval_time, pkt_bytes)
             delta = (curr_time - eval_time).total_seconds()
             if delta > self.sample_interval:
-                times.remove(eval_time)
+                time_bytes_tuple.remove((eval_time, bytes))
             else:
                 count += 1
-
-        if count > self.packet_count:
-            logger.debug('Attack detected - count [%s] with key [%s]',
-                         count, attack_map_key)
+                total_bytes += pkt_bytes
+        logger.debug('Total bytes received in window - [%s]', total_bytes)
+        if count > self.packet_count or total_bytes > self.byte_count:
+            logger.debug(
+                'Attack detected - count [%s] & bytes [%s] with key [%s]',
+                count, total_bytes, attack_map_key)
 
             attack_dict = dict(
                 src_mac=int_data['devMac'],
@@ -504,7 +513,7 @@ class SimpleAE(PacketAnalytics):
         :param packet: the packet to process
         :return: T/F - True when an attack has been triggered
         """
-        ip_pkt, protocol = parse_ip_pkt(packet)
+        ip_pkt, protocol, pkt_bytes = parse_ip_pkt(packet)
         if ip_pkt and protocol and protocol == UDP_PROTO:
             udp_packet = UDP(_pkt=ip_pkt.payload)
             if udp_packet.dport == UDP_TRPT_DST_PORT:
@@ -543,17 +552,20 @@ class SimpleAE(PacketAnalytics):
 def parse_ip_pkt(packet):
     ip_pkt = None
     protocol = None
+    pkt_bytes = 0
     try:
         if packet[Ether].type == IPV4_TYPE:
             ip_pkt = IP(_pkt=packet[Ether].payload)
             protocol = ip_pkt.proto
+            pkt_bytes = ip_pkt.len
         elif packet[Ether].type == IPV6_TYPE:
             ip_pkt = IPv6(_pkt=packet[Ether].payload)
             protocol = ip_pkt.nh
+            pkt_bytes = ip_pkt.plen
     except Exception as e:
         logger.error('Unexpected error processing packet - [%s]', e)
 
-    return ip_pkt, protocol
+    return ip_pkt, protocol, pkt_bytes
 
 
 class IntLoggerAE(PacketAnalytics):
