@@ -155,7 +155,7 @@ class CoreSwitch(BFRuntimeSwitch):
         self.delete_table_entry(data_fwd_tbl,
                                 [KeyTuple(data_fwd_tbl_key, value=dst_mac)])
 
-    def __write_clone_entries(self, port, mirror_tbl_key=1, max_len=200):
+    def __write_clone_entries(self, port, mirror_tbl_key=1, max_len=0):
         logger.info('Start mirroring operations on table [%s] to port [%s]',
                     "$mirror.cfg", port)
         mirror_cfg_table = self.get_table("$mirror.cfg")

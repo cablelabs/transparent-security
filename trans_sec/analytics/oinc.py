@@ -17,6 +17,7 @@ import logging
 import threading
 import time
 
+from time import strftime, localtime
 from anytree import search, Node, RenderTree
 from scapy.all import sniff
 from scapy.layers.inet import IP, UDP, TCP
@@ -143,7 +144,8 @@ class PacketAnalytics(object):
         logger.info('Stopping attack - [%s] to [%s]',
                     attack_dict, self.sdn_attack_context)
         self.sdn_interface.delete(self.sdn_attack_context, attack_dict)
-        logger.debug('Attack stopped with args - [%s]', attack_dict)
+        logger.warning('Attack stopped at time [%s] with args - [%s]',
+        strftime("%b-%d-%Y %H:%M:%S", localtime()), attack_dict)
 
     @abc.abstractmethod
     def process_packet(self, packet, udp_dport=UDP_INT_DST_PORT):
@@ -259,7 +261,7 @@ def extract_drop_rpt(udp_packet):
     :param udp_packet: the packet to parse
     :return: tuple of key (hash|int) and value (count|int)
     """
-    logger.debug('UDP packet sport [%s], dport [%s], len [%s]',
+    logger.info('UDP packet sport [%s], dport [%s], len [%s]',
                  udp_packet.sport, udp_packet.dport, udp_packet.len)
 
     drop_rpt = DropReport(_pkt=udp_packet.payload)
@@ -443,14 +445,14 @@ class SimpleAE(PacketAnalytics):
         attack_map_key = tps_utils.create_attack_hash(
             mac=int_data['devMac'], port=int_data['dstPort'], ip_addr=ipv4,
             ipv6_addr=ipv6)
-        logger.debug('Attack map key - [%s]', attack_map_key)
+        logger.info('Attack map key - [%s]', attack_map_key)
 
         if not self.drop_rpt_map.get(attack_map_key):
-            logger.debug('Updating drop_rpt_map entry with zeros - [%s]',
+            logger.info('Updating drop_rpt_map entry with zeros - [%s]',
                          attack_map_key)
             self.drop_rpt_map[attack_map_key] = (0, 0)
         else:
-            logger.debug('Creating drop_rpt_map entry with key - [%s]',
+            logger.info('Creating drop_rpt_map entry with key - [%s]',
                          attack_map_key)
             tuple_val = self.drop_rpt_map[attack_map_key]
             new_tuple = (tuple_val[0], 0)
@@ -473,11 +475,11 @@ class SimpleAE(PacketAnalytics):
             else:
                 count += 1
                 total_bytes += pkt_bytes
-        logger.debug('Total bytes received in window - [%s]', total_bytes)
+        logger.info('Total bytes received in window - [%s]', total_bytes)
         if count > self.packet_count or total_bytes > self.byte_count:
-            logger.debug(
-                'Attack detected - count [%s] & bytes [%s] with key [%s]',
-                count, total_bytes, attack_map_key)
+            logger.warning(
+                'Attack detected at time [%s]- count [%s] & bytes [%s] with key [%s]',
+                strftime("%b-%d-%Y %H:%M:%S", localtime()), count, total_bytes, attack_map_key)
 
             attack_dict = dict(
                 src_mac=int_data['devMac'],
@@ -540,7 +542,7 @@ class SimpleAE(PacketAnalytics):
                             self.attack_map[hash_key] = None
                             self.count_map[hash_key] = None
                             self.drop_rpt_map[hash_key] = None
-                            logger.debug('Cleared maps with hash [%s]',
+                            logger.info('Cleared maps with hash [%s]',
                                          hash_key)
                             return True
                         else:
@@ -563,7 +565,7 @@ def parse_ip_pkt(packet):
             protocol = ip_pkt.nh
             pkt_bytes = ip_pkt.plen
     except Exception as e:
-        logger.error('Unexpected error processing packet - [%s]', e)
+        logger.debug('Unexpected error processing packet - [%s]', e)
 
     return ip_pkt, protocol, pkt_bytes
 

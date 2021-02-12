@@ -127,9 +127,9 @@ class DdosSdnController:
                   + UDP_HDR_LEN + DRPT_PAYLOAD_LEN)
         udp_int_len = ip_len - IPV4_HDR_LEN
         udp_len = UDP_HDR_LEN + DRPT_PAYLOAD_LEN
-        drop_pkt = Ether(type=consts.IPV4_TYPE)
+        drop_pkt = Ether(dst='32:ab:6c:5b:1f:d8', type=consts.IPV4_TYPE)
         drop_pkt = drop_pkt / IP(
-            dst=str(self.ae_ip), src=sdn_ip, len=ip_len,
+            dst='10.11.11.164', src='10.11.11.165', len=ip_len,
             proto=consts.UDP_PROTO)
         drop_pkt = drop_pkt / UdpInt(sport=consts.UDP_INT_SRC_PORT,
                                      dport=consts.UDP_TRPT_DST_PORT,
