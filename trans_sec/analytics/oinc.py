@@ -38,6 +38,7 @@ class PacketAnalytics(object):
     """
     Analytics Engine class
     """
+
     def __init__(self, sdn_interface, packet_count=100, sample_interval=60,
                  sdn_attack_context='gwAttack'):
         """
@@ -145,7 +146,7 @@ class PacketAnalytics(object):
                     attack_dict, self.sdn_attack_context)
         self.sdn_interface.delete(self.sdn_attack_context, attack_dict)
         logger.warning('Attack stopped at time [%s] with args - [%s]',
-        strftime("%b-%d-%Y %H:%M:%S", localtime()), attack_dict)
+                       strftime("%b-%d-%Y %H:%M:%S", localtime()), attack_dict)
 
     @abc.abstractmethod
     def process_packet(self, packet, udp_dport=UDP_INT_DST_PORT):
@@ -262,7 +263,7 @@ def extract_drop_rpt(udp_packet):
     :return: tuple of key (hash|int) and value (count|int)
     """
     logger.info('UDP packet sport [%s], dport [%s], len [%s]',
-                 udp_packet.sport, udp_packet.dport, udp_packet.len)
+                udp_packet.sport, udp_packet.dport, udp_packet.len)
 
     drop_rpt = DropReport(_pkt=udp_packet.payload)
     if drop_rpt:
@@ -350,7 +351,7 @@ class Oinc(PacketAnalytics):
         """
         Processes a packet from an existing device that has been counted
         """
-        logger.debug('Packet with MAC [%s] and source IP [%s]', mac, src_ip)
+        logger.info('Packet with MAC [%s] and source IP [%s]', mac, src_ip)
         count = packet_size.children[0]
         count.value = count.value + 1
         base_time = count.time
@@ -381,6 +382,7 @@ class SimpleAE(PacketAnalytics):
     Simple implementation of PacketAnalytics where the count for detecting
     attack notifications is based on the unique hash of the extracted INT data
     """
+
     def __init__(self, sdn_interface, packet_count=100, sample_interval=60,
                  sdn_attack_context='gwAttack', drop_count=3,
                  byte_count=50000):
@@ -446,18 +448,17 @@ class SimpleAE(PacketAnalytics):
             mac=int_data['devMac'], port=int_data['dstPort'], ip_addr=ipv4,
             ipv6_addr=ipv6)
         logger.info('Attack map key - [%s]', attack_map_key)
-
         if not self.drop_rpt_map.get(attack_map_key):
-            logger.info('Updating drop_rpt_map entry with zeros - [%s]',
-                         attack_map_key)
+            logger.info('Updating drop_rpt_map entry with zeros at time [%s] - [%s]',
+                        strftime("%b-%d-%Y %H:%M:%S", localtime()), attack_map_key)
             self.drop_rpt_map[attack_map_key] = (0, 0)
         else:
             logger.info('Creating drop_rpt_map entry with key - [%s]',
-                         attack_map_key)
+                        attack_map_key)
             tuple_val = self.drop_rpt_map[attack_map_key]
             new_tuple = (tuple_val[0], 0)
             self.drop_rpt_map[attack_map_key] = new_tuple
-
+        logger.info('Drop report attack map - [%s]', self.drop_rpt_map)
         if not self.count_map.get(attack_map_key):
             self.count_map[attack_map_key] = list()
 
@@ -475,7 +476,7 @@ class SimpleAE(PacketAnalytics):
             else:
                 count += 1
                 total_bytes += pkt_bytes
-        logger.info('Total bytes received in window - [%s]', total_bytes)
+        logger.info('Total bytes [%s] and packet count [%s] received in window', total_bytes, count)
         if count > self.packet_count or total_bytes > self.byte_count:
             logger.warning(
                 'Attack detected at time [%s]- count [%s] & bytes [%s] with key [%s]',
@@ -522,32 +523,29 @@ class SimpleAE(PacketAnalytics):
                 hash_key, drop_count = extract_drop_rpt(udp_packet)
                 if self.drop_rpt_map.get(hash_key):
                     tuple_val = self.drop_rpt_map[hash_key]
-                    old_count = tuple_val[0]
-                    if old_count != drop_count:
-                        new_tuple = (drop_count, 0)
+                    logger.info('Drop report map - [%s]', self.drop_rpt_map)
+                    new_tuple = (tuple_val[0], tuple_val[1] + 1)
+                    self.drop_rpt_map[hash_key] = new_tuple
+                    logger.info('Number of drop reports received after attack - [%s]',
+                                new_tuple[1])
+                    if new_tuple[1] >= self.drop_count:
+                        attack_body = self.attack_payload.get(hash_key)
+                        if attack_body:
+                            logger.info('Stopping attack with [%s]',
+                                        attack_body)
+                            self._stop_attack(**attack_body)
+
+                        logger.info('Clearing maps after attacked stopped')
+                        self.attack_payload[hash_key] = None
+                        self.attack_map[hash_key] = None
+                        self.count_map[hash_key] = None
+                        self.drop_rpt_map[hash_key] = None
+                        logger.info('Cleared maps with hash [%s] at time [%s]',
+                                    hash_key, strftime("%b-%d-%Y %H:%M:%S", localtime()))
+                        return True
+                    else:
                         self.drop_rpt_map[hash_key] = new_tuple
                         return False
-                    else:
-                        new_tuple = (tuple_val[0], tuple_val[1] + 1)
-                        self.drop_rpt_map[hash_key] = new_tuple
-                        if new_tuple[1] >= self.drop_count:
-                            attack_body = self.attack_payload.get(hash_key)
-                            if attack_body:
-                                logger.info('Stopping attack with [%s]',
-                                            attack_body)
-                                self._stop_attack(**attack_body)
-
-                            logger.info('Clearing maps after attacked stopped')
-                            self.attack_payload[hash_key] = None
-                            self.attack_map[hash_key] = None
-                            self.count_map[hash_key] = None
-                            self.drop_rpt_map[hash_key] = None
-                            logger.info('Cleared maps with hash [%s]',
-                                         hash_key)
-                            return True
-                        else:
-                            self.drop_rpt_map[hash_key] = new_tuple
-                            return False
         return False
 
 
@@ -574,6 +572,7 @@ class IntLoggerAE(PacketAnalytics):
     """
     Logs only INT packets
     """
+
     def process_packet(self, packet, udp_dport=UDP_INT_DST_PORT):
         """
         Logs the INT data within the packet
@@ -592,6 +591,7 @@ class LoggerAE(PacketAnalytics):
     """
     Logging only
     """
+
     def handle_packet(self, packet, ip_proto=None):
         """
         Logs every received packet's summary data
