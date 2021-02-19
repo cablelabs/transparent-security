@@ -17,6 +17,7 @@ import logging
 import threading
 import time
 
+from time import strftime, localtime
 from anytree import search, Node, RenderTree
 from scapy.all import sniff
 from scapy.layers.inet import IP, UDP, TCP
@@ -37,6 +38,7 @@ class PacketAnalytics(object):
     """
     Analytics Engine class
     """
+
     def __init__(self, sdn_interface, packet_count=100, sample_interval=60,
                  sdn_attack_context='gwAttack'):
         """
@@ -89,7 +91,7 @@ class PacketAnalytics(object):
             logger.error('Unexpected error sniffing for INT Data - [%s]', e)
             self.sniff_int(iface, udp_port)
 
-    def sniff_drop(self, iface, foo=None):
+    def sniff_drop(self, iface):
         logger.info("Drop monitoring iface [%s]", iface)
 
         try:
@@ -143,7 +145,8 @@ class PacketAnalytics(object):
         logger.info('Stopping attack - [%s] to [%s]',
                     attack_dict, self.sdn_attack_context)
         self.sdn_interface.delete(self.sdn_attack_context, attack_dict)
-        logger.debug('Attack stopped with args - [%s]', attack_dict)
+        logger.info('Attack stopped at time [%s] with args - [%s]',
+                    strftime("%b-%d-%Y %H:%M:%S", localtime()), attack_dict)
 
     @abc.abstractmethod
     def process_packet(self, packet, udp_dport=UDP_INT_DST_PORT):
@@ -379,6 +382,7 @@ class SimpleAE(PacketAnalytics):
     Simple implementation of PacketAnalytics where the count for detecting
     attack notifications is based on the unique hash of the extracted INT data
     """
+
     def __init__(self, sdn_interface, packet_count=100, sample_interval=60,
                  sdn_attack_context='gwAttack', drop_count=3,
                  byte_count=50000):
@@ -446,8 +450,8 @@ class SimpleAE(PacketAnalytics):
         logger.debug('Attack map key - [%s]', attack_map_key)
 
         if not self.drop_rpt_map.get(attack_map_key):
-            logger.debug('Updating drop_rpt_map entry with zeros - [%s]',
-                         attack_map_key)
+            logger.debug('Updating drop_rpt_map entry with zeros at time [%s] - [%s]',
+                         strftime("%b-%d-%Y %H:%M:%S", localtime()), attack_map_key)
             self.drop_rpt_map[attack_map_key] = (0, 0)
         else:
             logger.debug('Creating drop_rpt_map entry with key - [%s]',
@@ -469,15 +473,15 @@ class SimpleAE(PacketAnalytics):
                          eval_time, pkt_bytes)
             delta = (curr_time - eval_time).total_seconds()
             if delta > self.sample_interval:
-                time_bytes_tuple.remove((eval_time, bytes))
+                time_bytes_tuple.remove((eval_time, pkt_bytes))
             else:
                 count += 1
                 total_bytes += pkt_bytes
-        logger.debug('Total bytes received in window - [%s]', total_bytes)
+        logger.info('Total bytes [%s] and packet count [%s] received in window', total_bytes, count)
         if count > self.packet_count or total_bytes > self.byte_count:
-            logger.debug(
-                'Attack detected - count [%s] & bytes [%s] with key [%s]',
-                count, total_bytes, attack_map_key)
+            logger.warning(
+                'Attack detected at time [%s]- count [%s] & bytes [%s] with key [%s]',
+                strftime("%b-%d-%Y %H:%M:%S", localtime()), count, total_bytes, attack_map_key)
 
             attack_dict = dict(
                 src_mac=int_data['devMac'],
@@ -540,8 +544,8 @@ class SimpleAE(PacketAnalytics):
                             self.attack_map[hash_key] = None
                             self.count_map[hash_key] = None
                             self.drop_rpt_map[hash_key] = None
-                            logger.debug('Cleared maps with hash [%s]',
-                                         hash_key)
+                            logger.info('Cleared maps with hash [%s] at time [%s]',
+                                        hash_key, strftime("%b-%d-%Y %H:%M:%S", localtime()))
                             return True
                         else:
                             self.drop_rpt_map[hash_key] = new_tuple
@@ -572,6 +576,7 @@ class IntLoggerAE(PacketAnalytics):
     """
     Logs only INT packets
     """
+
     def process_packet(self, packet, udp_dport=UDP_INT_DST_PORT):
         """
         Logs the INT data within the packet
@@ -590,6 +595,7 @@ class LoggerAE(PacketAnalytics):
     """
     Logging only
     """
+
     def handle_packet(self, packet, ip_proto=None):
         """
         Logs every received packet's summary data
