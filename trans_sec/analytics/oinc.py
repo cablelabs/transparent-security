@@ -76,7 +76,7 @@ class PacketAnalytics(object):
         if drop_iface:
             logger.info('Starting Drop Report listener dr_thread')
             dr_thread = threading.Thread(target=self.sniff_drop,
-                                         args=(drop_iface, 'foo'))
+                                         args=drop_iface)
             dr_thread.start()
             logger.debug('dr_thread has been started')
 
