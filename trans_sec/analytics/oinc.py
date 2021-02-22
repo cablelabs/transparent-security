@@ -76,7 +76,7 @@ class PacketAnalytics(object):
         if drop_iface:
             logger.info('Starting Drop Report listener dr_thread')
             dr_thread = threading.Thread(target=self.sniff_drop,
-                                         args=drop_iface)
+                                         args=(drop_iface, 'foo'))
             dr_thread.start()
             logger.debug('dr_thread has been started')
 
@@ -91,7 +91,7 @@ class PacketAnalytics(object):
             logger.error('Unexpected error sniffing for INT Data - [%s]', e)
             self.sniff_int(iface, udp_port)
 
-    def sniff_drop(self, iface):
+    def sniff_drop(self, iface, foo=None):
         logger.info("Drop monitoring iface [%s]", iface)
 
         try:
