@@ -14,6 +14,9 @@
 # AWS EC2 Instance
 
 locals {
+  none = [
+    "echo foo",
+  ]
   py3 = [
     "sudo update-alternatives --install /usr/bin/python python /usr/bin/python${var.python_version} 0",
   ]
@@ -25,11 +28,11 @@ locals {
     "sudo rm -f /usr/bin/python",
     "sudo ln -s /usr/bin/python2.7 /usr/bin/python"
   ]
-  inline_scripts = var.env_type == "ae" ? local.ae : var.env_type == "tofino" ? local.py2 : local.py3
+  inline_scripts = var.env_type == "ae" ? local.ae : var.env_type == "tofino" ? local.py2 : var.env_type == "siddhi" ? local.none : local.py3
 }
 
 resource "aws_instance" "transparent-security-build-img" {
-  ami = var.env_type == "ae" ? var.centos7_ami : var.ubuntu_version == "18" ? var.base_18_ami : var.base_16_ami
+  ami = var.env_type == "ae" ? var.centos7_ami : var.ubuntu_version == "20" ? var.base_20_ami : var.ubuntu_version == "18" ? var.base_18_ami : var.base_16_ami
   instance_type = var.instance_type
   key_name = aws_key_pair.transparent-security-mini-pk.key_name
 
