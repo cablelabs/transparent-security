@@ -10,7 +10,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+# Playbook that is responsible for putting together an AWS image for running
+# Siddhi with the new "udp" source & P4 Telemetry report mapping extensions
+# TO Test image, ensure the following from the image's
+# /home/ubuntu/siddhi-map-p4-trpt/component directory will startup without error
+# ctrl-C will gracefully exit.
+#  mvn exec:java -Dexec.mainClass=io.siddhi.extension.map.p4.StartSiddhiRuntime "-Dexec.args=/home/ubuntu/siddhi-map-p4-trpt/docs/siddhi/examples/convert_trpt.siddhi /home/ubuntu/siddhi-map-p4-trpt/docs/siddhi/examples/simple_ddos_detection.siddhi" -f pom.xml
 ---
 - import_playbook: setup_jdk.yml
 - import_playbook: setup_kafka.yml
 - import_playbook: setup_siddhi_p4.yml
+
