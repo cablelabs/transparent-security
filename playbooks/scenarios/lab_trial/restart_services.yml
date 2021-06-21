@@ -79,8 +79,9 @@
         state: "{{ ae_srvc_state }}"
       when: exe_systemd | bool
 
-    - name: Restart tps-es-pcap with state {{ es_pcap_state }}
-      systemd:
-        name: tps-es-pcap
-        state: "{{ ae_srvc_state }}"
-      when: exe_systemd | bool
+# This is required for snaps-hcp
+#    - name: Restart tps-es-pcap with state {{ es_pcap_state }}
+#      systemd:
+#        name: tps-es-pcap
+#        state: "{{ ae_srvc_state }}"
+#      when: exe_systemd | bool

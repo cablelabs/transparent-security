@@ -39,12 +39,12 @@
   vars:
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
 
-# Startup ElasticSearch and Kibana
-#   note: if done after switch startup the wait value needs to be 180 for taking
-#   in configuration
-- import_playbook: ../ae/start_ae_elk.yml
-  vars:
-    wait_for_kibana: 0
+## Startup ElasticSearch and Kibana
+##   note: if done after switch startup the wait value needs to be 180 for taking
+##   in configuration
+#- import_playbook: ../ae/start_ae_elk.yml
+#  vars:
+#    wait_for_kibana: 0
 
 # TODO/FIXME - Call setup_tofino_switch playbook so it can run in parallel
 # Start tofino-model and tofino-switchd on the aggregate switch
@@ -75,22 +75,7 @@
   vars:
     host_val: ae
     service_name: tps-tofino-ae
-    local_srvc_script_tmplt_file: "{{ orch_trans_sec_dir }}/playbooks/general/templates/ae_service.sh.j2"
+    local_srvc_script_tmplt_file: "{{ orch_trans_sec_dir }}/playbooks/general/templates/siddhi_p4_service.sh.j2"
     srvc_type: SIMPLE
     sdn_url: "http://{{ sdn_ip }}:{{ sdn_port }}"
-    monitor_intf: "{{ ae_monitor_intf }}"
-    packet_count: 100
-    sample_interval: 60
-    sdn_attack_context: aggAttack
-    packet_bytes: 50000
-
-# Start ES PCAP Service
-- import_playbook: ../general/start_service.yml
-  vars:
-    host_val: ae
-    service_name: tps-es-pcap
-    local_srvc_script_tmplt_file: "{{ orch_trans_sec_dir }}/playbooks/general/templates/es_pcap.sh.j2"
-    srvc_type: SIMPLE
-
-#Import playbook to setup and load AE pipelines
-- import_playbook: ../ae/setup_ae_udp_and_tcp_pipeline.yml
+    port_to_wait: 9092

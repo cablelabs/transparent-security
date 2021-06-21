@@ -164,7 +164,6 @@ host2_tun1_mac=${local.host2_tun1_mac}
 inet_ip=${local.lab_inet_ip}
 inet_tun1_ip=${local.lab_inet_tun1_ip}
 inet_tun1_mac=${local.lab_inet_tun1_mac}
-ae_user=${var.ae_user}
 ae_ip=${local.ae_ip}
 ae_tun1_ip=${local.ae_tun1_ip}
 ae_tun1_mac=${local.ae_tun1_mac}
