@@ -21,4 +21,7 @@
 - import_playbook: setup_jdk.yml
 - import_playbook: setup_kafka.yml
 - import_playbook: setup_siddhi_p4.yml
+- import_playbook: ../general/setup_source.yml
+- import_playbook: ../general/final_env_setup.yml
+
 
