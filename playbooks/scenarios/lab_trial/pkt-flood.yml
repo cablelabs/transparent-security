@@ -44,5 +44,6 @@
         dst_port: "{{ send_port }}"
       ok_status: 201
 
-- import_playbook: ./../../ae/delete_ae_history.yml
+# Was required when using snaps-hcp
+#- import_playbook: ./../../hcp/delete_ae_history.yml
 

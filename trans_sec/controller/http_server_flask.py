@@ -37,8 +37,6 @@ class SDNControllerServer:
     def start(self):
         logger.info('Starting Web services')
         try:
-            # self.thread.start()
-
             logger.info('Starting dataForward')
             self.api.add_resource(
                 DataForward, '/dataForward',

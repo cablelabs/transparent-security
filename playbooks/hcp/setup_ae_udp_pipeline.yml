@@ -11,26 +11,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #Import playbook
-- import_playbook: setup_ae_elk.yml
+- import_playbook: conf_ae_elk.yml
 
 - hosts: ae
   gather_facts: no
   tasks:
-    - name: POST call to create TCP data mapping template for incoming data in Elasticsearch
+    - name: POST call to create data mapping template for incoming data in Elasticsearch
       uri:
         url: "http://localhost:9200/_template/packets"
         method: PUT
         return_content: yes
-        body: "{{ lookup('file','./templates/tcp/tcp_data_mapping.json') }}"
+        body: "{{ lookup('file','./templates/udp/udp_data_mapping.json') }}"
         body_format: json
-      register: tcp_template_response
+      register: udp_template_response
 
-    - name: POST call to create data parsing pipeline for TCP v4 and UDP v6 for incoming data in Elasticsearch
+    - name: POST call to create script function to generate drop report hash
       uri:
-        url: "http://localhost:9200/_ingest/pipeline/ts_tcp_parsing"
+          url: "http://localhost:9200/_scripts/calculateKeyHash"
+          method: POST
+          return_content: yes
+          body: "{{ lookup('file','./templates/drop_report_hash_script.json') }}"
+          body_format: json
+      register: drop_report_hash_response
+
+    - name: POST call to create data parsing pipeline for UDP v4 and UDP v6 for incoming data in Elasticsearch
+      uri:
+        url: "http://localhost:9200/_ingest/pipeline/ts_parsing"
         method: PUT
         return_content: yes
-        body: "{{ lookup('file','./templates/tcp/tcp_data_parsing.json') }}"
+        body: "{{ lookup('file','./templates/udp/udp_data_parsing.json') }}"
         body_format: json
       register: ts_pipeline_response
 
@@ -48,7 +57,7 @@
 
     - name: Copy file sdn_attack_webhook.json to  {{ remote_scripts_dir }} for updates
       copy:
-        src: "{{ trans_sec_dir }}/playbooks/ae/templates/sdn_attack_webhook.json"
+        src: "{{ trans_sec_dir }}/playbooks/hcp/templates/sdn_attack_webhook.json"
         dest: "{{ remote_scripts_dir }}/sdn_attack_webhook.json"
         remote_src: yes
         force: yes
@@ -77,7 +86,7 @@
 
     - name: Slurp updated sdn webhook definition and save it to be used in POST request.
       slurp:
-        src: "{{ remote_scripts_dir }}/sdn_attack_webhook.json"
+          src: "{{ remote_scripts_dir }}/sdn_attack_webhook.json"
       register: slurped_updated_sdn_webhook_def
 
     - name: Set updated_sdn_webhook_def as fact
@@ -87,7 +96,6 @@
     - name: Show SDN Webhook definition
       debug:
         var: updated_sdn_webhook_def_contents
-
 
     - name: POST call to create SDN Aggregate attack webhook to attach to monitor for incoming data in Elasticsearch
       uri:
@@ -111,30 +119,19 @@
       debug:
         msg: " SDN Webhook response Id : {{ sdn_webhook_id }}"
 
-    - name: Ensures {{ remote_scripts_dir }} exists
-      become: yes
-      file:
-        path: "{{ remote_scripts_dir }}"
-        state: directory
-
-    - name: Ensure {{ remote_scripts_dir }} directories are 777
-      become: yes
-      shell: "chmod -R 777 transparent-security"
-      args:
-        chdir: "/etc"
 
     - name: Copy file udp_monitor_def.json to  {{ remote_scripts_dir }} for updates
       copy:
-        src: "{{ trans_sec_dir }}/playbooks/ae/templates/tcp/tcp_monitor_def.json"
-        dest: "{{ remote_scripts_dir }}/tcp_monitor_def.json"
+        src: "{{ trans_sec_dir }}/playbooks/hcp/templates/udp/udp_monitor_def.json"
+        dest: "{{ remote_scripts_dir }}/udp_monitor_def.json"
         remote_src: yes
         force: yes
 
-    - name: Replace SDN Webhook ID in TCP monitor definition file
+    - name: Replace SDN Webhook ID in UDP monitor definition file
       become: yes
       tags: monitorUpdate
       lineinfile:
-        path: "{{ remote_scripts_dir }}/tcp_monitor_def.json"
+        path: "{{ remote_scripts_dir }}/udp_monitor_def.json"
         regex: 'sdnWebhookResponseId'
         line: ' "destination_id": "{{sdn_webhook_id}}",'
         state: present
@@ -143,23 +140,23 @@
 
     - name: Slurp updated monitor definition and save it to be used in POST request.
       slurp:
-        src: "{{ remote_scripts_dir }}/tcp_monitor_def.json"
-      register: slurped_updated_tcp_monitor_def
+        src: "{{ remote_scripts_dir }}/udp_monitor_def.json"
+      register: slurped_updated_udp_monitor_def
 
-    - name: Set updated_tcp_monitor_def as fact
+    - name: Set updated_udp_monitor_def as fact
       set_fact:
-        updated_tcp_monitor_def_contents: "{{ slurped_updated_tcp_monitor_def.content | b64decode }}"
+        updated_udp_monitor_def_contents: "{{ slurped_updated_udp_monitor_def.content | b64decode }}"
 
     - name: Show Updated monitor definition
       debug:
-        var: updated_tcp_monitor_def_contents
+        var: updated_udp_monitor_def_contents
 
-    - name: POST call to create Monitor,trigger and action for TCP DDOS Detection and Mitigation Pipeline for incoming data in Elasticsearch
+    - name: POST call to create Monitor,trigger and action for UDP DDOS Detection and Mitigation Pipeline for incoming data in Elasticsearch
       uri:
         url: "http://localhost:9200/_opendistro/_alerting/monitors"
         method: POST
         return_content: yes
         status_code: 201
-        body: "{{ updated_tcp_monitor_def_contents }}"
+        body: "{{ updated_udp_monitor_def_contents }}"
         body_format: json
-      register: tcp_monitor_response
+      register: udp_monitor_response
