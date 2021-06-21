@@ -24,7 +24,7 @@ variable "private_key_file" {default = "~/.ssh/id_rsa"}
 variable "orch_user" {default = "ubuntu"}
 variable "switch_user" {default = "ubuntu"}
 variable "node_user" {default = "ubuntu"}
-variable "ae_user" {default = "centos"}
+variable "ae_user" {default = "ubuntu"}
 variable "region" {default = "us-west-2"}
 variable "availability_zone" {default = "us-west-2a"}
 
@@ -35,7 +35,9 @@ variable "tofino" {
     bfrt_ami = "ami-01a5ff54de23b6739"
   }
 }
-variable "hcp_ami" {default ="ami-01bcfe22682eb95e4"}
+
+//variable "siddhi_ae_ami" {default ="ami-066fd0478b3f9568c"}
+variable "siddhi_ae_ami" {default ="ami-0ebb184b9a710444c"}
 
 variable "switch_instance_type" {default = "t2.2xlarge"}
 variable "ae_instance_type" {default = "t2.large"}
