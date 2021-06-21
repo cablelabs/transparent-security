@@ -24,6 +24,7 @@ logger = logging.getLogger('http_server_handler')
 
 class SDNControllerServer:
     def __init__(self, sdn_controller, port=9998, host='0.0.0.0'):
+        logger.info('Staring SDN Controller')
         self.sdn_controller = sdn_controller
         self.port = port
         self.host = host
@@ -86,6 +87,7 @@ class DataForward(Resource):
     parser.add_argument('output_port', type=int)
 
     def __init__(self, **kwargs):
+        logger.info('Staring DataForward context')
         self.sdn_controller = kwargs['sdn_controller']
 
     @swagger.tags(['dataForwardPost'])
@@ -129,6 +131,7 @@ class DataInspection(Resource):
     parser.add_argument('device_mac', type=str)
 
     def __init__(self, **kwargs):
+        logger.info('Staring DataInspection context')
         self.sdn_controller = kwargs['sdn_controller']
 
     @swagger.tags(['dataInspectionPost'])
@@ -170,6 +173,7 @@ class GwAttack(Resource):
     parser.add_argument('attack_type', type=str)
 
     def __init__(self, **kwargs):
+        logger.info('Staring GwAttack context')
         self.sdn_controller = kwargs['sdn_controller']
 
     @swagger.tags(['gatewayAttackStart'])
@@ -208,6 +212,7 @@ class AggDataForward(Resource):
     parser.add_argument('output_port', type=str)
 
     def __init__(self, **kwargs):
+        logger.info('Staring AggAttack context')
         self.sdn_controller = kwargs['sdn_controller']
 
     @swagger.tags(['aggDataForwardAdd'])
@@ -245,6 +250,7 @@ class AggAttack(Resource):
     parser.add_argument('dst_port', type=str)
 
     def __init__(self, **kwargs):
+        logger.info('Staring AggAttack context')
         self.sdn_controller = kwargs['sdn_controller']
 
     @swagger.tags(['aggAttackStart'])
@@ -319,6 +325,7 @@ class TelemetryReport(Resource):
     parser.add_argument('ae_mac', type=str)
 
     def __init__(self, **kwargs):
+        logger.info('Staring TelemetryReport context')
         self.sdn_controller = kwargs['sdn_controller']
 
     @swagger.tags(['telemetryRptAdd'])
@@ -356,6 +363,7 @@ class TelemetryReportSampling(Resource):
     parser.add_argument('sample', type=int, default=0)
 
     def __init__(self, **kwargs):
+        logger.info('Staring TelemetryReportSampling context')
         self.sdn_controller = kwargs['sdn_controller']
 
     @swagger.tags(['telemetryRptSample'])
@@ -382,6 +390,7 @@ class DefaultPort(Resource):
     parser.add_argument('port', type=int)
 
     def __init__(self, **kwargs):
+        logger.info('Staring DefaultPort context')
         self.sdn_controller = kwargs['sdn_controller']
 
     @swagger.tags(['setDefaultPort'])
@@ -407,6 +416,7 @@ class MulticastGroups(Resource):
     parser.add_argument('ports', type=str)
 
     def __init__(self, **kwargs):
+        logger.info('Staring MulticastGroups context')
         self.sdn_controller = kwargs['sdn_controller']
 
     @swagger.tags(['mcastUpdatePorts'])

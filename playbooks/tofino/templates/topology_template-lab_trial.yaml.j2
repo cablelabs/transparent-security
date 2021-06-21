@@ -70,8 +70,8 @@ hosts:
     id: 13
     ip: 192.168.1.14
     intf_name: core-tun1
-{% if ae_user is defined or host_user is defined %}
-    user: {{ ae_user | default(host_user) }}
+{% if host_user is defined %}
+    user: {{ host_user }}
 {% endif %}
     public_ip: {{ ae_ip }}
     tun1_ip: {{ ae_tun1_ip }}
