@@ -19,19 +19,12 @@
   become: yes
   vars:
     ae_srvc_state: "{{ ae_state | default('stopped') }}"
-    es_pcap_state: "{{ es_pcap_srvc_state | default('stopped') }}"
     exe_systemd: "{% if ae_srvc_state == 'none' %}False{% else %}True{% endif %}"
   tasks:
     - name: Stop tps-tofino-ae with state {{ ae_srvc_state }} on the analytics engine
       systemd:
         name: tps-tofino-ae
         state: "{{ ae_srvc_state }}"
-      when: exe_systemd | bool
-
-    - name: Stop tps-es-pcap with state {{ es_pcap_state }} on the analytics engine
-      systemd:
-        name: tps-es-pcap
-        state: "{{ es_pcap_state }}"
       when: exe_systemd | bool
 
 # Call POST on all WS calls
