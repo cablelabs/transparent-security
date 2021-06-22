@@ -16,8 +16,8 @@ import argparse
 import json
 import logging
 import os
-
 import pydevd
+import signal
 import yaml
 
 from trans_sec.controller.aggregate_controller import AggregateController
@@ -158,14 +158,19 @@ def main():
         is_delta = True
     else:
         is_delta = False
-    DdosSdnController(
+    controller = DdosSdnController(
         topo=topo,
         controllers=controllers,
         http_server_port=args.http_server_port,
         ansible_inventory=args.ansible_inventory,
         controller_user=args.controller_user,
         ae_ip_str=args.ae_ip,
-        is_delta=is_delta).start()
+        is_delta=is_delta)
+
+    signal.signal(signal.SIGINT, controller.stop)
+    signal.signal(signal.SIGTERM, controller.stop)
+
+    controller.start()
 
 
 if __name__ == '__main__':
