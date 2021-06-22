@@ -39,14 +39,7 @@
   vars:
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
 
-## Startup ElasticSearch and Kibana
-##   note: if done after switch startup the wait value needs to be 180 for taking
-##   in configuration
-#- import_playbook: ../ae/start_ae_elk.yml
-#  vars:
-#    wait_for_kibana: 0
-
-# TODO/FIXME - Call setup_tofino_switch playbook so it can run in parallel
+# TODO/FIXME - Change call to and the setup_tofino_switch.yml playbook so it can run in parallel
 # Start tofino-model and tofino-switchd on the aggregate switch
 - import_playbook: setup_tofino_switch.yml
   vars:
