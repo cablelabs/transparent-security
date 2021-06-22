@@ -39,30 +39,3 @@
   vars:
     scenario_send_protocol: TCP
     scenario_send_ip_version: 6
-
-# Refresh lab_trial environment config
-- import_playbook: restart.yml
-
-# Packet Flood scenarios for UDP and IPv4 using simpleAE
-- import_playbook: pkt-flood-simple-ae.yml
-  vars:
-    scenario_send_protocol: UDP
-    scenario_send_ip_version: 4
-
-# Packet Flood scenarios for UDP and IPv6 using simpleAE
-- import_playbook: pkt-flood-simple-ae.yml
-  vars:
-    scenario_send_protocol: UDP
-    scenario_send_ip_version: 6
-
-# Packet Flood scenarios for TCP and IPv4 using simpleAE
-- import_playbook: pkt-flood-simple-ae.yml
-  vars:
-    scenario_send_protocol: TCP
-    scenario_send_ip_version: 4
-
-# Packet Flood scenarios for TCP and IPv6 using simpleAE
-- import_playbook: pkt-flood-simple-ae.yml
-  vars:
-    scenario_send_protocol: TCP
-    scenario_send_ip_version: 6

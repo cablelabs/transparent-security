@@ -43,7 +43,3 @@
         dst_ip: "{% if scenario_send_ip_version|int == 4 %}{{ receiver.ip }}{% else %}{{ receiver.ipv6 }}{% endif %}"
         dst_port: "{{ send_port }}"
       ok_status: 201
-
-# Was required when using snaps-hcp
-#- import_playbook: ./../../hcp/delete_ae_history.yml
-
