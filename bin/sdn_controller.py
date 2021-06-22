@@ -166,10 +166,11 @@ def main():
         controller_user=args.controller_user,
         ae_ip_str=args.ae_ip,
         is_delta=is_delta)
-    controller.start()
 
     signal.signal(signal.SIGINT, controller.stop)
     signal.signal(signal.SIGTERM, controller.stop)
+
+    controller.start()
 
 
 if __name__ == '__main__':
