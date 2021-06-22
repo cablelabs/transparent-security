@@ -1,0 +1,42 @@
+# Copyright (c) 2021 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+- hosts: "{{ hosts | default('all') }}"
+  gather_facts: no
+  tasks:
+    - name: apt update
+      become: yes
+      apt:
+        update_cache: yes
+
+    - name: Install apt dependencies
+      become: yes
+      apt:
+        name:
+          - git
+          - maven
+      register: apt_rc
+      retries: 3
+      delay: 10
+      until: apt_rc is not failed
+
+    - name: Get siddhi-map-p4-trpt repository
+      git:
+        repo: https://github.com/cablelabs/siddhi-map-p4-trpt.git
+        dest: ~/siddhi-map-p4-trpt
+        version: master
+
+    - name: Build and test siddhi-map-p4-trpt
+      command: mvn clean test
+      args:
+        chdir: ~/siddhi-map-p4-trpt
