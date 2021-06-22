@@ -68,7 +68,6 @@
   become: yes
   vars:
     ae_srvc_state: "{{ ae_state | default('stopped') }}"
-    es_pcap_state: "{{ es_pcap_srvc_state | default('stopped') }}"
     exe_systemd: "{% if ae_srvc_state == 'none' %}False{% else %}True{% endif %}"
   tasks:
     - debug:
