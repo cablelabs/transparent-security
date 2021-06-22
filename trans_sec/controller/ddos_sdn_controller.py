@@ -70,7 +70,9 @@ class DdosSdnController:
         logger.info('Starting HTTP server on port - [%s]',
                     self.http_server.port)
         self.http_server.start()
+        logger.info('Starting drop report thread')
         self.drop_rpt_thread.start()
+        logger.info('Starting main loop')
         self.__main_loop()
 
     def stop(self):

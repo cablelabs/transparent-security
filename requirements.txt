@@ -10,8 +10,8 @@ cffi
 cygrpc
 grpcio
 python-dateutil
-flask
-flask-restful-swagger-3
+Flask==1.1.2
+flask-restful-swagger-3==0.4.3
 ipaddress
 netaddr
 mock==4.0.2
