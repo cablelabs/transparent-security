@@ -165,7 +165,7 @@ class DataInspection(Resource):
                       description='Added data_inspection entry')
     @swagger.reqparser(name='DataInspectionParser', parser=parser)
     def post(self):
-        logger.info('Attack requested')
+        logger.info('Adding data inspection')
         args = self.parser.parse_args()
 
         logger.info('args - [%s]', args)
@@ -177,7 +177,7 @@ class DataInspection(Resource):
                       description='Deleted data_inspection deletion')
     @swagger.reqparser(name='DataInspectionParser', parser=parser)
     def delete(self):
-        logger.info('Attacker to remove')
+        logger.info('Data inspection to remove')
         args = self.parser.parse_args()
 
         logger.info('args - [%s]', args)
@@ -207,7 +207,7 @@ class GwAttack(Resource):
                       description='Mitigated attack on gateway')
     @swagger.reqparser(name='GwAttackParser', parser=parser)
     def post(self):
-        logger.info('Attack requested')
+        logger.info('Gateway attack requested')
         args = self.parser.parse_args()
 
         logger.info('args - [%s]', args)
@@ -219,7 +219,7 @@ class GwAttack(Resource):
                       description='Unmitigated attacks from gateway')
     @swagger.reqparser(name='GwAttackParser', parser=parser)
     def delete(self):
-        logger.info('Attacker to remove')
+        logger.info('GW Attacker to remove')
         args = self.parser.parse_args()
 
         logger.info('args - [%s]', args)
@@ -238,7 +238,7 @@ class AggDataForward(Resource):
     parser.add_argument('output_port', type=str)
 
     def __init__(self, **kwargs):
-        logger.info('Starting AggAttack context')
+        logger.info('Starting AggDataForward context')
         self.sdn_controller = kwargs['sdn_controller']
 
     @swagger.tags(['aggDataForwardAdd'])
@@ -246,7 +246,7 @@ class AggDataForward(Resource):
                       description='Added data forward entry to aggregate')
     @swagger.reqparser(name='AggDataForwardParser', parser=parser)
     def post(self):
-        logger.info('Attack requested')
+        logger.info('Agg data forward requested')
         args = self.parser.parse_args()
 
         logger.info('args - [%s]', args)
@@ -258,7 +258,7 @@ class AggDataForward(Resource):
                       description='Deleted data forward entry from aggregate')
     @swagger.reqparser(name='AggDataForwardParser', parser=parser)
     def delete(self):
-        logger.info('Attacker to remove')
+        logger.info('Agg data forward to remove')
         args = self.parser.parse_args()
 
         logger.info('args - [%s]', args)
@@ -284,11 +284,13 @@ class AggAttack(Resource):
                       description='Mitigated attacks from aggregate')
     @swagger.reqparser(name='AggAttackParser', parser=parser)
     def post(self):
-        logger.info('Attack requested')
-        args = self.parser.parse_args()
+        logger.info('Agg attack requested')
+        url_args = self.parser.parse_args()
+        logger.info('URL args - [%s]', url_args)
 
-        logger.info('args - [%s]', args)
-        self.sdn_controller.add_agg_attacker(args)
+        logger.info('Request args - [%s]', request.args.get('src_mac'))
+
+        self.sdn_controller.add_agg_attacker(url_args)
         return json.dumps({"success": True}), 201
 
     @swagger.tags(['aggAttackStop'])
@@ -296,7 +298,7 @@ class AggAttack(Resource):
                       description='Unmitigated attacks from aggregate')
     @swagger.reqparser(name='AggAttackParser', parser=parser)
     def delete(self):
-        logger.info('Attacker to remove')
+        logger.info('Agg Attacker to remove')
         args = self.parser.parse_args()
 
         logger.info('args - [%s]', args)
@@ -319,7 +321,7 @@ class CoreDataForward(Resource):
                       description='Added data forward entry to core')
     @swagger.reqparser(name='CoreDataForwardParser', parser=parser)
     def post(self):
-        logger.info('Attack requested')
+        logger.info('Core data forward entry requested')
         args = self.parser.parse_args()
 
         logger.info('args - [%s]', args)
@@ -331,7 +333,7 @@ class CoreDataForward(Resource):
                       description='Deleted data forward entry from core')
     @swagger.reqparser(name='CoreDataForwardParser', parser=parser)
     def delete(self):
-        logger.info('Attacker to remove')
+        logger.info('Data forward entry to remove')
         args = self.parser.parse_args()
 
         logger.info('args - [%s]', args)
@@ -340,9 +342,6 @@ class CoreDataForward(Resource):
 
 
 class TelemetryReport(Resource):
-    """
-    Class for exposing web service to issue an attack call to aggregate.p4
-    """
     parser = reqparse.RequestParser()
     parser.add_argument('device_id', type=int, default=0)
     parser.add_argument('switch_mac', type=str)
@@ -408,7 +407,7 @@ class TelemetryReportSampling(Resource):
 
 class DefaultPort(Resource):
     """
-    Class for exposing web service to issue an attack call to aggregate.p4
+    Class for exposing web service to set the default data forward port value
     """
     parser = reqparse.RequestParser()
     parser.add_argument('device_id', type=int, default=0)
@@ -434,7 +433,7 @@ class DefaultPort(Resource):
 
 class MulticastGroups(Resource):
     """
-    Class for exposing web service to issue an attack call to aggregate.p4
+    Class for exposing web service to setup multicast groups
     """
     parser = reqparse.RequestParser()
     parser.add_argument('device_id', type=int, default=0)

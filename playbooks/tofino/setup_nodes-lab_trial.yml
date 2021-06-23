@@ -71,4 +71,10 @@
     local_srvc_script_tmplt_file: "{{ orch_trans_sec_dir }}/playbooks/general/templates/siddhi_p4_service.sh.j2"
     srvc_type: SIMPLE
     sdn_url: "http://{{ sdn_ip }}:{{ sdn_port }}"
-    port_to_wait: 9092
+    telem_rpt_port: 556
+    kafka_host_port: localhost:9092
+    templates:
+      - src: "{{ orch_trans_sec_dir }}/playbooks/siddhi/templates/convert_trpt.siddhi.j2"
+        dest: "{{ remote_scripts_dir }}/convert_trpt.siddhi"
+      - src: "{{ orch_trans_sec_dir }}/playbooks/siddhi/templates/simple_ddos_detection.siddhi.j2"
+        dest: "{{ remote_scripts_dir }}/simple_ddos_detection.siddhi"

@@ -67,20 +67,13 @@
   gather_facts: no
   become: yes
   vars:
-    ae_srvc_state: "{{ ae_state | default('stopped') }}"
+    ae_srvc_state: "{{ ae_state | default('restarted') }}"
     exe_systemd: "{% if ae_srvc_state == 'none' %}False{% else %}True{% endif %}"
   tasks:
     - debug:
         var: exe_systemd
-    - name: Restart tps-tofino-ae with state {{ ae_srvc_state }}
+    - name: Set tps-tofino-ae service with state {{ ae_srvc_state }}
       systemd:
         name: tps-tofino-ae
         state: "{{ ae_srvc_state }}"
       when: exe_systemd | bool
-
-# This is required for snaps-hcp
-#    - name: Restart tps-es-pcap with state {{ es_pcap_state }}
-#      systemd:
-#        name: tps-es-pcap
-#        state: "{{ ae_srvc_state }}"
-#      when: exe_systemd | bool
