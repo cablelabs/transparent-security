@@ -167,8 +167,8 @@ def main():
         ae_ip_str=args.ae_ip,
         is_delta=is_delta)
 
-    signal.signal(signal.SIGINT, controller.stop)
-    signal.signal(signal.SIGTERM, controller.stop)
+    # signal.signal(signal.SIGINT, controller.stop)
+    # signal.signal(signal.SIGTERM, controller.stop)
 
     controller.start()
 

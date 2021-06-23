@@ -18,10 +18,10 @@
   gather_facts: no
   become: yes
   vars:
-    ae_srvc_state: "{{ ae_state | default('stopped') }}"
+    ae_srvc_state: "{{ ae_state | default('restarted') }}"
     exe_systemd: "{% if ae_srvc_state == 'none' %}False{% else %}True{% endif %}"
   tasks:
-    - name: Stop tps-tofino-ae with state {{ ae_srvc_state }} on the analytics engine
+    - name: Set tps-tofino-ae service with state {{ ae_srvc_state }} on the analytics engine
       systemd:
         name: tps-tofino-ae
         state: "{{ ae_srvc_state }}"

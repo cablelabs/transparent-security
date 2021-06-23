@@ -14,7 +14,8 @@
 # limitations under the License.
 #
 # Runs the Siddhi Analytics Engine
-cd /home/ubuntu/siddhi-map-p4-trpt/component
-sudo -i ubuntu; mvn exec:java -Dexec.mainClass=io.siddhi.extension.map.p4.StartSiddhiRuntime \
-"-Dexec.args=/home/ubuntu/siddhi-map-p4-trpt/docs/siddhi/examples/convert_trpt.siddhi \
-/home/ubuntu/siddhi-map-p4-trpt/docs/siddhi/examples/simple_ddos_detection.siddhi" -f pom.xml
+systemctl restart kafka
+cd {{ remote_scripts_dir }}/siddhi-map-p4-trpt/component
+mvn exec:java -Dexec.mainClass=io.siddhi.extension.map.p4.StartSiddhiRuntime \
+"-Dexec.args={{ remote_scripts_dir }}/convert_trpt.siddhi {{ remote_scripts_dir }}/simple_ddos_detection.siddhi" \
+-f pom.xml &> /var/log/transparent-security/siddhi-ae.log

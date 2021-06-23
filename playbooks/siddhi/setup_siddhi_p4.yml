@@ -13,14 +13,13 @@
 ---
 - hosts: "{{ hosts | default('all') }}"
   gather_facts: no
+  become: yes
   tasks:
     - name: apt update
-      become: yes
       apt:
         update_cache: yes
 
     - name: Install apt dependencies
-      become: yes
       apt:
         name:
           - git
@@ -33,10 +32,10 @@
     - name: Get siddhi-map-p4-trpt repository
       git:
         repo: https://github.com/cablelabs/siddhi-map-p4-trpt.git
-        dest: ~/siddhi-map-p4-trpt
+        dest: "{{ remote_scripts_dir }}/siddhi-map-p4-trpt"
         version: master
 
-    - name: Build and test siddhi-map-p4-trpt
+    - name: Build and test siddhi-map-p4-trpt as root
       command: mvn clean test
       args:
-        chdir: ~/siddhi-map-p4-trpt
+        chdir: "{{ remote_scripts_dir }}/siddhi-map-p4-trpt"
