@@ -36,10 +36,10 @@ variable "tofino" {
   }
 }
 
-variable "siddhi_ae_ami" {default = "ami-0da0dee44de91f867"}
+variable "siddhi_ae_ami" {default = "ami-05debba48a91be8d7"}
 
 variable "switch_instance_type" {default = "t2.2xlarge"}
-variable "ae_instance_type" {default = "t2.large"}
+variable "ae_instance_type" {default = "t2.2xlarge"}
 variable "orch_instance_type" {default = "t2.2xlarge"}
 variable "node_instance_type" {default = "t2.small"}
 variable "num_switches_full" {default = 5}

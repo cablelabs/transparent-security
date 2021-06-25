@@ -15,5 +15,5 @@
 
 @app:name('UDP-Source-TRPT')
 @source(type='udp', listen.port='{{ telem_rpt_port }}', @map(type='p4-trpt'))
-@sink(type='kafka', topic='trptTopic', bootstrap.servers='{{ kafka_host_port }}', @map(type='json'))
+@sink(type='kafka', topic='{{ kafka_topic }}', bootstrap.servers='{{ kafka_host_port }}', @map(type='json'))
 define stream trptUdpPktStream (telemRpt object);

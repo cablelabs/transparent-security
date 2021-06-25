@@ -14,7 +14,7 @@
  */
 
 @app:name('Kafka-Source-JSON')
-@source(type='kafka', topic.list='trptJson', bootstrap.servers='{{ kafka_host_port }}',
+@source(type='kafka', topic.list='{{ kafka_topic }}', bootstrap.servers='{{ kafka_host_port }}',
     group.id='test',
     threading.option='single.thread',
     @map(type='p4-trpt-json',
@@ -22,13 +22,13 @@
             dstAddr='ipHdr.dstAddr', dstPort='dstPort')))
 define stream trptJsonStream (origMac string, ipVer int, dstAddr string, dstPort long);
 
-@sink(type='http', publisher.url='http://{{ sdn_ip }}:{{ sdn_port }}/attack', method='POST',
+@sink(type='http', publisher.url='http://{{ sdn_ip }}:{{ sdn_port }}/aggAttack', method='POST',
     headers='trp:headers', @map(type='json'))
 define stream attackStream (origMac string, ipVer int, dstAddr string, dstPort long, count long);
 
 @info(name = 'trptJsonQuery')
-from trptJsonStream#window.time(1 sec)
+from trptJsonStream#window.time({{ alert_window_secs | default(1) }} sec)
 select origMac, ipVer, dstAddr, dstPort, count(ipVer) as count
 group by origMac, dstAddr, dstPort
-having count == 100
+having count == {{ alert_pkt_count | default(100) }}
 insert into attackStream;

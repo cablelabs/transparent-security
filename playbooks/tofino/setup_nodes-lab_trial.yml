@@ -73,6 +73,9 @@
     sdn_url: "http://{{ sdn_ip }}:{{ sdn_port }}"
     telem_rpt_port: 556
     kafka_host_port: localhost:9092
+    kafka_topic: trptJson
+    alert_pkt_count: 10
+    alert_window_secs: 1
     templates:
       - src: "{{ orch_trans_sec_dir }}/playbooks/siddhi/templates/convert_trpt.siddhi.j2"
         dest: "{{ remote_scripts_dir }}/convert_trpt.siddhi"
