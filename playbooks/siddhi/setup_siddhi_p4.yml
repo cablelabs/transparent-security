@@ -33,9 +33,13 @@
       git:
         repo: https://github.com/cablelabs/siddhi-map-p4-trpt.git
         dest: "{{ remote_scripts_dir }}/siddhi-map-p4-trpt"
-        version: master
+        version: "{{ siddhi_map_p4_trpt_version | default('master') }}"
 
     - name: Build and test siddhi-map-p4-trpt as root
       command: mvn clean test
       args:
         chdir: "{{ remote_scripts_dir }}/siddhi-map-p4-trpt"
+      register: mvn_rc
+      retries: 3
+      delay: 10
+      until: mvn_rc is not failed
