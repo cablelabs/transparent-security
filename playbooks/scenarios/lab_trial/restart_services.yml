@@ -67,7 +67,7 @@
   gather_facts: no
   become: yes
   vars:
-    ae_srvc_state: "{{ ae_state | default('restarted') }}"
+    ae_srvc_state: "{{ ae_state | default('stopped') }}"
     exe_systemd: "{% if ae_srvc_state == 'none' %}False{% else %}True{% endif %}"
   tasks:
     - debug:

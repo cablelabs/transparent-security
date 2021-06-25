@@ -68,6 +68,7 @@
   vars:
     host_val: ae
     service_name: tps-tofino-ae
+    srvc_start_pause_time: 60
     local_srvc_script_tmplt_file: "{{ orch_trans_sec_dir }}/playbooks/general/templates/siddhi_p4_service.sh.j2"
     srvc_type: SIMPLE
     sdn_url: "http://{{ sdn_ip }}:{{ sdn_port }}"
