@@ -21,16 +21,18 @@ from flask_restful_swagger_3 import swagger, Resource, Api
 
 logger = logging.getLogger('http_server_handler')
 
+http_server = Flask('sdn_controller_api_server')
+
 
 class SDNControllerServer:
+
     def __init__(self, sdn_controller, port=9998, host='0.0.0.0'):
         logger.info('Starting SDN Controller')
         self.sdn_controller = sdn_controller
         self.port = port
         self.host = host
         self.thread = threading.Thread(target=self.flask_thread)
-        self.http_server = Flask('sdn_controller_api_server')
-        self.api = Api(self.http_server, title='TPS Controller API',
+        self.api = Api(http_server, title='TPS Controller API',
                        description='APIs for some basic P4 CRUD operations')
         self.server_start = None
 
@@ -94,11 +96,11 @@ class SDNControllerServer:
                 self.host, self.port))
         except Exception as e:
             logger.warning('Trouble shutting down HTTP server - [%s]', e)
+        self.thread.join()
 
     def flask_thread(self):
         logger.info('Starting server on port [%s]', self.port)
-        self.server_start = self.http_server.run(host=self.host,
-                                                 port=self.port)
+        self.server_start = http_server.run(host=self.host, port=self.port)
 
 
 class DataForward(Resource):
@@ -285,11 +287,13 @@ class AggAttack(Resource):
     @swagger.reqparser(name='AggAttackParser', parser=parser)
     def post(self):
         logger.info('Agg attack requested')
-        url_args = self.parser.parse_args()
+        data = request.json
+
+        if data:
+            url_args = data.get('event')
+        else:
+            url_args = self.parser.parse_args()
         logger.info('URL args - [%s]', url_args)
-
-        logger.info('Request args - [%s]', request.args.get('src_mac'))
-
         self.sdn_controller.add_agg_attacker(url_args)
         return json.dumps({"success": True}), 201
 
@@ -299,10 +303,15 @@ class AggAttack(Resource):
     @swagger.reqparser(name='AggAttackParser', parser=parser)
     def delete(self):
         logger.info('Agg Attacker to remove')
-        args = self.parser.parse_args()
+        data = request.json
 
-        logger.info('args - [%s]', args)
-        self.sdn_controller.remove_agg_attacker(args)
+        if data:
+            url_args = data.get('event')
+        else:
+            url_args = self.parser.parse_args()
+
+        logger.info('args - [%s]', url_args)
+        self.sdn_controller.remove_agg_attacker(url_args)
         return json.dumps({"success": True}), 201
 
 

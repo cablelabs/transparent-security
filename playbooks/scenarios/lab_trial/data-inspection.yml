@@ -34,6 +34,7 @@
       - url: "http://{{ sdn_ip }}:{{ sdn_port }}/telemRptSample"
         body:
           sample: "{{ sample_rate }}"
+        headers: ""
         ok_status: 201
 
 # Basic Data Inspection scenario - receiving packets on AE/clone port
@@ -57,4 +58,5 @@
       - url: "http://{{ sdn_ip }}:{{ sdn_port }}/telemRptSample"
         body:
           sample: "{{ sample_rate }}"
+        headers: ""
         ok_status: 201

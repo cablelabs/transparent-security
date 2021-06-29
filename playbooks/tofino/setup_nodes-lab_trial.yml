@@ -39,18 +39,10 @@
   vars:
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
 
-# TODO/FIXME - Change call to and the setup_tofino_switch.yml playbook so it can run in parallel
-# Start tofino-model and tofino-switchd on the aggregate switch
+# Start tofino-model and tofino-switchd on the switches
 - import_playbook: setup_tofino_switch.yml
   vars:
-    switches: aggregate
-    p4_pkg: aggregate
-
-# Start tofino-model and tofino-switchd on the core switch
-- import_playbook: setup_tofino_switch.yml
-  vars:
-    switches: core
-    p4_pkg: core
+    switches: switches
 
 # Start SDN Controller
 - import_playbook: ../general/start_service.yml
@@ -68,7 +60,7 @@
   vars:
     host_val: ae
     service_name: tps-tofino-ae
-    srvc_start_pause_time: 60
+    srvc_start_pause_time: 45
     local_srvc_script_tmplt_file: "{{ orch_trans_sec_dir }}/playbooks/general/templates/siddhi_p4_service.sh.j2"
     srvc_type: SIMPLE
     sdn_url: "http://{{ sdn_ip }}:{{ sdn_port }}"

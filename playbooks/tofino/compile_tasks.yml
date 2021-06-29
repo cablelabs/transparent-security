@@ -18,29 +18,29 @@
     state: directory
 
 - set_fact:
-    compile_switch: "{{ topo_dict.switches[item] }}"
+    compile_switch: "{{ topo_dict.switches[switch_name] }}"
 
 - name: Determine P4 program name and base compile command when arch == 'v1model'
   set_fact:
-    p4_program_name: "{{ item }}"
+    p4_program_name: "{{ p4_prog }}"
   when: compile_switch.arch is not defined or compile_switch.arch == 'v1model'
 
 - name: Determine P4 program name and base compile command when arch != 'v1model'
   set_fact:
-    p4_program_name: "{{ item }}_{{ compile_switch.arch }}"
+    p4_program_name: "{{ p4_prog }}_{{ compile_switch.arch }}"
   when: compile_switch.arch is defined and compile_switch.arch != 'v1model'
 
 - name: Populate compile variables/facts
   set_fact:
-    sde_target_dir: "$SDE_INSTALL/share/p4/targets/tofino/{{ item }}"
-    build_obj_dir: "{{ remote_scripts_dir }}/p4/{{ item }}.tofino"
-    build_prog: "{{ trans_sec_dir }}/p4/{{ item }}/{{ p4_program_name }}.p4"
+    sde_target_dir: "$SDE_INSTALL/share/p4/targets/tofino/{{ p4_prog }}"
+    build_obj_dir: "{{ remote_scripts_dir }}/p4/{{ p4_prog }}.tofino"
+    build_prog: "{{ trans_sec_dir }}/p4/{{ p4_prog }}/{{ p4_program_name }}.p4"
 
 - name: Determine P4 program name and base compile command when arch == 'v1model'
   set_fact:
     compile_command: >
       {{ compile_command }} --p4runtime-format text --arch v1model -D TOFINO
-      --p4runtime-files {{ remote_scripts_dir }}/p4/{{ item }}.tofino/p4info.pb.txt
+      --p4runtime-files {{ remote_scripts_dir }}/p4/{{ p4_prog }}.tofino/p4info.pb.txt
   when: compile_switch.arch is not defined or compile_switch.arch == 'v1model'
 
 - name: Determine P4 program name and base compile command when arch != 'v1model'
@@ -65,7 +65,7 @@
   debug:
     var: compile_command
 
-- name: Compile P4 program {{ p4_program_name }}
+- name: Compile P4 program
   become: yes
   command: "{{ compile_command }}"
   args:
@@ -74,5 +74,5 @@
 - name: Copy compiled *.conf file to {{ sde_p4_target_dir }}
   copy:
     src: "{{ build_obj_dir }}/{{ p4_program_name }}.conf"
-    dest: "{{ sde_p4_target_dir }}/{{ item }}.conf"
+    dest: "{{ sde_p4_target_dir }}/{{ p4_prog }}.conf"
     remote_src: yes

@@ -68,12 +68,14 @@
   become: yes
   vars:
     ae_srvc_state: "{{ ae_state | default('stopped') }}"
-    exe_systemd: "{% if ae_srvc_state == 'none' %}False{% else %}True{% endif %}"
+    ae_pause: "{{ ae_state_pause | default(10) }}"
   tasks:
-    - debug:
-        var: exe_systemd
     - name: Set tps-tofino-ae service with state {{ ae_srvc_state }}
       systemd:
         name: tps-tofino-ae
         state: "{{ ae_srvc_state }}"
-      when: exe_systemd | bool
+
+    - name: Wait {{ ae_pause }} for tps-tofino-ae to fully start
+      pause:
+        seconds: "{{ ae_pause }}"
+      when: ae_srvc_state != 'stopped'

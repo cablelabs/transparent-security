@@ -140,7 +140,7 @@ resource "aws_instance" "ae" {
   tags = {
     Name = "tps-siddhi-ae-${var.build_id}"
   }
-  security_groups = [aws_security_group.tps.name]
+  security_groups = [aws_security_group.ae.name]
   associate_public_ip_address = true
 }
 

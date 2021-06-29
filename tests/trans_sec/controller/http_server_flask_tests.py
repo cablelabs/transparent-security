@@ -45,17 +45,21 @@ class HttpSessionTests(unittest.TestCase):
     def tearDown(self):
         self.http_server.stop()
 
-    def test_session(self):
-        attack = {
+    def test_agg_attack_url_params(self):
+
+        # Test attack with params
+        param_attack = {
             'src_mac': '00:00:00:00:00',
-            'src_ip': '10.0.0.1',
             'dst_ip': '10.1.0.1',
             'dst_port': '1234',
-            'packet_size': '12',
-            'attack_type': 'test',
         }
-        ret_val = requests.post(url='http://127.0.0.1:9998/gwAttack',
-                                params=attack)
+        ret_val = requests.post(url='http://127.0.0.1:9998/aggAttack',
+                                params=param_attack)
+        self.assertEquals(201, ret_val.status_code)
+
+        json_attack = {'event': param_attack}
+        ret_val = requests.post(url='http://127.0.0.1:9998/aggAttack',
+                                json=json_attack)
         self.assertEquals(201, ret_val.status_code)
 
 

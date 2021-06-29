@@ -85,6 +85,7 @@ hosts:
 switches:
   aggregate:
     name: aggregate
+    p4_prog: aggregate
     id: 0
     int_id: 123
     runtime_p4info: {{ remote_scripts_dir }}/p4/aggregate.tofino/p4info.pb.txt
@@ -114,6 +115,7 @@ switches:
         speed: BF_SPEED_10G
   core:
     name: core
+    p4_prog: core
     id: 0
     int_id: 234
     runtime_p4info: {{ remote_scripts_dir }}/p4/core.tofino/p4info.pb.txt

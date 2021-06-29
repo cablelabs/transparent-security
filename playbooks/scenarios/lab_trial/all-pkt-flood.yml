@@ -15,6 +15,8 @@
 ---
 # Refresh lab_trial environment config
 - import_playbook: restart.yml
+  vars:
+    ae_state: restarted
 
 # Packet Flood scenarios for UDP and IPv4
 - import_playbook: pkt-flood.yml
@@ -23,10 +25,10 @@
     scenario_send_ip_version: 4
 
 # Packet Flood scenarios for UDP and IPv6
-- import_playbook: pkt-flood.yml
-  vars:
-    scenario_send_protocol: UDP
-    scenario_send_ip_version: 6
+#- import_playbook: pkt-flood.yml
+#  vars:
+#    scenario_send_protocol: UDP
+#    scenario_send_ip_version: 6
 
 # Packet Flood scenarios for TCP and IPv4
 - import_playbook: pkt-flood.yml
@@ -35,7 +37,7 @@
     scenario_send_ip_version: 4
 
 # Packet Flood scenarios for TCP and IPv6
-- import_playbook: pkt-flood.yml
-  vars:
-    scenario_send_protocol: TCP
-    scenario_send_ip_version: 6
+#- import_playbook: pkt-flood.yml
+#  vars:
+#    scenario_send_protocol: TCP
+#    scenario_send_ip_version: 6

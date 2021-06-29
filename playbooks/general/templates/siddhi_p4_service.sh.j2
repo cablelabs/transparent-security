@@ -17,5 +17,8 @@
 systemctl restart kafka
 cd {{ remote_scripts_dir }}/siddhi-map-p4-trpt/component
 mvn exec:java -Dexec.mainClass=io.siddhi.extension.map.p4.StartSiddhiRuntime \
-"-Dexec.args={{ remote_scripts_dir }}/convert_trpt.siddhi {{ remote_scripts_dir }}/simple_ddos_detection.siddhi" \
--f pom.xml &> /var/log/transparent-security/siddhi-ae.log
+-Dexec.args="\
+{% for template in templates %}
+{{ template.dest }} \
+{% endfor %}
+" -f pom.xml &> /var/log/transparent-security/siddhi-ae.log

@@ -82,6 +82,37 @@ resource "aws_security_group" "tps" {
   }
 }
 
+resource "aws_security_group" "ae" {
+  name = "tps-ae-${var.build_id}"
+  ingress {
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 22
+    to_port = 22
+    protocol = "tcp"
+  }
+
+  ingress {
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 5000
+    to_port = 5010
+    protocol = "tcp"
+  }
+
+  ingress {
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 0
+    to_port = 65535
+    protocol = "udp"
+  }
+
+  egress {
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
 resource "aws_security_group" "tps-internal" {
   name = "tps-internal-${var.build_id}"
   ingress {

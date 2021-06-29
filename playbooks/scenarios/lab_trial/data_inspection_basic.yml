@@ -13,25 +13,12 @@
 # Simple scenario where packets are sent through 3 devices and only the last
 # one will be demonstrating dropped packets
 ---
-# Restart AE service to ensure moving window gets reset
-- hosts: ae
-  gather_facts: no
-  become: yes
-  vars:
-    ae_srvc_state: "{{ ae_state | default('stopped') }}"
-    exe_systemd: "{% if ae_srvc_state == 'none' %}False{% else %}True{% endif %}"
-  tasks:
-    - name: Set tps-tofino-ae service with state {{ ae_srvc_state }} on the analytics engine
-      systemd:
-        name: tps-tofino-ae
-        state: "{{ ae_srvc_state }}"
-      when: exe_systemd | bool
 
 # Call POST on all WS calls
 - hosts: controller
   gather_facts: no
   tasks:
-    - name: Set sampling rate to {{ sample_rate }} (one TRPT for 2 packets)
+    - name: Set sampling rate to {{ sample_rate }}
       uri:
         url: "http://{{ sdn_ip }}:{{ sdn_port }}/telemRptSample"
         method: POST

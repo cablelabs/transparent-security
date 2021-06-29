@@ -18,17 +18,17 @@
     group.id='test',
     threading.option='single.thread',
     @map(type='p4-trpt-json',
-        @attributes(origMac='intHdr.mdStackHdr.origMac', ipVer='ipHdr.version',
-            dstAddr='ipHdr.dstAddr', dstPort='dstPort')))
-define stream trptJsonStream (origMac string, ipVer int, dstAddr string, dstPort long);
+        @attributes(src_mac='intHdr.mdStackHdr.origMac', ipVer='ipHdr.version',
+            dst_ip='ipHdr.dstAddr', dst_port='dstPort')))
+define stream trptJsonStream (src_mac string, ipVer int, dst_ip string, dst_port long);
 
 @sink(type='http', publisher.url='http://{{ sdn_ip }}:{{ sdn_port }}/aggAttack', method='POST',
     headers='trp:headers', @map(type='json'))
-define stream attackStream (origMac string, ipVer int, dstAddr string, dstPort long, count long);
+define stream attackStream (src_mac string, ipVer int, dst_ip string, dst_port long, count long);
 
 @info(name = 'trptJsonQuery')
 from trptJsonStream#window.time({{ alert_window_secs | default(1) }} sec)
-select origMac, ipVer, dstAddr, dstPort, count(ipVer) as count
-group by origMac, dstAddr, dstPort
+select src_mac, ipVer, dst_ip, dst_port, count(ipVer) as count
+group by src_mac, dst_ip, dst_port
 having count == {{ alert_pkt_count | default(100) }}
 insert into attackStream;
