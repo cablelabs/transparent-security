@@ -40,6 +40,7 @@
           device_id: "{{ switch.id }}"
           switch_mac: "{{ switch.mac }}"
           port: 555
+          switch_ip: "{{ switch.ip }}"
           ae_ip: "{{ ae_ip }}"
           ae_mac: "00:00:00:00:00:00"
         ok_status: 201
@@ -77,6 +78,7 @@
           device_id: "{{ switch.id }}"
           switch_mac: "{{ switch.mac }}"
           port: 555
+          switch_ip: "{{ switch.ip }}"
           ae_ip: "{{ ae_ip }}"
           ae_mac: "01:02:03:04:05:06"
         ok_status: 201

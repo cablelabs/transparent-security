@@ -43,18 +43,18 @@
     di_send_port: 3456
     di_src_port: 5678
 
-## Packet Flood scenarios for UDP and IPv6
-#- import_playbook: pkt-flood.yml
-#  vars:
-#    scenario_send_protocol: UDP
-#    scenario_send_ip_version: 6
-#    di_send_port: 1234
-#    di_src_port: 2345
-#
-## Packet Flood scenarios for TCP and IPv6
-#- import_playbook: pkt-flood.yml
-#  vars:
-#    scenario_send_protocol: TCP
-#    scenario_send_ip_version: 6
-#    di_send_port: 3456
-#    di_src_port: 5678
+# Packet Flood scenarios for UDP and IPv6
+- import_playbook: pkt-flood.yml
+  vars:
+    scenario_send_protocol: UDP
+    scenario_send_ip_version: 6
+    di_send_port: 1234
+    di_src_port: 2345
+
+# Packet Flood scenarios for TCP and IPv6
+- import_playbook: pkt-flood.yml
+  vars:
+    scenario_send_protocol: TCP
+    scenario_send_ip_version: 6
+    di_send_port: 3456
+    di_src_port: 5678

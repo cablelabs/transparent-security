@@ -383,7 +383,7 @@ control TpsCoreEgress(
     /**
     * Restrutures data within INT packet into a Telemetry Report packet type for ipv4
     */
-    action setup_telem_rpt_ipv4(ip4Addr_t ae_ip, macAddr_t ae_mac) {
+    action setup_telem_rpt_ipv4(ip4Addr_t src_ip, ip4Addr_t ae_ip, macAddr_t ae_mac) {
         hdr.trpt_ipv4.setValid();
         hdr.trpt_eth.etherType = TYPE_IPV4;
         hdr.trpt_eth.dst_mac = ae_mac;
@@ -392,19 +392,19 @@ control TpsCoreEgress(
         hdr.trpt_ipv4.ttl = DFLT_IPV4_TTL;
         hdr.trpt_ipv4.flags = IPV4_DONT_FRAGMENT;
         hdr.trpt_ipv4.protocol = TYPE_UDP;
-        hdr.trpt_ipv4.srcAddr = hdr.ipv4.srcAddr;
+        hdr.trpt_ipv4.srcAddr = src_ip;
         hdr.trpt_ipv4.dstAddr = ae_ip;
     }
 
     /**
     * Restrutures data within INT packet into a Telemetry Report packet type for ipv4
     */
-    action setup_telem_rpt_ipv6(ip6Addr_t ae_ip, macAddr_t ae_mac) {
+    action setup_telem_rpt_ipv6(ip6Addr_t src_ip, ip6Addr_t ae_ip, macAddr_t ae_mac) {
         hdr.trpt_ipv6.setValid();
         hdr.trpt_eth.dst_mac = ae_mac;
         hdr.trpt_eth.etherType = TYPE_IPV6;
         hdr.trpt_ipv6.next_hdr_proto = TYPE_UDP;
-        hdr.trpt_ipv6.srcAddr = hdr.ipv6.srcAddr;
+        hdr.trpt_ipv6.srcAddr = src_ip;
         hdr.trpt_ipv6.dstAddr = ae_ip;
     }
 

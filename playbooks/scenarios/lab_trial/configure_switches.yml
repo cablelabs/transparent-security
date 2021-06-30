@@ -29,6 +29,7 @@
           device_id: "{{ core.id }}"
           switch_mac: "{{ core.mac }}"
           port: 555
+          switch_ip: "{{ core.ip }}"
           ae_ip: "{{ ae_ip }}"
           ae_mac: "{{ ae.mac }}"
         ok_status: 201
