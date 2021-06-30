@@ -21,7 +21,8 @@
 - import_playbook: all-data-forward.yml
 
 # Data Inspection scenarios
-- import_playbook: all-data-inspection.yml
+# Disabling as this test is a bit redundant and does not deliver consistent results in CI
+#- import_playbook: all-data-inspection.yml
 
 # Data Drop scenarios
 - import_playbook: all-data-drop.yml
