@@ -20,4 +20,4 @@
 - import_playbook: discover-paths.yml
 
 # Configure the switches
-- import_playbook: configure_switches-lab_trial.yml
+- import_playbook: configure_switches.yml

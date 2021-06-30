@@ -15,7 +15,6 @@
   vars:
     host_val:
       - hosts
-      - switches
     trans_sec_source_dir: "{{ orch_trans_sec_dir }}"
     python_unit_tests: false
 
@@ -36,7 +35,6 @@
     switches:
       - core
     host_val: core
-    p4_pkg: core
     p4_prog: core.p4
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     tunnels: "{{ topo_dict.switches['core'].tunnels }}"
@@ -48,7 +46,6 @@
     switches:
       - aggregate
     host_val: aggregate
-    p4_pkg: aggregate
     p4_prog: aggregate.p4
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
     tunnels: "{{ topo_dict.switches['aggregate'].tunnels }}"
@@ -60,7 +57,7 @@
       - gateway1
       - gateway2
       - gateway3
-    p4_pkg: gateway
+    p4_prog: gateway.p4
 
 # Start SDN Controller
 - import_playbook: ../general/start_service.yml

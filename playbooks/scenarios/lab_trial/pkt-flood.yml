@@ -35,12 +35,3 @@
     rec_intf_name: "{{ receiver.intf_name }}"
     dst_mac: "{{ receiver['mac'] }}"
     expected_rate: 0
-    cleanup_rest_call:
-      url: "http://{{ sdn_ip }}:{{ sdn_port }}/aggAttack"
-      body:
-        src_mac: "{{ sender.mac }}"
-        dst_ip: "{% if scenario_send_ip_version|int == 4 %}{{ receiver.ip }}{% else %}{{ receiver.ipv6 }}{% endif %}"
-        dst_port: "{{ send_port }}"
-      headers:
-        Content-Type: "application/json"
-      ok_status: 201

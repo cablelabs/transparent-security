@@ -11,6 +11,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
+# Copy TPS source from orchestrator to all switches
+- import_playbook: ../general/setup_source.yml
+  vars:
+    host_val: "{{ switches }}"
+    trans_sec_source_dir: "{{ orch_trans_sec_dir }}"
+    python_unit_tests: false
+    install_tps_python: false
+
 # Compile the proper P4 program on the switch
 - import_playbook: compile_p4.yml
   vars:

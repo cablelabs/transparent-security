@@ -29,13 +29,6 @@
     rec_intf_name: "{{ receiver.intf_name }}"
     dst_mac: "{{ receiver['mac'] }}"
     sr1_rec_int_hops: 0
-    expected_rate: 0
-    ws_calls:
-      - url: "http://{{ sdn_ip }}:{{ sdn_port }}/telemRptSample"
-        body:
-          sample: "{{ sample_rate }}"
-        headers: ""
-        ok_status: 201
 
 # Basic Data Inspection scenario - receiving packets on AE/clone port
 - import_playbook: data_inspection_basic.yml
@@ -53,10 +46,3 @@
     rec_intf_name: "{{ receiver.intf_name }}"
     dst_mac: "{{ receiver['mac'] }}"
     sr1_rec_int_hops: 2
-    expected_rate: "{{ sample_rate }}"
-    ws_calls:
-      - url: "http://{{ sdn_ip }}:{{ sdn_port }}/telemRptSample"
-        body:
-          sample: "{{ sample_rate }}"
-        headers: ""
-        ok_status: 201

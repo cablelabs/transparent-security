@@ -13,31 +13,48 @@
 # Simple scenario where packets are sent through 3 devices and only the last
 # one will be demonstrating dropped packets
 ---
-# Refresh lab_trial environment config
-- import_playbook: restart.yml
-  vars:
-    ae_state: restarted
+# Start AE service
+- hosts: ae
+  gather_facts: no
+  become: yes
+  tasks:
+    - name: Start tps-tofino-ae service
+      systemd:
+        name: tps-tofino-ae
+        state: restarted
+
+    - name: Wait 10 seconds for tps-tofino-ae to fully start
+      pause:
+        seconds: 10
 
 # Packet Flood scenarios for UDP and IPv4
 - import_playbook: pkt-flood.yml
   vars:
     scenario_send_protocol: UDP
     scenario_send_ip_version: 4
-
-# Packet Flood scenarios for UDP and IPv6
-#- import_playbook: pkt-flood.yml
-#  vars:
-#    scenario_send_protocol: UDP
-#    scenario_send_ip_version: 6
+    di_send_port: 1234
+    di_src_port: 2345
 
 # Packet Flood scenarios for TCP and IPv4
 - import_playbook: pkt-flood.yml
   vars:
     scenario_send_protocol: TCP
     scenario_send_ip_version: 4
+    di_send_port: 3456
+    di_src_port: 5678
 
-# Packet Flood scenarios for TCP and IPv6
+## Packet Flood scenarios for UDP and IPv6
+#- import_playbook: pkt-flood.yml
+#  vars:
+#    scenario_send_protocol: UDP
+#    scenario_send_ip_version: 6
+#    di_send_port: 1234
+#    di_src_port: 2345
+#
+## Packet Flood scenarios for TCP and IPv6
 #- import_playbook: pkt-flood.yml
 #  vars:
 #    scenario_send_protocol: TCP
 #    scenario_send_ip_version: 6
+#    di_send_port: 3456
+#    di_src_port: 5678
