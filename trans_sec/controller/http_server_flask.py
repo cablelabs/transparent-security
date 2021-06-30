@@ -290,7 +290,10 @@ class AggAttack(Resource):
         data = request.json
 
         if data:
-            url_args = data.get('event')
+            if 'event' in data:
+                url_args = data.get('event')
+            else:
+                url_args = data
         else:
             url_args = self.parser.parse_args()
         logger.info('URL args - [%s]', url_args)
@@ -306,7 +309,10 @@ class AggAttack(Resource):
         data = request.json
 
         if data:
-            url_args = data.get('event')
+            if 'event' in data:
+                url_args = data.get('event')
+            else:
+                url_args = data
         else:
             url_args = self.parser.parse_args()
 

@@ -62,6 +62,10 @@ class HttpSessionTests(unittest.TestCase):
                                 json=json_attack)
         self.assertEquals(201, ret_val.status_code)
 
+        ret_val = requests.post(url='http://127.0.0.1:9998/aggAttack',
+                                json=param_attack)
+        self.assertEquals(201, ret_val.status_code)
+
 
 class TestSDNController:
     def __init__(self):

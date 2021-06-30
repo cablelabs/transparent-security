@@ -50,9 +50,10 @@
       uri:
         url: "http://{{ sdn_ip }}:{{ sdn_port }}/aggAttack"
         body:
-          src_mac: "{{ sender.mac }}"
-          dst_ip: "{% if ip_version|int == 4 %}{{ receiver.ip }}{% else %}{{ receiver.ipv6 }}{% endif %}"
-          dst_port: "{{ di_send_port }}"
+          event:
+            src_mac: "{{ sender.mac }}"
+            dst_ip: "{% if ip_version|int == 4 %}{{ receiver.ip }}{% else %}{{ receiver.ipv6 }}{% endif %}"
+            dst_port: "{{ di_send_port }}"
         headers:
           Content-Type: "application/json"
         method: DELETE
