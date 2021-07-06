@@ -14,6 +14,30 @@
  */
 
 @app:name('UDP-Source-TRPT')
-@source(type='udp', listen.port='{{ telem_rpt_port }}', @map(type='p4-trpt'))
-@sink(type='kafka', topic='{{ kafka_topic }}', bootstrap.servers='{{ kafka_host_port }}', @map(type='json'))
-define stream trptUdpPktStream (telemRpt object);
+@source(type='udp', listen.port='{{ telem_rpt_port }}', @map(type='p4-trpt',
+        @attributes(in_type='telemRptHdr.inType', full_json='jsonString')))
+define stream trptUdpStream (in_type int, full_json object);
+
+@sink(type='kafka',
+    topic='{{ kafka_trpt_pkt_topic }}',
+    bootstrap.servers='{{ kafka_host_port }}',
+    is.binary.message = 'false',
+    @map(type='text'))
+define stream trptPacket (full_json object);
+
+@sink(type='kafka',
+    topic='{{ kafka_trpt_drop_topic }}',
+    bootstrap.servers='{{ kafka_host_port }}',
+    is.binary.message = 'false',
+    @map(type='text'))
+define stream trptDrop (full_json object);
+
+@info(name = 'TrptPacket')
+    from trptUdpStream[in_type != 2]
+    select full_json
+    insert into trptPacket;
+
+@info(name = 'TrptDrop')
+    from trptUdpStream[in_type == 2]
+    select full_json
+    insert into trptDrop;

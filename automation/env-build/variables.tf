@@ -29,6 +29,7 @@ variable "public_key_file" {default = "~/.ssh/id_rsa.pub"}
 variable "private_key_file" {default = "~/.ssh/id_rsa"}
 variable "sudo_user" {default = "ubuntu"}
 variable "ubuntu_version" {default = "18"}
+variable "siddhi_map_p4_trpt_version" {default = "master"}
 variable "python_version" {default = "3.6"}
 
 # snaps-hcp image

@@ -13,21 +13,21 @@
  * limitations under the License.
  */
 
-@app:name('Kafka-Source-JSON')
-@source(type='kafka', topic.list='{{ kafka_topic }}', bootstrap.servers='{{ kafka_host_port }}',
+@app:name('Kafka-Source-Packet-JSON')
+@source(type='kafka', topic.list='{{ kafka_trpt_pkt_topic }}', bootstrap.servers='{{ kafka_host_port }}',
     group.id='test',
     threading.option='single.thread',
-    @map(type='p4-trpt-json',
+    @map(type='p4-trpt',
         @attributes(src_mac='intHdr.mdStackHdr.origMac', ipVer='ipHdr.version',
-            dst_ip='ipHdr.dstAddr', dst_port='dstPort')))
-define stream trptJsonStream (src_mac string, ipVer int, dst_ip string, dst_port long);
+            dst_ip='ipHdr.dstAddr', dst_port='protoHdr.dstPort')))
+define stream trptPktStream (src_mac string, ipVer int, dst_ip string, dst_port long);
 
 @sink(type='http', publisher.url='http://{{ sdn_ip }}:{{ sdn_port }}/aggAttack', method='POST',
     headers='trp:headers', @map(type='json'))
 define stream attackStream (src_mac string, ipVer int, dst_ip string, dst_port long, count long);
 
 @info(name = 'trptJsonQuery')
-from trptJsonStream#window.time({{ alert_window_secs | default(1) }} sec)
+from trptPktStream#window.time({{ alert_window_secs | default(1) }} sec)
 select src_mac, ipVer, dst_ip, dst_port, count(ipVer) as count
 group by src_mac, dst_ip, dst_port
 having count == {{ alert_pkt_count | default(100) }}

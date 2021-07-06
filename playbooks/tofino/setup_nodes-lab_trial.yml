@@ -57,7 +57,8 @@
     sdn_url: "http://{{ sdn_ip }}:{{ sdn_port }}"
     telem_rpt_port: 556
     kafka_host_port: localhost:9092
-    kafka_topic: trptJson
+    kafka_trpt_pkt_topic: trptPacket
+    kafka_trpt_drop_topic: trptDrop
     alert_pkt_count: 10
     alert_window_secs: 1
     templates:
@@ -65,3 +66,5 @@
         dest: "{{ remote_scripts_dir }}/convert_trpt.siddhi"
       - src: "{{ orch_trans_sec_dir }}/playbooks/siddhi/templates/simple_ddos_detection.siddhi.j2"
         dest: "{{ remote_scripts_dir }}/simple_ddos_detection.siddhi"
+      - src: "{{ orch_trans_sec_dir }}/playbooks/siddhi/templates/simple_ddos_clear_drop.siddhi.j2"
+        dest: "{{ remote_scripts_dir }}/simple_ddos_clear.siddhi"
