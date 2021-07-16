@@ -267,7 +267,7 @@ def extract_drop_rpt(udp_packet):
 
     drop_rpt = DropReport(_pkt=udp_packet.payload)
     if drop_rpt:
-        return drop_rpt.drop_tbl_keys, drop_rpt.drop_count
+        return drop_rpt.drop_hash, drop_rpt.drop_count
 
 
 class Oinc(PacketAnalytics):
@@ -450,8 +450,9 @@ class SimpleAE(PacketAnalytics):
         logger.debug('Attack map key - [%s]', attack_map_key)
 
         if not self.drop_rpt_map.get(attack_map_key):
-            logger.debug('Updating drop_rpt_map entry with zeros at time [%s] - [%s]',
-                         strftime("%b-%d-%Y %H:%M:%S", localtime()), attack_map_key)
+            logger.debug(
+                'Updating drop_rpt_map entry with zeros at time [%s] - [%s]',
+                strftime("%b-%d-%Y %H:%M:%S", localtime()), attack_map_key)
             self.drop_rpt_map[attack_map_key] = (0, 0)
         else:
             logger.debug('Creating drop_rpt_map entry with key - [%s]',
@@ -477,11 +478,15 @@ class SimpleAE(PacketAnalytics):
             else:
                 count += 1
                 total_bytes += pkt_bytes
-        logger.info('Total bytes [%s] and packet count [%s] received in window', total_bytes, count)
+        logger.info(
+            'Total bytes [%s] and packet count [%s] received in window',
+            total_bytes, count)
         if count > self.packet_count or total_bytes > self.byte_count:
             logger.warning(
-                'Attack detected at time [%s]- count [%s] & bytes [%s] with key [%s]',
-                strftime("%b-%d-%Y %H:%M:%S", localtime()), count, total_bytes, attack_map_key)
+                'Attack detected at time [%s]- count [%s] & bytes [%s] '
+                'with key [%s]',
+                strftime("%b-%d-%Y %H:%M:%S", localtime()),
+                count, total_bytes, attack_map_key)
 
             attack_dict = dict(
                 src_mac=int_data['devMac'],
@@ -544,8 +549,10 @@ class SimpleAE(PacketAnalytics):
                             self.attack_map[hash_key] = None
                             self.count_map[hash_key] = None
                             self.drop_rpt_map[hash_key] = None
-                            logger.info('Cleared maps with hash [%s] at time [%s]',
-                                        hash_key, strftime("%b-%d-%Y %H:%M:%S", localtime()))
+                            logger.info(
+                                'Cleared maps with hash [%s] at time [%s]',
+                                hash_key, strftime("%b-%d-%Y %H:%M:%S",
+                                                   localtime()))
                             return True
                         else:
                             self.drop_rpt_map[hash_key] = new_tuple

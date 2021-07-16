@@ -29,5 +29,7 @@ define stream dropAttackStream (dropKey string, dropCount long, averageDropCount
 @info(name = 'trptJsonQuery')
 from trptDropStream#window.length(3)
 select dropKey, dropCount, count(dropCount) / 3 as averageDropCount
-having dropCount == averageDropCount
+having averageDropCount > 25
+-- TODO - Fix this query to work when the last three events have the same count value
+-- having averageDropCount == dropCount and dropCount != 0
 insert into dropAttackStream;

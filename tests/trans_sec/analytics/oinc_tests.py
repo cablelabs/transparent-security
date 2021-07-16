@@ -100,7 +100,7 @@ class SimpleAETests(unittest.TestCase):
                 var_opt_bsmd=consts.DRPT_BS_MD,
                 timestamp=int(time.time()),
                 drop_count=5,
-                drop_tbl_keys=self.ipv4_hash)
+                drop_hash=self.ipv4_hash)
         )
 
         self.int_pkt_ipv4_tcp = (

@@ -160,7 +160,7 @@ def __log_drop_rpt(ip_pkt, count_to_exit):
         drop_rpt_pkt = DropReport(_pkt=udp_pkt.payload)
         if not drop_rpt_dict:
             drop_rpt_dict = dict()
-        drop_rpt_dict[drop_rpt_pkt.drop_tbl_keys] = drop_rpt_pkt.drop_count
+        drop_rpt_dict[drop_rpt_pkt.drop_hash] = drop_rpt_pkt.drop_count
 
         logger.warning('Drop Report dict - [%s]', drop_rpt_dict)
 
