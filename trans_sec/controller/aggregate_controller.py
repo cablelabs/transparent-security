@@ -69,12 +69,13 @@ class AggregateController(AbstractController):
                         attack, agg_switch.device_id)
             agg_switch.add_attack(**attack)
             
-            logger.info('Creating attack hash')
+            logger.debug('Creating attack hash')
             attack_hash = tps_utils.create_attack_hash(**attack)
 
             logger.info('Storing attack [%s] with hash value [%s]',
                         attack, attack_hash)
-            self.attack_dict[attack_hash] = attack
+            if attack_hash not in self.attack_dict:
+                self.attack_dict[attack_hash] = attack
 
     def remove_attacker(self, attack, host):
         self.remove_agg_attacker(attack)
@@ -82,17 +83,29 @@ class AggregateController(AbstractController):
     def remove_agg_attacker(self, attack):
         logger.info('Requesting to remove attacker - [%s]', attack)
         agg_switch = self.__get_agg_switch()
+        this_attack = None
         if agg_switch:
             if 'dropKey' in attack:
                 drop_key = attack.get('dropKey')
-                drop_key_int = int(drop_key[0:16], 16)
-                this_attack = self.attack_dict.get(drop_key_int)
-                logger.info('Retrieved this_attack [%s] with key [%s]',
-                            this_attack, drop_key_int)
+                if drop_key:
+                    drop_key_int = int(drop_key[:16], 16)
+                    if drop_key_int in self.attack_dict:
+                        this_attack = self.attack_dict.pop(drop_key_int)
+                        logger.debug('Retrieved this_attack [%s] with key [%s]',
+                                    this_attack, drop_key_int)
+                    else:
+                        logger.warning(
+                            'Cannot find attack key with hash - [%s]',
+                            drop_key_int)
+                        return
+                else:
+                    logger.warning('Drop key not on request JSON payload')
             else:
                 this_attack = attack
-                logger.info('this_attack is the attack [%s]', attack)
-            agg_switch.stop_attack(**this_attack)
+                logger.debug('this_attack is the attack [%s]', attack)
+
+            if this_attack:
+                agg_switch.stop_attack(**this_attack)
 
     def count_dropped_packets(self):
         agg_switch = self.__get_agg_switch()

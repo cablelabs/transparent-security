@@ -24,12 +24,11 @@ define stream trptDropStream (timestamp long, dropKey string, dropCount long);
 
 @sink(type='http', publisher.url='http://{{ sdn_ip }}:{{ sdn_port }}/aggAttack', method='DELETE',
     headers='trp:headers', @map(type='json'))
-define stream dropAttackStream (dropKey string, dropCount long, averageDropCount long);
+define stream dropAttackStream (dropKey string, dropCount long, count long);
 
 @info(name = 'trptJsonQuery')
-from trptDropStream#window.length(3)
-select dropKey, dropCount, count(dropCount) / 3 as averageDropCount
-having averageDropCount > 25
--- TODO - Fix this query to work when the last three events have the same count value
--- having averageDropCount == dropCount and dropCount != 0
+from trptDropStream#window.time(35 sec)
+select dropKey, dropCount, count(dropCount) as count
+group by dropKey, dropCount
+having count >= 3
 insert into dropAttackStream;

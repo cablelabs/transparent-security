@@ -45,6 +45,8 @@
 
 - hosts: controller
   gather_facts: no
+  vars:
+    call_ws: "{{ stop_attack | default(true) }}"
   tasks:
     - name: Stop any potential attack that may have been issued
       uri:
@@ -59,3 +61,4 @@
         method: DELETE
         body_format: json
         status_code: 201
+      when: call_ws|bool
