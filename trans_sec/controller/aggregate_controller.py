@@ -68,12 +68,12 @@ class AggregateController(AbstractController):
             logger.info("Adding attack [%s] to Aggregate switch [%s]",
                         attack, agg_switch.device_id)
             agg_switch.add_attack(**attack)
-            
+
             logger.debug('Creating attack hash')
             attack_hash = tps_utils.create_attack_hash(**attack)
-
             logger.info('Storing attack [%s] with hash value [%s]',
                         attack, attack_hash)
+
             if attack_hash not in self.attack_dict:
                 self.attack_dict[attack_hash] = attack
 
@@ -91,8 +91,9 @@ class AggregateController(AbstractController):
                     drop_key_int = int(drop_key[:16], 16)
                     if drop_key_int in self.attack_dict:
                         this_attack = self.attack_dict.pop(drop_key_int)
-                        logger.debug('Retrieved this_attack [%s] with key [%s]',
-                                    this_attack, drop_key_int)
+                        logger.debug(
+                            'Retrieved this_attack [%s] with key [%s]',
+                            this_attack, drop_key_int)
                     else:
                         logger.warning(
                             'Cannot find attack key with hash - [%s]',
