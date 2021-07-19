@@ -167,5 +167,5 @@ class DropReport(Packet):
         fields.IntField('var_opt_bsmd', 0),
         fields.IntField('timestamp', 0),
         fields.IntField('drop_count', 0),
-        fields.BitField('drop_tbl_keys', 0, 128)
+        fields.BitField('drop_hash', 0, 128)
     ]

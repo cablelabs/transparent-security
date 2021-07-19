@@ -1,4 +1,6 @@
-# Copyright (c) 2020 Cable Television Laboratories, Inc.
+#!/usr/bin/env bash
+
+# Copyright (c) 2021 Cable Television Laboratories, Inc.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -10,14 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# Simple scenario where packets are sent through 3 devices and only the last
-# one will be demonstrating dropped packets
----
-# Restart all services
-- import_playbook: restart_services.yml
-
-# Discover SB path
-- import_playbook: discover-paths.yml
-
-# Configure the switches
-- import_playbook: configure_switches.yml
+#
+# Runs the Siddhi Analytics Engine
+systemctl restart kafka
+cd {{ remote_scripts_dir }}/siddhi-map-p4-trpt/component
+mvn exec:java -Dexec.mainClass=io.siddhi.extension.map.p4.StartSiddhiRuntime \
+-Dexec.args="\
+{% for template in templates %}
+{{ template.dest }} \
+{% endfor %}
+" -f pom.xml &> /var/log/transparent-security/siddhi-ae.log

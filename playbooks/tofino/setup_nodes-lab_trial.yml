@@ -19,15 +19,6 @@
     trans_sec_source_dir: "{{ orch_trans_sec_dir }}"
     python_unit_tests: false
 
-# Copy TPS source from orchestrator to all switches
-- import_playbook: ../general/setup_source.yml
-  vars:
-    host_val:
-      - switches
-    trans_sec_source_dir: "{{ orch_trans_sec_dir }}"
-    python_unit_tests: false
-    install_tps_python: false
-
 # Create virtual interfaces on switches
 - import_playbook: setup_virt_eth.yml
   vars:
@@ -39,25 +30,10 @@
   vars:
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
 
-# Startup ElasticSearch and Kibana
-#   note: if done after switch startup the wait value needs to be 180 for taking
-#   in configuration
-- import_playbook: ../ae/start_ae_elk.yml
-  vars:
-    wait_for_kibana: 0
-
-# TODO/FIXME - Call setup_tofino_switch playbook so it can run in parallel
-# Start tofino-model and tofino-switchd on the aggregate switch
+# Start tofino-model and tofino-switchd on the switches
 - import_playbook: setup_tofino_switch.yml
   vars:
-    switches: aggregate
-    p4_pkg: aggregate
-
-# Start tofino-model and tofino-switchd on the core switch
-- import_playbook: setup_tofino_switch.yml
-  vars:
-    switches: core
-    p4_pkg: core
+    switches: switches
 
 # Start SDN Controller
 - import_playbook: ../general/start_service.yml
@@ -75,22 +51,20 @@
   vars:
     host_val: ae
     service_name: tps-tofino-ae
-    local_srvc_script_tmplt_file: "{{ orch_trans_sec_dir }}/playbooks/general/templates/ae_service.sh.j2"
+    srvc_start_pause_time: 45
+    local_srvc_script_tmplt_file: "{{ orch_trans_sec_dir }}/playbooks/general/templates/siddhi_p4_service.sh.j2"
     srvc_type: SIMPLE
     sdn_url: "http://{{ sdn_ip }}:{{ sdn_port }}"
-    monitor_intf: "{{ ae_monitor_intf }}"
-    packet_count: 100
-    sample_interval: 60
-    sdn_attack_context: aggAttack
-    packet_bytes: 50000
-
-# Start ES PCAP Service
-- import_playbook: ../general/start_service.yml
-  vars:
-    host_val: ae
-    service_name: tps-es-pcap
-    local_srvc_script_tmplt_file: "{{ orch_trans_sec_dir }}/playbooks/general/templates/es_pcap.sh.j2"
-    srvc_type: SIMPLE
-
-#Import playbook to setup and load AE pipelines
-- import_playbook: ../ae/setup_ae_udp_and_tcp_pipeline.yml
+    telem_rpt_port: 556
+    kafka_host_port: localhost:9092
+    kafka_trpt_pkt_topic: trptPacket
+    kafka_trpt_drop_topic: trptDrop
+    alert_pkt_count: 10
+    alert_window_secs: 1
+    templates:
+      - src: "{{ orch_trans_sec_dir }}/playbooks/siddhi/templates/convert_trpt.siddhi.j2"
+        dest: "{{ remote_scripts_dir }}/convert_trpt.siddhi"
+      - src: "{{ orch_trans_sec_dir }}/playbooks/siddhi/templates/simple_ddos_detection.siddhi.j2"
+        dest: "{{ remote_scripts_dir }}/simple_ddos_detection.siddhi"
+      - src: "{{ orch_trans_sec_dir }}/playbooks/siddhi/templates/simple_ddos_clear_drop.siddhi.j2"
+        dest: "{{ remote_scripts_dir }}/simple_ddos_clear.siddhi"

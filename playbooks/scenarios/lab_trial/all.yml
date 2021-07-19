@@ -13,11 +13,16 @@
 # Simple scenario where packets are sent through 3 devices and only the last
 # one will be demonstrating dropped packets
 ---
+- import_playbook: restart.yml
+  vars:
+    ae_state: stopped
+
 # Data Forward scenarios
 - import_playbook: all-data-forward.yml
 
 # Data Inspection scenarios
-- import_playbook: all-data-inspection.yml
+# Disabling as this test is a bit redundant and does not deliver consistent results in CI
+#- import_playbook: all-data-inspection.yml
 
 # Data Drop scenarios
 - import_playbook: all-data-drop.yml
@@ -25,8 +30,8 @@
 # Drop Reporting scenarios
 - import_playbook: all-drop-rpt.yml
 
-# Packet Flood scenarios
-- import_playbook: all-pkt-flood.yml
-
-# Packet Flood scenarios
+# Packet Performance tests
 - import_playbook: iperf.yml
+
+# Switches now operational - Run Packet Flood scenarios to test the AE
+- import_playbook: all-pkt-flood.yml

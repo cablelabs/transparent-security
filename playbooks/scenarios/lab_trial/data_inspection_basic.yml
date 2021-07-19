@@ -13,40 +13,20 @@
 # Simple scenario where packets are sent through 3 devices and only the last
 # one will be demonstrating dropped packets
 ---
-# Restart AE service to ensure moving window gets reset
-- hosts: ae
-  gather_facts: no
-  become: yes
-  vars:
-    ae_srvc_state: "{{ ae_state | default('stopped') }}"
-    es_pcap_state: "{{ es_pcap_srvc_state | default('stopped') }}"
-    exe_systemd: "{% if ae_srvc_state == 'none' %}False{% else %}True{% endif %}"
-  tasks:
-    - name: Stop tps-tofino-ae with state {{ ae_srvc_state }} on the analytics engine
-      systemd:
-        name: tps-tofino-ae
-        state: "{{ ae_srvc_state }}"
-      when: exe_systemd | bool
-
-    - name: Stop tps-es-pcap with state {{ es_pcap_state }} on the analytics engine
-      systemd:
-        name: tps-es-pcap
-        state: "{{ es_pcap_state }}"
-      when: exe_systemd | bool
-
+# TODO - Figure out why sample rate for telemetry reports has not been very stable running on the model
 # Call POST on all WS calls
-- hosts: controller
-  gather_facts: no
-  tasks:
-    - name: Set sampling rate to {{ sample_rate }} (one TRPT for 2 packets)
-      uri:
-        url: "http://{{ sdn_ip }}:{{ sdn_port }}/telemRptSample"
-        method: POST
-        body_format: json
-        body:
-          sample: "{{ sample_rate }}"
-        status_code: 201
-      when: sample_rate is defined
+#- hosts: controller
+#  gather_facts: no
+#  tasks:
+#    - name: Set sampling rate to {{ sample_rate }}
+#      uri:
+#        url: "http://{{ sdn_ip }}:{{ sdn_port }}/telemRptSample"
+#        method: POST
+#        body_format: json
+#        body:
+#          sample: "{{ sample_rate }}"
+#        status_code: 201
+#      when: sample_rate is defined
 
 # Sending packets expect all to be received with configured INT hops sr1_rec_int_hops
 - import_playbook: ../test_cases/send_receive.yml
@@ -54,11 +34,31 @@
     int_hops: "{{ sr1_rec_int_hops | default(0) }}"
     receiver_log_filename: "{{ di_log_prfx | default('di') }}_basic_receiver-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}-1.out"
     sender_log_filename: "{{ di_log_prfx | default('di') }}_basic_sender-{{ send_protocol }}-ip-{{ ip_version }}-ih-{{ int_hops }}-1.out"
-    send_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 9) }}"
-    send_src_port: "{{ '%s' % range(2000, 10000) | random(seed=now|int + 10) }}"
+    send_port: "{{ di_send_port }}"
+    send_src_port: "{{ di_src_port }}"
     send_packet_count: "{{ di_send_packet_count | default('%s' % 100 | random(seed=now|int + 11)) }}"
-    min_received_packet_count: "{{ di_min_rec_packet_count | default((send_packet_count | int / (expected_rate + 1))|int - 1) }}"
-    max_received_packet_count: "{{ di_send_packet_count | default((send_packet_count | int / (expected_rate + 1))|int + 1) }}"
+    min_received_packet_count: "{{ di_min_rec_packet_count | default(send_packet_count | int) }}"
+    max_received_packet_count: "{{ di_send_packet_count | default(send_packet_count | int ) }}"
     inspection_data: "{{ sr1_data_inspection_int | default(None) }}"
     send_loops: "{{ di_send_loops | default(1) }}"
-    send_loop_delay: "{{ di_send_loop_delay | default(5) }}"
+    send_loop_delay: "{{ di_send_loop_delay | default(0) }}"
+
+- hosts: controller
+  gather_facts: no
+  vars:
+    call_ws: "{{ stop_attack | default(true) }}"
+  tasks:
+    - name: Stop any potential attack that may have been issued
+      uri:
+        url: "http://{{ sdn_ip }}:{{ sdn_port }}/aggAttack"
+        body:
+          event:
+            src_mac: "{{ sender.mac }}"
+            dst_ip: "{% if ip_version|int == 4 %}{{ receiver.ip }}{% else %}{{ receiver.ipv6 }}{% endif %}"
+            dst_port: "{{ di_send_port }}"
+        headers:
+          Content-Type: "application/json"
+        method: DELETE
+        body_format: json
+        status_code: 201
+      when: call_ws|bool

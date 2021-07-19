@@ -13,6 +13,7 @@
 from logging import getLogger
 from trans_sec.controller.abstract_controller import AbstractController
 from trans_sec.controller.ddos_sdn_controller import AGG_CTRL_KEY
+from trans_sec.utils import tps_utils
 
 logger = getLogger('aggregate_controller')
 
@@ -38,9 +39,13 @@ class AggregateController(AbstractController):
     Implementation of the controller for a switch running the aggregate.p4
     program
     """
+
     def __init__(self, platform, p4_build_out, topo, log_dir, load_p4=True):
         super(self.__class__, self).__init__(
             platform, p4_build_out, topo, AGG_CTRL_KEY, log_dir, load_p4)
+
+        # Holds all of the attacks by the generated attack hash value
+        self.attack_dict = {}
 
     def instantiate_switch(self, sw_info):
         if 'arch' in sw_info and sw_info['arch'] == 'tna':
@@ -64,12 +69,46 @@ class AggregateController(AbstractController):
                         attack, agg_switch.device_id)
             agg_switch.add_attack(**attack)
 
+            logger.debug('Creating attack hash')
+            attack_hash = tps_utils.create_attack_hash(**attack)
+            logger.info('Storing attack [%s] with hash value [%s]',
+                        attack, attack_hash)
+
+            if attack_hash not in self.attack_dict:
+                self.attack_dict[attack_hash] = attack
+
     def remove_attacker(self, attack, host):
+        self.remove_agg_attacker(attack)
+
+    def remove_agg_attacker(self, attack):
+        logger.info('Requesting to remove attacker - [%s]', attack)
         agg_switch = self.__get_agg_switch()
+        this_attack = None
         if agg_switch:
-            agg_switch.stop_attack(**attack)
+            if 'dropKey' in attack:
+                drop_key = attack.get('dropKey')
+                if drop_key:
+                    drop_key_int = int(drop_key[:16], 16)
+                    if drop_key_int in self.attack_dict:
+                        this_attack = self.attack_dict.pop(drop_key_int)
+                        logger.debug(
+                            'Retrieved this_attack [%s] with key [%s]',
+                            this_attack, drop_key_int)
+                    else:
+                        logger.warning(
+                            'Cannot find attack key with hash - [%s]',
+                            drop_key_int)
+                        return
+                else:
+                    logger.warning('Drop key not on request JSON payload')
+            else:
+                this_attack = attack
+                logger.debug('this_attack is the attack [%s]', attack)
+
+            if this_attack:
+                agg_switch.stop_attack(**this_attack)
 
     def count_dropped_packets(self):
         agg_switch = self.__get_agg_switch()
         if agg_switch:
-            return agg_switch.get_drop_pkt_count()
+            return agg_switch.get_drop_pkt_counts()

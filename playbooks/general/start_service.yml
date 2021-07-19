@@ -27,6 +27,17 @@
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
 
   tasks:
+    - name: Show templates
+      debug:
+        var: templates
+
+    - name: Copy resources
+      template:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+      loop: "{{ templates }}"
+      when: templates is defined
+
     - name: Start service block when {{ start_srvc }} is true
       block:
       - name: Ensure {{ remote_scripts_dir }} scripts directory has been created

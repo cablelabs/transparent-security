@@ -1,5 +1,5 @@
 PyYaml
-scapy
+scapy==2.4.3
 requests
 urllib3
 psutil

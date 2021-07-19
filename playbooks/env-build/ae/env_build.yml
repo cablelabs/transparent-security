@@ -14,4 +14,4 @@
 # https://github.com/p4lang/tutorials/blob/master/vm/user-bootstrap.sh
 # Project and script derived in part from the script in the link above
 ---
-- import_playbook: ../../ae/ae_node_build.yml
+- import_playbook: ../../hcp/ae_node_build.yml

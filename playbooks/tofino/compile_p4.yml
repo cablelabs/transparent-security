@@ -34,4 +34,3 @@
           --std p4-16
 
     - include_tasks: compile_tasks.yml
-      loop: "{{ p4_progs }}"

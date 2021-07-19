@@ -70,8 +70,8 @@ hosts:
     id: 13
     ip: 192.168.1.14
     intf_name: core-tun1
-{% if ae_user is defined or host_user is defined %}
-    user: {{ ae_user | default(host_user) }}
+{% if host_user is defined %}
+    user: {{ host_user }}
 {% endif %}
     public_ip: {{ ae_ip }}
     tun1_ip: {{ ae_tun1_ip }}
@@ -85,6 +85,7 @@ hosts:
 switches:
   aggregate:
     name: aggregate
+    p4_prog: aggregate
     id: 0
     int_id: 123
     runtime_p4info: {{ remote_scripts_dir }}/p4/aggregate.tofino/p4info.pb.txt
@@ -114,6 +115,7 @@ switches:
         speed: BF_SPEED_10G
   core:
     name: core
+    p4_prog: core
     id: 0
     int_id: 234
     runtime_p4info: {{ remote_scripts_dir }}/p4/core.tofino/p4info.pb.txt

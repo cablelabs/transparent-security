@@ -40,7 +40,10 @@
     attack:
       url: "http://{{ sdn_ip }}:{{ sdn_port }}/aggAttack"
       body:
-        src_mac: "{{ sender.mac }}"
-        dst_ip: "{% if ip_version|int == 4 %}{{ receiver.ip }}{% else %}{{ receiver.ipv6 }}{% endif %}"
-        dst_port: "{{ send_port }}"
+        event:
+          src_mac: "{{ sender.mac }}"
+          dst_ip: "{% if ip_version|int == 4 %}{{ receiver.ip }}{% else %}{{ receiver.ipv6 }}{% endif %}"
+          dst_port: "{{ send_port }}"
+        headers:
+          Content-Type: "application/json"
       ok_status: 201

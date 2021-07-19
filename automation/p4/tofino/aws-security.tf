@@ -82,13 +82,27 @@ resource "aws_security_group" "tps" {
   }
 }
 
-resource "aws_security_group" "tps-internal" {
-  name = "tps-internal-${var.build_id}"
+resource "aws_security_group" "ae" {
+  name = "tps-ae-${var.build_id}"
+  ingress {
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 22
+    to_port = 22
+    protocol = "tcp"
+  }
+
+  ingress {
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 5000
+    to_port = 5010
+    protocol = "tcp"
+  }
+
   ingress {
     cidr_blocks = ["0.0.0.0/0"]
     from_port = 0
-    to_port = 0
-    protocol = "-1"
+    to_port = 65535
+    protocol = "udp"
   }
 
   egress {
@@ -99,31 +113,15 @@ resource "aws_security_group" "tps-internal" {
   }
 }
 
-resource "aws_security_group" "transparent-security-hcp-img-sg" {
-  name = "transparent-security-hcp-${var.scenario_name}-${var.build_id}"
+resource "aws_security_group" "tps-internal" {
+  name = "tps-internal-${var.build_id}"
   ingress {
     cidr_blocks = ["0.0.0.0/0"]
-    from_port = 22
-    to_port = 22
-    protocol = "tcp"
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
   }
 
-  ingress {
-    cidr_blocks = ["0.0.0.0/0"]
-    from_port = 5601
-    to_port = 5601
-    protocol = "tcp"
-  }
-
-  ingress {
-    cidr_blocks = ["0.0.0.0/0"]
-    from_port = 9200
-    to_port = 9200
-    protocol = "tcp"
-  }
-
-
-  // Terraform removes the default rule
   egress {
     from_port = 0
     to_port = 0

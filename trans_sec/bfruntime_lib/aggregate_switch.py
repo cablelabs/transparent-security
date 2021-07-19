@@ -182,22 +182,23 @@ class AggregateSwitch(BFRuntimeSwitch):
         self.delete_table_entry(data_fwd_tbl,
                                 [KeyTuple(data_fwd_tbl_key, value=dst_mac)])
 
-    def add_attack(self, **kwargs):
-        logger.info('Adding attack [%s]', kwargs)
-        action_name, dst_ipv4, dst_ipv6 = self.parse_attack(**kwargs)
+    def add_attack(self, **attack):
+        logger.info('Aggregate Switch adding attack [%s]', attack)
+        action_name, dst_ipv4, dst_ipv6 = self.parse_attack(**attack)
         self.insert_table_entry(data_drop_tbl,
                                 data_drop_action,
                                 [
                                     KeyTuple(data_drop_tbl_key_1,
-                                             kwargs['src_mac']),
+                                             attack['src_mac']),
                                     KeyTuple(data_drop_tbl_key_2, dst_ipv4),
                                     KeyTuple(data_drop_tbl_key_3, dst_ipv6),
                                     KeyTuple(data_drop_tbl_key_4,
-                                             int(kwargs['dst_port']))
+                                             int(attack['dst_port']))
                                 ], [])
+        logger.info('Added attack without error - [%s]', attack)
 
     def stop_attack(self, **kwargs):
-        logger.info('Adding attack [%s]', kwargs)
+        logger.info('Stopping attack [%s]', kwargs)
         action_name, dst_ipv4, dst_ipv6 = self.parse_attack(**kwargs)
         self.delete_table_entry(data_drop_tbl,
                                 [
@@ -209,7 +210,7 @@ class AggregateSwitch(BFRuntimeSwitch):
                                              int(kwargs['dst_port']))
                                 ])
 
-    def get_drop_pkt_count(self):
+    def get_drop_pkt_counts(self):
         logger.info('Requesting drop packets')
         drop_table_obj = self.get_table(data_drop_tbl)
         out_tuples = list()
@@ -217,9 +218,22 @@ class AggregateSwitch(BFRuntimeSwitch):
             try:
                 entries = drop_table_obj.entry_get(
                     self.target, [], flags={"from_hw": True})
-                for data, key in entries:
-                    out_tuples.append((self.__map_drop_tbl_keys(key.to_dict()),
-                                       data.to_dict()["$COUNTER_SPEC_PKTS"]))
+                logger.info("Drop entries class - [%s]", entries.__class__)
+                this_entry = next(entries)
+                while this_entry:
+                    data_dict = this_entry[0].to_dict()
+                    keys_dict = this_entry[1].to_dict()
+                    logger.info('Drop data - [%s]', data_dict)
+                    logger.info('Key data - [%s]', keys_dict)
+                    logger.info("Drop report for data - [%s]", data_dict)
+                    drop_count = data_dict["$COUNTER_SPEC_PKTS"]
+                    logger.info("Drop count - [%s]", drop_count)
+                    table_keys = self.__map_drop_tbl_keys(keys_dict)
+                    logger.info("Table keys - [%s]", table_keys)
+                    out_tuples.append((table_keys, drop_count))
+
+                    # Get next entry
+                    this_entry = next(entries)
             except Exception as e:
                 logger.info("Unable to access table entry info - [%s]", e)
 

@@ -54,6 +54,7 @@ hosts:
 switches:
   {{ p4_prog }}:
     name: {{ p4_prog }}
+    p4_prog: {{ p4_prog }}
     id: 0
     runtime_p4info: {{ remote_scripts_dir }}/p4/{{ p4_prog }}.tofino/p4info.pb.txt
     tofino_bin: {{ remote_scripts_dir }}/p4/{{ p4_prog }}.tofino/pipe/tofino.bin

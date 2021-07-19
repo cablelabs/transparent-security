@@ -11,12 +11,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
+# Copy TPS source from orchestrator to all switches
+- import_playbook: ../general/setup_source.yml
+  vars:
+    host_val: "{{ switches }}"
+    trans_sec_source_dir: "{{ orch_trans_sec_dir }}"
+    python_unit_tests: false
+    install_tps_python: false
+
 # Compile the proper P4 program on the switch
 - import_playbook: compile_p4.yml
   vars:
     host_val: "{{ switches }}"
-    p4_progs:
-      - "{{ p4_pkg }}"
 
 # Start tofino model chip emulator
 - import_playbook: ../general/start_service.yml
@@ -24,11 +30,11 @@
     host_val: "{{ switches }}"
     service_name: tps-tofino-model
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-    the_switch: "{{ topo_dict.switches[p4_pkg] }}"
+    the_switch: "{{ topo_dict.switches[switch_name] }}"
     tunnels: "{{ the_switch.tunnels }}"
     local_srvc_script_tmplt_file: "{{ trans_sec_dir }}/playbooks/general/templates/tofino_service.sh.j2"
     port_to_wait: "{{ tofino_model_port }}"
-    prog_name: "{{ p4_pkg }}"
+    prog_name: "{{ p4_prog }}"
     additional_tmplt_file: "{{ trans_sec_dir }}/playbooks/tofino/templates/tofino-model-veth-port-mapping.json.j2"
     additional_tmplt_out_file: "{{ remote_scripts_dir }}/port-mapping.json"
   when: not from_hw | bool
@@ -39,12 +45,12 @@
     host_val: "{{ switches }}"
     service_name: tps-tofino-switchd
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-    switch_arch: "{{ topo_dict.switches[p4_pkg].arch }}"
+    switch_arch: "{{ topo_dict.switches[switch_name].arch }}"
     tmplt_dir: "{{ trans_sec_dir }}/playbooks/tofino/templates"
     local_srvc_script_tmplt_file: ../tofino/templates/switchd_service.sh.j2
     port_to_wait: "{{ grpc_port }}"
     wait_timeout: 90
-    prog_name: "{{ p4_pkg }}"
+    prog_name: "{{ p4_prog }}"
     srvc_start_pause_time: 30
     log_file: "{{ log_dir }}/tofino-switchd.log"
     # TODO/FIXME - Fix the status of the service
@@ -56,7 +62,7 @@
     host_val: "{{ switches }}"
     service_name: tps-tofino-load-p4rt
     local_srvc_script_tmplt_file: "{{ trans_sec_dir }}/playbooks/general/templates/tofino_p4rt_service.sh.j2"
-    prog_name: "{{ p4_pkg }}"
+    prog_name: "{{ p4_prog }}"
     srvc_start_pause_time: 15
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
-    start_service: "{% if topo_dict.switches[p4_pkg].arch == 'v1model' %}True{% else %}False{% endif %}"
+    start_service: "{% if topo_dict.switches[switch_name].arch == 'v1model' %}True{% else %}False{% endif %}"

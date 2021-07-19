@@ -54,6 +54,8 @@
         body_format: "{{ attack.body_format | default('json') }}"
         body: "{{ attack.body }}"
         status_code: "{{ attack.ok_status | default('200') }}"
+        headers:
+          Content-Type: "application/json"
 
 # Sending UDP packets expect none to be received
 - import_playbook: ../test_cases/send_receive.yml
@@ -79,6 +81,8 @@
         body_format: "{{ attack.body_format | default('json') }}"
         body: "{{ attack.body }}"
         status_code: "{{ attack.ok_status | default('200') }}"
+        headers:
+          Content-Type: "application/json"
 
 # Sending UDP packets expect all to be received
 - import_playbook: ../test_cases/send_receive.yml

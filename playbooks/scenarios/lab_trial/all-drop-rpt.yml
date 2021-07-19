@@ -13,9 +13,6 @@
 # Simple scenario where packets are sent through 3 devices and only the last
 # one will be demonstrating dropped packets
 ---
-## Refresh lab_trial environment config
-- import_playbook: restart.yml
-
 # Data Drop scenarios for UDP and IPv4
 - import_playbook: drop-rpt.yml
   vars:

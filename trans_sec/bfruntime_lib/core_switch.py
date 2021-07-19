@@ -53,6 +53,7 @@ data_fwd_action_val = 'port'
 
 telem_rpt_tbl = 'TpsCoreEgress.setup_telemetry_rpt_t'
 telem_rpt_tbl_key = 'hdr.udp_int.dst_port'
+telem_rpt_src_ip = 'src_ip'
 telem_rpt_ae_ip = 'ae_ip'
 telem_rpt_ae_mac = 'ae_mac'
 telem_rpt_action_1 = 'setup_telem_rpt_ipv4'
@@ -212,22 +213,29 @@ class CoreSwitch(BFRuntimeSwitch):
                     logger.debug("Unable to access table entry info - [%s]", e)
         return ae_ip
 
-    def setup_telemetry_rpt(self, ae_ip, ae_mac, port):
+    def setup_telemetry_rpt(self, switch_src_ip, ae_ip, ae_mac, port):
         logger.info(
             'Setting up telemetry report on core device [%s] with '
-            'AE IP - [%s]', self.device_id, ae_ip)
-        ip_addr = ipaddress.ip_address(ae_ip)
-        logger.debug('ip_addr object - [%s]', ip_addr)
+            'Switch Source IP - [%s], AE IP - [%s]',
+            self.device_id, switch_src_ip, ae_ip)
+        switch_src_ip_addr = ipaddress.ip_address(switch_src_ip)
+        ae_ip_addr = ipaddress.ip_address(ae_ip)
+        logger.debug('ae_ip_addr object - [%s]', ae_ip_addr)
+        logger.debug('switch_src_ip_addr object - [%s]', switch_src_ip_addr)
         action_name = 'TpsCoreEgress.setup_telem_rpt_ipv{}'.format(
-            ip_addr.version)
+            ae_ip_addr.version)
         try:
             self.insert_table_entry(
                 telem_rpt_tbl,
                 action_name,
                 [KeyTuple(telem_rpt_tbl_key, value=int(port))],
                 [
-                    DataTuple(telem_rpt_ae_ip, val=bytearray(ip_addr.packed)),
-                    DataTuple(telem_rpt_ae_mac, val=ae_mac),
+                    DataTuple(telem_rpt_src_ip,
+                              val=bytearray(switch_src_ip_addr.packed)),
+                    DataTuple(telem_rpt_ae_ip,
+                              val=bytearray(ae_ip_addr.packed)),
+                    DataTuple(telem_rpt_ae_mac,
+                              val=ae_mac),
                  ])
         except Exception as e:
             if 'ALREADY_EXISTS' in str(e):

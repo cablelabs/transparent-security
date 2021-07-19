@@ -22,6 +22,8 @@ all:
 {% for name, switch in topo_dict.switches.items() %}
         {{ name }}:
           ansible_connection: ssh
+          switch_name: {{ switch.name }}
+          p4_prog: {{ switch.p4_prog }}
 {% if switch.user is defined %}
           ansible_user: {{ switch.user }}
           trans_sec_dir: /home/{{ switch.user | default('ubuntu') }}/transparent-security

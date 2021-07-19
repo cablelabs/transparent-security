@@ -146,7 +146,7 @@ class DdosSdnController:
             var_opt_bsmd=consts.DRPT_BS_MD,
             timestamp=int(time.time()),
             drop_count=rpt_count,
-            drop_tbl_keys=attack_key)
+            drop_hash=attack_key)
         drop_pkt = drop_pkt / UDP(dport=consts.UDP_DRPT_DST_PORT,
                                   sport=consts.UDP_DRPT_SRC_PORT,
                                   len=udp_len)
@@ -253,8 +253,8 @@ class DdosSdnController:
             gw_controller.add_attacker(attack, host)
         except Exception as e:
             logger.error(
-                'Error adding attacker to host - [%s] with error - [%s])',
-                host, e)
+                'Error adding gateway attacker to host - [%s] '
+                'with error - [%s])', host, e)
             raise e
 
     def remove_agg_attacker(self, attack):
@@ -263,10 +263,11 @@ class DdosSdnController:
         :param attack: dict of attack
         """
         agg_controller = self.get_agg_controller()
-        logger.info('Removing attack from aggregate')
+        logger.info(
+            'Removing attack from aggregate with attack - [%s]', attack)
         if agg_controller:
             try:
-                agg_controller.remove_attacker(attack, None)
+                agg_controller.remove_agg_attacker(attack)
             except Exception as e:
                 logger.error('Error removing attacker with error - [%s])', e)
         else:
@@ -283,7 +284,8 @@ class DdosSdnController:
             try:
                 agg_controller.add_attacker(attack, None)
             except Exception as e:
-                logger.error('Error adding attacker with error - [%s])', e)
+                logger.error(
+                    'Error adding aggregate attacker with error - [%s])', e)
         else:
             logger.warning('Aggregate controller cannot add attack')
 

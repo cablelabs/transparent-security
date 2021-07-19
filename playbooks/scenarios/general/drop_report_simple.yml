@@ -23,9 +23,12 @@
         method: POST
         body_format: "{{ attack.body_format | default('json') }}"
         body:
-          src_mac: "{{ sender.mac }}"
-          dst_ip: "{% if ip_version | int == 4 %}{{ receiver.ip }}{% else %}{{ receiver.ipv6 }}{% endif %}"
-          dst_port: "{{ item | int }}"
+          event:
+            src_mac: "{{ sender.mac }}"
+            dst_ip: "{% if ip_version | int == 4 %}{{ receiver.ip }}{% else %}{{ receiver.ipv6 }}{% endif %}"
+            dst_port: "{{ item | int }}"
+        headers:
+          Content-Type: "application/json"
         status_code: 201
       with_items: "{{ send_ports }}"
 
@@ -102,8 +105,11 @@
         method: DELETE
         body_format: "{{ attack.body_format | default('json') }}"
         body:
-          src_mac: "{{ sender.mac }}"
-          dst_ip: "{% if ip_version|int == 4 %}{{ receiver.ip }}{% else %}{{ receiver.ipv6 }}{% endif %}"
-          dst_port: "{{ item }}"
+          event:
+            src_mac: "{{ sender.mac }}"
+            dst_ip: "{% if ip_version|int == 4 %}{{ receiver.ip }}{% else %}{{ receiver.ipv6 }}{% endif %}"
+            dst_port: "{{ item }}"
+        headers:
+          Content-Type: "application/json"
         status_code: 201
       with_items: "{{ send_ports }}"
