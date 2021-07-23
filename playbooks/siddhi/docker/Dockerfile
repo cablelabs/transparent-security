@@ -10,9 +10,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-# https://github.com/p4lang/tutorials/blob/master/vm/user-bootstrap.sh
-# Project and script derived in part from the script in the link above
----
-#- import_playbook: ../../siddhi/setup_siddhi_maven.yml
-- import_playbook: ../../siddhi/setup_siddhi_minikube.yml
+
+FROM siddhiio/siddhi-runner-alpine:5.1.2
+ARG classpath_lib=.
+COPY $classpath_lib/lib/* /home/siddhi_user/siddhi-runner/lib/
