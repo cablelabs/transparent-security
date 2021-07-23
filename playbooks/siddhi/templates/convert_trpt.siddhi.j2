@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-@app:name('UDP-Source-TRPT')
+@App:name('UDPSourceTRPT')
 @source(type='udp', listen.port='{{ telem_rpt_port }}', @map(type='p4-trpt',
         @attributes(in_type='telemRptHdr.inType', full_json='jsonString')))
 define stream trptUdpStream (in_type int, full_json object);

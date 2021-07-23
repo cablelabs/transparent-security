@@ -10,9 +10,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-# https://github.com/p4lang/tutorials/blob/master/vm/user-bootstrap.sh
-# Project and script derived in part from the script in the link above
+
+# Playbook that is responsible for putting together an AWS image for running
+# Siddhi with the new "udp" source & P4 Telemetry report mapping extensions
+# running in Kubernetes
 ---
-#- import_playbook: ../../siddhi/setup_siddhi_maven.yml
-- import_playbook: ../../siddhi/setup_siddhi_minikube.yml
+- import_playbook: ../general/setup_siddhi_operator.yml
+- import_playbook: ../general/final_env_setup.yml

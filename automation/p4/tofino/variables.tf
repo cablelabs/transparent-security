@@ -36,7 +36,10 @@ variable "tofino" {
   }
 }
 
-variable "siddhi_ae_ami" {default = "ami-00876f36fe8f97733"}
+// This is for a Kubernetes Siddhi environment
+variable "siddhi_ae_ami" {default = "ami-0c6deef5ada5dd434"}
+// This is a good Maven Siddhi environment
+//variable "siddhi_ae_ami" {default = "ami-00876f36fe8f97733"}
 
 variable "switch_instance_type" {default = "t2.2xlarge"}
 variable "ae_instance_type" {default = "t2.2xlarge"}

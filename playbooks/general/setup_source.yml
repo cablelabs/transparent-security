@@ -20,48 +20,51 @@
     dest_dir: "/home/{{ ansible_user }}/transparent-security"
     run_tests: "{{ python_unit_tests | default(false) }}"
     install_python: "{{ install_tps_python | default(true) }}"
+    install_tps_dependencies: "{{ install_dependencies | default(true) }}"
 
   tasks:
-    - name: Install apt dependencies
-      apt:
-        update_cache: yes
-        name:
-          - python3-pip
-          - arping
-          - iperf3
-      register: apt_rc
-      retries: 3
-      delay: 10
-      until: apt_rc is not failed
-      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+    - block:
+      - name: Install apt dependencies
+        apt:
+          update_cache: yes
+          name:
+            - python3-pip
+            - arping
+            - iperf3
+        register: apt_rc
+        retries: 3
+        delay: 10
+        until: apt_rc is not failed
+        when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
-    - name: Install yum dependencies
-      yum:
-        update_cache: yes
-        name:
-          - python3-pip
-          - python3-devel
-          - gcc-c++
-          - tcpdump
-          - net-tools
-          - iputils
-          - iperf3
-      register: apt_rc
-      retries: 3
-      delay: 10
-      until: apt_rc is not failed
-      when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+      - name: Install yum dependencies
+        yum:
+          update_cache: yes
+          name:
+            - python3-pip
+            - python3-devel
+            - gcc-c++
+            - tcpdump
+            - net-tools
+            - iputils
+            - iperf3
+        register: apt_rc
+        retries: 3
+        delay: 10
+        until: apt_rc is not failed
+        when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
 
-    - name: Downgrade pip3 scapy version to 2.4.3 due to 2.4.4 bug when running receive_packets.py on centos
-      pip:
-        name:
-          - scapy==2.4.3
-        executable: pip3
-      register: pip_rc
-      retries: 3
-      delay: 10
-      until: pip_rc is not failed
-      when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+      - name: Downgrade pip3 scapy version to 2.4.3 due to 2.4.4 bug when running receive_packets.py on centos
+        pip:
+          name:
+            - scapy==2.4.3
+          executable: pip3
+        register: pip_rc
+        retries: 3
+        delay: 10
+        until: pip_rc is not failed
+        when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+      when: install_tps_dependencies | bool
 
     - name: Copy local transparent-security source
       become: no
