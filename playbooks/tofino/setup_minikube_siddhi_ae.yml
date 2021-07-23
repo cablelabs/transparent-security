@@ -1,0 +1,72 @@
+# Copyright (c) 2021 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+- hosts: "{{ host_val | default('all') }}"
+  gather_facts: no
+  tasks:
+    - name: Create Service File to /etc/systemd/system/tps-tofino-ae.service
+      become: yes
+      template:
+        src: ../siddhi/templates/minikube_service.service.j2
+        dest: /etc/systemd/system/tps-tofino-ae.service
+
+    - name: Start tps-tofino-ae.service
+      become: yes
+      systemd:
+        name: tps-tofino-ae.service
+        state: restarted
+        enabled: yes
+      register: minkube_start_rc
+      retries: 3
+      delay: 5
+      until: minkube_start_rc is not failed
+
+    - name: Wait for tps-tofino-ae service to be completely up...
+      command: kubectl get po
+      register: kube_pods_out
+      retries: 10
+      delay: 5
+      until: kube_pods_out.stdout.find("Running") != -1
+
+    - name: Show pods
+      debug:
+        var: kube_pods_out.stdout_lines
+
+    - name: Install siddhi K8s operator
+      command: "kubectl apply -f {{ item }}"
+      loop:
+        - "{{ trans_sec_dir }}/playbooks/siddhi/kubernetes/kafka.yaml"
+        - "{{ trans_sec_dir }}/playbooks/siddhi/kubernetes/trpt-to-kafka.yaml"
+        - "{{ trans_sec_dir }}/playbooks/siddhi/kubernetes/kafka-trpt-ddos-detection.yaml"
+        - "{{ trans_sec_dir }}/playbooks/siddhi/kubernetes/kafka-trpt-drop-clear.yaml"
+
+    # TODO - Improve validation by for all containing "Running"
+    - name: Wait for K8s pods to come up...
+      command: kubectl get po
+      register: kube_pods_out
+      retries: 10
+      delay: 10
+      until: kube_pods_out.stdout.find("Running") != -1 and
+             kube_pods_out.stdout.find("Creating") == -1 and
+             kube_pods_out.stdout_lines | length >= 9
+
+    - name: Show pods
+      debug:
+        var: kube_pods_out.stdout_lines
+
+    - name: Stop tps-tofino-ae.service
+      become: yes
+      systemd:
+        name: tps-tofino-ae.service
+        state: stopped

@@ -18,8 +18,8 @@
 # ctrl-C will gracefully exit.
 #  mvn exec:java -Dexec.mainClass=io.siddhi.extension.map.p4.StartSiddhiRuntime "-Dexec.args=/home/ubuntu/siddhi-map-p4-trpt/docs/siddhi/examples/convert_trpt.siddhi /home/ubuntu/siddhi-map-p4-trpt/docs/siddhi/examples/simple_ddos_detection.siddhi" -f pom.xml
 ---
-- import_playbook: setup_jdk.yml
-- import_playbook: setup_kafka.yml
+- import_playbook: ../general/setup_jdk.yml
+- import_playbook: ../general/setup_kafka.yml
 - import_playbook: setup_siddhi_p4.yml
 - import_playbook: ../general/setup_source.yml
 - import_playbook: ../general/final_env_setup.yml
