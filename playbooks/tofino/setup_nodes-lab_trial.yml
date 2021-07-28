@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+---
 # Copy TPS source from orchestrator to all hosts
 - import_playbook: ../general/setup_source.yml
   vars:
