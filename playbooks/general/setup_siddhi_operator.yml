@@ -28,11 +28,31 @@
     - name: Install siddhi K8s operator
       command: "kubectl apply -f {{ item }}"
       loop:
-        - https://raw.githubusercontent.com/siddhi-io/siddhi-operator/master/deploy/siddhi_v1alpha2_siddhiprocess_crd.yaml
-        - https://raw.githubusercontent.com/siddhi-io/siddhi-operator/master/deploy/service_account.yaml
-        - https://raw.githubusercontent.com/siddhi-io/siddhi-operator/master/deploy/role.yaml
-        - https://raw.githubusercontent.com/siddhi-io/siddhi-operator/master/deploy/role_binding.yaml
-        - https://raw.githubusercontent.com/siddhi-io/siddhi-operator/master/deploy/operator.yaml
+        - https://github.com/siddhi-io/siddhi-operator/releases/download/v0.2.2/00-prereqs.yaml
+        - https://github.com/siddhi-io/siddhi-operator/releases/download/v0.2.2/01-siddhi-operator.yaml
+
+    - name: Enable minikube ingress addon
+      command: sudo -u $USER /usr/bin/minikube addons enable ingress
+      register: ing_out
+      async: 60
+      retries: 2
+      delay: 5
+      until: ing_out is not failed
+
+    - name: Get minikube ip
+      command: sudo -u $USER /usr/bin/minikube ip
+      register: ip_out
+      retries: 2
+      delay: 5
+      until: ip_out is not failed
+
+    - name: minikube IP
+      debug:
+        var: ip_out
+
+    - name: Setup minikube/siddhi IP into /etc/hosts
+      become: yes
+      shell: "echo ' {{ ip_out.stdout_lines[0] }} siddhi' >> /etc/hosts"
 
     - name: Check siddhi-operator is Running
       command: kubectl get po
