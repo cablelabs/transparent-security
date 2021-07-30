@@ -18,18 +18,12 @@
   gather_facts: no
   tasks:
     - name: Start minikube to install siddhi-operator
-      shell: sudo -u $USER /usr/bin/minikube start
+      shell: sudo -u $USER /usr/bin/minikube start --memory=4096
       register: minkube_start_rc
       async: 180
       retries: 2
       delay: 5
       until: minkube_start_rc is not failed
-
-    - name: Install siddhi K8s operator
-      command: "kubectl apply -f {{ item }}"
-      loop:
-        - https://github.com/siddhi-io/siddhi-operator/releases/download/v0.2.2/00-prereqs.yaml
-        - https://github.com/siddhi-io/siddhi-operator/releases/download/v0.2.2/01-siddhi-operator.yaml
 
     - name: Enable minikube ingress addon
       command: sudo -u $USER /usr/bin/minikube addons enable ingress
@@ -38,6 +32,22 @@
       retries: 2
       delay: 5
       until: ing_out is not failed
+
+    - name: Create K8s namespace "kafka"
+      command: kubectl create namespace kafka
+
+    - name: Create Strimzi Kafka ClusterRoles, ClusterRoleBindings & other CRDs
+      command: kubectl create -f 'https://strimzi.io/install/latest?namespace=kafka' -n kafka
+
+    - name: Install Siddhi K8s and Strimzi Kafka operator (see https://strimzi.io/quickstarts/)
+      command: "kubectl apply -f {{ item }}"
+      loop:
+        - https://github.com/siddhi-io/siddhi-operator/releases/download/v0.2.2/00-prereqs.yaml
+        - https://github.com/siddhi-io/siddhi-operator/releases/download/v0.2.2/01-siddhi-operator.yaml
+        - https://strimzi.io/examples/latest/kafka/kafka-persistent-single.yaml -n kafka
+
+    - name: Wait for Strimzi Kafka operator
+      command: kubectl wait kafka/my-cluster --for=condition=Ready --timeout=300s -n kafka
 
     - name: Get minikube ip
       command: sudo -u $USER /usr/bin/minikube ip

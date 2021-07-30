@@ -40,7 +40,7 @@
       command: snap install kubectl --classic
 
     - name: Start minikube to ensure it will work
-      shell: sudo -u $USER /usr/bin/minikube start
+      shell: sudo -u $USER /usr/bin/minikube start --memory=4096
       register: minkube_start_rc
       async: 180
       retries: 2
