@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+---
 apiVersion: siddhi.io/v1alpha2
 kind: SiddhiProcess
 metadata:
@@ -63,3 +64,21 @@ spec:
   container:
     image: "spisarski/siddhi"
     imagePullPolicy: Always
+
+  persistentVolumeClaim:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 1Gi
+    storageClassName: standard
+    volumeMode: Filesystem
+
+  runner: |
+    state.persistence:
+      enabled: true
+      intervalInMin: 5
+      revisionsToKeep: 2
+      persistenceStore: io.siddhi.distribution.core.persistence.FileSystemPersistenceStore
+      config:
+        location: siddhi-app-persistence
