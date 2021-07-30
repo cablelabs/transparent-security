@@ -1,0 +1,36 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-networking
+spec:
+  selector:
+    matchLabels:
+      app: test-networking
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: test-networking
+    spec:
+      containers:
+      - name: ubuntu-test
+        image: praqma/network-multitool
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-networking-service
+  annotations:
+    networking.gke.io/load-balancer-type: "Internal"
+  labels:
+    app: test-networking
+spec:
+  type: LoadBalancer
+  selector:
+    app: test-networking
+  ports:
+  - port: 556
+    targetPort: 556
+    protocol: UDP

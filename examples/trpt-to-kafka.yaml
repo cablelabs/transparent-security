@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+---
 apiVersion: siddhi.io/v1alpha2
 kind: SiddhiProcess
 metadata:
@@ -35,7 +36,7 @@ spec:
         @sink(
           type="kafka",
           topic="trptPacket",
-          bootstrap.servers="kafka-service:9092",
+          bootstrap.servers="10.110.95.121:9092",
           is.binary.message = "false",
           @map(type="text")
         )
@@ -44,7 +45,7 @@ spec:
         @sink(
           type="kafka",
           topic="trptDrop",
-          bootstrap.servers="kafka-service:9092",
+          bootstrap.servers="10.110.95.121:9092",
           is.binary.message = "false",
           @map(type="text")
         )
@@ -63,3 +64,23 @@ spec:
   container:
     image: "spisarski/siddhi"
     imagePullPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trpt-to-kafka-0
+spec:
+  type: LoadBalancer
+  clusterIP: 10.96.100.2
+  externalIPs:
+    - 192.168.86.181
+  selector:
+      siddhi.io/instance: trpt-to-kafka-0
+      siddhi.io/name: SiddhiProcess
+      siddhi.io/part-of: siddhi-operator
+      siddhi.io/version: 0.2.2
+  ports:
+    - port: 556
+      targetPort: 556
+      protocol: UDP
