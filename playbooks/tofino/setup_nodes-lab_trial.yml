@@ -24,6 +24,7 @@
 - import_playbook: setup_minikube_siddhi_ae.yml
   vars:
     host_val: ae
+    clone_tun_name: core-tun1
 
 # Create virtual interfaces on switches
 - import_playbook: setup_virt_eth.yml
@@ -51,3 +52,4 @@
     port_to_wait: "{{ sdn_port }}"
     wait_timeout: 60
     load_p4: False
+

@@ -27,11 +27,11 @@
 # Data Drop scenarios
 - import_playbook: all-data-drop.yml
 
+# Switches now operational - Run Packet Flood scenarios to test the AE
+- import_playbook: all-pkt-flood.yml
+
 # Drop Reporting scenarios
 - import_playbook: all-drop-rpt.yml
 
 # Packet Performance tests
 - import_playbook: iperf.yml
-
-# Switches now operational - Run Packet Flood scenarios to test the AE
-- import_playbook: all-pkt-flood.yml
