@@ -1,0 +1,14 @@
+[Unit]
+Description=Minikube service for TPS AE
+Wants=minikube.service
+Requisite={{ minikube_srvc }}
+After={{ minikube_srvc }}
+PartOf={{ minikube_srvc }}
+
+[Service]
+User=ubuntu
+#Group=docker
+ExecStart=/usr/bin/minikube tunnel
+ExecStop=/usr/bin/systemctl stop minikube.service
+[Install]
+WantedBy=multi-user.target

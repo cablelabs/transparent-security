@@ -15,11 +15,7 @@ FROM siddhiio/siddhi-runner-alpine:5.1.2
 
 RUN apk --update add net-tools tcpdump sudo
 RUN apk update && apk add ca-certificates && rm -rf /var/cache/apk/*
-#RUN set -ex && apk --no-cache add sudo
-
-#SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-#RUN addgroup siddhi_user sudo
-RUN echo 'siddhi_user:siddhi_user' | chpasswd
+RUN echo 'siddhi_user:siddhi' | chpasswd
 RUN echo '%wheel ALL=(ALL) ALL' > /etc/sudoers.d/wheel
 RUN adduser siddhi_user wheel
 

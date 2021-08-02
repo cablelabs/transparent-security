@@ -16,16 +16,33 @@
 # Start AE service
 - hosts: ae
   gather_facts: no
-  become: yes
   tasks:
     - name: Start tps-tofino-ae service
+      become: yes
       systemd:
         name: tps-tofino-ae
-        state: restarted
+        state: started
 
-    - name: Wait 10 seconds for tps-tofino-ae to fully start
-      pause:
-        seconds: 10
+    - name: Wait for K8s deployment/trpt-to-kafka-0 to become available
+      command: kubectl wait --for=condition=available --timeout=600s deployment/trpt-to-kafka-0 -n default
+      register: trpt_to_kafka_check
+      retries: 10
+      delay: 20
+      until: trpt_to_kafka_check is not failed
+
+    - name: Wait for K8s deployment/kafka-trpt-ddos-detect-0 to become available
+      command: kubectl wait --for=condition=available --timeout=600s deployment/kafka-trpt-ddos-detect-0 -n default
+      register: ddos_check
+      retries: 5
+      delay: 10
+      until: ddos_check is not failed
+
+    - name: Wait for K8s deployment/kafka-trpt-drop-clear-0 to become available
+      command: kubectl wait --for=condition=available --timeout=600s deployment/kafka-trpt-drop-clear-0 -n default
+      register: drop_check
+      retries: 5
+      delay: 10
+      until: drop_check is not failed
 
 # Packet Flood scenarios for UDP and IPv4
 - import_playbook: pkt-flood.yml

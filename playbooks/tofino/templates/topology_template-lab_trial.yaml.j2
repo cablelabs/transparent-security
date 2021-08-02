@@ -73,7 +73,8 @@ hosts:
 {% if host_user is defined %}
     user: {{ host_user }}
 {% endif %}
-    public_ip: {{ ae_ip }}
+    public_ip: {{ ae_mgmt_ip }}
+    streaming_ip: {{ ae_ip }}
     tun1_ip: {{ ae_tun1_ip }}
     tun1_mac: {{ ae_tun1_mac }}
     tunnels:
