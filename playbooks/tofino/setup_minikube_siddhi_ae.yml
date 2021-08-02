@@ -15,13 +15,23 @@
 - hosts: "{{ host_val | default('all') }}"
   gather_facts: no
   tasks:
-    - name: Create Service File to /etc/systemd/system/tps-tofino-ae.service
+    - name: Create Service File to /etc/systemd/system/minikube.service
       become: yes
       template:
         src: ../siddhi/templates/minikube_service.service.j2
-        dest: /etc/systemd/system/tps-tofino-ae.service
+        dest: /etc/systemd/system/minikube.service
+      vars:
+        part_of_srvc: tps-tofino-ae.service
 
-    - name: Start tps-tofino-ae.service
+    - name: Create Service File to /etc/systemd/system/tps-tofino-ae.service
+      become: yes
+      template:
+        src: ../siddhi/templates/minikube_lb.service.j2
+        dest: /etc/systemd/system/tps-tofino-ae.service
+      vars:
+        minikube_srvc: minikube.service
+
+    - name: Start TPS AE
       become: yes
       systemd:
         name: tps-tofino-ae.service
@@ -43,27 +53,79 @@
       debug:
         var: kube_pods_out.stdout_lines
 
-    - name: Install siddhi K8s operator
-      command: "kubectl apply -f {{ item }}"
-      loop:
-        - "{{ trans_sec_dir }}/playbooks/siddhi/kubernetes/kafka.yaml"
-        - "{{ trans_sec_dir }}/playbooks/siddhi/kubernetes/trpt-to-kafka.yaml"
-        - "{{ trans_sec_dir }}/playbooks/siddhi/kubernetes/kafka-trpt-ddos-detection.yaml"
-        - "{{ trans_sec_dir }}/playbooks/siddhi/kubernetes/kafka-trpt-drop-clear.yaml"
+    - name: Ensure {{ remote_scripts_dir }} scripts directory has been created
+      become: yes
+      file:
+        path: "{{ remote_scripts_dir }}"
+        state: directory
 
-    # TODO - Improve validation by for all containing "Running"
-    - name: Wait for K8s pods to come up...
-      command: kubectl get po
-      register: kube_pods_out
+    - name: Query the Kafka Service clusterIP
+      command: kubectl get svc -n kafka my-cluster-kafka-bootstrap -o jsonpath="{.spec.clusterIPs[0]}"
+      register: cluster_ip_out
+
+    - name: Define the K8s CRDs
+      set_fact:
+        the_crds:
+          - "kafka-trpt-ddos-detection.yaml"
+          - "kafka-trpt-drop-clear.yaml"
+          - "trpt-to-kafka.yaml"
+        kafka_svc_ip: "{{ cluster_ip_out.stdout_lines[0] }}"
+
+    - debug:
+        var: the_crds
+
+    - name: Applying J2 templates of the siddhi K8s CRDs to {{ remote_scripts_dir }} with Kafka service IP - {{ kafka_svc_ip }}
+      become: yes
+      template:
+        src: "{{ trans_sec_dir }}/playbooks/siddhi/kubernetes/templates/{{ item }}.j2"
+        dest: "{{ remote_scripts_dir }}/{{ item }}"
+      loop: "{{ the_crds }}"
+
+    - name: Install siddhi K8s SiddhiProcess
+      command: "kubectl apply -f {{ remote_scripts_dir }}/{{ item }}"
+      loop: "{{ the_crds }}"
+
+    - name: Wait for K8s deployment/trpt-to-kafka-0 to become available
+      command: kubectl wait --for=condition=available --timeout=600s deployment/trpt-to-kafka-0 -n default
+      register: trpt_to_kafka_check
       retries: 10
+      delay: 20
+      until: trpt_to_kafka_check is not failed
+
+    - name: Wait for K8s deployment/kafka-trpt-ddos-detect-0 to become available
+      command: kubectl wait --for=condition=available --timeout=600s deployment/kafka-trpt-ddos-detect-0 -n default
+      register: ddos_check
+      retries: 5
       delay: 10
-      until: kube_pods_out.stdout.find("Running") != -1 and
-             kube_pods_out.stdout.find("Creating") == -1 and
-             kube_pods_out.stdout_lines | length >= 9
+      until: ddos_check is not failed
+
+    - name: Wait for K8s deployment/kafka-trpt-drop-clear-0 to become available
+      command: kubectl wait --for=condition=available --timeout=600s deployment/kafka-trpt-drop-clear-0 -n default
+      register: drop_check
+      retries: 5
+      delay: 10
+      until: drop_check is not failed
+
+    - name: Get pods in default namespace
+      command: kubectl get pods -n default
+      register: kube_pods_out
 
     - name: Show pods
       debug:
         var: kube_pods_out.stdout_lines
+
+    # TODO - Find a better means to obtain this bridge as things may break as soon as another interface prefaced with "br-" is created
+    - name: Query for the docker/K8s bridge
+      shell: "ip -o link show | awk -F': ' '{print $2}'| grep br-"
+      register: bridge_name_out
+
+    - name: Store the CRDs
+      set_fact:
+        docker_bridge_name: "{{ bridge_name_out.stdout_lines[0] }}"
+
+    # TODO - Reconsider this approach which was hacked in place as TRPTs aren't getting routed into the pod
+    - name: Forward all {{ clone_tun_name }} packets to the Docker/K8s service bridge {{ docker_bridge_name }}
+      command: "sudo iptables -A FORWARD -i {{ clone_tun_name }} -o {{ docker_bridge_name }} -j ACCEPT"
 
     - name: Stop tps-tofino-ae.service
       become: yes
