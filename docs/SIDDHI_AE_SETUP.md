@@ -1,9 +1,8 @@
 # TPS Siddhi AE
 
-The Transparent Security .
-
-1. Open source python program Espcap for live data capture. ( https://github.com/vichargrave/espcap )
-2. Open source distribution of ElasticSearch. ( https://opendistro.github.io/for-elasticsearch-docs/ )
+The Transparent Security TPS AE is currently being run as a simple Java main
+program within our "lab_trial" scenario tests. This program's only responsibility
+is to start a Siddhi runtime and load Siddhi scripts.
 
 ## Host Software Requirements
 1. Java 8+
