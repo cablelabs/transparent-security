@@ -1,6 +1,9 @@
-# Analytics Guide
+# snaps-hcp Analytics Guide
 
-The transparent security analytics module uses the following components for data capture and data analysis.
+(deprecated)
+The files contained within these directories are requried for setting up the
+SNAPS Hortonworks analytics platform (aka. snap-hcp) which has been replaced
+by a Siddhi engine and scripts (see docs/SIDDHI_AE_SETUP.md).
 
 1. Open source python program Espcap for live data capture. ( https://github.com/vichargrave/espcap )
 2. Open source distribution of ElasticSearch. ( https://opendistro.github.io/for-elasticsearch-docs/ )

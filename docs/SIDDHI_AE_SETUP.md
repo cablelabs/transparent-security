@@ -1,0 +1,37 @@
+# TPS Siddhi AE
+
+The Transparent Security .
+
+1. Open source python program Espcap for live data capture. ( https://github.com/vichargrave/espcap )
+2. Open source distribution of ElasticSearch. ( https://opendistro.github.io/for-elasticsearch-docs/ )
+
+## Host Software Requirements
+1. Java 8+
+1. git
+1. maven
+1. kafka
+
+## Setup and run 
+There are several things that must be done to the host prior to attempting to start
+the Siddhi TPS AE running as a standalone Java application
+
+- Install Java 8+ (CI is running OpenJDK 11.0.11)
+- Install Git client (apt install git)
+- Install Maven client (apt install maven)
+- Install and start Kafka to port 9092 (see https://www.digitalocean.com/community/tutorials/how-to-install-apache-kafka-on-ubuntu-20-04)
+- Clone the following Git project: https://github.com/cablelabs/siddhi-map-p4-trpt.git
+- Open shell to the cloned directory (e.g. cd ~/siddhi-map-p4-trpt)
+- Execute
+```bash
+mvn exec:java -Dexec.mainClass=io.siddhi.extension.map.p4.StartSiddhiRuntime \
+-Dexec.args="/etc/transparent-security/convert_trpt.siddhi \
+/etc/transparent-security/simple_ddos_detection.siddhi \
+/etc/transparent-security/simple_ddos_clear.siddhi \
+" -f pom.xml
+```
+
+## Making changes
+The StartSiddhiRuntime Java main() simply starts a Siddhi Runtime then takes
+the file contents of each of the arguments and loads them into the engine.
+Therefore, changes can be made to any or all of the siddhi files and/or other
+Siddhi scripts can be added/deleted.
