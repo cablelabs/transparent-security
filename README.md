@@ -31,3 +31,14 @@ We use an [Apache 2.0 License](LICENSE) for Transparent Security.
 
 Questions? Just send us an email at
 [transparent-security@cablelabs.com](mailto:transparent-security@cablelabs.com) or [open an issue](https://github.com/cablelabs/transparent-security/issues).
+
+## The directories
+- automation - contains Terraform scripts for CI and testing on AWS
+- bin - miscellaneous scripts mostly used by scripts in automation
+- conf - miscellaneous environment configurations
+- docs - miscellaneous MD files
+- p4 - The P4 source code
+- playbooks - The Ansible Playbooks used by automation
+- snaps-hcp - Documentation on snaps-hcp which is no longer being used
+- tests - the Python unit test directory
+- trans_sec - the project's top-level Python package
