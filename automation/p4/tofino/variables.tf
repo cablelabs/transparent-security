@@ -36,7 +36,10 @@ variable "tofino" {
   }
 }
 
-variable "siddhi_ae_ami" {default = "ami-00876f36fe8f97733"}
+variable "siddhi_ae_ami" {default = "ami-08ec1da30d3413105"}
+//variable "siddhi_ae_ami" {default = "ami-0e7d14e85b77459c4"}
+//variable "siddhi_ae_ami" {default = "ami-06ea3285e31e16516"}
+//variable "siddhi_ae_ami" {default = "ami-00876f36fe8f97733"}
 
 variable "switch_instance_type" {default = "t2.2xlarge"}
 variable "ae_instance_type" {default = "t2.2xlarge"}
