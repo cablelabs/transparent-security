@@ -39,6 +39,5 @@ Questions? Just send us an email at
 - docs - miscellaneous MD files
 - p4 - The P4 source code
 - playbooks - The Ansible Playbooks used by automation
-- snaps-hcp - Documentation on snaps-hcp which is no longer being used
 - tests - the Python unit test directory
 - trans_sec - the project's top-level Python package
