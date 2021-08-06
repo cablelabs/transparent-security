@@ -11,14 +11,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from logging import getLogger
+from trans_sec.bfruntime_lib.aggregate_switch import (
+        AggregateSwitch as BFRTSwitch)
 from trans_sec.controller.abstract_controller import AbstractController
 from trans_sec.controller.ddos_sdn_controller import AGG_CTRL_KEY
 from trans_sec.utils import tps_utils
 
 logger = getLogger('aggregate_controller')
-
-from trans_sec.bfruntime_lib.aggregate_switch import (
-        AggregateSwitch as BFRTSwitch)
 
 
 class AggregateController(AbstractController):
