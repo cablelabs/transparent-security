@@ -17,21 +17,8 @@ from trans_sec.utils import tps_utils
 
 logger = getLogger('aggregate_controller')
 
-try:
-    from trans_sec.p4runtime_lib.aggregate_switch import (
-        AggregateSwitch as P4RTSwitch)
-except Exception as e:
-    logger.warning(
-        "Error [%s] - while attempting to import "
-        "trans_sec.p4runtime_lib.aggregate_switch.AggregateSwitch", e)
-
-try:
-    from trans_sec.bfruntime_lib.aggregate_switch import (
+from trans_sec.bfruntime_lib.aggregate_switch import (
         AggregateSwitch as BFRTSwitch)
-except Exception as e:
-    logger.warning(
-        "Error [%s] - while attempting to import "
-        "trans_sec.bfruntime_lib.aggregate_switch.AggregateSwitch", e)
 
 
 class AggregateController(AbstractController):
@@ -48,14 +35,8 @@ class AggregateController(AbstractController):
         self.attack_dict = {}
 
     def instantiate_switch(self, sw_info):
-        if 'arch' in sw_info and sw_info['arch'] == 'tna':
-            logger.info('Instantiating BFRT AggregateSwitch')
-            return BFRTSwitch(sw_info=sw_info)
-        else:
-            return P4RTSwitch(
-                sw_info=sw_info,
-                proto_dump_file='{}/{}-switch-controller.log'.format(
-                    self.log_dir, sw_info['name']))
+        logger.info('Instantiating BFRT AggregateSwitch')
+        return BFRTSwitch(sw_info=sw_info)
 
     def __get_agg_switch(self):
         return self.switches[0]

@@ -13,6 +13,10 @@
 
 locals {
   ami = var.p4_arch == "tna" ? var.tofino.bfrt_ami : var.tofino.p4rt_ami
+  dflt_start_script = ["sudo echo 'tps-orchestrator/controller' > ~/motd"]
+  // Placeholder for custom startup options for BFRT images
+  tofino_img_start_script = local.dflt_start_script
+  start_script = var.p4_arch == "tna" ? local.tofino_img_start_script : local.dflt_start_script
 }
 
 # Orchestrator/SDN Controller Instance
@@ -29,9 +33,7 @@ resource "aws_instance" "orchestrator" {
   associate_public_ip_address = true
 
   provisioner "remote-exec" {
-    inline = [
-      "sudo echo 'tps-orchestrator/controller' > ~/motd",
-    ]
+    inline = local.start_script
   }
 
   # Remote connection info for remote-exec
@@ -45,8 +47,8 @@ resource "aws_instance" "orchestrator" {
 
 # Determine switch and node count
 locals {
-  switch_count = var.scenario_name == "full" ? var.num_switches_full : var.scenario_name == "lab_trial" ? var.num_switches_lab_trial : var.num_switches_single
-  node_count = var.scenario_name == "full" ? var.num_nodes_full : var.scenario_name == "lab_trial" ? var.num_nodes_lab_trial : var.num_nodes_single
+  switch_count = var.scenario_name == "lab_trial" ? var.num_switches_lab_trial : var.num_switches_single
+  node_count = var.scenario_name == "lab_trial" ? var.num_nodes_lab_trial : var.num_nodes_single
 }
 
 # Tofino Model Switch Instances
@@ -63,6 +65,18 @@ resource "aws_instance" "tps-switch" {
 
   security_groups = [aws_security_group.tps.name]
   associate_public_ip_address = true
+
+  provisioner "remote-exec" {
+    inline = local.start_script
+  }
+
+  # Remote connection info for remote-exec
+  connection {
+    host = self.public_ip
+    type = "ssh"
+    user = var.switch_user
+    private_key = file(var.private_key_file)
+  }
 }
 
 # Third octet of the subnet IPv4 value

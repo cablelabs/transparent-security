@@ -20,6 +20,12 @@
   vars:
     local_topology: /tmp/tofino-topology.yaml
   tasks:
+    - name: Create {{ remote_scripts_dir }}
+      become: yes
+      file:
+        path: "{{ remote_scripts_dir }}"
+        state: directory
+
     - name: Apply template to topology configuration file {{ topology_template }}
       become: yes
       template:

@@ -16,14 +16,14 @@ variable "access_key" {}
 variable "secret_key" {}
 variable "build_id" {}
 variable "ec2_region" {}
-variable "env_type" {default = "mininet"}
+variable "env_type" {default = "tofino"}
 
 # Dependency version only for tofino environments
 variable "bf_sde_s3_bucket" {default = "null"}
 
 # Optional Variables
 variable "bf_sde_version" {default = "9.2.0"}
-variable "bf_sde_profile" {default = "p4_runtime_profile"}
+variable "bf_sde_profile" {default = "p416_examples_profile"}
 variable "create_ami" {default = "yes"}
 variable "public_key_file" {default = "~/.ssh/id_rsa.pub"}
 variable "private_key_file" {default = "~/.ssh/id_rsa"}
@@ -45,12 +45,6 @@ variable "base_20_ami" {default = "ami-03d5c68bab01f3496"}
 variable "instance_type" {default = "t2.2xlarge"}
 variable "run_tests" {default = "yes"}
 
-# Dependency versions only for mininet environments
-variable "grpc_version" {default = "v1.19.1"}
-variable "p4c_version" {default = "fbe395bbf1eed9653323ac73b20cf6c06af2121e"}
-variable "protobuf_version" {default = "3.6.x"}
-variable "pi_version" {default = "1539ecd8a50c159b011d9c5a9c0eba99f122a845"}
-variable "bm_version" {default = "16c699953ee02306731ebf9a9241ea9fe3bbdc8c"}
 variable "remote_scripts_dir" {default = "/etc/transparent-security"}
 
 # Playbook Constants

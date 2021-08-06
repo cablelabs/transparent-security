@@ -22,8 +22,7 @@ import yaml
 from trans_sec.controller.aggregate_controller import AggregateController
 from trans_sec.controller.core_controller import CoreController
 from trans_sec.controller.ddos_sdn_controller import (
-    DdosSdnController, GATEWAY_CTRL_KEY, AGG_CTRL_KEY, CORE_CTRL_KEY)
-from trans_sec.controller.gateway_controller import GatewayController
+    DdosSdnController, AGG_CTRL_KEY, CORE_CTRL_KEY)
 
 FORMAT = '%(levelname)s %(asctime)-15s %(filename)s %(message)s'
 logger = logging.getLogger('sdn_controller')
@@ -50,8 +49,7 @@ def get_args():
     parser.add_argument('-ld', '--log-dir', type=str, required=True,
                         default=default_logs)
     parser.add_argument('-t', '--topo', help='Path to topology json',
-                        required=False,
-                        default='../mininet-start/conf/topology_proposed.json')
+                        required=True)
     parser.add_argument('-p', '--platform', help='Switch Platform',
                         required=True, type=str, choices=['bmv2', 'tofino'])
     parser.add_argument('-s', '--switch-config-dir', dest='switch_config_dir',
@@ -78,8 +76,7 @@ def get_args():
                         help='When set, the controller will not attempt to '
                              'load the P4 program onto the switches')
     parser.add_argument('-ct', '--controller-type', type=str, required=True,
-                        choices=['gateway', 'aggregate', 'core', 'full',
-                                 'lab_trial'],
+                        choices=['aggregate', 'core', 'full', 'lab_trial'],
                         help='When not set, all controllers will attempt to '
                              'start')
     return parser.parse_args()
@@ -122,15 +119,6 @@ def main():
         'Starting SDN Controller with topology - [%s] and load_p4 flag - [%s]',
         topo, eval(args.load_p4))
     controllers = dict()
-    if (args.controller_type == 'gateway'
-            or args.controller_type == 'full'):
-        logger.info('Instantiating a GatewayController')
-        controllers[GATEWAY_CTRL_KEY] = GatewayController(
-            platform=args.platform,
-            p4_build_out=args.switch_config_dir,
-            topo=topo,
-            log_dir=args.log_dir,
-            load_p4=eval(args.load_p4))
     if (args.controller_type == 'aggregate'
             or args.controller_type == 'lab_trial'
             or args.controller_type == 'full'):

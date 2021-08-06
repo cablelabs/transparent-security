@@ -75,11 +75,6 @@ ${var.ANSIBLE_PB_PATH}/env-build/${var.env_type}/env_build.yml \
 --extra-vars "\
 aws_access_key=${var.access_key}
 aws_secret_key=${var.secret_key}
-grpc_version=${var.grpc_version}
-p4c_version=${var.p4c_version}
-protobuf_version=${var.protobuf_version}
-pi_version=${var.pi_version}
-bm_version=${var.bm_version}
 bf_sde_version=${var.bf_sde_version}
 bf_sde_profile=${var.bf_sde_profile}
 bf_sde_s3_bucket=${var.bf_sde_s3_bucket}
