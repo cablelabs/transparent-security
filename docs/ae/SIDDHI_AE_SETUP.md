@@ -21,8 +21,9 @@ Kubernetes where the siddhi-operator has been installed.
 
 ## Setup and run
 
-There are several things that must be done to the host prior to attempting to
-start the Siddhi TPS AE running as a standalone Java application
+There are several methods that can be used to run Siddhi scripts.
+
+### Java application
 
 - Install Java 8+ (CI is running OpenJDK 11.0.11)
 - Install Git client (apt install git)
@@ -35,16 +36,19 @@ start the Siddhi TPS AE running as a standalone Java application
 - Execute
 
 ```bash
+cd {siddhi-map-p4-trpt directory}
 mvn exec:java -Dexec.mainClass=io.siddhi.extension.map.p4.StartSiddhiRuntime \
--Dexec.args="/etc/transparent-security/convert_trpt.siddhi \
-/etc/transparent-security/simple_ddos_detection.siddhi \
-/etc/transparent-security/simple_ddos_clear.siddhi \
-" -f pom.xml
+-Dexec.args="{siddhi-script-location} {siddhi-script-location} ..." -f pom.xml
 ```
 
-## Making changes
+### Kubernetes
+Other than a Siddhi runtime server or Java application, another means to deploy
+Siddhi scripts is on Kubernetes with the
+[siddhi-operator](https://github.com/siddhi-io/siddhi-operator).
 
-The StartSiddhiRuntime Java main() simply starts a Siddhi Runtime then takes
-the file contents of each of the arguments and loads them into the engine.
-Therefore, changes can be made to any or all of the siddhi files and/or other
-Siddhi scripts can be added/deleted.
+- Install siddhi-operator
+- Apply CRDs
+  - kafka-operator.yml
+  - parse-trpt-udp.yml
+  - eval-pkt-trpt.yml
+  - eval-drop-trpt.yml
