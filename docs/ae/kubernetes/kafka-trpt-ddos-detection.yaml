@@ -1,0 +1,87 @@
+# Copyright (c) 2021 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+apiVersion: siddhi.io/v1alpha2
+kind: SiddhiProcess
+metadata:
+  name: kafka-trpt-ddos-detect
+spec:
+  apps:
+    - script: |
+        @App:name("KafkaSourcePacketJSON")
+        @source(
+          type="kafka",
+          topic.list="trptPacket",
+          bootstrap.servers="10.110.95.121:9092",
+          group.id="test",
+          threading.option="single.thread",
+          @map(
+            type="p4-trpt",
+            @attributes(
+              src_mac="intHdr.mdStackHdr.origMac",
+              ip_ver="ipHdr.version",
+              dst_ip="ipHdr.dstAddr",
+              dst_port="protoHdr.dstPort"
+            )
+          )
+        )
+        define stream trptPktStream (
+          src_mac string,
+          ip_ver int,
+          dst_ip string,
+          dst_port long);
+
+        @sink(
+          type="http",
+          publisher.url="http://localhost:9998/aggAttack",
+          method="POST",
+          headers="trp:headers",
+          @map(type="json")
+        )
+        define stream attackStream (
+          src_mac string,
+          ip_ver int,
+          dst_ip string,
+          dst_port long,
+          count long
+        );
+
+        @info(name = "trptJsonQuery")
+        from trptPktStream#window.time(1 sec)
+        select src_mac, ip_ver, dst_ip, dst_port, count(ip_ver) as count
+        group by src_mac, dst_ip, dst_port
+        having count == 10
+        insert into attackStream;
+
+  container:
+    image: "spisarski/siddhi"
+    imagePullPolicy: Always
+
+  persistentVolumeClaim:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 1Gi
+    storageClassName: standard
+    volumeMode: Filesystem
+
+  runner: |
+    state.persistence:
+      enabled: true
+      intervalInMin: 5
+      revisionsToKeep: 2
+      persistenceStore: io.siddhi.distribution.core.persistence.FileSystemPersistenceStore
+      config:
+        location: siddhi-app-persistence
