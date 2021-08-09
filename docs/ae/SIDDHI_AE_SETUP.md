@@ -39,16 +39,6 @@ Execute following shell commands
 
 ```bash
 cd {siddhi-map-p4-trpt directory}
-mvn exec:java -Dexec.mainClass=io.siddhi.extension.map.p4.StartSiddhiRuntime \
--Dexec.args="{siddhi-script-location} {siddhi-script-location} ..." -f pom.xml
-```
-
-Open shell to the cloned directory (e.g. cd ~/siddhi-map-p4-trpt)
-
-Execute following shell commands
-
-```bash
-cd {siddhi-map-p4-trpt directory}
 mvn clean compile test
 mvn exec:java -Dexec.mainClass=io.siddhi.extension.map.p4.StartSiddhiRuntime \
 -Dexec.args="{siddhi-script-location} {siddhi-script-location} ..." -f pom.xml
