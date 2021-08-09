@@ -1,0 +1,79 @@
+# Copyright (c) 2021 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+- import_playbook: setup_minikube.yml
+
+- hosts: "{{ hosts | default('all') }}"
+  gather_facts: no
+  tasks:
+    - name: Start minikube to install siddhi-operator
+      shell: sudo -u $USER /usr/bin/minikube start --memory=4096
+      register: minkube_start_rc
+      async: 180
+      retries: 2
+      delay: 5
+      until: minkube_start_rc is not failed
+
+    - name: Enable minikube ingress addon
+      command: sudo -u $USER /usr/bin/minikube addons enable ingress
+      register: ing_out
+      async: 60
+      retries: 2
+      delay: 5
+      until: ing_out is not failed
+
+    - name: Create K8s namespace "kafka"
+      command: kubectl create namespace kafka
+
+    - name: Create Strimzi Kafka ClusterRoles, ClusterRoleBindings & other CRDs
+      command: kubectl create -f 'https://strimzi.io/install/latest?namespace=kafka' -n kafka
+
+    - name: Install Siddhi K8s and Strimzi Kafka operator (see https://strimzi.io/quickstarts/)
+      command: "kubectl apply -f {{ item }}"
+      loop:
+        - https://github.com/siddhi-io/siddhi-operator/releases/download/v0.2.2/00-prereqs.yaml
+        - https://github.com/siddhi-io/siddhi-operator/releases/download/v0.2.2/01-siddhi-operator.yaml
+        - https://strimzi.io/examples/latest/kafka/kafka-persistent-single.yaml -n kafka
+
+    - name: Wait for Strimzi Kafka operator
+      command: kubectl wait kafka/my-cluster --for=condition=Ready --timeout=300s -n kafka
+
+    - name: Get minikube ip
+      command: sudo -u $USER /usr/bin/minikube ip
+      register: ip_out
+      retries: 2
+      delay: 5
+      until: ip_out is not failed
+
+    - name: minikube IP
+      debug:
+        var: ip_out
+
+    - name: Setup minikube/siddhi IP into /etc/hosts
+      become: yes
+      shell: "echo ' {{ ip_out.stdout_lines[0] }} siddhi' >> /etc/hosts"
+
+    - name: Check siddhi-operator is Running
+      command: kubectl get po
+      register: kube_pods_out
+      retries: 10
+      delay: 5
+      until: kube_pods_out.stdout.find("Running") != -1
+
+    - name: Show pods
+      debug:
+        var: kube_pods_out.stdout_lines
+
+    - name: Stop minikube
+      shell: sudo -u $USER /usr/bin/minikube stop
