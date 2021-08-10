@@ -11,6 +11,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# This playbook is responsible for starting minikube, adding the ingress addon,
+# setting up Kafka as well as the siddhi-operator which makes it possible to
+# deploy CRD's of kind "SiddhiProcess" to K8s.
+# Please note that Minikube is not required to install the either of the
+# operators (Strimzi Kafka or siddhi-operator)
+
 ---
 - import_playbook: setup_minikube.yml
 

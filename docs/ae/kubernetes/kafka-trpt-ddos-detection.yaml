@@ -11,6 +11,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# This is an example of a TPS-AE SiddhiProcess CRD for reading in Packet
+# Telemetry Reports as a JSON string from Kafka and sending out an HTTP POST
+# when 10 packets in a 1 second window with the same originating MAC,
+# destination IP, and destination port.
+
 ---
 apiVersion: siddhi.io/v1alpha2
 kind: SiddhiProcess

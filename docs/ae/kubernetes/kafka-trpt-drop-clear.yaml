@@ -11,6 +11,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# This is an example of a TPS-AE SiddhiProcess CRD for reading in Drop
+# Telemetry Reports as a JSON string from Kafka and sending out an HTTP DELETE
+# when 3 reports with the same hash and count arrive.
+
 ---
 apiVersion: siddhi.io/v1alpha2
 kind: SiddhiProcess

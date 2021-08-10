@@ -11,6 +11,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# This is an example of a TPS-AE SiddhiProcess CRD for reading in Telemetry
+# Report UDP packets, determining the type, sending the JSON String to the
+# Kafka topic "trptPacket" for Packet Telemetry Reports created on a P4 switch
+# and topic "trptDrop" for Drop Telemetry Reports.
+
 ---
 apiVersion: siddhi.io/v1alpha2
 kind: SiddhiProcess
