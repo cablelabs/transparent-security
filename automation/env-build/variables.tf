@@ -19,7 +19,7 @@ variable "ec2_region" {}
 variable "env_type" {default = "tofino"}
 
 # Dependency version only for tofino environments
-variable "bf_sde_s3_bucket" {default = "null"}
+variable "bf_sde_s3_bucket" {default = null}
 
 # Optional Variables
 variable "bf_sde_version" {default = "9.2.0"}

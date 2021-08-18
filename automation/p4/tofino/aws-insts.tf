@@ -12,7 +12,7 @@
 # limitations under the License.
 
 locals {
-  ami = var.p4_arch == "tna" ? var.tofino.bfrt_ami : var.tofino.p4rt_ami
+  ami = var.tofino.bfrt_ami
   dflt_start_script = ["sudo echo 'tps-orchestrator/controller' > ~/motd"]
   // Placeholder for custom startup options for BFRT images
   tofino_img_start_script = local.dflt_start_script

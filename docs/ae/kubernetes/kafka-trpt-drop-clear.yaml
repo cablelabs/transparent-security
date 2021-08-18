@@ -1,0 +1,88 @@
+# Copyright (c) 2021 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This is an example of a TPS-AE SiddhiProcess CRD for reading in Drop
+# Telemetry Reports as a JSON string from Kafka and sending out an HTTP DELETE
+# when 3 reports with the same hash and count arrive.
+
+---
+apiVersion: siddhi.io/v1alpha2
+kind: SiddhiProcess
+metadata:
+  name: kafka-trpt-drop-clear
+spec:
+  apps:
+    - script: |
+        @App:name("KafkaSourceDropJSON")
+        @source(
+          type="kafka",
+          topic.list="trptDrop",
+          bootstrap.servers="kafka-service:9092",
+          group.id="test",
+          threading.option="single.thread",
+          @map(
+            type="p4-trpt",
+            @attributes(
+              timestamp="dropHdr.timestamp",
+              dropKey="dropHdr.dropKey",
+              dropCount="dropHdr.dropCount"
+            )
+          )
+        )
+        define stream trptDropStream (
+          timestamp long,
+          dropKey string,
+          dropCount long
+        );
+
+        @sink(
+          type="http",
+          publisher.url="http://localhost:9998/aggAttack",
+          method="DELETE",
+          headers="trp:headers",
+          @map(type="json")
+        )
+        define stream dropAttackStream (
+          dropKey string,
+          dropCount long,
+          count long
+        );
+
+        @info(name = "trptJsonQuery")
+        from trptDropStream#window.time(35 sec)
+        select dropKey, dropCount, count(dropCount) as count
+        group by dropKey, dropCount
+        having count >= 3
+        insert into dropAttackStream;
+
+  container:
+    image: "spisarski/siddhi"
+    imagePullPolicy: Always
+
+  persistentVolumeClaim:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 1Gi
+    storageClassName: standard
+    volumeMode: Filesystem
+
+  runner: |
+    state.persistence:
+      enabled: true
+      intervalInMin: 5
+      revisionsToKeep: 2
+      persistenceStore: io.siddhi.distribution.core.persistence.FileSystemPersistenceStore
+      config:
+        location: siddhi-app-persistence

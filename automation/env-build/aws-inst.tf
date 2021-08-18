@@ -75,7 +75,7 @@ aws_access_key=${var.access_key}
 aws_secret_key=${var.secret_key}
 bf_sde_version=${var.bf_sde_version}
 bf_sde_profile=${var.bf_sde_profile}
-bf_sde_s3_bucket=${var.bf_sde_s3_bucket}
+bf_sde_s3_bucket=${var.bf_sde_s3_bucket == null ? "n/a" : var.bf_sde_s3_bucket}
 remote_scripts_dir=${var.remote_scripts_dir}
 python_version=${var.python_version}
 ubuntu_version=${var.ubuntu_version}

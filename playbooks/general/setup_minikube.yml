@@ -1,0 +1,61 @@
+# Copyright (c) 2021 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This playbook is capable of setting Minikube and depends on setup_docker.yml.
+
+---
+- import_playbook: setup_docker.yml
+
+- hosts: "{{ hosts | default('all') }}"
+  gather_facts: no
+  tasks:
+    - name: Create minikube binary directory
+      become: yes
+      file:
+        path: /etc/minikube
+        state: directory
+
+    - name: Get minikube
+      become: yes
+      get_url:
+        url: https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+        dest: /etc/minikube/minikube-linux-amd64
+
+    - name: Install minikube
+      become: yes
+      command: install minikube-linux-amd64 /usr/bin/minikube
+      args:
+        chdir: /etc/minikube
+
+    - name: Install kubectl
+      become: yes
+      command: snap install kubectl --classic
+
+    - name: Start minikube to ensure it will work
+      shell: sudo -u $USER /usr/bin/minikube start --memory=4096
+      register: minkube_start_rc
+      async: 180
+      retries: 2
+      delay: 5
+      until: minkube_start_rc is not failed
+
+    - name: Check Minikube K8s cluster is operational
+      command: kubectl get po -A
+      register: kube_pods_out
+
+    - name: Show pods
+      debug:
+        var: kube_pods_out
+
+    - name: Stop minikube
+      shell: sudo -u $USER /usr/bin/minikube stop
