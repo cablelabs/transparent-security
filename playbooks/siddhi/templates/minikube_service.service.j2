@@ -1,0 +1,16 @@
+[Unit]
+Description=Minikube service for TPS AE
+Requires=network.target docker.service
+After=syslog.target network.target docker.service
+PartOf={{ part_of_srvc }}
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=ubuntu
+Group=docker
+ExecStart=/usr/bin/minikube start --memory=4096
+ExecStop=/usr/bin/minikube stop
+
+[Install]
+WantedBy=multi-user.target

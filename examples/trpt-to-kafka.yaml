@@ -1,0 +1,86 @@
+# Copyright (c) 2021 Cable Television Laboratories, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+apiVersion: siddhi.io/v1alpha2
+kind: SiddhiProcess
+metadata:
+  name: trpt-to-kafka
+spec:
+  apps:
+    - script: |
+        @App:name("UDPSourceTRPT")
+        @source(
+          type="udp",
+          listen.port="556",
+          @map(
+            type="p4-trpt",
+            @attributes(
+              in_type="telemRptHdr.inType",
+              full_json="jsonString"
+            )
+          )
+        )
+        define stream trptUdpStream (in_type int, full_json object);
+
+        @sink(
+          type="kafka",
+          topic="trptPacket",
+          bootstrap.servers="10.110.95.121:9092",
+          is.binary.message = "false",
+          @map(type="text")
+        )
+        define stream trptPacket (full_json object);
+
+        @sink(
+          type="kafka",
+          topic="trptDrop",
+          bootstrap.servers="10.110.95.121:9092",
+          is.binary.message = "false",
+          @map(type="text")
+        )
+        define stream trptDrop (full_json object);
+
+        @info(name = "TrptPacket")
+        from trptUdpStream[in_type != 2]
+        select full_json
+        insert into trptPacket;
+
+        @info(name = "TrptDrop")
+        from trptUdpStream[in_type == 2]
+        select full_json
+        insert into trptDrop;
+
+  container:
+    image: "spisarski/siddhi"
+    imagePullPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trpt-to-kafka-0
+spec:
+  type: LoadBalancer
+  clusterIP: 10.96.100.2
+  externalIPs:
+    - 192.168.86.181
+  selector:
+      siddhi.io/instance: trpt-to-kafka-0
+      siddhi.io/name: SiddhiProcess
+      siddhi.io/part-of: siddhi-operator
+      siddhi.io/version: 0.2.2
+  ports:
+    - port: 556
+      targetPort: 556
+      protocol: UDP

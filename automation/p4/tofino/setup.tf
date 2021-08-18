@@ -21,7 +21,8 @@ locals {
   agg_switch_ip = var.scenario_name == "lab_trial" ? aws_instance.tps-switch.1.private_ip: "n/a"
   agg_tun1_ip = var.scenario_name == "lab_trial" ? aws_network_interface.switch_tun_1.1.private_ip: "n/a"
   agg_tun1_mac = var.scenario_name == "lab_trial" ? aws_network_interface.switch_tun_1.1.mac_address: "n/a"
-  ae_ip = var.scenario_name == "lab_trial" ? aws_instance.ae.private_ip: "n/a"
+  ae_ip = var.scenario_name == "lab_trial" ? var.ae_k8s_svc_ip: "n/a"
+  ae_mgmt_ip = var.scenario_name == "lab_trial" ? aws_instance.ae.private_ip: "n/a"
   ae_tun1_ip = var.scenario_name == "lab_trial" ? aws_network_interface.ae_tun_1.private_ip: "n/a"
   ae_tun1_mac = var.scenario_name == "lab_trial" ? aws_network_interface.ae_tun_1.mac_address: "n/a"
 
@@ -151,6 +152,7 @@ inet_ip=${local.lab_inet_ip}
 inet_tun1_ip=${local.lab_inet_tun1_ip}
 inet_tun1_mac=${local.lab_inet_tun1_mac}
 ae_ip=${local.ae_ip}
+ae_mgmt_ip=${local.ae_mgmt_ip}
 ae_tun1_ip=${local.ae_tun1_ip}
 ae_tun1_mac=${local.ae_tun1_mac}
 switch_user=${var.switch_user}

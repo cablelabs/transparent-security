@@ -35,7 +35,7 @@ variable "tofino" {
   }
 }
 
-variable "siddhi_ae_ami" {default = "ami-07e5e73831d02dbe9"}
+variable "siddhi_ae_ami" {default = "ami-010458ceb325ec348"}
 
 variable "switch_instance_type" {default = "t2.2xlarge"}
 variable "ae_instance_type" {default = "t2.2xlarge"}
@@ -66,6 +66,7 @@ variable "p4_grpc_port" {default = "50051"}
 variable "bf_grpc_port" {default = "50052"}
 variable "p4_bridge_subnet" {default = "192.168.0.0/24"}
 variable "sdn_port" {default = "9998"}
+variable "ae_k8s_svc_ip" {default = "10.96.0.2"}
 variable "switch_nic_prfx" {default = "veth"}
 variable "service_log_level" {default = "DEBUG"}
 variable "ae_monitor_intf" {default = "core-tun"}

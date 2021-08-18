@@ -19,10 +19,11 @@
   gather_facts: yes
   become: yes
   vars:
-    setup_tunnels: "{{ not from_hw|bool | default(True) }}"
+    setup_for_hw: "{{ from_hw | default(False) }}"
+    setup_tunnels: "{{ not setup_for_hw | bool }}"
   tasks:
     - debug:
-        var: from_hw
+        var: setup_for_hw
     - debug:
         var: setup_tunnels
     - block:
@@ -38,7 +39,7 @@
             name: ip_gre
             state: present
 
-        - name: install ip_gre module
+        - name: Setup ipv4 forwarding
           lineinfile:
             path: /etc/sysctl.conf
             line: "net.ipv4.ip_forward=1"

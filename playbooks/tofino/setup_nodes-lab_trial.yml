@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+---
 # Copy TPS source from orchestrator to all hosts
 - import_playbook: ../general/setup_source.yml
   vars:
@@ -18,6 +19,12 @@
       - hosts
     trans_sec_source_dir: "{{ orch_trans_sec_dir }}"
     python_unit_tests: false
+
+# Setup AE
+- import_playbook: setup_minikube_siddhi_ae.yml
+  vars:
+    host_val: ae
+    clone_tun_name: core-tun1
 
 # Create virtual interfaces on switches
 - import_playbook: setup_virt_eth.yml
@@ -46,25 +53,3 @@
     wait_timeout: 60
     load_p4: False
 
-# Start AE
-- import_playbook: ../general/start_service.yml
-  vars:
-    host_val: ae
-    service_name: tps-tofino-ae
-    srvc_start_pause_time: 45
-    local_srvc_script_tmplt_file: "{{ orch_trans_sec_dir }}/playbooks/general/templates/siddhi_p4_service.sh.j2"
-    srvc_type: SIMPLE
-    sdn_url: "http://{{ sdn_ip }}:{{ sdn_port }}"
-    telem_rpt_port: 556
-    kafka_host_port: localhost:9092
-    kafka_trpt_pkt_topic: trptPacket
-    kafka_trpt_drop_topic: trptDrop
-    alert_pkt_count: 10
-    alert_window_secs: 1
-    templates:
-      - src: "{{ orch_trans_sec_dir }}/playbooks/siddhi/templates/convert_trpt.siddhi.j2"
-        dest: "{{ remote_scripts_dir }}/convert_trpt.siddhi"
-      - src: "{{ orch_trans_sec_dir }}/playbooks/siddhi/templates/simple_ddos_detection.siddhi.j2"
-        dest: "{{ remote_scripts_dir }}/simple_ddos_detection.siddhi"
-      - src: "{{ orch_trans_sec_dir }}/playbooks/siddhi/templates/simple_ddos_clear_drop.siddhi.j2"
-        dest: "{{ remote_scripts_dir }}/simple_ddos_clear.siddhi"

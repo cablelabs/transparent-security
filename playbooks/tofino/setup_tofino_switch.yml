@@ -27,6 +27,7 @@
 # Start tofino model chip emulator
 - import_playbook: ../general/start_service.yml
   vars:
+    setup_for_hw: "{{ from_hw | default(False) }}"
     host_val: "{{ switches }}"
     service_name: tps-tofino-model
     topo_dict: "{{ lookup('file','{{ topo_file_loc }}') | from_yaml }}"
@@ -37,7 +38,7 @@
     prog_name: "{{ p4_prog }}"
     additional_tmplt_file: "{{ trans_sec_dir }}/playbooks/tofino/templates/tofino-model-veth-port-mapping.json.j2"
     additional_tmplt_out_file: "{{ remote_scripts_dir }}/port-mapping.json"
-  when: not from_hw | bool
+  when: not setup_for_hw | bool
 
 # Start switchd
 - import_playbook: ../general/start_service.yml
