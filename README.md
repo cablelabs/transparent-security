@@ -32,13 +32,22 @@ We use an [Apache 2.0 License](LICENSE) for Transparent Security.
 Questions? Just send us an email at
 [transparent-security@cablelabs.com](mailto:transparent-security@cablelabs.com) or [open an issue](https://github.com/cablelabs/transparent-security/issues).
 
+## The docs
+These directories contain other documentation 
+- [Analytic Engine](./docs/ae) - [How to setup the AE](./docs/ae/SIDDHI_AE_SETUP.md)
+  - [kubernetes](./docs/ae/kubernetes) - directory containing sample CRDs to deploy the TPS AE on Kubernetes
+- [Build automation AMIs](./docs/env_build) - [Creating the required EC2 Images](./docs/env_build/CREATE_AUTOMATION_IMAGES.md)
+- [P4 INT](./docs/int_header) - [Description of the P4 INT header added to packets and associated Wireshark plugin](./docs/int_header/README.md)
+- [Telemetry Report](./docs/telemetry_report) - [Description of the Telemetry Report UDP Packet](./docs/telemetry_report/telemetry_report.md)
+- [Terraform Example Variable File](./docs/terraform) - Example "tfvars" files for configuring a Terraform run
+- [P4 Automation](./docs/tofino) - [Instructions on how to execute the P4 automation scripts](./docs/tofino/RUN_CI_AUTOMATION.md)
+
 ## The directories
-- automation - contains Terraform scripts for CI and testing on AWS
-- bin - miscellaneous scripts mostly used by scripts in automation
-- conf - miscellaneous environment configurations
-- docs - miscellaneous MD files
-- p4 - The P4 source code
-- playbooks - The Ansible Playbooks used by automation
-- snaps-hcp - Documentation on snaps-hcp which is no longer being used
-- tests - the Python unit test directory
-- trans_sec - the project's top-level Python package
+- [automation](automation) - contains Terraform scripts for CI and testing on AWS
+- [bin](bin) - miscellaneous scripts mostly used by scripts in automation
+- [conf](conf) - miscellaneous environment configurations
+- [docs](docs) - miscellaneous MD files
+- [p4](p4) - The P4 source code
+- [playbooks](playbooks) - The Ansible Playbooks used by automation
+- [tests](tests) - the Python unit test directory
+- [trans_sec](trans_sec) - the project's top-level Python package

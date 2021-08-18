@@ -1,6 +1,4 @@
-#!/usr/bin/env bash
-
-# Copyright (c) 2019 Cable Television Laboratories, Inc.
+# Copyright (c) 2021 Cable Television Laboratories, Inc.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -12,19 +10,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-# Runs the SDN controller
-{{ trans_sec_dir }}/bin/sdn_controller.py -l {{ log_level }} \
--ainv {{ ansible_inventory_file }} \
--u {{ ansible_user }} \
--t {{ topo_file_loc }} \
--f {{ log_dir }}/sdn.log \
--ld {{ log_dir }} \
--s {{ remote_scripts_dir }}/p4 \
--aip {{ ae_ip }} \
--drf 10 \
--p {{ p4_platform }} \
--hsp {{ sdn_port }} \
--lp {{ load_p4 }} \
--ct {{ scenario_name }} \
--drb total_count
+
+# Playbook that is responsible for putting together an AWS image for running
+# Siddhi with the new "udp" source & P4 Telemetry report mapping extensions
+# running in Kubernetes
+---
+- import_playbook: ../general/setup_siddhi_operator.yml
+- import_playbook: ../general/final_env_setup.yml

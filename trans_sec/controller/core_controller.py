@@ -15,24 +15,10 @@ from logging import getLogger
 from trans_sec.controller.abstract_controller import AbstractController
 from trans_sec.controller.ddos_sdn_controller import CORE_CTRL_KEY
 
+from trans_sec.bfruntime_lib.core_switch import (CoreSwitch as BFRTSwitch)
+
+
 logger = getLogger('core_controller')
-
-try:
-    logger.debug('Importing CoreSwitch as P4RTSwitch')
-    from trans_sec.p4runtime_lib.core_switch import CoreSwitch as P4RTSwitch
-    logger.debug('Imported CoreSwitch as P4RTSwitch')
-except Exception as e:
-    logger.warning(
-        "Error [%s] - while attempting to import "
-        "trans_sec.p4runtime_lib.core_switch.CoreSwitch", e)
-
-try:
-    logger.debug('Importing CoreSwitch as BFRTSwitch')
-    from trans_sec.bfruntime_lib.core_switch import (
-        CoreSwitch as BFRTSwitch)
-    logger.debug('Imported CoreSwitch as BFRTSwitch')
-except Exception as e:
-    logger.warning('Could not import bfrt classes')
 
 
 class CoreController(AbstractController):
@@ -46,14 +32,8 @@ class CoreController(AbstractController):
 
     def instantiate_switch(self, sw_info):
         logger.info('Instantiating switch with arch - [%s]', sw_info)
-        if 'arch' in sw_info and sw_info['arch'] == 'tna':
-            logger.info('Instantiating BFRT CoreSwitch')
-            return BFRTSwitch(sw_info=sw_info)
-        else:
-            return P4RTSwitch(
-                sw_info=sw_info,
-                proto_dump_file='{}/{}-switch-controller.log'.format(
-                    self.log_dir, sw_info['name']))
+        logger.info('Instantiating BFRT CoreSwitch')
+        return BFRTSwitch(sw_info=sw_info)
 
     def __get_core_switch(self):
         return self.switches[0]

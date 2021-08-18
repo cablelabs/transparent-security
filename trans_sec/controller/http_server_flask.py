@@ -49,11 +49,6 @@ class SDNControllerServer:
                 DataInspection, '/dataInspection',
                 resource_class_kwargs={'sdn_controller': self.sdn_controller})
 
-            logger.info('Starting gwAttack')
-            self.api.add_resource(
-                GwAttack, '/gwAttack',
-                resource_class_kwargs={'sdn_controller': self.sdn_controller})
-
             logger.info('Starting aggAttack')
             self.api.add_resource(
                 AggAttack, '/aggAttack',
@@ -184,48 +179,6 @@ class DataInspection(Resource):
 
         logger.info('args - [%s]', args)
         self.sdn_controller.del_data_inspection(args)
-        return json.dumps({"success": True}), 201
-
-
-class GwAttack(Resource):
-    """
-    Class for exposing web service to issue an attack call to gateway.p4
-    """
-
-    parser = reqparse.RequestParser()
-    parser.add_argument('src_mac', type=str)
-    parser.add_argument('src_ip', type=str)
-    parser.add_argument('dst_ip', type=str)
-    parser.add_argument('dst_port', type=str)
-    parser.add_argument('packet_size', type=str)
-    parser.add_argument('attack_type', type=str)
-
-    def __init__(self, **kwargs):
-        logger.info('Starting GwAttack context')
-        self.sdn_controller = kwargs['sdn_controller']
-
-    @swagger.tags(['gatewayAttackStart'])
-    @swagger.response(response_code=201,
-                      description='Mitigated attack on gateway')
-    @swagger.reqparser(name='GwAttackParser', parser=parser)
-    def post(self):
-        logger.info('Gateway attack requested')
-        args = self.parser.parse_args()
-
-        logger.info('args - [%s]', args)
-        self.sdn_controller.add_attacker(args)
-        return json.dumps({"success": True}), 201
-
-    @swagger.tags(['gatewayAttackStop'])
-    @swagger.response(response_code=201,
-                      description='Unmitigated attacks from gateway')
-    @swagger.reqparser(name='GwAttackParser', parser=parser)
-    def delete(self):
-        logger.info('GW Attacker to remove')
-        args = self.parser.parse_args()
-
-        logger.info('args - [%s]', args)
-        self.sdn_controller.remove_attacker(args)
         return json.dumps({"success": True}), 201
 
 

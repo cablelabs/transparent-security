@@ -14,46 +14,32 @@
 locals {
   sdn_ip = aws_instance.orchestrator.private_ip
 
-  # For full & lab_trial scenarios
-  core_switch_ip = var.scenario_name == "full" || var.scenario_name == "lab_trial" ? aws_instance.tps-switch.0.private_ip: "n/a"
-  core_tun1_ip = var.scenario_name == "full" || var.scenario_name == "lab_trial" ? aws_network_interface.switch_tun_1.0.private_ip: "n/a"
-  core_tun1_mac = var.scenario_name == "full" || var.scenario_name == "lab_trial" ? aws_network_interface.switch_tun_1.0.mac_address: "n/a"
-  agg_switch_ip = var.scenario_name == "full" || var.scenario_name == "lab_trial" ? aws_instance.tps-switch.1.private_ip: "n/a"
-  agg_tun1_ip = var.scenario_name == "full" || var.scenario_name == "lab_trial" ? aws_network_interface.switch_tun_1.1.private_ip: "n/a"
-  agg_tun1_mac = var.scenario_name == "full" || var.scenario_name == "lab_trial" ? aws_network_interface.switch_tun_1.1.mac_address: "n/a"
-
-  # For full scenario
-  gateway_1_ip = var.scenario_name == "full" ? aws_instance.tps-switch.2.private_ip: "n/a"
-  gateway_2_ip = var.scenario_name == "full" ? aws_instance.tps-switch.3.private_ip: "n/a"
-  gateway_3_ip = var.scenario_name == "full" ? aws_instance.tps-switch.4.private_ip: "n/a"
-  camera_1_ip = var.scenario_name == "full" ? aws_instance.node.0.private_ip: "n/a"
-  nas_1_ip = var.scenario_name == "full" ? aws_instance.node.1.private_ip: "n/a"
-  game_1_ip = var.scenario_name == "full" ? aws_instance.node.2.private_ip: "n/a"
-  camera_2_ip = var.scenario_name == "full" ? aws_instance.node.3.private_ip: "n/a"
-  game_2_ip = var.scenario_name == "full" ? aws_instance.node.4.private_ip: "n/a"
-  camera_3_ip = var.scenario_name == "full" ? aws_instance.node.5.private_ip: "n/a"
-  game_3_ip = var.scenario_name == "full" ? aws_instance.node.6.private_ip: "n/a"
-
   # For lab_trial scenario
+  core_switch_ip = var.scenario_name == "lab_trial" ? aws_instance.tps-switch.0.private_ip: "n/a"
+  core_tun1_ip = var.scenario_name == "lab_trial" ? aws_network_interface.switch_tun_1.0.private_ip: "n/a"
+  core_tun1_mac = var.scenario_name == "lab_trial" ? aws_network_interface.switch_tun_1.0.mac_address: "n/a"
+  agg_switch_ip = var.scenario_name == "lab_trial" ? aws_instance.tps-switch.1.private_ip: "n/a"
+  agg_tun1_ip = var.scenario_name == "lab_trial" ? aws_network_interface.switch_tun_1.1.private_ip: "n/a"
+  agg_tun1_mac = var.scenario_name == "lab_trial" ? aws_network_interface.switch_tun_1.1.mac_address: "n/a"
   ae_ip = var.scenario_name == "lab_trial" ? aws_instance.ae.private_ip: "n/a"
   ae_tun1_ip = var.scenario_name == "lab_trial" ? aws_network_interface.ae_tun_1.private_ip: "n/a"
   ae_tun1_mac = var.scenario_name == "lab_trial" ? aws_network_interface.ae_tun_1.mac_address: "n/a"
 
   # For single-switch scenario
-  switch_ip = var.scenario_name == "full" ? "n/a" : aws_instance.tps-switch.0.private_ip
-  switch_tun1_ip = var.scenario_name == "full" ? "n/a" : aws_network_interface.switch_tun_1.0.private_ip
-  switch_tun1_mac = var.scenario_name == "full" ? "n/a" : aws_network_interface.switch_tun_1.0.mac_address
-  clone_ip = var.scenario_name == "full" ? "n/a" : aws_instance.node.2.private_ip
-  clone_tun1_ip = var.scenario_name == "full" ? "n/a" : aws_network_interface.node_tun_1.2.private_ip
-  clone_tun1_mac = var.scenario_name == "full" ? "n/a" : aws_network_interface.node_tun_1.2.mac_address
+  switch_ip = aws_instance.tps-switch.0.private_ip
+  switch_tun1_ip = aws_network_interface.switch_tun_1.0.private_ip
+  switch_tun1_mac = aws_network_interface.switch_tun_1.0.mac_address
+  clone_ip = aws_instance.node.2.private_ip
+  clone_tun1_ip = aws_network_interface.node_tun_1.2.private_ip
+  clone_tun1_mac = aws_network_interface.node_tun_1.2.mac_address
 
   # For single_switch & lab_trial scenarios
-  host1_ip = var.scenario_name == "full" ? "n/a" : aws_instance.node.0.private_ip
-  host1_tun1_ip = var.scenario_name == "full" ? "n/a" : aws_network_interface.node_tun_1.0.private_ip
-  host1_tun1_mac = var.scenario_name == "full" ? "n/a" : aws_network_interface.node_tun_1.0.mac_address
-  host2_ip = var.scenario_name == "full" ? "n/a" : aws_instance.node.1.private_ip
-  host2_tun1_ip = var.scenario_name == "full" ? "n/a" : aws_network_interface.node_tun_1.1.private_ip
-  host2_tun1_mac = var.scenario_name == "full" ? "n/a" : aws_network_interface.node_tun_1.1.mac_address
+  host1_ip = aws_instance.node.0.private_ip
+  host1_tun1_ip = aws_network_interface.node_tun_1.0.private_ip
+  host1_tun1_mac = aws_network_interface.node_tun_1.0.mac_address
+  host2_ip = aws_instance.node.1.private_ip
+  host2_tun1_ip = aws_network_interface.node_tun_1.1.private_ip
+  host2_tun1_mac = aws_network_interface.node_tun_1.1.mac_address
 
   # For lab_trial scenarios
   lab_inet_ip = var.scenario_name == "lab_trial" ? aws_instance.node.2.private_ip: "n/a"
@@ -92,7 +78,7 @@ EOT
 }
 
 resource "null_resource" "tps-sim-setup-orch-single-switch" {
-  count = var.scenario_name == "full" || var.scenario_name == "lab_trial" ? 0 : 1
+  count = var.scenario_name == "lab_trial" ? 0 : 1
   depends_on = [
     aws_instance.tps-switch,
     aws_instance.node,
@@ -192,7 +178,7 @@ EOT
 }
 
 locals {
-  setup_pb = var.scenario_name == "full" || var.scenario_name == "lab_trial" ? "setup_nodes-${var.scenario_name}.yml" : "setup_nodes-single_switch.yml"
+  setup_pb = var.scenario_name == "lab_trial" ? "setup_nodes-${var.scenario_name}.yml" : "setup_nodes-single_switch.yml"
 }
 
 resource "null_resource" "tps-tofino-setup-nodes" {

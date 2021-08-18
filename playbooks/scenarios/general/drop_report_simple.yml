@@ -85,7 +85,7 @@
       command: "{{ receive_cmd }}"
       register: receive_out
       changed_when: receive_out is not failed
-      retries: 3
+      retries: 6
       delay: 10
       until: receive_out.stdout | length > 5 and receive_out.stdout | from_json | length == send_ports | length
 

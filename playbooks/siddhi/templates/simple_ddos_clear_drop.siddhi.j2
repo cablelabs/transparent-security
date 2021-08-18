@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-@app:name('Kafka-Source-Drop-JSON')
+@App:name('KafkaSourceDropJSON')
 @source(type='kafka', topic.list='{{ kafka_trpt_drop_topic }}', bootstrap.servers='{{ kafka_host_port }}',
     group.id='test',
     threading.option='single.thread',

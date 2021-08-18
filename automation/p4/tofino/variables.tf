@@ -31,30 +31,23 @@ variable "availability_zone" {default = "us-west-2a"}
 variable "tofino" {
   default = {
     sde_version = "9.2.0"
-    p4rt_ami = "ami-043e6714f3d0863f2"
-    bfrt_ami = "ami-01a5ff54de23b6739"
+    bfrt_ami = "ami-090b409398f016b84"
   }
 }
 
-variable "siddhi_ae_ami" {default = "ami-08ec1da30d3413105"}
-//variable "siddhi_ae_ami" {default = "ami-0e7d14e85b77459c4"}
-//variable "siddhi_ae_ami" {default = "ami-06ea3285e31e16516"}
-//variable "siddhi_ae_ami" {default = "ami-00876f36fe8f97733"}
+variable "siddhi_ae_ami" {default = "ami-07e5e73831d02dbe9"}
 
 variable "switch_instance_type" {default = "t2.2xlarge"}
 variable "ae_instance_type" {default = "t2.2xlarge"}
 variable "orch_instance_type" {default = "t2.2xlarge"}
 variable "node_instance_type" {default = "t2.small"}
-variable "num_switches_full" {default = 5}
 variable "num_switches_single" {default = 1}
 variable "num_switches_lab_trial" {default = 2}
-variable "num_nodes_full" {default = 9}
 variable "num_nodes_single" {default = 3}
 variable "num_nodes_lab_trial" {default = 3}
 
 # Variables for ansible playbooks
 variable "ANSIBLE_CMD" {default = "export ANSIBLE_HOST_KEY_CHECKING=False; ansible-playbook"}
-variable "SETUP_ORCH_FULL" {default = "../../../playbooks/tofino/setup_orchestrator-full.yml"}
 variable "SETUP_ORCH_SINGLE_SWITCH" {default = "../../../playbooks/tofino/setup_orchestrator-single_switch.yml"}
 variable "SETUP_ORCH_LAB_TRIAL" {default = "../../../playbooks/tofino/setup_orchestrator-lab_trial.yml"}
 variable "START_SERVICE" {default = "../../../playbooks/general/start_service.yml"}
@@ -82,5 +75,5 @@ variable "p4_arch" {default = "tna"}
 variable "from_hw" {default = "False"}
 
 variable "setup_nodes_pb" {default = "setup_nodes.yml"}
-variable "scenario_name" {default = "full"}
+variable "scenario_name" {default = "lab_trial"}
 variable "test_case" {default = "all"}
