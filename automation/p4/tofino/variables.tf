@@ -31,12 +31,11 @@ variable "availability_zone" {default = "us-west-2a"}
 variable "tofino" {
   default = {
     sde_version = "9.2.0"
-    p4rt_ami = "ami-043e6714f3d0863f2"
-    bfrt_ami = "ami-01a5ff54de23b6739"
+    bfrt_ami = "ami-090b409398f016b84"
   }
 }
 
-variable "siddhi_ae_ami" {default = "ami-05bb35a9f06141f6b"}
+variable "siddhi_ae_ami" {default = "ami-07e5e73831d02dbe9"}
 
 variable "switch_instance_type" {default = "t2.2xlarge"}
 variable "ae_instance_type" {default = "t2.2xlarge"}

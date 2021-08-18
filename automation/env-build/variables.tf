@@ -19,21 +19,18 @@ variable "ec2_region" {}
 variable "env_type" {default = "tofino"}
 
 # Dependency version only for tofino environments
-variable "bf_sde_s3_bucket" {default = "null"}
+variable "bf_sde_s3_bucket" {default = null}
 
 # Optional Variables
 variable "bf_sde_version" {default = "9.2.0"}
 variable "bf_sde_profile" {default = "p416_examples_profile"}
-variable "create_ami" {default = "yes"}
+variable "create_ami" {default = "no"}
 variable "public_key_file" {default = "~/.ssh/id_rsa.pub"}
 variable "private_key_file" {default = "~/.ssh/id_rsa"}
 variable "sudo_user" {default = "ubuntu"}
 variable "ubuntu_version" {default = "18"}
 variable "siddhi_map_p4_trpt_version" {default = "master"}
 variable "python_version" {default = "3.6"}
-
-# snaps-hcp image
-variable "centos7_ami" {default="ami-01ed306a12b7d1c96"}
 
 # ubuntu 16
 variable "base_16_ami" {default = "ami-08692d171e3cf02d6"}
